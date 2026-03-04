@@ -1,0 +1,253 @@
+.landing__background {
+  position: relative;
+  background: radial-gradient(
+      ellipse 160% 100% at 50% 10%,
+      rgba(34, 211, 238, 0.06) 0%,
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse 120% 70% at 50% 95%,
+      rgba(34, 211, 238, 0.02) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 15% 50%,
+      rgba(0, 0, 0, 0.35) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 85% 50%,
+      rgba(0, 0, 0, 0.35) 0%,
+      transparent 55%
+    ),
+    linear-gradient(180deg, #030405 0%, #050608 22%, #060709 48%, #050607 78%, #030405 100%);
+}
+
+.landing__background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+.landing__background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  z-index: 1;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 0%, transparent 75%);
+}
+
+.landing__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 70% at 50% 45%, transparent 0%, rgba(4, 4, 6, 0.4) 50%, rgba(4, 4, 6, 0.85) 100%);
+}
+
+.landing__content {
+  position: relative;
+  z-index: 10;
+}
+
+.landing__hero {
+  position: relative;
+  z-index: 10;
+}
+
+.landing__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1.35rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.landing__pill:hover {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(34, 211, 238, 0.06);
+  box-shadow: 0 0 28px -6px rgba(34, 211, 238, 0.15);
+}
+
+.landing__pillBold {
+  font-weight: 800;
+  color: #22d3ee;
+  letter-spacing: 0.28em;
+}
+
+.landing__pill:hover .landing__pillBold {
+  color: #67e8f9;
+}
+
+.landing__pillDivider {
+  width: 1px;
+  height: 0.75rem;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.35), transparent);
+  border-radius: 1px;
+}
+
+.landing__pillLight {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.22em;
+}
+
+.landing__pill:hover .landing__pillLight {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.landing__eyebrowWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.landing__eyebrowLine {
+  width: 2px;
+  height: 2.75rem;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(34, 211, 238, 0.25) 15%,
+    rgba(34, 211, 238, 0.6) 50%,
+    rgba(34, 211, 238, 0.25) 85%,
+    transparent
+  );
+  border-radius: 2px;
+}
+
+.landing__eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: #67e8f9;
+}
+
+.landing__title {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 1.02;
+  margin-bottom: 1.5rem;
+  text-rendering: optimizeLegibility;
+}
+
+.landing__titlePrimary {
+  font-size: clamp(3.25rem, 9.5vw, 6rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  background: linear-gradient(135deg, #ffffff 0%, #b2ebf2 28%, #22d3ee 70%, #0dd5e8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 48px rgba(34, 211, 238, 0.25)) drop-shadow(0 2px 20px rgba(0, 0, 0, 0.35));
+}
+
+.landing__titleAccent {
+  width: 3rem;
+  height: 3px;
+  margin: 0.6rem 0 0.5rem;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.7), transparent);
+  border-radius: 2px;
+}
+
+.landing__titleSecondary {
+  font-size: clamp(1.5rem, 3.8vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  color: rgba(255, 255, 255, 0.88);
+  text-transform: uppercase;
+  text-shadow: 0 0 40px rgba(34, 211, 238, 0.08), 0 1px 12px rgba(0, 0, 0, 0.2);
+}
+
+.landing__subtitle {
+  font-size: clamp(1rem, 1.9vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 28rem;
+  margin: 0 auto;
+  letter-spacing: 0.02em;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.landing__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  padding: 1rem 2.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #030405;
+  background: #22d3ee;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  box-shadow: 0 4px 24px -4px rgba(34, 211, 238, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.landing__cta:hover {
+  background: #67e8f9;
+  box-shadow: 0 8px 32px -4px rgba(34, 211, 238, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  transform: translateY(-2px);
+}
+
+.landing__cta:active {
+  transform: translateY(0);
+}
+
+.landing__cta:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 4px;
+}
+
+.landing__scrollWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing__scrollLine {
+  width: 1px;
+  height: 2.25rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(34, 211, 238, 0.35),
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+  border-radius: 1px;
+}
+
+.landing__scroll {
+  opacity: 0.5;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.landing__scroll:hover {
+  opacity: 0.9;
+}
