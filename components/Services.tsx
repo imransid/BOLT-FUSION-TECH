@@ -119,13 +119,17 @@ export default function Services() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[17px] overflow-hidden grayscale"
+            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[17px] overflow-hidden ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0"
             style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
           >
             <img
-              src="https://framerusercontent.com/images/p6Im6dfknHAI0ig4NqDcO4WNpc.jpg"
-              alt="Software engineering and product delivery"
-              className="w-full h-full object-cover"
+              src="/section-services.png"
+              alt="Engineering team building software products with clear UI and architecture on screen"
+              width={1376}
+              height={768}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover object-center"
             />
           </motion.div>
         </div>

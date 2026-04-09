@@ -9,6 +9,7 @@ import Services from "@/components/Services";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
+import CalendlyInlineEmbed from "@/components/CalendlyInlineEmbed";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -27,16 +28,9 @@ export default function Home() {
         <FAQ />
         <CTA />
 
-        <div
-          className="calendly-inline-widget"
-          data-url="https://calendly.com/bolttechfusion/30min?background_color=1a1a1a&text_color=ffffff&primary_color=0069FF"
-          style={{ minWidth: "320px", width: "100%", height: "700px" }}
-        ></div>
-        <script
-          type="text/javascript"
-          src="https://assets.calendly.com/assets/external/widget.js"
-          async
-        ></script>
+        <div className="px-5 md:px-20 pb-20 max-w-[1600px] mx-auto w-full">
+          <CalendlyInlineEmbed />
+        </div>
       </main>
       <Footer />
     </>

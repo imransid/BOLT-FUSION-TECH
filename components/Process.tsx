@@ -34,9 +34,13 @@ export default function Process() {
           style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
         >
           <img
-            src="https://framerusercontent.com/images/djbcRHCD89IflJ1okJAa1J65cuM.png"
-            alt="How we deliver software with you"
-            className="w-full h-full object-cover"
+            src="/section-process.png"
+            alt="Product and engineering collaboration during discovery and sprint planning"
+            width={1376}
+            height={768}
+            loading="lazy"
+            decoding="async"
+            className="h-full min-h-[360px] w-full object-cover object-center"
           />
         </motion.div>
 

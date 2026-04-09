@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 const skills = [
   "Web & mobile apps",
@@ -30,6 +30,8 @@ const experience = [
 ];
 
 export default function AboutMe() {
+  const reduceMotion = useReducedMotion();
+
   return (
     <section
       id="about"
@@ -100,22 +102,99 @@ export default function AboutMe() {
           </div>
         </div>
 
-        {/* Right image */}
+        {/* Right image — framed with depth, vignette, and hover polish */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="flex-1 min-w-0 lg:min-w-[460px] aspect-[1.07] rounded-[4px] overflow-hidden grayscale"
-          style={{
-            boxShadow: "16px 24px 20px 8px rgba(0,0,0,0.4)",
-          }}
+          initial={
+            reduceMotion ? false : { opacity: 0, y: 28, filter: "blur(10px)" }
+          }
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+          className="flex-1 min-w-0 lg:min-w-[460px] relative isolate pt-2"
         >
-          <img
-            src="https://framerusercontent.com/images/roWFLkzHAotwSx5UxGPxpxMeA.jpg"
-            alt="Bolt Fusion Tech — product engineering team"
-            className="w-full h-full object-cover"
+          {/* Ambient rim light */}
+          <div
+            className="pointer-events-none absolute -inset-10 z-0 opacity-70 blur-3xl md:-inset-14"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 55% at 50% 45%, rgba(251,191,36,0.14), transparent 62%), radial-gradient(ellipse 55% 50% at 70% 80%, rgba(59,130,246,0.08), transparent 65%)",
+            }}
           />
+
+          <motion.div
+            className="relative z-[1] aspect-video rounded-2xl overflow-hidden ring-1 ring-white/[0.12] cursor-default"
+            initial="rest"
+            variants={{ rest: {}, hover: {} }}
+            whileHover={reduceMotion ? undefined : "hover"}
+            style={{
+              boxShadow:
+                "0 0 0 1px rgba(255,255,255,0.04) inset, 0 28px 56px -24px rgba(0,0,0,0.75), 0 12px 32px -16px rgba(0,0,0,0.55)",
+            }}
+          >
+            <div className="relative h-full w-full overflow-hidden">
+              {reduceMotion ? (
+                <img
+                  src="/about-engineering.png"
+                  alt="Product engineers collaborating on delivery, roadmap, and shipping reliable software"
+                  width={1376}
+                  height={768}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover object-center"
+                />
+              ) : (
+                <motion.img
+                  src="/about-engineering.png"
+                  alt="Product engineers collaborating on delivery, roadmap, and shipping reliable software"
+                  width={1376}
+                  height={768}
+                  loading="lazy"
+                  decoding="async"
+                  variants={{
+                    rest: { scale: 1 },
+                    hover: { scale: 1.06 },
+                  }}
+                  transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+                  className="h-full w-full object-cover object-center will-change-transform"
+                />
+              )}
+            </div>
+
+            {/* Inner glass edge */}
+            <div
+              className="pointer-events-none absolute inset-0 z-[2] rounded-2xl ring-1 ring-inset ring-white/[0.07]"
+              aria-hidden
+            />
+
+            {/* Vignette + bottom blend into page */}
+            <div
+              className="pointer-events-none absolute inset-0 z-[3] rounded-2xl"
+              style={{
+                background:
+                  "radial-gradient(ellipse 85% 70% at 50% 48%, transparent 32%, rgba(0,0,0,0.45) 100%), linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 42%)",
+              }}
+              aria-hidden
+            />
+
+            {/* Hover shine */}
+            {!reduceMotion && (
+              <motion.div
+                className="pointer-events-none absolute inset-0 z-[4] overflow-hidden rounded-2xl"
+                variants={{ rest: {}, hover: {} }}
+                aria-hidden
+              >
+                <motion.div
+                  className="absolute inset-y-0 left-0 w-[58%] -skew-x-12 bg-gradient-to-r from-transparent via-white/28 to-transparent"
+                  variants={{
+                    rest: { x: "-70%", opacity: 0 },
+                    hover: { x: "135%", opacity: 1 },
+                  }}
+                  transition={{ duration: 0.95, ease: [0.22, 1, 0.36, 1] }}
+                />
+              </motion.div>
+            )}
+          </motion.div>
         </motion.div>
       </div>
     </section>

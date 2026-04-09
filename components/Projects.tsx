@@ -4,52 +4,71 @@ import { motion } from "framer-motion";
 
 const projects = [
   {
-    src: "https://framerusercontent.com/images/GkhJfmw17Q5eehve51WR25Ijjnk.png",
-    alt: "Client web application",
+    src: "/projects/hospitality-ops-admin.png",
+    alt: "Hospitality staff admin: kitchen, POS, orders, procurement",
+    caption: "Hospitality ops — mobile",
   },
   {
-    src: "https://framerusercontent.com/images/En1SV0rP485Zf5WOrpnHl3Nz658.png",
-    alt: "Product workflow UI",
+    src: "/projects/opal-fashion-tech.png",
+    alt: "OPAL Fashion × Tech storefront hero and navigation",
+    caption: "OPAL — commerce",
   },
   {
-    src: "https://framerusercontent.com/images/bed888CTflXNK3KFX1R7VhRMtE.png",
-    alt: "SaaS dashboard concept",
+    src: "/projects/immidox-immigration.png",
+    alt: "Immidox immigration services marketing site hero",
+    caption: "Immidox — services web",
   },
   {
-    src: "https://framerusercontent.com/images/roWFLkzHAotwSx5UxGPxpxMeA.jpg",
-    alt: "Bolt Fusion Tech team",
+    src: "/projects/expert-marketplace-mobile.png",
+    alt: "Expert search, profiles, booking, and trust metrics on mobile",
+    caption: "Expert marketplace",
+  },
+  {
+    src: "/projects/godconnect-community.png",
+    alt: "GodConnect onboarding and community app screens",
+    caption: "GodConnect — community",
+  },
+  {
+    src: "/projects/rebellion-brand-agency.png",
+    alt: "REBELLION agency hero and interactive brand showcase",
+    caption: "REBELLION — agency web",
+  },
+  {
+    src: "/about-engineering.png",
+    alt: "Bolt Fusion Tech — product engineering partnership",
+    caption: "How we work with your team",
     isProfile: true,
   },
   {
-    src: "https://framerusercontent.com/images/QqqmFNIdzb0HbOiMSHvqZXkwT7w.png",
-    alt: "Mobile app screens",
+    src: "/section-services.png",
+    alt: "Engineers shipping product with clear UI on monitors",
+    caption: "Delivery & architecture",
   },
   {
-    src: "https://framerusercontent.com/images/RYRvZnstUexQMOl8zRyrvDfDT0.png",
-    alt: "Marketing and product site",
+    src: "/section-process.png",
+    alt: "Sprint planning and stakeholder alignment",
+    caption: "Discovery to launch",
   },
   {
-    src: "https://framerusercontent.com/images/jlIAaI4caPj3oVLaxetMd2RvY.png",
-    alt: "Component library preview",
+    src: "/section-testimonials.png",
+    alt: "Client trust and advisory conversations",
+    caption: "Stakeholder partnership",
   },
   {
-    src: "https://framerusercontent.com/images/MM7F7DNjn9gGQjHqbiowegENsRY.png",
-    alt: "Enterprise tool interface",
+    src: "/gallery-engineering-desk.png",
+    alt: "Engineering workspace with code and systems design",
+    caption: "Build quality",
   },
   {
-    src: "https://framerusercontent.com/images/W7bXB4tsou7l5mHYU8sze3sBeg.png",
-    alt: "Early-stage product concept",
+    src: "/gallery-product-analytics.png",
+    alt: "Product analytics across mobile and web surfaces",
+    caption: "Insights & scale",
   },
 ];
 
 function ArrowIcon() {
   return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 256 256"
-      fill="white"
-    >
+    <svg width="20" height="20" viewBox="0 0 256 256" fill="white">
       <path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" />
     </svg>
   );
@@ -58,10 +77,11 @@ function ArrowIcon() {
 interface ProjectCardProps {
   src: string;
   alt: string;
+  caption?: string;
   isProfile?: boolean;
 }
 
-function ProjectCard({ src, alt, isProfile }: ProjectCardProps) {
+function ProjectCard({ src, alt, isProfile, caption }: ProjectCardProps) {
   return (
     <motion.div
       className="relative aspect-[1.07] overflow-hidden rounded group cursor-pointer"
@@ -71,15 +91,28 @@ function ProjectCard({ src, alt, isProfile }: ProjectCardProps) {
       <img
         src={src}
         alt={alt}
-        className={`w-full h-full object-cover transition-all duration-500 ${
+        width={1376}
+        height={768}
+        loading="lazy"
+        decoding="async"
+        className={`h-full w-full object-cover transition-all duration-500 ${
           isProfile ? "grayscale-0" : "grayscale group-hover:grayscale-0"
         }`}
       />
       {!isProfile && (
         <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-          <div className="flex items-center justify-between px-5 py-3 rounded-full backdrop-blur-md bg-white/10 border border-white/30 shadow-lg">
-            <span className="text-sm text-white">View case study</span>
+          <div className="flex items-center justify-between gap-3 px-5 py-3 rounded-full backdrop-blur-md bg-white/10 border border-white/30 shadow-lg">
+            <span className="text-sm text-white line-clamp-1">
+              {caption ?? "View case study"}
+            </span>
             <ArrowIcon />
+          </div>
+        </div>
+      )}
+      {isProfile && caption && (
+        <div className="absolute bottom-2 left-2 right-2">
+          <div className="rounded-full backdrop-blur-md bg-black/50 border border-white/20 px-4 py-2.5">
+            <span className="text-xs text-white/90">{caption}</span>
           </div>
         </div>
       )}
@@ -88,20 +121,31 @@ function ProjectCard({ src, alt, isProfile }: ProjectCardProps) {
 }
 
 export default function Projects() {
-  // Distribute into 3 columns for desktop
-  const col1 = projects.slice(0, 3);
-  const col2 = projects.slice(3, 6); // includes profile
-  const col3 = projects.slice(6, 9);
+  const col1 = projects.slice(0, 4);
+  const col2 = projects.slice(4, 8);
+  const col3 = projects.slice(8, 12);
 
   return (
     <section id="projects" className="py-16 px-2 scroll-mt-24">
-      <div className="max-w-[1600px] mx-auto">
-        {/* Desktop 3-column grid */}
+      <div className="max-w-[1600px] mx-auto px-5 md:px-8">
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-8 max-w-2xl text-sm text-white/50 leading-relaxed"
+        >
+          Selected visuals from shipped work and how we operate—scroll to{" "}
+          <a href="#recent-work" className="text-white/75 underline underline-offset-4 hover:text-white">
+            featured case cards
+          </a>{" "}
+          for full context on our six featured launches.
+        </motion.p>
+
         <div className="hidden lg:flex gap-3">
           <div className="flex-1 flex flex-col gap-3">
             {col1.map((p, i) => (
               <motion.div
-                key={i}
+                key={p.src}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -114,7 +158,7 @@ export default function Projects() {
           <div className="flex-[1.2] flex flex-col gap-3">
             {col2.map((p, i) => (
               <motion.div
-                key={i}
+                key={p.src}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -127,7 +171,7 @@ export default function Projects() {
           <div className="flex-1 flex flex-col gap-3">
             {col3.map((p, i) => (
               <motion.div
-                key={i}
+                key={p.src}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -139,11 +183,10 @@ export default function Projects() {
           </div>
         </div>
 
-        {/* Mobile / Tablet grid */}
         <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
           {projects.map((p, i) => (
             <motion.div
-              key={i}
+              key={p.src}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -154,13 +197,12 @@ export default function Projects() {
           ))}
         </div>
 
-        {/* Bottom CTA row */}
         <div className="flex flex-wrap items-center justify-center gap-4 mt-10 px-5 md:px-10">
           <a
             href="#recent-work"
             className="text-sm text-white underline underline-offset-4 hover:text-white/80 transition-colors"
           >
-            More recent work
+            Featured launches (detail)
           </a>
           <a
             href="#contact"

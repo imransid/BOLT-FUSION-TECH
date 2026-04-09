@@ -85,12 +85,16 @@ export default function Testimonials() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[8px] overflow-hidden grayscale"
+            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[8px] overflow-hidden ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0"
           >
             <img
-              src="https://framerusercontent.com/images/GkhJfmw17Q5eehve51WR25Ijjnk.png"
-              alt="Software delivery and client collaboration"
-              className="w-full h-full object-cover"
+              src="/section-testimonials.png"
+              alt="Client stakeholders in a trusted advisory conversation"
+              width={1376}
+              height={768}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover object-center"
             />
           </motion.div>
         </div>
