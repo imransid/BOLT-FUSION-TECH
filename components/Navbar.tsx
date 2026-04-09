@@ -41,7 +41,7 @@ export default function Navbar() {
               </a>
             ))}
             <a
-              href="#contact"
+              href="#schedule"
               className="beam-button corner-glow ml-4 px-5 py-2.5 text-sm rounded-full border border-white/10 bg-gradient-to-b from-[#0d0d0d] to-white/5 backdrop-blur-sm hover:border-white/25 transition-all duration-500 flex items-center gap-2 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
               <svg
@@ -96,7 +96,7 @@ export default function Navbar() {
                   </a>
                 ))}
                 <a
-                  href="#contact"
+                  href="#schedule"
                   onClick={() => setIsOpen(false)}
                   className="mt-2 w-full text-center px-5 py-3 text-sm rounded-xl border border-white/10 bg-[#0d0d0d]"
                 >

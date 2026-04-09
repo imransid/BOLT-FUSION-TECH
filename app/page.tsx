@@ -28,7 +28,13 @@ export default function Home() {
         <FAQ />
         <CTA />
 
-        <div className="px-5 md:px-20 pb-20 max-w-[1600px] mx-auto w-full">
+        <div
+          id="schedule"
+          className="px-5 md:px-20 pb-24 max-w-[1200px] mx-auto w-full scroll-mt-24 md:scroll-mt-28"
+        >
+          <p className="mb-4 text-center text-sm text-white/45">
+            Or grab an open slot below — same 30‑minute intro call.
+          </p>
           <CalendlyInlineEmbed />
         </div>
       </main>

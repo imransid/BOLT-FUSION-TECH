@@ -46,24 +46,31 @@ export default function CTA() {
             wall.
           </p>
 
-          <a
-            href="mailto:hello@boltfusiontech.com"
-            className="group relative inline-flex items-center mt-4"
-          >
-            <div className="beam-button corner-glow relative px-8 py-4 rounded-[10px] bg-black border border-white/10 text-sm text-white group-hover:border-white/25 transition-all duration-500 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)] flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 256 256"
-                fill="currentColor"
-                className="opacity-60"
-              >
-                <path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z" />
-              </svg>
-              <span className="relative z-10">Email the team</span>
-            </div>
-          </a>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
+            <a href="#schedule" className="group relative inline-flex items-center">
+              <div className="beam-button corner-glow relative px-8 py-4 rounded-[10px] bg-white text-sm text-black border border-white/20 group-hover:bg-white/95 transition-all duration-500 flex items-center gap-2">
+                <span className="relative z-10 font-medium">Pick a time (30 min)</span>
+              </div>
+            </a>
+            <a
+              href="mailto:hello@boltfusiontech.com"
+              className="group relative inline-flex items-center"
+            >
+              <div className="beam-button corner-glow relative px-8 py-4 rounded-[10px] bg-black border border-white/10 text-sm text-white group-hover:border-white/25 transition-all duration-500 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)] flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 256 256"
+                  fill="currentColor"
+                  className="opacity-60"
+                >
+                  <path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z" />
+                </svg>
+                <span className="relative z-10">Email the team</span>
+              </div>
+            </a>
+          </div>
         </div>
       </motion.div>
     </section>

@@ -1,79 +1,23 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-
-const CALENDLY_URL =
-  "https://calendly.com/bolttechfusion/30min?background_color=1a1a1a&text_color=ffffff&primary_color=0069FF";
-
-declare global {
-  interface Window {
-    Calendly?: {
-      initInlineWidget: (opts: {
-        url: string;
-        parentElement: HTMLElement;
-      }) => void;
-    };
-  }
-}
+/**
+ * Iframe embed — no Calendly widget.js on this node, so React hydration always
+ * matches the server (avoids initInlineWidget mutating a React-owned div).
+ * Add your production host under Calendly → Integrations → “Allowed domains” if embed is blocked.
+ */
+const CALENDLY_IFRAME_SRC =
+  "https://calendly.com/bolttechfusion/30min?background_color=1a1a1a&text_color=ffffff&primary_color=0069ff";
 
 export default function CalendlyInlineEmbed() {
-  const [mounted, setMounted] = useState(false);
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    const el = parentRef.current;
-    if (!el) return;
-
-    let intervalId: ReturnType<typeof setInterval> | undefined;
-    let cancelled = false;
-
-    const init = () => {
-      if (cancelled || !el || !window.Calendly) return;
-      el.replaceChildren();
-      window.Calendly.initInlineWidget({
-        url: CALENDLY_URL,
-        parentElement: el,
-      });
-    };
-
-    if (window.Calendly) {
-      init();
-    } else {
-      intervalId = setInterval(() => {
-        if (window.Calendly) {
-          if (intervalId) clearInterval(intervalId);
-          init();
-        }
-      }, 50);
-    }
-
-    return () => {
-      cancelled = true;
-      if (intervalId) clearInterval(intervalId);
-      el.replaceChildren();
-    };
-  }, [mounted]);
-
-  if (!mounted) {
-    return (
-      <div
-        className="w-full rounded-xl bg-white/[0.03] border border-white/10"
-        style={{ minWidth: 320, minHeight: 700 }}
-        aria-hidden
-      />
-    );
-  }
-
   return (
-    <div
-      ref={parentRef}
-      className="w-full min-w-[320px]"
-      style={{ minHeight: 700 }}
-    />
+    <div className="w-full overflow-hidden rounded-xl border border-white/10 bg-[#1a1a1a] shadow-[0_24px_64px_-32px_rgba(0,0,0,0.85)]">
+      <iframe
+        title="Schedule a 30-minute call — Bolt Fusion Tech"
+        src={CALENDLY_IFRAME_SRC}
+        width="100%"
+        height={700}
+        className="block w-full min-w-[320px] border-0 bg-white"
+        style={{ minHeight: 700 }}
+        loading="lazy"
+      />
+    </div>
   );
 }
