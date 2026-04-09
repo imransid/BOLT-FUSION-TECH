@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth scroll-pt-20 md:scroll-pt-24">
       <head>
         <link
           href="https://assets.calendly.com/assets/external/widget.css"
