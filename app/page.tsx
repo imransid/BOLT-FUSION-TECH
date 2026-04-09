@@ -30,9 +30,9 @@ export default function Home() {
 
         <div
           id="schedule"
-          className="px-5 md:px-20 pb-24 max-w-[1200px] mx-auto w-full scroll-mt-24 md:scroll-mt-28"
+          className="mx-auto w-full min-w-0 max-w-[min(100%,1200px)] scroll-mt-20 px-4 pb-16 pt-2 sm:scroll-mt-24 sm:px-6 sm:pb-20 md:scroll-mt-28 md:px-10 lg:px-12 xl:px-16"
         >
-          <p className="mb-4 text-center text-sm text-white/45">
+          <p className="mb-4 px-1 text-center text-sm leading-snug text-white/45 text-balance sm:text-base sm:leading-normal">
             Or grab an open slot below — same 30‑minute intro call.
           </p>
           <CalendlyInlineEmbed />

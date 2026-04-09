@@ -6,14 +6,14 @@ export default function CTA() {
   return (
     <section
       id="contact"
-      className="py-20 px-5 md:px-20 flex items-center justify-center"
+      className="flex items-center justify-center py-14 px-4 sm:py-20 sm:px-6 md:px-12 lg:px-20"
     >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="relative w-full max-w-[1200px] rounded-[30px] overflow-hidden"
+        className="relative w-full min-w-0 max-w-[1200px] overflow-hidden rounded-2xl sm:rounded-[30px]"
       >
         {/* Animated smoky gradient background */}
         <div className="absolute inset-0">
@@ -26,7 +26,7 @@ export default function CTA() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center py-24 px-8 gap-6">
+        <div className="relative z-10 flex flex-col items-center justify-center gap-5 px-4 py-16 text-center sm:gap-6 sm:px-8 sm:py-24">
           {/* Small label */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -34,7 +34,7 @@ export default function CTA() {
           </div>
 
           <h2
-            className="text-5xl sm:text-7xl lg:text-[80px] font-normal leading-[1em] max-w-[900px]"
+            className="max-w-[900px] text-[clamp(2rem,8vw,5rem)] font-normal leading-[1.05] sm:text-7xl lg:text-[80px]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
             Tell us what you need to ship
@@ -46,17 +46,17 @@ export default function CTA() {
             wall.
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-            <a href="#schedule" className="group relative inline-flex items-center">
-              <div className="beam-button corner-glow relative px-8 py-4 rounded-[10px] bg-white text-sm text-black border border-white/20 group-hover:bg-white/95 transition-all duration-500 flex items-center gap-2">
+          <div className="mt-2 flex w-full max-w-md flex-col items-stretch gap-3 sm:mt-4 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
+            <a href="#schedule" className="group relative inline-flex w-full items-center justify-center sm:w-auto">
+              <div className="beam-button corner-glow relative flex w-full items-center justify-center gap-2 rounded-[10px] border border-white/20 bg-white px-6 py-3.5 text-sm text-black transition-all duration-500 group-hover:bg-white/95 sm:w-auto sm:px-8 sm:py-4">
                 <span className="relative z-10 font-medium">Pick a time (30 min)</span>
               </div>
             </a>
             <a
               href="mailto:hello@boltfusiontech.com"
-              className="group relative inline-flex items-center"
+              className="group relative inline-flex w-full items-center justify-center sm:w-auto"
             >
-              <div className="beam-button corner-glow relative px-8 py-4 rounded-[10px] bg-black border border-white/10 text-sm text-white group-hover:border-white/25 transition-all duration-500 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)] flex items-center gap-2">
+              <div className="beam-button corner-glow relative flex w-full items-center justify-center gap-2 rounded-[10px] border border-white/10 bg-black px-6 py-3.5 text-sm text-white transition-all duration-500 group-hover:border-white/25 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)] sm:w-auto sm:px-8 sm:py-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="20"
