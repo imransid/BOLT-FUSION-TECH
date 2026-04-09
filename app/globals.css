@@ -189,6 +189,61 @@
   50% { opacity: 0.6; transform: translateY(-15px); }
 }
 
+/* Logo chip — soft living glow (navbar mark) */
+@keyframes logo-chip-breathe {
+  0%,
+  100% {
+    opacity: 0.88;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.08);
+  }
+}
+.logo-chip-breathe {
+  animation: logo-chip-breathe 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-chip-breathe {
+    animation: none;
+  }
+}
+
+/* Premium logo — slow aurora behind jewel (hover only, paused when reduced motion) */
+@keyframes logo-aurora-drift {
+  0% {
+    transform: rotate(0deg) scale(1.15);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.15);
+  }
+}
+.logo-jewel-aurora {
+  background: conic-gradient(
+    from 210deg,
+    rgba(251, 191, 36, 0.45),
+    rgba(254, 243, 199, 0.2),
+    rgba(245, 158, 11, 0.35),
+    rgba(255, 255, 255, 0.12),
+    rgba(234, 88, 12, 0.25),
+    rgba(251, 191, 36, 0.45)
+  );
+  animation: logo-aurora-drift 14s linear infinite;
+  animation-play-state: paused;
+}
+.group:hover .logo-jewel-aurora {
+  animation-play-state: running;
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-jewel-aurora {
+    animation: none;
+  }
+  .group:hover .logo-jewel-aurora {
+    animation: none;
+  }
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;

@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Bolt Fusion Tech – Custom Software & Product Engineering",
   description:
     "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: "/favicon.svg",
+  },
   openGraph: {
     title: "Bolt Fusion Tech – Custom Software & Product Engineering",
     description:

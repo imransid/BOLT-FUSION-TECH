@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { LogoMark } from "@/components/Logo";
 
 const socialLinks = [
   { name: "Behance", url: "#" },
@@ -13,14 +14,28 @@ export default function Footer() {
     <footer className="py-8 px-5 md:px-20 border-t border-white/5">
       <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         {/* Brand */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-sm text-white/50"
+          className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4"
         >
-          © 2026 Bolt Fusion Tech. All rights reserved.
-        </motion.p>
+          <a
+            href="#hero"
+            className="flex items-center gap-2 text-white/60 transition-colors hover:text-white/90"
+          >
+            <LogoMark className="h-7 w-7 opacity-90" />
+            <span className="text-sm text-white/50">
+              © 2026 Bolt Fusion Tech
+            </span>
+          </a>
+          <span className="hidden text-white/25 sm:inline" aria-hidden>
+            ·
+          </span>
+          <span className="text-xs text-white/35 sm:text-sm sm:text-white/50">
+            All rights reserved.
+          </span>
+        </motion.div>
 
         {/* Social links */}
         <div className="flex items-center gap-1">

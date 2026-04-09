@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "@/components/Logo";
 
 const navLinks = [
   { label: "Services", href: "#services" },
@@ -23,10 +24,9 @@ export default function Navbar() {
           {/* Logo */}
           <a
             href="#hero"
-            className="text-sm font-medium tracking-wider bg-gradient-to-r from-white to-white/0 bg-clip-text text-transparent"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            className="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-amber-200/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
-            BOLT FUSION TECH
+            <Logo />
           </a>
 
           {/* Desktop Nav */}
@@ -85,6 +85,16 @@ export default function Navbar() {
               className="md:hidden overflow-hidden border-t border-white/5"
             >
               <div className="px-6 py-6 flex flex-col gap-4">
+                <a
+                  href="#hero"
+                  onClick={() => setIsOpen(false)}
+                  className="mb-2 flex items-center gap-2 border-b border-white/10 pb-4"
+                >
+                  <Logo markOnly />
+                  <span className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+                    Menu
+                  </span>
+                </a>
                 {navLinks.map((link) => (
                   <a
                     key={link.label}
