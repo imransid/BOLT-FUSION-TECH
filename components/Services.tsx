@@ -3,39 +3,40 @@
 import { motion } from "framer-motion";
 
 const serviceSkills = [
-  "Product Design",
-  "Brand Identity Design",
-  "Branding",
-  "Packaging Design",
-  "Mochup Design",
+  "TypeScript & React",
+  "Next.js & Node",
+  "Mobile (iOS / Android)",
+  "AWS & cloud-native",
+  "API design",
+  "Automated testing",
 ];
 
 const serviceCards = [
   {
-    title: "Brand Identity",
-    desc: "Crafting unique, memorable brand identities that resonate with your audience — from logos to visual systems — ensuring every touchpoint reflects your brand's essence.",
+    title: "Custom product development",
+    desc: "End-to-end web and mobile builds: discovery workshops, technical design, implementation, and handoff documentation—so your team owns the system with confidence after launch.",
   },
   {
-    title: "Package Design",
-    desc: "Bringing your brand to life through high-fidelity product mockups, giving you a clear, realistic preview of how your packaging and visuals will stand out in the real world.",
+    title: "Platforms & integrations",
+    desc: "Connect products to payments, CRMs, data pipelines, and internal tools with APIs and event-driven workflows that are observable, secure, and easy to extend.",
   },
   {
-    title: "Brand Design",
-    desc: "Designing sleek, impactful packaging that not only looks stunning but also connects with your ideal customers — turning first impressions into lasting brand loyalty.",
+    title: "Reliability & scale",
+    desc: "Hardening for real traffic: performance tuning, monitoring and alerts, CI/CD, and operational runbooks—reducing downtime and making releases boring in the best way.",
   },
   {
-    title: "Mochup Design",
-    desc: "Tailored design mockups that align perfectly with your brand's aesthetic — because every detail matters when showcasing your product's true potential.",
+    title: "UX & frontend craft",
+    desc: "Interfaces that match your brand and usability goals: accessible components, responsive layouts, and design-system thinking so new features stay consistent.",
   },
 ];
 
 const marqueeServices = [
-  "Slide Decks",
-  "Copywriting",
-  "Brand Graphics",
-  "Brand Migration",
-  "Package Design",
-  "Branding",
+  "Technical discovery",
+  "Sprint delivery",
+  "Code review",
+  "Security-minded defaults",
+  "Documentation",
+  "Post-launch support",
 ];
 
 export default function Services() {
@@ -62,7 +63,7 @@ export default function Services() {
                   <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
                 </span>
               </span>
-              <span className="text-sm text-white">Design services</span>
+              <span className="text-sm text-white">What we deliver</span>
             </motion.div>
 
             <motion.h2
@@ -76,8 +77,9 @@ export default function Services() {
             </motion.h2>
 
             <p className="text-xl text-white/65 opacity-90" style={{ fontFamily: "'Inter Display', sans-serif" }}>
-              Helping businesses standout with brand identity packaging that
-              captivates and converts effectively.
+              Practical engineering aligned to your roadmap: you get transparent
+              communication, measurable milestones, and software ready for real
+              users—not a black box.
             </p>
 
             {/* Skills */}
@@ -100,13 +102,13 @@ export default function Services() {
                 href="#contact"
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                Book a Free Call
+                Discuss your project
               </a>
               <a
                 href="#projects"
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                See Projects
+                See recent work
               </a>
             </div>
           </div>
@@ -122,7 +124,7 @@ export default function Services() {
           >
             <img
               src="https://framerusercontent.com/images/p6Im6dfknHAI0ig4NqDcO4WNpc.jpg"
-              alt="Design services"
+              alt="Software engineering and product delivery"
               className="w-full h-full object-cover"
             />
           </motion.div>

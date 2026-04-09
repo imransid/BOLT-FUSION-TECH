@@ -10,13 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Portfolite – Brand Identity & Package Designer",
+  title: "Bolt Fusion Tech – Custom Software & Product Engineering",
   description:
-    "Portfolite is a sleek portfolio template for creatives. Crafting bold visual identities and packaging that captivate and inspire.",
+    "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
   openGraph: {
-    title: "Portfolite – Brand Identity & Package Designer",
+    title: "Bolt Fusion Tech – Custom Software & Product Engineering",
     description:
-      "Crafting bold visual identities and packaging that captivate and inspire.",
+      "Partner with a product-minded engineering team to launch faster, reduce risk, and scale with confidence.",
     type: "website",
   },
 };
@@ -42,7 +42,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         <Script id="calendly-init" strategy="afterInteractive">
-          {`window.onload = function() { Calendly.initBadgeWidget({ url: 'https://calendly.com/bolttechfusion/30min?background_color=1a1a1a&text_color=ffffff&primary_color=c8c8c8', text: 'Schedule time with me', color: '#0069ff', textColor: '#ffffff', branding: true }); }`}
+          {`window.onload = function() { Calendly.initBadgeWidget({ url: 'https://calendly.com/bolttechfusion/30min?background_color=1a1a1a&text_color=ffffff&primary_color=c8c8c8', text: 'Schedule a strategy call', color: '#0069ff', textColor: '#ffffff', branding: true }); }`}
         </Script>
         {children}
       </body>

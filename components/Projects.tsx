@@ -5,40 +5,40 @@ import { motion } from "framer-motion";
 const projects = [
   {
     src: "https://framerusercontent.com/images/GkhJfmw17Q5eehve51WR25Ijjnk.png",
-    alt: "Brand identity project",
+    alt: "Client web application",
   },
   {
     src: "https://framerusercontent.com/images/En1SV0rP485Zf5WOrpnHl3Nz658.png",
-    alt: "Package design project",
+    alt: "Product workflow UI",
   },
   {
     src: "https://framerusercontent.com/images/bed888CTflXNK3KFX1R7VhRMtE.png",
-    alt: "Branding project",
+    alt: "SaaS dashboard concept",
   },
   {
     src: "https://framerusercontent.com/images/roWFLkzHAotwSx5UxGPxpxMeA.jpg",
-    alt: "Profile photo",
+    alt: "Bolt Fusion Tech team",
     isProfile: true,
   },
   {
     src: "https://framerusercontent.com/images/QqqmFNIdzb0HbOiMSHvqZXkwT7w.png",
-    alt: "Design project",
+    alt: "Mobile app screens",
   },
   {
     src: "https://framerusercontent.com/images/RYRvZnstUexQMOl8zRyrvDfDT0.png",
-    alt: "Mockup project",
+    alt: "Marketing and product site",
   },
   {
     src: "https://framerusercontent.com/images/jlIAaI4caPj3oVLaxetMd2RvY.png",
-    alt: "Visual identity project",
+    alt: "Component library preview",
   },
   {
     src: "https://framerusercontent.com/images/MM7F7DNjn9gGQjHqbiowegENsRY.png",
-    alt: "Creative design",
+    alt: "Enterprise tool interface",
   },
   {
     src: "https://framerusercontent.com/images/W7bXB4tsou7l5mHYU8sze3sBeg.png",
-    alt: "Concept design",
+    alt: "Early-stage product concept",
   },
 ];
 
@@ -78,7 +78,7 @@ function ProjectCard({ src, alt, isProfile }: ProjectCardProps) {
       {!isProfile && (
         <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <div className="flex items-center justify-between px-5 py-3 rounded-full backdrop-blur-md bg-white/10 border border-white/30 shadow-lg">
-            <span className="text-sm text-white">View Casestudy</span>
+            <span className="text-sm text-white">View case study</span>
             <ArrowIcon />
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function Projects() {
   const col3 = projects.slice(6, 9);
 
   return (
-    <section className="py-16 px-2">
+    <section id="projects" className="py-16 px-2 scroll-mt-24">
       <div className="max-w-[1600px] mx-auto">
         {/* Desktop 3-column grid */}
         <div className="hidden lg:flex gap-3">
@@ -157,16 +157,16 @@ export default function Projects() {
         {/* Bottom CTA row */}
         <div className="flex flex-wrap items-center justify-center gap-4 mt-10 px-5 md:px-10">
           <a
-            href="#projects"
+            href="#recent-work"
             className="text-sm text-white underline underline-offset-4 hover:text-white/80 transition-colors"
           >
-            All Projects
+            More recent work
           </a>
           <a
             href="#contact"
             className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
           >
-            Book a Free Call
+            Discuss your build
           </a>
         </div>
       </div>

@@ -5,24 +5,24 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
   {
-    q: "What services do you offer?",
-    a: "I specialize in Brand Identity Design, Package Design, Brand Design, and Mockup Design. From logos and visual systems to product packaging, I craft bold visuals that elevate your brand.",
+    q: "What kinds of projects do you take on?",
+    a: "We focus on custom web and mobile products, internal tools, integrations, and hardening existing systems for scale. If you have a clear user or business outcome, we can usually map a sensible technical path.",
   },
   {
-    q: "How long does a project take?",
-    a: "Most projects are delivered within 2-3 days. Complex brand identity projects may take up to a week depending on scope and revisions needed.",
+    q: "How do you estimate timeline and cost?",
+    a: "After a short discovery, we break work into milestones with acceptance criteria. You get ranges tied to scope—not a single opaque number—plus options to phase features if budget or deadlines are tight.",
   },
   {
-    q: "What is your design process?",
-    a: "My process follows three steps: Define Your Vision (understanding your needs), Submit Your Request (sharing requirements through our portal), and Project Delivered (receiving polished, on-brand deliverables).",
+    q: "What does your delivery process look like?",
+    a: "Discovery and plan first, then iterative builds with demos and a transparent backlog, then launch with monitoring and handoff materials. You are never guessing what we are doing week to week.",
   },
   {
-    q: "Do you offer revisions?",
-    a: "Yes! Every project includes revision rounds to ensure the final deliverables perfectly match your vision. I work closely with you until you're fully satisfied.",
+    q: "Can you work with our existing codebase?",
+    a: "Yes. We routinely join live products: code review, refactors, test coverage, performance work, and incremental feature delivery. We start with a short technical assessment so risks are explicit up front.",
   },
   {
-    q: "How do I get started?",
-    a: "Simply book a free call through the contact section, or submit your design request through our portal. I'll review your needs and get back to you promptly.",
+    q: "How do we get started?",
+    a: "Use the contact section to book a call or email us with goals, timeline, and any constraints. We respond with fit, suggested next steps, and what we would need from your side to begin.",
   },
 ];
 

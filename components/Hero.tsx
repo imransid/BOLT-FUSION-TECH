@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-const logos = ["Opal", "Dune", "Oasis", "Nimbus", "Pulse"];
+const logos = ["SaaS", "Fintech", "Healthtech", "E‑commerce", "AI products"];
 
 export default function Hero() {
   return (
@@ -39,7 +39,7 @@ export default function Hero() {
         >
           <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
           <span className="text-sm text-white/80">
-            Crafting Unique Brand Identities
+            Custom software &amp; product engineering
           </span>
         </motion.div>
 
@@ -51,7 +51,7 @@ export default function Hero() {
           className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em] tracking-tight"
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
-          {"Branding that you need Indeed".split(" ").map((word, i) => (
+          {"Ship dependable products faster".split(" ").map((word, i) => (
             <motion.span
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -71,8 +71,9 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="text-base sm:text-lg text-white/65 max-w-[540px] leading-relaxed"
         >
-          Elevate your brand with custom identity and package design. Showcase
-          your story through bold visuals and strategic design solutions.
+          From first roadmap to production release, we help you clarify scope,
+          de-risk delivery, and launch software your customers and teams can
+          trust—without surprises on timeline or quality.
         </motion.p>
 
         {/* CTA Buttons */}
@@ -82,8 +83,8 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.8 }}
           className="flex flex-wrap items-center justify-center gap-4 mt-2"
         >
-          <BeamButton href="#contact">Get Started Now</BeamButton>
-          <BeamButton href="#projects">See Projects</BeamButton>
+          <BeamButton href="#contact">Plan your build</BeamButton>
+          <BeamButton href="#projects">See recent work</BeamButton>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -110,7 +111,7 @@ export default function Hero() {
             </svg>
           </motion.div>
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-sm text-white/50">to see projects</span>
+          <span className="text-sm text-white/50">to explore delivery</span>
         </motion.div>
 
         {/* Logo marquee */}

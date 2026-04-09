@@ -4,21 +4,21 @@ import { motion } from "framer-motion";
 
 const testimonials = [
   {
-    name: "Sarah Johnson",
-    role: "CEO, GreenLeaf",
-    text: "Meily transformed our brand identity completely. The attention to detail and creative approach exceeded all expectations. Highly recommended!",
+    name: "Sarah K.",
+    role: "CEO, B2B SaaS",
+    text: "They turned a vague brief into a shipped MVP with sane tradeoffs explained along the way. Our team finally had a release cadence we could plan around.",
     stars: 5,
   },
   {
     name: "David Chen",
-    role: "Founder, UrbanFit",
-    text: "Working with Meily was an absolute pleasure. The packaging design was stunning and perfectly captured our brand essence.",
+    role: "Head of Product, Fintech",
+    text: "Strong engineering judgment on integrations and compliance-sensitive flows. We cut rework because they asked the right questions early.",
     stars: 5,
   },
   {
     name: "Emily Torres",
-    role: "Marketing Lead, Nimbus",
-    text: "Incredible work on our complete brand overhaul. The new identity has significantly boosted our market presence and customer engagement.",
+    role: "CTO, Healthtech",
+    text: "Clear documentation and handoff after launch. Internal developers picked up the codebase without a weeks-long archaeology project.",
     stars: 5,
   },
 ];
@@ -45,7 +45,7 @@ export default function Testimonials() {
                   <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
                 </span>
               </span>
-              <span className="text-sm text-white">Client reviews</span>
+              <span className="text-sm text-white">Client outcomes</span>
             </motion.div>
 
             <motion.h2
@@ -59,8 +59,8 @@ export default function Testimonials() {
             </motion.h2>
 
             <p className="text-xl text-white/65 opacity-90" style={{ fontFamily: "'Inter Display', sans-serif" }}>
-              What clients say about working with me and their experience with
-              my design services.
+              Feedback from leaders who needed delivery they could defend—to
+              users, investors, and their own engineering teams.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -68,13 +68,13 @@ export default function Testimonials() {
                 href="#contact"
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                Book a Free Call
+                Start a conversation
               </a>
               <a
                 href="#projects"
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                See Projects
+                See recent work
               </a>
             </div>
           </div>
@@ -89,7 +89,7 @@ export default function Testimonials() {
           >
             <img
               src="https://framerusercontent.com/images/GkhJfmw17Q5eehve51WR25Ijjnk.png"
-              alt="Client work showcase"
+              alt="Software delivery and client collaboration"
               className="w-full h-full object-cover"
             />
           </motion.div>

@@ -358,10 +358,10 @@ export default function Team() {
                 transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
               />
               <span className="font-mono text-[10px] font-medium uppercase tracking-[0.35em] text-white/45">
-                Roster
+                Your bench
               </span>
               <span className="hidden h-px w-14 bg-gradient-to-r from-amber-200/40 to-transparent sm:block" />
-              <span className="font-mono text-[10px] text-white/28">// collective</span>
+              <span className="font-mono text-[10px] text-white/28">// who builds with you</span>
             </motion.div>
 
             <div className="space-y-6">
@@ -376,7 +376,7 @@ export default function Team() {
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ ...springSnappy, delay: 0.02 }}
                 >
-                  Same bench.
+                  Senior engineers.
                 </motion.span>
                 <motion.span
                   className="mt-2 block bg-gradient-to-r from-white via-amber-100/90 to-white/40 bg-clip-text text-transparent"
@@ -385,7 +385,7 @@ export default function Team() {
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ ...springSoft, delay: 0.1 }}
                 >
-                  Different superpowers.
+                  One delivery standard.
                 </motion.span>
               </h2>
               <motion.div
@@ -406,8 +406,8 @@ export default function Team() {
               className="max-w-lg text-[15px] leading-[1.7] text-white/50 md:text-[17px]"
               style={{ fontFamily: "'Inter Display', Inter, sans-serif" }}
             >
-              Profiles open in a new tab — a directory of people we build and ship
-              alongside.
+              Each card opens in a new tab—so you can see who you would work
+              with before you commit scope or budget.
             </motion.p>
           </div>
 
@@ -422,7 +422,7 @@ export default function Team() {
             <div className="flex items-baseline gap-2.5">
               <AnimatedSeatCount target={members.length} reduceMotion={reduceMotion} />
               <span className="pb-1 font-mono text-[9px] uppercase tracking-[0.22em] text-white/35">
-                seats
+                specialists
               </span>
             </div>
             <motion.div

@@ -19,7 +19,7 @@ export default function Footer() {
           viewport={{ once: true }}
           className="text-sm text-white/50"
         >
-          © 2025 Portfolite. All rights reserved.
+          © 2026 Bolt Fusion Tech. All rights reserved.
         </motion.p>
 
         {/* Social links */}

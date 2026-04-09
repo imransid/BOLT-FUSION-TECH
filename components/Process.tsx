@@ -5,18 +5,18 @@ import { motion } from "framer-motion";
 const steps = [
   {
     num: 1,
-    title: "Define Your Vision",
-    desc: "Find the perfect plan tailored to your needs, offering the right balance of features, flexibility, and value to help you achieve your goals effortlessly.",
+    title: "Discovery & plan",
+    desc: "We align on users, success metrics, constraints, and risks—then produce a concise technical approach and milestone plan so stakeholders know what “done” looks like and when to expect it.",
   },
   {
     num: 2,
-    title: "Submit Your Request",
-    desc: "Easily submit your design requirements through our private design portal, ensuring a seamless process where your vision is understood, refined, and brought to life with precision and creativity.",
+    title: "Build in iterations",
+    desc: "Working software every cycle: demos, backlog transparency, and early integration (auth, data, deployments) so issues surface when they are cheap to fix—not the week before launch.",
   },
   {
     num: 3,
-    title: "Project Delivered",
-    desc: "As a dedicated freelancer, I ensure your project is completed with precision and delivered within 2-3 days. With a keen eye for detail and a passion for quality, I bring your vision to life—on time and beyond expectations.",
+    title: "Launch, measure, improve",
+    desc: "Release with monitoring, runbooks, and a sensible cutover. After go-live we support stabilization, iterate on feedback, and help your team operate the product with confidence.",
   },
 ];
 
@@ -35,7 +35,7 @@ export default function Process() {
         >
           <img
             src="https://framerusercontent.com/images/djbcRHCD89IflJ1okJAa1J65cuM.png"
-            alt="Design process"
+            alt="How we deliver software with you"
             className="w-full h-full object-cover"
           />
         </motion.div>
@@ -58,7 +58,7 @@ export default function Process() {
                 <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
               </span>
             </span>
-            <span className="text-sm text-white">Design process</span>
+            <span className="text-sm text-white">How we work</span>
           </motion.div>
 
           <motion.h2
@@ -72,8 +72,9 @@ export default function Process() {
           </motion.h2>
 
           <p className="text-xl text-white/65 max-w-[640px]" style={{ fontFamily: "'Inter Display', sans-serif" }}>
-            Crafting bold visuals that inspire and elevate brands with thought
-            process.
+            A straightforward process designed for busy product leaders: fewer
+            surprises, clearer tradeoffs, and decisions you can explain to your
+            board or budget owner.
           </p>
 
           {/* CTA buttons */}
@@ -82,13 +83,13 @@ export default function Process() {
               href="#contact"
               className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
-              Book a Free Call
+              Discuss your roadmap
             </a>
             <a
               href="#projects"
               className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
-              See Projects
+              See recent work
             </a>
           </div>
 

@@ -3,25 +3,36 @@
 import { motion } from "framer-motion";
 
 const skills = [
-  "Product Design",
-  "Brand Identity Design",
-  "UX Design",
-  "Branding",
-  "Packaging Design",
-  "Figma",
-  "Photoshop",
+  "Web & mobile apps",
+  "APIs & integrations",
+  "Cloud & DevOps",
+  "Product discovery",
+  "UI/UX engineering",
+  "Quality & launch readiness",
 ];
 
 const experience = [
-  { role: "Freelance", company: "GreenLeaf Co", period: "Currently" },
-  { role: "Brand Designer", company: "UrbanFit Studio", period: "2023-24" },
-  { role: "Package Designer", company: "GreenK Studio", period: "2020-22" },
+  {
+    role: "MVP & greenfield builds",
+    company: "Scope, architecture, and a shippable first version",
+    period: "Typical 8–16 weeks",
+  },
+  {
+    role: "Embedded product teams",
+    company: "Roadmap delivery with your PMs and stakeholders",
+    period: "Ongoing",
+  },
+  {
+    role: "Stabilize & scale",
+    company: "Performance, reliability, and maintainability for live systems",
+    period: "As needed",
+  },
 ];
 
 export default function AboutMe() {
   return (
     <section
-      id="about-me"
+      id="about"
       className="py-20 px-5 md:px-20 overflow-hidden"
     >
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-11 items-start">
@@ -39,16 +50,17 @@ export default function AboutMe() {
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
-            Meet Meily
+            Why Bolt Fusion Tech
           </motion.h2>
 
           {/* Bio */}
           <div className="flex flex-col gap-8">
             <p className="text-base text-white/65 max-w-[640px] leading-relaxed">
-              I&apos;m Meily, a passionate Brand Identity &amp; Package Designer
-              based in Tokyo. I specialize in crafting bold visual identities and
-              packaging that captivate and inspire, blending creativity with
-              strategy to elevate brands.
+              Clients come to us when delivery has to be predictable: clear
+              requirements, honest estimates, and engineering judgment applied
+              early—so you spend less time firefighting and more time growing
+              the product. We work as an extension of your team, focused on
+              outcomes users feel and metrics you can read.
             </p>
           </div>
 
@@ -101,7 +113,7 @@ export default function AboutMe() {
         >
           <img
             src="https://framerusercontent.com/images/roWFLkzHAotwSx5UxGPxpxMeA.jpg"
-            alt="Meily - Brand Designer"
+            alt="Bolt Fusion Tech — product engineering team"
             className="w-full h-full object-cover"
           />
         </motion.div>
