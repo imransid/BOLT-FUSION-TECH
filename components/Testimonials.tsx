@@ -58,7 +58,10 @@ export default function Testimonials() {
               Testimonials
             </motion.h2>
 
-            <p className="text-xl text-white/65 opacity-90" style={{ fontFamily: "'Inter Display', sans-serif" }}>
+            <p
+              className="text-lg text-white/65 opacity-90 sm:text-xl"
+              style={{ fontFamily: "'Inter Display', sans-serif" }}
+            >
               Feedback from leaders who needed delivery they could defend—to
               users, investors, and their own engineering teams.
             </p>
@@ -85,7 +88,7 @@ export default function Testimonials() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[8px] overflow-hidden ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0"
+            className="flex-1 min-w-0 overflow-hidden rounded-[8px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
           >
             <img
               src="/section-testimonials.png"
@@ -100,7 +103,7 @@ export default function Testimonials() {
         </div>
 
         {/* Testimonial cards */}
-        <div className="bg-[#0d0d0d] rounded-[18px] p-8 md:p-12 flex flex-col md:flex-row gap-6 items-stretch max-w-[1200px] mx-auto w-full">
+        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-0 rounded-[18px] bg-[#0d0d0d] p-8 md:flex-row md:items-stretch md:gap-0 md:p-12">
           {testimonials.map((t, i) => (
             <motion.div
               key={t.name}
@@ -108,7 +111,9 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.15 }}
-              className="flex-1 min-w-[280px] flex flex-col gap-4"
+              className={`flex min-w-0 flex-1 flex-col gap-4 pt-8 first:pt-0 md:min-h-0 md:pt-0 md:pl-8 md:first:pl-0 ${
+                i > 0 ? "border-t border-white/[0.12] md:border-l md:border-t-0" : ""
+              }`}
             >
               {/* Stars */}
               <div className="flex gap-1">
@@ -141,14 +146,6 @@ export default function Testimonials() {
               </div>
             </motion.div>
           ))}
-
-          {/* Dividers */}
-          {testimonials.length > 1 && (
-            <>
-              <div className="hidden md:block w-px bg-white/[0.15] self-stretch" />
-              <div className="hidden md:block w-px bg-white/[0.15] self-stretch" style={{ order: -1, marginLeft: 0, marginRight: 0 }} />
-            </>
-          )}
         </div>
       </div>
     </section>

@@ -75,7 +75,10 @@ export default function Process() {
             Process
           </motion.h2>
 
-          <p className="text-xl text-white/65 max-w-[640px]" style={{ fontFamily: "'Inter Display', sans-serif" }}>
+          <p
+            className="max-w-[640px] text-lg text-white/65 sm:text-xl"
+            style={{ fontFamily: "'Inter Display', sans-serif" }}
+          >
             A straightforward process designed for busy product leaders: fewer
             surprises, clearer tradeoffs, and decisions you can explain to your
             board or budget owner.

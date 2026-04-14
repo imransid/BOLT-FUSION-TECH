@@ -55,7 +55,7 @@ export default function FAQ() {
           </div>
 
           <h2
-            className="text-5xl sm:text-7xl lg:text-[80px] font-normal leading-[1em]"
+            className="px-1 text-[clamp(2rem,8vw,3.5rem)] font-normal leading-[1.05] text-balance sm:text-7xl sm:leading-[1em] lg:text-[80px]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
             Questions? Answers.

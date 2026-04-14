@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 
@@ -17,10 +17,19 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <nav className="backdrop-blur-xl bg-black/80 border-b border-white/5">
-        <div className="max-w-[1680px] mx-auto px-6 md:px-10 flex items-center justify-between h-16">
+        <div className="max-w-[1680px] mx-auto flex h-16 items-center justify-between px-4 sm:px-6 md:px-10">
           {/* Logo */}
           <a
             href="#hero"
@@ -84,7 +93,7 @@ export default function Navbar() {
               exit={{ height: 0, opacity: 0 }}
               className="md:hidden overflow-hidden border-t border-white/5"
             >
-              <div className="px-6 py-6 flex flex-col gap-4">
+              <div className="flex max-h-[min(70dvh,calc(100dvh-4rem))] flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
                 <a
                   href="#hero"
                   onClick={() => setIsOpen(false)}

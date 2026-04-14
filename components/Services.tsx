@@ -76,7 +76,10 @@ export default function Services() {
               Services
             </motion.h2>
 
-            <p className="text-xl text-white/65 opacity-90" style={{ fontFamily: "'Inter Display', sans-serif" }}>
+            <p
+              className="text-lg text-white/65 opacity-90 sm:text-xl"
+              style={{ fontFamily: "'Inter Display', sans-serif" }}
+            >
               Practical engineering aligned to your roadmap: you get transparent
               communication, measurable milestones, and software ready for real
               users—not a black box.
@@ -119,7 +122,7 @@ export default function Services() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 lg:min-w-[460px] h-[503px] rounded-[17px] overflow-hidden ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0"
+            className="flex-1 min-w-0 overflow-hidden rounded-[17px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
             style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
           >
             <img

@@ -74,19 +74,21 @@ function TeamMemberCard({
   index,
   scrollProgress,
   reduceMotion,
+  scrollMuted,
   variants,
 }: {
   member: (typeof members)[number];
   index: number;
   scrollProgress: MotionValue<number>;
   reduceMotion: boolean | null;
+  scrollMuted: boolean;
   variants: ItemVariants;
 }) {
   const depth = (index % 5) - 2;
   const portraitY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [12 + depth * 4, -12 - depth * 4]
+    scrollMuted ? [0, 0] : [12 + depth * 4, -12 - depth * 4]
   );
 
   return (
@@ -177,13 +179,11 @@ function AnimatedSeatCount({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-12%" });
-  const [n, setN] = useState(reduceMotion ? target : 0);
+  const [n, setN] = useState(0);
+  const display = reduceMotion ? target : n;
 
   useEffect(() => {
-    if (reduceMotion) {
-      setN(target);
-      return;
-    }
+    if (reduceMotion) return;
     if (!inView) return;
     const c = animate(0, target, {
       duration: 1.35,
@@ -203,13 +203,23 @@ function AnimatedSeatCount({
       }
       style={{ fontFamily: "Satoshi, sans-serif" }}
     >
-      {n}
+      {display}
     </span>
   );
 }
 
 export default function Team() {
   const reduceMotion = useReducedMotion();
+  const [wideEnoughForScrollParallax, setWideEnoughForScrollParallax] =
+    useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setWideEnoughForScrollParallax(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  const scrollMuted = Boolean(reduceMotion) || !wideEnoughForScrollParallax;
   const sectionRef = useRef<HTMLElement>(null);
 
   const { scrollYProgress } = useScroll({
@@ -218,58 +228,58 @@ export default function Team() {
   });
 
   const spring = {
-    stiffness: reduceMotion ? 9000 : 36,
-    damping: reduceMotion ? 110 : 30,
-    mass: reduceMotion ? 0.04 : 0.92,
+    stiffness: scrollMuted ? 9000 : 36,
+    damping: scrollMuted ? 110 : 30,
+    mass: scrollMuted ? 0.04 : 0.92,
   };
   const scrollProgress = useSpring(scrollYProgress, spring);
 
   const blobTopY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [64, -64]
+    scrollMuted ? [0, 0] : [64, -64]
   );
   const blobAmberY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [-88, 88]
+    scrollMuted ? [0, 0] : [-88, 88]
   );
   const dotsY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [32, -32]
+    scrollMuted ? [0, 0] : [32, -32]
   );
   const dotsScale = useTransform(
     scrollProgress,
     [0, 0.5, 1],
-    reduceMotion ? [1, 1, 1] : [1, 1.02, 1]
+    scrollMuted ? [1, 1, 1] : [1, 1.02, 1]
   );
 
   const headerY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [-28, 28]
+    scrollMuted ? [0, 0] : [-28, 28]
   );
   const statY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [18, -18]
+    scrollMuted ? [0, 0] : [18, -18]
   );
 
   const plinthY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [22, -22]
+    scrollMuted ? [0, 0] : [22, -22]
   );
   const bracketTopY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [-8, 8]
+    scrollMuted ? [0, 0] : [-8, 8]
   );
   const bracketBotY = useTransform(
     scrollProgress,
     [0, 1],
-    reduceMotion ? [0, 0] : [8, -8]
+    scrollMuted ? [0, 0] : [8, -8]
   );
 
   const container = {
@@ -367,7 +377,9 @@ export default function Team() {
                 Your bench
               </span>
               <span className="hidden h-px w-16 bg-gradient-to-r from-cyan-300/45 via-amber-200/35 to-transparent sm:block" />
-              <span className="font-mono text-[10px] text-white/28">// who builds with you</span>
+              <span className="font-mono text-[10px] text-white/28">
+                {"// who builds with you"}
+              </span>
             </motion.div>
 
             <div className="space-y-6">
@@ -475,7 +487,7 @@ export default function Team() {
           style={{ y: plinthY }}
           className="relative will-change-transform rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_40px_100px_-48px_rgba(34,211,238,0.06)] backdrop-blur-[3px] sm:rounded-[2rem] sm:p-2 md:p-4"
         >
-          {!reduceMotion && (
+          {!reduceMotion && wideEnoughForScrollParallax && (
             <motion.div
               className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] opacity-[0.38]"
               style={{
@@ -515,6 +527,7 @@ export default function Team() {
                 index={index}
                 scrollProgress={scrollProgress}
                 reduceMotion={reduceMotion}
+                scrollMuted={scrollMuted}
                 variants={item}
               />
             ))}

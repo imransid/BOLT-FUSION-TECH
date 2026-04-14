@@ -1,6 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+
+const HeroThreeField = dynamic(() => import("@/components/HeroThreeField"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const logos = ["SaaS", "Fintech", "Healthtech", "E‑commerce", "AI products"];
 
@@ -8,28 +14,36 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
+      className="relative flex min-h-dvh flex-col items-center justify-center overflow-x-clip"
     >
       {/* ═══ Animated Smoky Background ═══ */}
       <div className="absolute inset-0 z-0">
         {/* Base gradient */}
         <div className="absolute inset-0 bg-black" />
 
-        {/* Smoky blobs */}
-        <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] rounded-full bg-white/[0.04] blur-[120px] animate-blob-1" />
-        <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] rounded-full bg-white/[0.03] blur-[100px] animate-blob-2" />
-        <div className="absolute bottom-1/4 left-1/2 w-[600px] h-[600px] rounded-full bg-white/[0.025] blur-[140px] animate-blob-3" />
+        {/* WebGL accent — metallic jewel, soft blend (client-only) */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[2] mix-blend-soft-light opacity-[0.26] sm:opacity-[0.34] md:opacity-[0.4]"
+          aria-hidden
+        >
+          <HeroThreeField />
+        </div>
+
+        {/* Smoky blobs — fewer / lighter on small screens (blur is expensive) */}
+        <div className="absolute top-1/4 left-1/3 h-[min(100vw,380px)] w-[min(100vw,380px)] rounded-full bg-white/[0.04] blur-[72px] sm:h-[420px] sm:w-[420px] sm:blur-[100px] md:h-[500px] md:w-[500px] md:blur-[120px] animate-blob-1" />
+        <div className="absolute top-1/2 right-1/4 hidden h-[340px] w-[340px] rounded-full bg-white/[0.03] blur-[90px] sm:block md:h-[400px] md:w-[400px] md:blur-[100px] animate-blob-2" />
+        <div className="absolute bottom-1/4 left-1/2 h-[min(110vw,440px)] w-[min(110vw,440px)] rounded-full bg-white/[0.025] blur-[80px] sm:h-[520px] sm:w-[520px] sm:blur-[120px] md:h-[600px] md:w-[600px] md:blur-[140px] animate-blob-3" />
 
         {/* Extra subtle smoke wisps */}
-        <div className="absolute top-[10%] right-[15%] w-[300px] h-[200px] rounded-full bg-gradient-to-br from-white/[0.03] to-transparent blur-[80px] animate-blob-2" />
-        <div className="absolute bottom-[15%] left-[10%] w-[350px] h-[250px] rounded-full bg-gradient-to-tr from-white/[0.025] to-transparent blur-[90px] animate-blob-1" />
+        <div className="absolute top-[10%] right-[15%] hidden h-[200px] w-[300px] rounded-full bg-gradient-to-br from-white/[0.03] to-transparent blur-[80px] animate-blob-2 md:block" />
+        <div className="absolute bottom-[15%] left-[10%] hidden h-[250px] w-[350px] rounded-full bg-gradient-to-tr from-white/[0.025] to-transparent blur-[90px] animate-blob-1 lg:block" />
 
         {/* Gradient overlay fading to black at bottom */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center gap-6 px-5 pt-40 pb-16 max-w-[840px] mx-auto text-center">
+      <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[840px] flex-col items-center gap-6 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -48,7 +62,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em] tracking-tight"
+          className="max-w-full text-[clamp(1.85rem,6vw+0.35rem,3rem)] font-normal leading-[1.05] tracking-tight text-balance sm:text-7xl sm:leading-[1em] lg:text-[92px]"
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
           {"Ship dependable products faster".split(" ").map((word, i) => (

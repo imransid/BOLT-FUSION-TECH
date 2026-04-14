@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -7,6 +7,13 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#000000",
+};
 
 export const metadata: Metadata = {
   title: "Bolt Fusion Tech – Custom Software & Product Engineering",
@@ -31,7 +38,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="scroll-smooth scroll-pt-20 md:scroll-pt-24">
-      <body className={`${inter.variable} antialiased bg-black text-white`}>
+      <body
+        className={`${inter.variable} min-h-dvh overflow-x-clip antialiased bg-black text-white`}
+      >
         {/* Grain noise overlay */}
         <div className="grain-overlay" aria-hidden="true" />
         {children}
