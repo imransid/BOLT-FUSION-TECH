@@ -17,20 +17,29 @@ const springSoft = { type: "spring" as const, stiffness: 280, damping: 32, mass:
 const springCard = { type: "spring" as const, stiffness: 380, damping: 22, mass: 0.85 };
 
 const members = [
-  { name: "Rafa", handle: "@mrousavy", image: "/team/marc-face.svg" },
-  { name: "Nadim", handle: "@szymon20000", image: "/team/szymon-face.svg" },
-  { name: "Joinal", handle: "@thomas-coldwell", image: "/team/thomas-face.svg" },
-  { name: "Arif", handle: "@chrispader", image: "/team/christoph-face.svg" },
-  { name: "Tareq", handle: "@janicduplessis", image: "/team/janic-face.svg" },
-  { name: "Nazi", handle: "@catalinmiron", image: "/team/catalin-face.svg" },
-  { name: "Talal", handle: "@gorhom", image: "/team/mo-face.svg" },
-  { name: "Eric", handle: "@ericvicenti", image: "/team/eric-face.svg" },
-  { name: "Musfique", handle: "@mateioprea", image: "/team/matei-face.svg" },
-  { name: "Viktoria", handle: "@viktoria.psd", image: "/team/viktoria-face.svg" },
+  { name: "Rafa", handle: "@rafa", image: "/team/marc-face.svg" },
+  { name: "Nadim", handle: "@nadim", image: "/team/szymon-face.svg" },
+  { name: "Joinal", handle: "@joinal", image: "/team/thomas-face.svg" },
+  { name: "Arifur Rahman", handle: "@arifur", image: "/team/christoph-face.svg" },
+  { name: "Tareq", handle: "@tareq", image: "/team/janic-face.svg" },
+  { name: "Nazi", handle: "@nazi", image: "/team/catalin-face.svg" },
+  { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
+  { name: "Eric", handle: "@eric", image: "/team/eric-face.svg" },
+  { name: "Musfique", handle: "@musfique", image: "/team/matei-face.svg" },
+  { name: "Viktoria", handle: "@viktoria", image: "/team/viktoria-face.svg" },
 ] as const;
 
 function profileHref(handle: string): string {
   const h = handle.slice(1);
+  if (h === "rafa") {
+    return "https://imran-khan-chi.vercel.app/";
+  }
+  if (h === "nazi") {
+    return "https://nazirul-live.web.app/";
+  }
+  if (h === "talha") {
+    return "https://www.linkedin.com/in/talhajubair100/";
+  }
   if (h === "viktoria.psd") {
     return "https://www.instagram.com/viktoria.psd/";
   }
