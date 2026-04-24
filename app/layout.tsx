@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Bolt Fusion Tech – Custom Software & Product Engineering",
+  title: "Bolt Fusion Tech",
   description:
     "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
   icons: {
