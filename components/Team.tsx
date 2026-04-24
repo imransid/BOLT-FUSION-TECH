@@ -22,11 +22,11 @@ const members = [
   { name: "Joinal", handle: "@joinal", image: "/team/thomas-face.svg" },
   { name: "Arifur Rahman", handle: "@arifur", image: "/team/christoph-face.svg" },
   { name: "Tareq", handle: "@tareq", image: "/team/janic-face.svg" },
-  { name: "Nazi", handle: "@nazi", image: "/team/catalin-face.svg" },
+  { name: "Nazirul", handle: "@nazirul", image: "/team/mo-face.svg" },
   { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
-  { name: "Eric", handle: "@eric", image: "/team/eric-face.svg" },
+  { name: "Nihal", handle: "@nihal", image: "/team/eric-face.svg" },
   { name: "Musfique", handle: "@musfique", image: "/team/matei-face.svg" },
-  { name: "Viktoria", handle: "@viktoria", image: "/team/viktoria-face.svg" },
+  { name: "Sabbir", handle: "@sabbir", image: "/team/mo-face.svg" },
 ] as const;
 
 function profileHref(handle: string): string {
@@ -34,14 +34,14 @@ function profileHref(handle: string): string {
   if (h === "rafa") {
     return "https://imran-khan-chi.vercel.app/";
   }
-  if (h === "nazi") {
-    return "https://nazirul-live.web.app/";
+  if (h === "nazirul") {
+    return "https://www.linkedin.com/in/imnazirul/";
   }
   if (h === "talha") {
     return "https://www.linkedin.com/in/talhajubair100/";
   }
-  if (h === "viktoria.psd") {
-    return "https://www.instagram.com/viktoria.psd/";
+  if (h === "sabbir") {
+    return "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/";
   }
   return `https://x.com/${h}`;
 }
