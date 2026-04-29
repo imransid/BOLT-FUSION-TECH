@@ -32,7 +32,7 @@ const members = [
 function profileHref(handle: string): string {
   const h = handle.slice(1);
   if (h === "rafa") {
-    return "https://imran-khan-chi.vercel.app/";
+    return "https://www.linkedin.com/in/asif-nihal";
   }
   if (h === "nazirul") {
     return "https://www.linkedin.com/in/imnazirul/";
@@ -42,6 +42,16 @@ function profileHref(handle: string): string {
   }
   if (h === "sabbir") {
     return "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/";
+  }else if (h === "nihal") {
+    return "www.linkedin.com/in/asif-nihal";
+  }else if (h === "musfique") {
+    return "https://www.linkedin.com/in/musfique-ahmed-3423b021b/";
+  }else if (h === "joinal") {
+    return "https://www.linkedin.com/in/joinal-ahmed-3423b021b/";
+  }else if (h === "arifur") {
+    return "https://www.linkedin.com/in/arifur-rahman-3423b021b/";
+  }else if (h === "tareq") {
+  return `https://x.com/${h}`;
   }
   return `https://x.com/${h}`;
 }

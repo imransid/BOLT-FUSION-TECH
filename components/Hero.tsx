@@ -8,7 +8,8 @@ const HeroThreeField = dynamic(() => import("@/components/HeroThreeField"), {
   loading: () => null,
 });
 
-const logos = ["SaaS", "Fintech", "Healthtech", "E‑commerce", "AI products"];
+const logos = ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI products"];
+const trustPoints = ["Senior-only team", "Timezone overlap", "Quality-first delivery"];
 
 export default function Hero() {
   return (
@@ -16,92 +17,109 @@ export default function Hero() {
       id="hero"
       className="relative flex min-h-dvh flex-col items-center justify-center overflow-x-clip"
     >
-      {/* ═══ Animated Smoky Background ═══ */}
+      {/* Premium background */}
       <div className="absolute inset-0 z-0">
-        {/* Base gradient */}
         <div className="absolute inset-0 bg-black" />
 
-        {/* WebGL accent — metallic jewel, soft blend (client-only) */}
         <div
-          className="pointer-events-none absolute inset-0 z-[2] mix-blend-soft-light opacity-[0.26] sm:opacity-[0.34] md:opacity-[0.4]"
+          className="pointer-events-none absolute inset-0 z-[2] hidden mix-blend-soft-light opacity-[0.24] md:block"
           aria-hidden
         >
           <HeroThreeField />
         </div>
 
-        {/* Smoky blobs — fewer / lighter on small screens (blur is expensive) */}
-        <div className="absolute top-1/4 left-1/3 h-[min(100vw,380px)] w-[min(100vw,380px)] rounded-full bg-white/[0.04] blur-[72px] sm:h-[420px] sm:w-[420px] sm:blur-[100px] md:h-[500px] md:w-[500px] md:blur-[120px] animate-blob-1" />
-        <div className="absolute top-1/2 right-1/4 hidden h-[340px] w-[340px] rounded-full bg-white/[0.03] blur-[90px] sm:block md:h-[400px] md:w-[400px] md:blur-[100px] animate-blob-2" />
-        <div className="absolute bottom-1/4 left-1/2 h-[min(110vw,440px)] w-[min(110vw,440px)] rounded-full bg-white/[0.025] blur-[80px] sm:h-[520px] sm:w-[520px] sm:blur-[120px] md:h-[600px] md:w-[600px] md:blur-[140px] animate-blob-3" />
-
-        {/* Extra subtle smoke wisps */}
-        <div className="absolute top-[10%] right-[15%] hidden h-[200px] w-[300px] rounded-full bg-gradient-to-br from-white/[0.03] to-transparent blur-[80px] animate-blob-2 md:block" />
-        <div className="absolute bottom-[15%] left-[10%] hidden h-[250px] w-[350px] rounded-full bg-gradient-to-tr from-white/[0.025] to-transparent blur-[90px] animate-blob-1 lg:block" />
-
-        {/* Gradient overlay fading to black at bottom */}
+        <div className="absolute left-1/2 top-[20%] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-cyan-200/[0.07] blur-[88px] md:h-[460px] md:w-[460px] md:blur-[110px]" />
+        <div className="absolute bottom-[10%] right-[8%] hidden h-[300px] w-[300px] rounded-full bg-amber-200/[0.05] blur-[95px] md:block" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(255,255,255,0.09),transparent_52%)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[840px] flex-col items-center gap-6 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
-        {/* Badge */}
+      <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[980px] flex-col items-center gap-7 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#0a0a0a]/40 backdrop-blur-[68px] border border-white/5"
+          className="group relative flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.03] px-4 py-2.5 shadow-[0_12px_30px_-18px_rgba(255,255,255,0.35)] backdrop-blur-[68px]"
         >
+          <span
+            className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            style={{
+              background:
+                "linear-gradient(120deg, rgba(34,211,238,0.12), rgba(255,255,255,0.02), rgba(251,191,36,0.1))",
+            }}
+            aria-hidden
+          />
           <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
-          <span className="text-sm text-white/80">
+          <span className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/80">
             Custom software &amp; product engineering
           </span>
         </motion.div>
 
-        {/* Heading with stagger */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-full text-[clamp(1.85rem,6vw+0.35rem,3rem)] font-normal leading-[1.05] tracking-tight text-balance sm:text-7xl sm:leading-[1em] lg:text-[92px]"
+          className="max-w-[13ch] text-[clamp(2.1rem,6vw+0.35rem,6rem)] font-normal leading-[0.98] tracking-[-0.04em] text-balance sm:leading-[0.98] lg:text-[96px]"
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
-          {"Ship dependable products faster".split(" ").map((word, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 + i * 0.08 }}
-              className="inline-block mr-[0.25em]"
-            >
-              {word}
-            </motion.span>
-          ))}
+          <span className="bg-gradient-to-b from-white via-white to-white/80 bg-clip-text text-transparent">
+            Elite engineers.
+          </span>
+          <br />
+          <span className="bg-gradient-to-r from-white via-cyan-100 to-amber-100 bg-clip-text text-transparent">
+            Lower hiring cost.
+          </span>
         </motion.h1>
 
-        {/* Subtext */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-base sm:text-lg text-white/65 max-w-[540px] leading-relaxed"
+          className="max-w-[640px] text-base leading-relaxed text-white/65 sm:text-[1.15rem]"
         >
-          From first roadmap to production release, we help you clarify scope,
-          de-risk delivery, and launch software your customers and teams can
-          trust—without surprises on timeline or quality.
+          Build with a dedicated remote team of top-tier Bangladeshi engineers
+          trusted to deliver speed, quality, and reliability.
         </motion.p>
 
-        {/* CTA Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.68 }}
+          className="flex flex-wrap items-center justify-center gap-2.5"
+        >
+          {trustPoints.map((point) => (
+            <span
+              key={point}
+              className="rounded-full border border-white/12 bg-white/[0.03] px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/58"
+            >
+              {point}
+            </span>
+          ))}
+        </motion.div>
+
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.72 }}
+          className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/35"
+        >
+          Senior execution, transparent process, enterprise-grade quality
+        </motion.p>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex flex-wrap items-center justify-center gap-4 mt-2"
+          className="mt-2 flex flex-wrap items-center justify-center gap-4"
         >
-          <BeamButton href="#contact">Plan your build</BeamButton>
-          <BeamButton href="#projects">See recent work</BeamButton>
+          <BeamButton href="#contact" variant="primary">
+            Plan your build
+          </BeamButton>
+          <BeamButton href="#projects" variant="ghost">
+            See recent work
+          </BeamButton>
         </motion.div>
 
-        {/* Scroll indicator */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -128,16 +146,15 @@ export default function Hero() {
           <span className="text-sm text-white/50">to explore delivery</span>
         </motion.div>
 
-        {/* Logo marquee */}
         <div
-          className="mt-8 w-full overflow-hidden"
+          className="mt-10 w-full overflow-hidden rounded-full border border-white/10 bg-white/[0.02] py-3"
           style={{
             maskImage:
               "linear-gradient(to right, transparent 0%, black 12.5%, black 87.5%, transparent 100%)",
           }}
         >
           <div className="flex animate-marquee gap-24 items-center">
-            {[...logos, ...logos, ...logos, ...logos].map((logo, i) => (
+            {[...logos, ...logos].map((logo, i) => (
               <span
                 key={i}
                 className="text-white/30 text-sm font-medium whitespace-nowrap tracking-widest uppercase flex-shrink-0"
@@ -156,14 +173,32 @@ export default function Hero() {
 function BeamButton({
   href,
   children,
+  variant = "ghost",
 }: {
   href: string;
   children: React.ReactNode;
+  variant?: "primary" | "ghost";
 }) {
+  const isPrimary = variant === "primary";
   return (
     <a href={href} className="group relative inline-flex items-center">
-      {/* Button */}
-      <div className="beam-button corner-glow relative px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white group-hover:border-white/25 transition-all duration-500 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]">
+      <div
+        className={`beam-button corner-glow relative rounded-[10px] px-6 py-3 text-sm text-white transition-all duration-500 ${
+          isPrimary
+            ? "border border-cyan-200/35 bg-gradient-to-br from-cyan-200/25 via-white/[0.16] to-amber-200/20 shadow-[0_16px_36px_-20px_rgba(34,211,238,0.9)] group-hover:border-cyan-100/60 group-hover:shadow-[0_22px_44px_-20px_rgba(34,211,238,0.95)]"
+            : "border border-white/14 bg-black/60 group-hover:border-white/30 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
+        }`}
+      >
+        {isPrimary && (
+          <span
+            className="pointer-events-none absolute inset-0 rounded-[10px] opacity-80"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(255,255,255,0.02), rgba(251,191,36,0.12))",
+            }}
+            aria-hidden
+          />
+        )}
         <span className="relative z-10">{children}</span>
       </div>
     </a>
