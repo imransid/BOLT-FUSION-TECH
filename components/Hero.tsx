@@ -8,7 +8,7 @@ const HeroThreeField = dynamic(() => import("@/components/HeroThreeField"), {
   loading: () => null,
 });
 
-const logos = ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI products"];
+const logos = ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI & IoT products"];
 const trustPoints = ["Senior-only team", "Timezone overlap", "Quality-first delivery"];
 
 export default function Hero() {
@@ -78,7 +78,8 @@ export default function Hero() {
           className="max-w-[640px] text-base leading-relaxed text-white/65 sm:text-[1.15rem]"
         >
           Build with a dedicated remote team of top-tier Bangladeshi engineers
-          trusted to deliver speed, quality, and reliability.
+          trusted to deliver speed, quality, and reliability across web, AI, and
+          IoT products.
         </motion.p>
 
         <motion.div
