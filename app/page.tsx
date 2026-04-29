@@ -1,11 +1,13 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import AIDrivenExcellence from "@/components/AIDrivenExcellence";
 import Projects from "@/components/Projects";
 import AboutMe from "@/components/AboutMe";
 import Team from "@/components/Team";
 import RecentWorks from "@/components/RecentWorks";
 import Process from "@/components/Process";
 import Services from "@/components/Services";
+import Industries from "@/components/Industries";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
@@ -18,12 +20,14 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <AIDrivenExcellence />
         <Projects />
         <AboutMe />
         <Team />
         <RecentWorks />
         <Process />
         <Services />
+        <Industries />
         <Testimonials />
         <FAQ />
         <CTA />

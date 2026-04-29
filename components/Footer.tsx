@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { LogoMark } from "@/components/Logo";
 
 const socialLinks = [
-  { name: "Behance", url: "#" },
-  { name: "Dribbble", url: "#" },
-  { name: "X (Twitter)", url: "#" },
+  { name: "LinkedIn", url: "https://www.linkedin.com/company/bolt-fusion-tech/" },
+  { name: "Facebook", url: "https://web.facebook.com/boltfusiontech" },
+  { name: "X (Twitter)", url: "https://x.com/boltfusiontech" },
 ];
 
 export default function Footer() {
@@ -38,19 +38,17 @@ export default function Footer() {
         </motion.div>
 
         {/* Social links */}
-        <div className="flex items-center gap-1">
-          {socialLinks.map((link, i) => (
-            <span key={link.name} className="flex items-center gap-1">
-              <a
-                href={link.url}
-                className="text-sm text-white/50 hover:text-white transition-colors duration-300 px-3 py-2"
-              >
-                {link.name}
-              </a>
-              {i < socialLinks.length - 1 && (
-                <span className="text-white/20">|</span>
-              )}
-            </span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {socialLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-[10px] border border-white/12 bg-white/[0.02] px-3.5 py-2 text-sm text-white/65 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200/45 hover:bg-white/[0.06] hover:text-white hover:shadow-[0_10px_24px_-16px_rgba(125,211,252,0.75)]"
+            >
+              {link.name}
+            </a>
           ))}
         </div>
 
