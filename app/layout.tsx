@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
+import { getSiteUrl } from "@/lib/site-url";
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -16,7 +18,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Bolt Fusion Tech",
+  metadataBase: getSiteUrl(),
+  title: {
+    default: "Bolt Fusion Tech",
+    template: "%s | Bolt Fusion Tech",
+  },
   description:
     "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
   icons: {
@@ -28,6 +34,19 @@ export const metadata: Metadata = {
     description:
       "Partner with a product-minded engineering team to launch faster, reduce risk, and scale with confidence.",
     type: "website",
+    locale: "en_US",
+    siteName: "Bolt Fusion Tech",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Bolt Fusion Tech – Custom Software & Product Engineering",
+    description:
+      "Partner with a product-minded engineering team to launch faster, reduce risk, and scale with confidence.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
   },
 };
 
