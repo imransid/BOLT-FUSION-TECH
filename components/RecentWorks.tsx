@@ -9,54 +9,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 
-/** Shipped client products — real screenshots, written for buyer clarity */
-const featuredWork = [
-  {
-    src: "/projects/hospitality-ops-admin.png",
-    title: "Hospitality operations suite",
-    outcome: "Staff admin for dashboard, kitchen, procurement, POS, and orders—built for fast floor decisions.",
-    stack: "Mobile · React Native",
-    alt: "Mobile admin app for restaurant operations: kitchen, POS, orders, and procurement",
-  },
-  {
-    src: "/projects/opal-fashion-tech.png",
-    title: "OPAL — Fashion × Tech",
-    outcome: "Luxury commerce experience with a cinematic hero, trust strip, and conversion-focused layout.",
-    stack: "Web · Next.js · Commerce",
-    alt: "OPAL Fashion × Tech e-commerce hero: craft meets circuitry, shop and brand story",
-    imgClass: "object-[50%_24%] min-[380px]:object-[center_20%] sm:object-[center_top]",
-  },
-  {
-    src: "/projects/immidox-immigration.png",
-    title: "Immidox immigration services",
-    outcome: "High-trust services site with clear journeys, proof points, and strong primary calls to action.",
-    stack: "Web · CMS-ready",
-    alt: "Immidox immigration services website hero with confident messaging and CTAs",
-  },
-  {
-    src: "/projects/expert-marketplace-mobile.png",
-    title: "Expert marketplace & booking",
-    outcome: "Search, rich profiles, availability, and booking in one flow—trust signals like ratings and status built in.",
-    stack: "Mobile · Marketplace",
-    alt: "Mobile app to find skilled experts, view profiles, and book services with ratings and availability",
-  },
-  {
-    src: "/projects/godconnect-community.png",
-    title: "GodConnect — faith community",
-    outcome: "Welcome journey, daily encouragement, and community connection—clear onboarding and a focused first-run experience.",
-    stack: "Mobile · Community",
-    alt: "GodConnect app splash and welcome screen for a Christian community platform",
-  },
-  {
-    src: "/projects/rebellion-brand-agency.png",
-    title: "REBELLION — brand agency",
-    outcome: "Statement hero, brutalist energy, and interactive work showcase—built to win bold creative briefs.",
-    stack: "Web · Agency / brand",
-    alt: "REBELLION agency website hero with bold typography and project carousel on orange background",
-    /** Wide hero inside a tall card — bias crop toward headline */
-    imgClass: "object-[center_22%] sm:object-[center_top]",
-  },
-] as const;
+import { useSiteContent } from "@/context/SiteContentContext";
 
 function useGalleryActiveIndex(
   scrollerRef: RefObject<HTMLDivElement | null>,
@@ -100,6 +53,8 @@ function useGalleryActiveIndex(
 }
 
 export default function RecentWorks() {
+  const { recentWorks: rw } = useSiteContent();
+  const featuredWork = rw.items;
   const scrollerRef = useRef<HTMLDivElement>(null);
   const active = useGalleryActiveIndex(scrollerRef, featuredWork.length);
 
@@ -125,7 +80,7 @@ export default function RecentWorks() {
               className="text-xl md:text-2xl text-white max-w-[640px]"
               style={{ fontFamily: "'Inter Display', sans-serif" }}
             >
-              Featured client work
+              {rw.title}
             </motion.p>
             <motion.p
               initial={{ opacity: 0, x: -12 }}
@@ -133,9 +88,7 @@ export default function RecentWorks() {
               viewport={{ once: true }}
               className="text-sm text-white/55 max-w-[560px] leading-relaxed"
             >
-              Six shipped experiences—operations, commerce, regulated services,
-              marketplaces, community, and agency brands—each tuned to real users
-              and conversion.
+              {rw.subtitle}
             </motion.p>
           </div>
           <div className="opacity-75 shrink-0 hidden sm:block">
@@ -157,7 +110,7 @@ export default function RecentWorks() {
         <div className="w-full h-px bg-white/10 mb-8" />
 
         <p className="mb-3 text-center text-xs text-white/40 md:hidden">
-          Swipe sideways for more — tap dots to jump
+          {rw.mobileSwipeHint}
         </p>
 
         <div
@@ -186,7 +139,7 @@ export default function RecentWorks() {
                 loading={i < 2 ? "eager" : "lazy"}
                 decoding="async"
                 className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
-                  "imgClass" in project && project.imgClass
+                  project.imgClass
                     ? project.imgClass
                     : "object-top sm:object-center"
                 }`}

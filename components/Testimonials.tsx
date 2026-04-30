@@ -2,28 +2,11 @@
 
 import { motion } from "framer-motion";
 
-const testimonials = [
-  {
-    name: "Sarah K.",
-    role: "CEO, B2B SaaS",
-    text: "They turned a vague brief into a shipped MVP with sane tradeoffs explained along the way. Our team finally had a release cadence we could plan around.",
-    stars: 5,
-  },
-  {
-    name: "David Chen",
-    role: "Head of Product, Fintech",
-    text: "Strong engineering judgment on integrations and compliance-sensitive flows. We cut rework because they asked the right questions early.",
-    stars: 5,
-  },
-  {
-    name: "Emily Torres",
-    role: "CTO, Healthtech",
-    text: "Clear documentation and handoff after launch. Internal developers picked up the codebase without a weeks-long archaeology project.",
-    stars: 5,
-  },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function Testimonials() {
+  const { testimonials: te } = useSiteContent();
+  const testimonials = te.items;
   return (
     <section id="testimonials" className="py-20 px-5 md:px-20">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-11">
@@ -45,7 +28,7 @@ export default function Testimonials() {
                   <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
                 </span>
               </span>
-              <span className="text-sm text-white">Client outcomes</span>
+              <span className="text-sm text-white">{te.badge}</span>
             </motion.div>
 
             <motion.h2
@@ -55,29 +38,28 @@ export default function Testimonials() {
               className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
               style={{ fontFamily: "Satoshi, sans-serif" }}
             >
-              Testimonials
+              {te.title}
             </motion.h2>
 
             <p
               className="text-lg text-white/65 opacity-90 sm:text-xl"
               style={{ fontFamily: "'Inter Display', sans-serif" }}
             >
-              Feedback from leaders who needed delivery they could defend—to
-              users, investors, and their own engineering teams.
+              {te.intro}
             </p>
 
             <div className="flex flex-wrap gap-4">
               <a
-                href="#contact"
+                href={te.startConversationHref}
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                Start a conversation
+                {te.startConversationLabel}
               </a>
               <a
-                href="#projects"
+                href={te.recentWorkHref}
                 className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
               >
-                See recent work
+                {te.recentWorkLabel}
               </a>
             </div>
           </div>
@@ -106,7 +88,7 @@ export default function Testimonials() {
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-0 rounded-[18px] bg-[#0d0d0d] p-8 md:flex-row md:items-stretch md:gap-0 md:p-12">
           {testimonials.map((t, i) => (
             <motion.div
-              key={t.name}
+              key={`${t.name}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

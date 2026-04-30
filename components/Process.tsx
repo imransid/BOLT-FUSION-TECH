@@ -2,25 +2,11 @@
 
 import { motion } from "framer-motion";
 
-const steps = [
-  {
-    num: 1,
-    title: "Discovery & plan",
-    desc: "We align on users, success metrics, constraints, and risks—then produce a concise technical approach and milestone plan so stakeholders know what “done” looks like and when to expect it.",
-  },
-  {
-    num: 2,
-    title: "Build in iterations",
-    desc: "Working software every cycle: demos, backlog transparency, and early integration (auth, data, deployments) so issues surface when they are cheap to fix—not the week before launch.",
-  },
-  {
-    num: 3,
-    title: "Launch, measure, improve",
-    desc: "Release with monitoring, runbooks, and a sensible cutover. After go-live we support stabilization, iterate on feedback, and help your team operate the product with confidence.",
-  },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function Process() {
+  const { process: p } = useSiteContent();
+  const steps = p.steps;
   return (
     <section id="process" className="py-20 px-5 md:px-20">
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-11">
@@ -34,8 +20,8 @@ export default function Process() {
           style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
         >
           <img
-            src="/section-process.png"
-            alt="Product and engineering collaboration during discovery and sprint planning"
+            src={p.imageSrc}
+            alt={p.imageAlt}
             width={1376}
             height={768}
             loading="lazy"
@@ -62,7 +48,7 @@ export default function Process() {
                 <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
               </span>
             </span>
-            <span className="text-sm text-white">How we work</span>
+            <span className="text-sm text-white">{p.badge}</span>
           </motion.div>
 
           <motion.h2
@@ -72,16 +58,14 @@ export default function Process() {
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
-            Process
+            {p.title}
           </motion.h2>
 
           <p
             className="max-w-[640px] text-lg text-white/65 sm:text-xl"
             style={{ fontFamily: "'Inter Display', sans-serif" }}
           >
-            A straightforward process designed for busy product leaders: fewer
-            surprises, clearer tradeoffs, and decisions you can explain to your
-            board or budget owner.
+            {p.intro}
           </p>
 
           {/* CTA buttons */}
@@ -90,13 +74,13 @@ export default function Process() {
               href="#contact"
               className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
-              Discuss your roadmap
+              {p.discussLabel}
             </a>
             <a
               href="#projects"
               className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
-              See recent work
+              {p.workLabel}
             </a>
           </div>
 

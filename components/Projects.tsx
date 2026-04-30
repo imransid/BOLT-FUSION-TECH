@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 
+import { useSiteContent } from "@/context/SiteContentContext";
+
 type ProjectItem = {
   src: string;
   alt: string;
@@ -10,82 +12,6 @@ type ProjectItem = {
   /** Narrow viewports: bias `object-cover` so hero type in screenshots stays readable */
   imgMobileClass?: string;
 };
-
-const projects: ProjectItem[] = [
-  {
-    src: "/projects/hospitality-ops-admin.png",
-    alt: "Hospitality staff admin: kitchen, POS, orders, procurement",
-    caption: "Hospitality ops — mobile",
-    imgMobileClass: "object-[center_top]",
-  },
-  {
-    src: "/projects/opal-fashion-tech.png",
-    alt: "OPAL Fashion × Tech storefront hero and navigation",
-    caption: "OPAL — commerce",
-    /** Wide hero — keep “craft meets circuitry” in frame on phones */
-    imgMobileClass: "object-[52%_28%] min-[380px]:object-[center_22%]",
-  },
-  {
-    src: "/projects/immidox-immigration.png",
-    alt: "Immidox immigration services marketing site hero",
-    caption: "Immidox — services web",
-    imgMobileClass: "object-[center_18%]",
-  },
-  {
-    src: "/projects/expert-marketplace-mobile.png",
-    alt: "Expert search, profiles, booking, and trust metrics on mobile",
-    caption: "Expert marketplace",
-    imgMobileClass: "object-[center_top]",
-  },
-  {
-    src: "/projects/godconnect-community.png",
-    alt: "GodConnect onboarding and community app screens",
-    caption: "GodConnect — community",
-    imgMobileClass: "object-[center_20%]",
-  },
-  {
-    src: "/projects/rebellion-brand-agency.png",
-    alt: "REBELLION agency hero and interactive brand showcase",
-    caption: "REBELLION — agency web",
-    imgMobileClass: "object-[center_25%]",
-  },
-  {
-    src: "/about-engineering.png",
-    alt: "Bolt Fusion Tech — product engineering partnership",
-    caption: "How we work with your team",
-    isProfile: true,
-  },
-  {
-    src: "/section-services.png",
-    alt: "Engineers shipping product with clear UI on monitors",
-    caption: "Delivery & architecture",
-    imgMobileClass: "object-[center_35%]",
-  },
-  {
-    src: "/section-process.png",
-    alt: "Sprint planning and stakeholder alignment",
-    caption: "Discovery to launch",
-    imgMobileClass: "object-[center_30%]",
-  },
-  {
-    src: "/section-testimonials.png",
-    alt: "Client trust and advisory conversations",
-    caption: "Stakeholder partnership",
-    imgMobileClass: "object-[center_30%]",
-  },
-  {
-    src: "/gallery-engineering-desk.png",
-    alt: "Engineering workspace with code and systems design",
-    caption: "Build quality",
-    imgMobileClass: "object-[center_40%]",
-  },
-  {
-    src: "/gallery-product-analytics.png",
-    alt: "Product analytics across mobile and web surfaces",
-    caption: "Insights & scale",
-    imgMobileClass: "object-[center_35%]",
-  },
-];
 
 function ArrowIcon() {
   return (
@@ -170,9 +96,13 @@ function ProjectCard({
 }
 
 export default function Projects() {
-  const col1 = projects.slice(0, 4);
-  const col2 = projects.slice(4, 8);
-  const col3 = projects.slice(8, 12);
+  const { projects: p } = useSiteContent();
+  const projects = p.tiles as ProjectItem[];
+  const n = projects.length;
+  const third = Math.ceil(n / 3) || 1;
+  const col1 = projects.slice(0, third);
+  const col2 = projects.slice(third, third * 2);
+  const col3 = projects.slice(third * 2);
 
   return (
     <section
@@ -186,11 +116,14 @@ export default function Projects() {
           viewport={{ once: true }}
           className="mb-6 max-w-2xl text-sm leading-relaxed text-white/50 md:mb-8"
         >
-          Selected visuals from shipped work and how we operate—scroll to{" "}
-          <a href="#recent-work" className="text-white/75 underline underline-offset-4 hover:text-white">
-            featured case cards
-          </a>{" "}
-          for full context on our six featured launches.
+          {p.introStart}
+          <a
+            href={p.introLinkHref}
+            className="text-white/75 underline underline-offset-4 hover:text-white"
+          >
+            {p.introLinkText}
+          </a>
+          {p.introEnd}
         </motion.p>
 
         <div className="hidden lg:flex gap-3">
@@ -237,7 +170,7 @@ export default function Projects() {
 
         <div className="lg:hidden">
           <p className="mb-2 text-center text-[11px] leading-snug text-white/45">
-            Swipe sideways — shorter cards, less scrolling
+            {p.mobileStripHint}
           </p>
           <div className="scrollbar-hide -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-1 pl-2 pr-6 [-webkit-overflow-scrolling:touch] sm:gap-3 sm:pl-1 sm:pr-4">
             {projects.map((p, i) => (
@@ -260,13 +193,13 @@ export default function Projects() {
             href="#recent-work"
             className="text-sm text-white underline underline-offset-4 hover:text-white/80 transition-colors"
           >
-            Featured launches (detail)
+            {p.featuredDetailLabel}
           </a>
           <a
             href="#contact"
             className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
           >
-            Discuss your build
+            {p.discussLabel}
           </a>
         </div>
       </div>

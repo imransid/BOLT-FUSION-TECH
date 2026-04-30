@@ -2,34 +2,12 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 
-const skills = [
-  "Web & mobile apps",
-  "APIs & integrations",
-  "Cloud & DevOps",
-  "Product discovery",
-  "UI/UX engineering",
-  "Quality & launch readiness",
-];
-
-const experience = [
-  {
-    role: "MVP & greenfield builds",
-    company: "Scope, architecture, and a shippable first version",
-    period: "Typical 8–16 weeks",
-  },
-  {
-    role: "Embedded product teams",
-    company: "Roadmap delivery with your PMs and stakeholders",
-    period: "Ongoing",
-  },
-  {
-    role: "Stabilize & scale",
-    company: "Performance, reliability, and maintainability for live systems",
-    period: "As needed",
-  },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function AboutMe() {
+  const { about: a } = useSiteContent();
+  const skills = a.skills;
+  const experience = a.experience;
   const reduceMotion = useReducedMotion();
 
   return (
@@ -52,17 +30,13 @@ export default function AboutMe() {
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
-            Why Bolt Fusion Tech
+            {a.title}
           </motion.h2>
 
           {/* Bio */}
           <div className="flex flex-col gap-8">
             <p className="text-base text-white/65 max-w-[640px] leading-relaxed">
-              Clients come to us when delivery has to be predictable: clear
-              requirements, honest estimates, and engineering judgment applied
-              early—so you spend less time firefighting and more time growing
-              the product. We work as an extension of your team, focused on
-              outcomes users feel and metrics you can read.
+              {a.bio}
             </p>
           </div>
 

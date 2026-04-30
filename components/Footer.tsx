@@ -2,14 +2,11 @@
 
 import { motion } from "framer-motion";
 import { LogoMark } from "@/components/Logo";
-
-const socialLinks = [
-  { name: "LinkedIn", url: "https://www.linkedin.com/company/bolt-fusion-tech/" },
-  { name: "Facebook", url: "https://web.facebook.com/boltfusiontech" },
-  { name: "X (Twitter)", url: "https://x.com/boltfusiontech" },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function Footer() {
+  const { footer: f } = useSiteContent();
+  const socialLinks = f.socialLinks;
   return (
     <footer className="py-8 px-5 md:px-20 border-t border-white/5">
       <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -25,15 +22,13 @@ export default function Footer() {
             className="flex items-center gap-2 text-white/60 transition-colors hover:text-white/90"
           >
             <LogoMark className="h-7 w-7 opacity-90" />
-            <span className="text-sm text-white/50">
-              © 2026 Bolt Fusion Tech
-            </span>
+            <span className="text-sm text-white/50">{f.copyrightName}</span>
           </a>
           <span className="hidden text-white/25 sm:inline" aria-hidden>
             ·
           </span>
           <span className="text-xs text-white/35 sm:text-sm sm:text-white/50">
-            All rights reserved.
+            {f.rightsLine}
           </span>
         </motion.div>
 
@@ -65,7 +60,7 @@ export default function Footer() {
           >
             <path d="M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z" />
           </svg>
-          Back to top
+          {f.backToTopLabel}
         </a>
       </div>
     </footer>

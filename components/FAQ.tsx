@@ -3,30 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const faqs = [
-  {
-    q: "What kinds of projects do you take on?",
-    a: "We focus on custom web and mobile products, internal tools, integrations, and hardening existing systems for scale. If you have a clear user or business outcome, we can usually map a sensible technical path.",
-  },
-  {
-    q: "How do you estimate timeline and cost?",
-    a: "After a short discovery, we break work into milestones with acceptance criteria. You get ranges tied to scope—not a single opaque number—plus options to phase features if budget or deadlines are tight.",
-  },
-  {
-    q: "What does your delivery process look like?",
-    a: "Discovery and plan first, then iterative builds with demos and a transparent backlog, then launch with monitoring and handoff materials. You are never guessing what we are doing week to week.",
-  },
-  {
-    q: "Can you work with our existing codebase?",
-    a: "Yes. We routinely join live products: code review, refactors, test coverage, performance work, and incremental feature delivery. We start with a short technical assessment so risks are explicit up front.",
-  },
-  {
-    q: "How do we get started?",
-    a: "Use the contact section to book a call or email us with goals, timeline, and any constraints. We respond with fit, suggested next steps, and what we would need from your side to begin.",
-  },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function FAQ() {
+  const { faq } = useSiteContent();
+  const faqs = faq.items;
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
@@ -51,20 +32,20 @@ export default function FAQ() {
                 <span className="w-[5px] h-[5px] rounded-[10px] bg-white" />
               </span>
             </span>
-            <span className="text-sm text-white">FAQ</span>
+            <span className="text-sm text-white">{faq.badge}</span>
           </div>
 
           <h2
             className="px-1 text-[clamp(2rem,8vw,3.5rem)] font-normal leading-[1.05] text-balance sm:text-7xl sm:leading-[1em] lg:text-[80px]"
             style={{ fontFamily: "Satoshi, sans-serif" }}
           >
-            Questions? Answers.
+            {faq.title}
           </h2>
         </motion.div>
 
         {/* FAQ items */}
         <div className="flex flex-col gap-0">
-          {faqs.map((faq, i) => (
+          {faqs.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -77,7 +58,7 @@ export default function FAQ() {
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
                 className="w-full flex items-center justify-between py-6 text-left cursor-pointer"
               >
-                <span className="text-lg text-white/90 pr-6">{faq.q}</span>
+                <span className="text-lg text-white/90 pr-6">{item.q}</span>
                 <motion.div
                   animate={{ rotate: openIndex === i ? 45 : 0 }}
                   transition={{ duration: 0.2 }}
@@ -105,7 +86,7 @@ export default function FAQ() {
                     className="overflow-hidden"
                   >
                     <p className="text-sm text-white/60 pb-6 leading-relaxed max-w-[640px]">
-                      {faq.a}
+                      {item.a}
                     </p>
                   </motion.div>
                 )}

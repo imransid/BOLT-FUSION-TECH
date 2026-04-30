@@ -3,19 +3,11 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
-
-const navLinks = [
-  { label: "Services", href: "#services" },
-  { label: "Industry", href: "#industries" },
-  { label: "Process", href: "#process" },
-  { label: "Work", href: "#projects" },
-  { label: "About", href: "#about" },
-  { label: "Team", href: "#team" },
-  { label: "Clients", href: "#testimonials" },
-  { label: "Contact", href: "#contact" },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function Navbar() {
+  const { navbar } = useSiteContent();
+  const navLinks = navbar.links;
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -64,7 +56,7 @@ export default function Navbar() {
               >
                 <path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z" />
               </svg>
-              Book a call
+              {navbar.scheduleCtaLabel}
             </a>
           </div>
 
@@ -120,7 +112,7 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="mt-2 w-full text-center px-5 py-3 text-sm rounded-xl border border-white/10 bg-[#0d0d0d]"
                 >
-                  Book a call
+                  {navbar.scheduleCtaLabel}
                 </a>
               </div>
             </motion.div>

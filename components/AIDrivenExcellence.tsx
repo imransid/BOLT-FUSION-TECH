@@ -3,36 +3,12 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 
-const metrics = [
-  {
-    value: "70%",
-    label: "Faster Development",
-    title: "Intelligent Coding",
-    desc: "AI-powered workflows reduce manual effort while maintaining enterprise-level code quality.",
-  },
-  {
-    value: "99.9%",
-    label: "Defect-Free Releases",
-    title: "Bulletproof QA",
-    desc: "Automation-assisted QA catches regressions early and keeps releases stable and predictable.",
-  },
-  {
-    value: "40%",
-    label: "Higher Efficiency",
-    title: "Peak Performance",
-    desc: "Smart optimization improves response time and system throughput under production load.",
-  },
-  {
-    value: "90%",
-    label: "Faster Deployments",
-    title: "Zero-Downtime DevOps",
-    desc: "AI-guided pipelines enable safer releases with lower operational risk.",
-  },
-];
-
-const trustPoints = ["100% IP Protection", "Top 1% Talent"];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 export default function AIDrivenExcellence() {
+  const { aiExcellence: a } = useSiteContent();
+  const metrics = a.metrics;
+  const trustPoints = a.trustPoints;
   return (
     <section id="ai-excellence" className="px-5 py-20 md:px-20 md:py-24">
       <div className="mx-auto max-w-[1200px] rounded-[28px] border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-6 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.85)] backdrop-blur-sm md:p-10">
@@ -48,22 +24,20 @@ export default function AIDrivenExcellence() {
               className="max-w-[14ch] text-[clamp(2rem,4vw,3.4rem)] font-normal leading-[1.02] tracking-[-0.03em] text-white"
               style={{ fontFamily: "Satoshi, sans-serif" }}
             >
-              AI-Driven
+              {a.headlineLine1}
               <br />
-              Development
+              {a.headlineLine2}
               <br />
-              Excellence
+              {a.headlineLine3}
             </h2>
             <p className="max-w-[54ch] text-sm leading-relaxed text-white/65 md:text-base">
-              We combine senior engineering with practical AI workflows to ship
-              faster, test deeper, and scale products without compromising
-              reliability.
+              {a.intro}
             </p>
             <a
-              href="#schedule"
+              href={a.scheduleCtaHref}
               className="inline-flex items-center justify-center rounded-full border border-amber-200/35 bg-amber-300 px-5 py-2 text-sm font-semibold text-[#1f2329] transition-all duration-300 hover:-translate-y-0.5 hover:bg-amber-200"
             >
-              Schedule a Call
+              {a.scheduleCtaLabel}
             </a>
 
             <motion.div
@@ -74,8 +48,8 @@ export default function AIDrivenExcellence() {
               className="relative h-[260px] overflow-hidden rounded-2xl border border-white/10 md:h-[300px]"
             >
               <Image
-                src="/section-services.png"
-                alt="AI-assisted product engineering team in a modern delivery setup"
+                src={a.imageSrc}
+                alt={a.imageAlt}
                 fill
                 sizes="(max-width: 768px) 100vw, 560px"
                 className="object-cover"
@@ -130,11 +104,10 @@ export default function AIDrivenExcellence() {
               className="text-[1.55rem] leading-none text-white"
               style={{ fontFamily: "Satoshi, sans-serif" }}
             >
-              10X Faster Delivery
+              {a.footerTitle}
             </p>
             <p className="mt-1.5 text-sm leading-relaxed text-white/60">
-              Senior teams leveraging AI-assisted engineering to accelerate output
-              while keeping quality high.
+              {a.footerSubtitle}
             </p>
           </div>
 

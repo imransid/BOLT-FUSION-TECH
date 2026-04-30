@@ -12,22 +12,14 @@ import {
   type MotionValue,
 } from "framer-motion";
 
+import { useSiteContent } from "@/context/SiteContentContext";
+import type { SiteContent } from "@/lib/site-content-schema";
+
 const springSnappy = { type: "spring" as const, stiffness: 420, damping: 26, mass: 0.72 };
 const springSoft = { type: "spring" as const, stiffness: 280, damping: 32, mass: 0.9 };
 const springCard = { type: "spring" as const, stiffness: 380, damping: 22, mass: 0.85 };
 
-const members = [
-  { name: "Rafa", handle: "@rafa", image: "/team/marc-face.svg" },
-  { name: "Nadim", handle: "@nadim", image: "/team/szymon-face.svg" },
-  { name: "Joinal", handle: "@joinal", image: "/team/thomas-face.svg" },
-  { name: "Arifur Rahman", handle: "@arifur", image: "/team/christoph-face.svg" },
-  { name: "Tareq", handle: "@tareq", image: "/team/janic-face.svg" },
-  { name: "Nazirul", handle: "@nazirul", image: "/team/mo-face.svg" },
-  { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
-  { name: "Nihal", handle: "@nihal", image: "/team/eric-face.svg" },
-  { name: "Musfique", handle: "@musfique", image: "/team/matei-face.svg" },
-  { name: "Sabbir", handle: "@sabbir", image: "/team/mo-face.svg" },
-] as const;
+type TeamMember = SiteContent["team"]["members"][number];
 
 function profileHref(handle: string): string {
   const h = handle.slice(1);
@@ -96,7 +88,7 @@ function TeamMemberCard({
   scrollMuted,
   variants,
 }: {
-  member: (typeof members)[number];
+  member: TeamMember;
   index: number;
   scrollProgress: MotionValue<number>;
   reduceMotion: boolean | null;
@@ -110,10 +102,12 @@ function TeamMemberCard({
     scrollMuted ? [0, 0] : [12 + depth * 4, -12 - depth * 4]
   );
 
+  const href = member.profileUrl?.trim() || profileHref(member.handle);
+
   return (
     <motion.li variants={variants} className="min-h-0">
       <motion.a
-        href={profileHref(member.handle)}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         whileHover={
@@ -228,6 +222,8 @@ function AnimatedSeatCount({
 }
 
 export default function Team() {
+  const { team: t } = useSiteContent();
+  const members = t.members;
   const reduceMotion = useReducedMotion();
   const [wideEnoughForScrollParallax, setWideEnoughForScrollParallax] =
     useState(false);
@@ -393,12 +389,10 @@ export default function Team() {
                 transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
               />
               <span className="bg-gradient-to-r from-white/55 to-white/35 bg-clip-text font-mono text-[10px] font-medium uppercase tracking-[0.38em] text-transparent">
-                Your bench
+                {t.benchLabel}
               </span>
               <span className="hidden h-px w-16 bg-gradient-to-r from-cyan-300/45 via-amber-200/35 to-transparent sm:block" />
-              <span className="font-mono text-[10px] text-white/28">
-                {"// who builds with you"}
-              </span>
+              <span className="font-mono text-[10px] text-white/28">{t.codeComment}</span>
             </motion.div>
 
             <div className="space-y-6">
@@ -413,7 +407,7 @@ export default function Team() {
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ ...springSnappy, delay: 0.02 }}
                 >
-                  Senior engineers.
+                  {t.headlineLine1}
                 </motion.span>
                 <motion.span
                   className="mt-2 block bg-gradient-to-r from-white via-cyan-100/85 to-amber-100/75 bg-clip-text text-transparent"
@@ -422,7 +416,7 @@ export default function Team() {
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ ...springSoft, delay: 0.1 }}
                 >
-                  One delivery standard.
+                  {t.headlineLine2}
                 </motion.span>
               </h2>
               <motion.div
@@ -443,8 +437,7 @@ export default function Team() {
               className="max-w-lg text-[15px] leading-[1.7] text-white/50 md:text-[17px]"
               style={{ fontFamily: "'Inter Display', Inter, sans-serif" }}
             >
-              Each card opens in a new tab—so you can see who you would work
-              with before you commit scope or budget.
+              {t.subtext}
             </motion.p>
           </div>
 
@@ -463,7 +456,7 @@ export default function Team() {
                 className="bg-gradient-to-br from-white via-white to-cyan-200/55 bg-clip-text text-transparent"
               />
               <span className="pb-1 font-mono text-[9px] uppercase tracking-[0.24em] text-white/38">
-                specialists
+                {t.statLabel}
               </span>
             </div>
             <motion.div

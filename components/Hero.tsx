@@ -3,15 +3,15 @@
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
+import { useSiteContent } from "@/context/SiteContentContext";
+
 const HeroThreeField = dynamic(() => import("@/components/HeroThreeField"), {
   ssr: false,
   loading: () => null,
 });
 
-const logos = ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI & IoT products"];
-const trustPoints = ["Senior-only team", "Timezone overlap", "Quality-first delivery"];
-
 export default function Hero() {
+  const { hero: h } = useSiteContent();
   return (
     <section
       id="hero"
@@ -51,7 +51,7 @@ export default function Hero() {
           />
           <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
           <span className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/80">
-            Custom software &amp; product engineering
+            {h.badge}
           </span>
         </motion.div>
 
@@ -63,11 +63,11 @@ export default function Hero() {
           style={{ fontFamily: "Satoshi, sans-serif" }}
         >
           <span className="bg-gradient-to-b from-white via-white to-white/80 bg-clip-text text-transparent">
-            Elite engineers.
+            {h.headlineLine1}
           </span>
           <br />
           <span className="bg-gradient-to-r from-white via-cyan-100 to-amber-100 bg-clip-text text-transparent">
-            Lower hiring cost.
+            {h.headlineLine2}
           </span>
         </motion.h1>
 
@@ -77,9 +77,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="max-w-[640px] text-base leading-relaxed text-white/65 sm:text-[1.15rem]"
         >
-          Build with a dedicated remote team of top-tier Bangladeshi engineers
-          trusted to deliver speed, quality, and reliability across web, AI, and
-          IoT products.
+          {h.subtext}
         </motion.p>
 
         <motion.div
@@ -88,7 +86,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.68 }}
           className="flex flex-wrap items-center justify-center gap-2.5"
         >
-          {trustPoints.map((point) => (
+          {h.trustPoints.map((point) => (
             <span
               key={point}
               className="rounded-full border border-white/12 bg-white/[0.03] px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/58"
@@ -104,7 +102,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.72 }}
           className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/35"
         >
-          Senior execution, transparent process, enterprise-grade quality
+          {h.tagline}
         </motion.p>
 
         <motion.div
@@ -113,11 +111,11 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.8 }}
           className="mt-2 flex flex-wrap items-center justify-center gap-4"
         >
-          <BeamButton href="#contact" variant="primary">
-            Plan your build
+          <BeamButton href={h.primaryCtaHref} variant="primary">
+            {h.primaryCtaLabel}
           </BeamButton>
-          <BeamButton href="#projects" variant="ghost">
-            See recent work
+          <BeamButton href={h.secondaryCtaHref} variant="ghost">
+            {h.secondaryCtaLabel}
           </BeamButton>
         </motion.div>
 
@@ -127,7 +125,7 @@ export default function Hero() {
           transition={{ delay: 1.2 }}
           className="hidden md:flex items-center gap-4 mt-12 w-full max-w-[640px]"
         >
-          <span className="text-sm text-white/50">Scroll down</span>
+          <span className="text-sm text-white/50">{h.scrollHintLeft}</span>
           <div className="flex-1 h-px bg-white/10" />
           <motion.div
             animate={{ y: [0, 5, 0] }}
@@ -144,7 +142,7 @@ export default function Hero() {
             </svg>
           </motion.div>
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-sm text-white/50">to explore delivery</span>
+          <span className="text-sm text-white/50">{h.scrollHintRight}</span>
         </motion.div>
 
         <div
@@ -155,7 +153,7 @@ export default function Hero() {
           }}
         >
           <div className="flex animate-marquee gap-24 items-center">
-            {[...logos, ...logos].map((logo, i) => (
+            {[...h.logos, ...h.logos].map((logo, i) => (
               <span
                 key={i}
                 className="text-white/30 text-sm font-medium whitespace-nowrap tracking-widest uppercase flex-shrink-0"
