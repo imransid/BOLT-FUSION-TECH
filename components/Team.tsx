@@ -24,7 +24,7 @@ type TeamMember = SiteContent["team"]["members"][number];
 function profileHref(handle: string): string {
   const h = handle.slice(1);
   if (h === "rafa") {
-    return "https://www.linkedin.com/in/asif-nihal";
+    return "https://www.linkedin.com/in/imran1993/";
   }
   if (h === "nazirul") {
     return "https://www.linkedin.com/in/imnazirul/";
@@ -35,7 +35,7 @@ function profileHref(handle: string): string {
   if (h === "sabbir") {
     return "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/";
   }else if (h === "nihal") {
-    return "www.linkedin.com/in/asif-nihal";
+    return "https://www.linkedin.com/in/asif-nihal";
   }else if (h === "musfique") {
     return "https://www.linkedin.com/in/musfique-ahmed-3423b021b/";
   }else if (h === "joinal") {
