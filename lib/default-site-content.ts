@@ -17,6 +17,7 @@ const raw: SiteContent = {
       "about",
       "team",
       "recent_works",
+      "case_study",
       "process",
       "services",
       "industries",
@@ -33,6 +34,7 @@ const raw: SiteContent = {
       { label: "Industry", href: "#industries" },
       { label: "Process", href: "#process" },
       { label: "Work", href: "#projects" },
+      { label: "Case study", href: "#case-study" },
       { label: "About", href: "#about" },
       { label: "Team", href: "#team" },
       { label: "Clients", href: "#testimonials" },
@@ -44,7 +46,10 @@ const raw: SiteContent = {
     copyrightName: "© 2026 Bolt Fusion Tech",
     rightsLine: "All rights reserved.",
     socialLinks: [
-      { name: "LinkedIn", url: "https://www.linkedin.com/company/bolt-fusion-tech/" },
+      {
+        name: "LinkedIn",
+        url: "https://www.linkedin.com/company/bolt-fusion-tech/",
+      },
       { name: "Facebook", url: "https://web.facebook.com/boltfusiontech" },
       { name: "X (Twitter)", url: "https://x.com/boltfusiontech" },
     ],
@@ -56,7 +61,11 @@ const raw: SiteContent = {
     headlineLine2: "Lower hiring cost.",
     subtext:
       "Build with a dedicated remote team of top-tier Bangladeshi engineers trusted to deliver speed, quality, and reliability across web, AI, and IoT products.",
-    trustPoints: ["Senior-only team", "Timezone overlap", "Quality-first delivery"],
+    trustPoints: [
+      "Senior-only team",
+      "Timezone overlap",
+      "Quality-first delivery",
+    ],
     logos: ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI & IoT products"],
     tagline: "Senior execution, transparent process, enterprise-grade quality",
     primaryCtaLabel: "Plan your build",
@@ -108,7 +117,8 @@ const raw: SiteContent = {
     trustPoints: ["100% IP Protection", "Top 1% Talent"],
   },
   projects: {
-    introStart: "Selected visuals from shipped work and how we operate—scroll to ",
+    introStart:
+      "Selected visuals from shipped work and how we operate—scroll to ",
     introLinkText: "featured case cards",
     introLinkHref: "#recent-work",
     introEnd: " for full context on our six featured launches.",
@@ -192,8 +202,7 @@ const raw: SiteContent = {
   },
   about: {
     title: "Why Bolt Fusion Tech",
-    bio:
-      "Clients come to us when delivery has to be predictable: clear requirements, honest estimates, and engineering judgment applied early—so you spend less time firefighting and more time growing the product. We work as an extension of your team, focused on outcomes users feel and metrics you can read.",
+    bio: "Clients come to us when delivery has to be predictable: clear requirements, honest estimates, and engineering judgment applied early—so you spend less time firefighting and more time growing the product. We work as an extension of your team, focused on outcomes users feel and metrics you can read.",
     skills: [
       "Web & mobile apps",
       "APIs & integrations",
@@ -215,7 +224,8 @@ const raw: SiteContent = {
       },
       {
         role: "Stabilize & scale",
-        company: "Performance, reliability, and maintainability for live systems",
+        company:
+          "Performance, reliability, and maintainability for live systems",
         period: "As needed",
       },
     ],
@@ -232,7 +242,11 @@ const raw: SiteContent = {
       { name: "Rafa", handle: "@rafa", image: "/team/marc-face.svg" },
       { name: "Nadim", handle: "@nadim", image: "/team/szymon-face.svg" },
       { name: "Joinal", handle: "@joinal", image: "/team/thomas-face.svg" },
-      { name: "Arifur Rahman", handle: "@arifur", image: "/team/christoph-face.svg" },
+      {
+        name: "Arifur Rahman",
+        handle: "@arifur",
+        image: "/team/christoph-face.svg",
+      },
       { name: "Tareq", handle: "@tareq", image: "/team/janic-face.svg" },
       { name: "Nazirul", handle: "@nazirul", image: "/team/mo-face.svg" },
       { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
@@ -262,7 +276,8 @@ const raw: SiteContent = {
           "Luxury commerce experience with a cinematic hero, trust strip, and conversion-focused layout.",
         stack: "Web · Next.js · Commerce",
         alt: "OPAL Fashion × Tech e-commerce hero: craft meets circuitry, shop and brand story",
-        imgClass: "object-[50%_24%] min-[380px]:object-[center_20%] sm:object-[center_top]",
+        imgClass:
+          "object-[50%_24%] min-[380px]:object-[center_20%] sm:object-[center_top]",
       },
       {
         src: "/projects/immidox-immigration.png",
@@ -299,13 +314,199 @@ const raw: SiteContent = {
       },
     ],
   },
+  caseStudy: {
+    badge: "Case study · Systems architecture",
+    title: "Intelligent restaurant search",
+    titleAccentLine: "Multi-tenant microservice · Tiered search · Observable by design",
+    subtitle:
+      "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
+    executiveSummary:
+      "We delivered a multi-tenant restaurant discovery microservice that resolves natural-language queries (for example, “cozy Italian place for date night”) while keeping the majority of requests on a sub-100ms path. The architecture caps model spend at roughly $0.001 per AI-assisted query on average, combines Redis caching with deterministic lane selection, and ships with the metrics, logging, and guardrails operators expect in production.",
+    imageSrc: "/projects/case-fnb-smart-search.png",
+    imageAlt:
+      "Case study visual for AI-assisted restaurant search and discovery product",
+    kpis: [
+      {
+        value: "<100ms",
+        label: "Search SLA",
+        hint: "~80% of queries hit the fast lane",
+      },
+      {
+        value: "~$0.001",
+        label: "Avg. cost / AI search",
+        hint: "Budgeted hybrid retrieval",
+      },
+      {
+        value: "Multi-tenant",
+        label: "Postgres RLS",
+        hint: "Isolated rows per tenant",
+      },
+      {
+        value: "Observable",
+        label: "Production-ready",
+        hint: "Metrics, logs, safe limits",
+      },
+    ],
+    kpiSectionEyebrow: "Service commitments",
+    kpiBlockTitle: "Latency, cost, isolation, and operations",
+    lanesSectionTitle: "Three-lane search architecture",
+    lanesIntro:
+      "Each query is classified before any paid inference: deterministic paths carry the bulk of volume; models run only when phrasing requires interpretation; a short-TTL cache reduces repeat load on the database and providers.",
+    lanes: [
+      {
+        lane: 1,
+        title: "Keyword search",
+        summary: "Simple intents, zero AI spend.",
+        traffic: "~80% of traffic",
+        latency: "<80ms target",
+        bullets: [
+          "Queries like “Italian”, “sushi”, “pizza”.",
+          "PostgreSQL ILIKE plus PostGIS geo filters.",
+          "Predictable path—no model calls.",
+        ],
+        costLine: "$0 marginal cost per query",
+      },
+      {
+        lane: 2,
+        title: "Natural language AI search",
+        summary: "Complex intent → structured retrieval.",
+        traffic: "~20% of traffic",
+        latency: "<1200ms target",
+        bullets: [
+          "Examples: “romantic spot with live music near me”.",
+          "Claude Haiku parses intent to structured JSON.",
+          "OpenAI embeddings + pgvector cosine similarity in Postgres.",
+        ],
+        costLine: "~$0.001 per search (budgeted)",
+      },
+      {
+        lane: 3,
+        title: "Result cache",
+        summary: "Repeat demand disappears at the edge.",
+        traffic: "Hot paths",
+        latency: "<15ms target",
+        bullets: [
+          "Redis with 30s TTL on hashed keys.",
+          "Key = tenant + query + geo + filters + classification.",
+          "Hit-rate goal 30–40% to protect DB and models.",
+        ],
+      },
+    ],
+    stackSectionTitle: "Technical stack",
+    stackBlockTitle: "Implementation stack",
+    stackGroups: [
+      {
+        title: "Backend",
+        items: ["NestJS 10", "TypeScript (strict)", "DDD + Hexagonal + CQRS"],
+      },
+      {
+        title: "Data",
+        items: [
+          "PostgreSQL 17",
+          "PostGIS",
+          "pgvector",
+          "Row-level security (tenancy)",
+        ],
+      },
+      {
+        title: "Cache & realtime",
+        items: [
+          "Redis 7 — result cache (30s)",
+          "Semantic intent cache (60s)",
+          "LLM rate limits (100/min/tenant)",
+          "Pulse: WebSocket + Redis pub/sub",
+        ],
+      },
+      {
+        title: "AI services",
+        items: [
+          "Claude Haiku 4.5 — intent parsing (~90% of AI calls)",
+          "Claude Sonnet 4.6 — menu Q&A only",
+          "OpenAI text-embedding-3-small (1536-d)",
+        ],
+      },
+    ],
+    patternsSectionTitle: "Engineering patterns",
+    patterns: [
+      "Domain-Driven Design",
+      "Hexagonal architecture",
+      "CQRS",
+      "Event-driven architecture",
+    ],
+    architectureSectionTitle: "Bounded contexts",
+    architectureBlockTitle: "Partitioning for maintainable evolution",
+    architectureLead:
+      "Five bounded contexts share a small kernel so search behavior can evolve without coupling unrelated concerns or destabilizing shared infrastructure.",
+    contexts: [
+      {
+        name: "Tenancy",
+        tagline: "Configuration per brand",
+        bullets: [
+          "Valid vibes, cuisines, ranker weights, embedding templates.",
+          "In-memory registry with Redis warmup.",
+        ],
+      },
+      {
+        name: "Discovery",
+        tagline: "The search core",
+        featured: true,
+        bullets: [
+          "Query classifier picks the lane.",
+          "Intent parser (Claude) for NL queries.",
+          "Search index in Postgres + hybrid ranker.",
+        ],
+      },
+      {
+        name: "Indexing",
+        tagline: "Fresh vectors & listings",
+        bullets: [
+          "Venue CRUD on the search index.",
+          "Embedding saga on EntityIndexedEvent.",
+        ],
+      },
+      {
+        name: "GoldenKeys",
+        tagline: "Smart filter chips",
+        bullets: [
+          "Auto-generated chips like “Rooftop”, “Live music”.",
+          "Cron every 6h from search analytics.",
+        ],
+      },
+      {
+        name: "Pulse",
+        tagline: "Live venue status",
+        bullets: [
+          "Open/busy/wait signals.",
+          "Gateway on /pulse with WebSocket fan-out.",
+        ],
+      },
+    ],
+    sharedKernelTitle: "Shared kernel",
+    sharedKernelItems: [
+      "TenantId & Geo value objects",
+      "Result<T, E> for explicit failures",
+      "Prisma + Redis services",
+      "TenantContext via AsyncLocalStorage",
+      "Pino logging",
+      "Claude & OpenAI adapters",
+    ],
+    diagramBadgeLeft: "System overview",
+    diagramBadgeRight: "Production posture",
+    ctaSupportingText:
+      "If you are evaluating search, ranking, or multi-tenant isolation under cost and latency constraints, we can walk through a comparable architecture and delivery approach on a short call.",
+    primaryCtaLabel: "Discuss a similar engagement",
+    primaryCtaHref: "#contact",
+    secondaryCtaLabel: "Book a technical call",
+    secondaryCtaHref: "#schedule",
+  },
   process: {
     badge: "How we work",
     title: "Process",
     intro:
       "A straightforward process designed for busy product leaders: fewer surprises, clearer tradeoffs, and decisions you can explain to your board or budget owner.",
     imageSrc: "/section-process.png",
-    imageAlt: "Product and engineering collaboration during discovery and sprint planning",
+    imageAlt:
+      "Product and engineering collaboration during discovery and sprint planning",
     discussLabel: "Discuss your roadmap",
     workLabel: "See recent work",
     steps: [

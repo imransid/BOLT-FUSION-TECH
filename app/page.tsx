@@ -10,6 +10,7 @@ import Projects from "@/components/Projects";
 import AboutMe from "@/components/AboutMe";
 import Team from "@/components/Team";
 import RecentWorks from "@/components/RecentWorks";
+import CaseStudy from "@/components/CaseStudy";
 import Process from "@/components/Process";
 import Services from "@/components/Services";
 import Industries from "@/components/Industries";
@@ -76,6 +77,8 @@ function renderSection(id: SectionId, blurb: string) {
       return <Team />;
     case "recent_works":
       return <RecentWorks />;
+    case "case_study":
+      return <CaseStudy />;
     case "process":
       return <Process />;
     case "services":

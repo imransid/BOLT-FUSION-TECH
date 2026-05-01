@@ -7,6 +7,7 @@ export const sectionIds = [
   "about",
   "team",
   "recent_works",
+  "case_study",
   "process",
   "services",
   "industries",
@@ -101,6 +102,34 @@ const aiMetricSchema = z.object({
   desc: z.string(),
 });
 
+const caseStudyKpiSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+  hint: z.string().optional(),
+});
+
+const caseStudyLaneSchema = z.object({
+  lane: z.number(),
+  title: z.string(),
+  summary: z.string(),
+  traffic: z.string(),
+  latency: z.string(),
+  bullets: z.array(z.string()),
+  costLine: z.string().optional(),
+});
+
+const caseStudyStackGroupSchema = z.object({
+  title: z.string(),
+  items: z.array(z.string()),
+});
+
+const caseStudyContextSchema = z.object({
+  name: z.string(),
+  tagline: z.string(),
+  bullets: z.array(z.string()),
+  featured: z.boolean().optional(),
+});
+
 const experienceRowSchema = z.object({
   role: z.string(),
   company: z.string(),
@@ -187,6 +216,39 @@ export const siteContentSchema = z.object({
     subtitle: z.string(),
     mobileSwipeHint: z.string(),
     items: z.array(featuredWorkSchema),
+  }),
+  caseStudy: z.object({
+    badge: z.string(),
+    title: z.string(),
+    titleAccentLine: z.string(),
+    subtitle: z.string(),
+    executiveSummary: z.string(),
+    imageSrc: z.string(),
+    imageAlt: z.string(),
+    kpis: z.array(caseStudyKpiSchema),
+    kpiSectionEyebrow: z.string(),
+    kpiBlockTitle: z.string(),
+    lanesSectionTitle: z.string(),
+    lanesIntro: z.string(),
+    lanes: z.array(caseStudyLaneSchema),
+    stackSectionTitle: z.string(),
+    stackBlockTitle: z.string(),
+    stackGroups: z.array(caseStudyStackGroupSchema),
+    patternsSectionTitle: z.string(),
+    patterns: z.array(z.string()),
+    architectureSectionTitle: z.string(),
+    architectureBlockTitle: z.string(),
+    architectureLead: z.string(),
+    contexts: z.array(caseStudyContextSchema),
+    sharedKernelTitle: z.string(),
+    sharedKernelItems: z.array(z.string()),
+    diagramBadgeLeft: z.string(),
+    diagramBadgeRight: z.string(),
+    ctaSupportingText: z.string(),
+    primaryCtaLabel: z.string(),
+    primaryCtaHref: z.string(),
+    secondaryCtaLabel: z.string(),
+    secondaryCtaHref: z.string(),
   }),
   process: z.object({
     badge: z.string(),
