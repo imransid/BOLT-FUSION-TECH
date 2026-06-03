@@ -69,6 +69,10 @@ const featuredWorkSchema = z.object({
   stack: z.string(),
   alt: z.string(),
   imgClass: z.string().optional(),
+  /** Optional deep-dive link (e.g. a case study page). Falls back to the contact anchor. */
+  href: z.string().optional(),
+  /** Short label shown on the card's hover/footer pill when href points to a case study. */
+  ctaLabel: z.string().optional(),
 });
 
 const processStepSchema = z.object({

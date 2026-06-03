@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: new URL("/work/warmchats", base).toString(),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: new URL("/privacy-policy", base).toString(),
       lastModified: now,
       changeFrequency: "yearly",

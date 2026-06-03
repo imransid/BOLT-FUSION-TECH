@@ -117,11 +117,14 @@ export default function RecentWorks() {
           ref={scrollerRef}
           className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden scroll-pl-4 scroll-pr-6 pb-4 pl-1 pr-6 [-webkit-overflow-scrolling:touch] md:scroll-p-0 md:gap-4 md:px-0 md:pr-2"
         >
-          {featuredWork.map((project, i) => (
+          {featuredWork.map((project, i) => {
+            const hasCaseStudy = Boolean(project.href);
+            const ctaLabel = project.ctaLabel ?? "Discuss a similar build";
+            return (
             <motion.a
               key={project.src}
               data-gallery-slide={i}
-              href="#contact"
+              href={project.href ?? "#contact"}
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -131,7 +134,11 @@ export default function RecentWorks() {
                 boxShadow:
                   "0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 48px -28px rgba(0,0,0,0.65)",
               }}
-              aria-label={`${project.title}: ${project.outcome}. Contact to discuss a similar project.`}
+              aria-label={
+                hasCaseStudy
+                  ? `${project.title}: ${project.outcome}. ${ctaLabel}.`
+                  : `${project.title}: ${project.outcome}. Contact to discuss a similar project.`
+              }
             >
               <img
                 src={project.src}
@@ -163,15 +170,22 @@ export default function RecentWorks() {
                 </p>
               </div>
               <span className="pointer-events-none absolute inset-x-4 bottom-4 z-[2] flex justify-center sm:inset-x-5 sm:bottom-5 md:opacity-0 md:transition-opacity md:duration-300 md:group-hover:opacity-100">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-[11px] font-medium text-white backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs">
-                  Discuss a similar build
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-medium backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs ${
+                    hasCaseStudy
+                      ? "border-amber-200/40 bg-amber-300/90 text-[#1a1d22]"
+                      : "border-white/25 bg-white/15 text-white"
+                  }`}
+                >
+                  {ctaLabel}
                   <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden>
                     <path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" />
                   </svg>
                 </span>
               </span>
             </motion.a>
-          ))}
+            );
+          })}
         </div>
 
         <div

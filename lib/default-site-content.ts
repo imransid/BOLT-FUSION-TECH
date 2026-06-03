@@ -275,6 +275,8 @@ const raw: SiteContent = {
         stack: "Web · AI Automation · Microservices",
         alt: "WarmChats landing page: 'Stop chasing leads—let AI book appointments for you', comparing manual follow-up with WarmChats automation",
         imgClass: "object-[center_top]",
+        href: "/work/warmchats",
+        ctaLabel: "Read the case study",
       },
       {
         src: "/projects/hospitality-ops-admin.png",
