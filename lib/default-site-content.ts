@@ -121,8 +121,14 @@ const raw: SiteContent = {
       "Selected visuals from shipped work and how we operate—scroll to ",
     introLinkText: "featured case cards",
     introLinkHref: "#recent-work",
-    introEnd: " for full context on our six featured launches.",
+    introEnd: " for full context on our seven featured launches.",
     tiles: [
+      {
+        src: "/projects/warmchats-ai-booking.png",
+        alt: "WarmChats landing page: AI that books appointments from leads, with manual follow-up vs automation comparison",
+        caption: "WarmChats — AI booking",
+        imgMobileClass: "object-[center_top]",
+      },
       {
         src: "/projects/hospitality-ops-admin.png",
         alt: "Hospitality staff admin: kitchen, POS, orders, procurement",
@@ -258,9 +264,18 @@ const raw: SiteContent = {
   recentWorks: {
     title: "Featured client work",
     subtitle:
-      "Six shipped experiences—operations, commerce, regulated services, marketplaces, community, and agency brands—each tuned to real users and conversion.",
+      "Seven shipped experiences—AI lead automation, operations, commerce, regulated services, marketplaces, community, and agency brands—each tuned to real users and conversion.",
     mobileSwipeHint: "Swipe sideways for more — tap dots to jump",
     items: [
+      {
+        src: "/projects/warmchats-ai-booking.png",
+        title: "WarmChats — AI appointment booking",
+        outcome:
+          "AI follow-up that's always first to respond: Claude qualifies and routes leads while GPT-4.1 handles instant auto-replies and books appointments—24/7, with every message tracked.",
+        stack: "Web · AI Automation · Microservices",
+        alt: "WarmChats landing page: 'Stop chasing leads—let AI book appointments for you', comparing manual follow-up with WarmChats automation",
+        imgClass: "object-[center_top]",
+      },
       {
         src: "/projects/hospitality-ops-admin.png",
         title: "Hospitality operations suite",
