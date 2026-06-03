@@ -45,6 +45,12 @@ export default function Footer() {
               {link.name}
             </a>
           ))}
+          <a
+            href="/privacy-policy"
+            className="rounded-[10px] border border-white/12 bg-white/[0.02] px-3.5 py-2 text-sm text-white/65 transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200/45 hover:bg-white/[0.06] hover:text-white hover:shadow-[0_10px_24px_-16px_rgba(125,211,252,0.75)]"
+          >
+            Privacy Policy
+          </a>
         </div>
 
         {/* Back to top */}
