@@ -13,65 +13,89 @@ import { LogoMark } from "@/components/Logo";
 const SITE_URL = "https://www.warmchats.com/";
 
 const HERO = {
-  badge: "Case study · AI Automation",
-  title: "WarmChats: AI that replies in seconds and books the meeting.",
+  badge: "Case study · Real Estate AI",
+  title: "WarmChats: turn new real estate leads into booked appointments — automatically.",
   subtitle:
-    "An always-on AI sales assistant that qualifies inbound leads, replies instantly across channels, and books appointments automatically — so no warm lead ever goes cold.",
+    "An always-on AI assistant for real estate agents. WarmChats instantly answers every new lead from Zillow, open houses, and Facebook, qualifies buyers and sellers, follows up 24/7 on email and SMS, and books showings straight into the calendar — so no lead ever goes cold.",
   accentLine:
     "Next.js · NestJS · Django · PostgreSQL · Claude · GPT-4.1 · event-driven microservices",
   image: "/projects/warmchats-ai-booking.png",
   imageAlt:
-    "WarmChats landing page — 'Stop chasing leads, let AI book appointments for you' — comparing manual follow-up with WarmChats automation",
+    "WarmChats landing page — 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
   summary:
-    "Speed-to-lead decides who wins the deal. WarmChats removes the human delay entirely: Claude reads and qualifies every inbound lead, GPT-4.1 holds a natural, on-brand conversation in real time, and the system books the appointment straight into the calendar — 24/7, with every message tracked. We delivered it as an event-driven microservice platform built to scale from first pilot to thousands of concurrent conversations.",
+    "For real estate agents, speed-to-lead decides who gets the showing and wins the listing. WarmChats removes the human delay entirely: Claude reads and qualifies every new lead — buyer or seller — GPT-4.1 holds a natural, on-brand conversation across email and SMS, and the system books the appointment straight into the calendar, 24/7, with every message tracked. We delivered it as an event-driven microservice platform built to scale from a solo agent's first pilot to a brokerage running thousands of concurrent conversations.",
 } as const;
 
 const KPIS = [
-  { value: "<60s", label: "First response", hint: "AI replies the moment a lead lands — day or night." },
-  { value: "3×", label: "More replies", hint: "Instant, conversational follow-up keeps leads engaged." },
-  { value: "24/7", label: "Autonomous", hint: "Qualifies, nurtures, and books with no human in the loop." },
-  { value: "100%", label: "Tracked", hint: "Every message logged and auditable across channels." },
+  { value: "<60s", label: "First response", hint: "AI replies the moment a new lead lands — Zillow, open house, or Facebook." },
+  { value: "3×", label: "More replies", hint: "Instant, conversational follow-up keeps buyers and sellers engaged." },
+  { value: "24/7", label: "Autonomous", hint: "Qualifies, nurtures, and books showings with no agent in the loop." },
+  { value: "100%", label: "Tracked", hint: "Every lead, message, and booking logged across email and SMS." },
 ] as const;
 
 const LANES = [
   {
     step: "01",
     tag: "Qualify",
-    title: "Lead intake & scoring",
+    title: "Lead intake & buyer/seller routing",
     summary:
-      "Claude reads each inbound lead, infers intent, and routes only the conversations worth pursuing.",
+      "Claude reads every new lead, works out whether they're a buyer or a seller and how ready they are, and routes them into the right flow automatically.",
     bullets: [
-      "Claude (Opus) classifies intent, urgency, and fit",
-      "Noise and spam filtered before a human ever sees it",
-      "High-intent leads prioritised and routed instantly",
+      "Claude classifies intent — buyer, seller, urgency, and fit",
+      "Leads self-route: Buyer → Nurture, Seller → Nurture, Appointment → Booking",
+      "Spam and tyre-kickers filtered before they reach the agent",
     ],
-    foot: "AI lead selection",
+    foot: "AI lead routing",
   },
   {
     step: "02",
     tag: "Engage",
-    title: "Instant AI replies",
+    title: "Instant replies on email & SMS",
     summary:
-      "GPT-4.1 holds a natural, on-brand conversation and answers questions in real time across web and messaging.",
+      "GPT-4.1 answers within 60 seconds in the agent's voice, asks the right qualifying questions, and keeps the conversation warm around the clock.",
     bullets: [
-      "GPT-4.1 conversational replies, tuned per brand voice",
-      "Context carried across the full thread, not single messages",
-      "Hand-off to a human the moment it's actually needed",
+      "GPT-4.1 replies in under 60s, tuned to the agent's brand voice",
+      "Context carried across the whole thread and both channels",
+      "Hands off to the agent the moment a human is genuinely needed",
     ],
     foot: "Conversational AI",
   },
   {
     step: "03",
     tag: "Book",
-    title: "Automated scheduling",
+    title: "Showings booked automatically",
     summary:
-      "The assistant detects intent to meet, offers real availability, and writes the appointment to the calendar.",
+      "The assistant detects intent to meet, offers real availability, and writes the showing or call straight into the calendar.",
     bullets: [
       "Detects booking intent and proposes open slots",
-      "Confirms and writes events automatically",
-      "Reminders and follow-ups close the no-show gap",
+      "Confirms and writes appointments automatically",
+      "Reminders and re-engagement close the no-show gap",
     ],
     foot: "Zero-touch booking",
+  },
+] as const;
+
+const GALLERY = [
+  {
+    src: "/projects/warmchats-dashboard.png",
+    title: "Operator dashboard",
+    caption:
+      "Estimated pipeline value, hot leads, appointments, and AI wins — everything the agent needs in one view.",
+    featured: true,
+  },
+  {
+    src: "/projects/warmchats-ai-agent.png",
+    title: "AI Agent — leads route themselves",
+    caption:
+      "Buyer Nurture, Seller Nurture, Re-Engagement, Booking Flow, and Human Takeover, triggered automatically.",
+    featured: false,
+  },
+  {
+    src: "/projects/warmchats-onboarding.png",
+    title: "Two-minute onboarding",
+    caption:
+      "Connect email or SMS and the AI goes live across the agent's channels in a guided 3-step setup.",
+    featured: false,
   },
 ] as const;
 
@@ -128,10 +152,10 @@ const PATTERNS = [
 ] as const;
 
 const OUTCOMES = [
-  "Every inbound lead answered in seconds, around the clock — no staffing required.",
-  "Reps freed from repetitive first-touch follow-up to focus on closing.",
-  "A complete, searchable record of every AI conversation and booking.",
-  "An architecture that scales from pilot to thousands of concurrent chats.",
+  "Every new lead — Zillow, open house, or Facebook — answered in seconds, day or night, with no extra staffing.",
+  "Agents freed from repetitive first-touch follow-up to focus on listings and closings.",
+  "A complete, searchable record of every conversation, qualification, and booking.",
+  "An architecture that scales from a solo agent to a brokerage running thousands of concurrent chats.",
 ] as const;
 
 /* -------------------------------------------------------------------------- */
@@ -345,8 +369,8 @@ export default function WarmChatsCaseStudy() {
         <Eyebrow>How it works</Eyebrow>
         <Heading>Qualify → Engage → Book, fully automated.</Heading>
         <p className="mt-3 max-w-[68ch] text-sm leading-[1.7] text-white/58 md:text-[15px]">
-          Each inbound lead flows through three AI stages. The model handles the
-          conversation end-to-end and only escalates to a human when it genuinely
+          Each new lead flows through three AI stages. The model handles the
+          conversation end-to-end and only escalates to the agent when it genuinely
           matters.
         </p>
 
@@ -386,6 +410,70 @@ export default function WarmChatsCaseStudy() {
               </p>
             </motion.article>
           ))}
+        </div>
+
+        <Divider />
+
+        {/* ---------------------------------------------------------------- */}
+        {/* PRODUCT GALLERY                                                  */}
+        {/* ---------------------------------------------------------------- */}
+        <Eyebrow>The product</Eyebrow>
+        <Heading>Inside WarmChats.</Heading>
+        <p className="mt-3 max-w-[68ch] text-sm leading-[1.7] text-white/58 md:text-[15px]">
+          The agent-facing product — a live operator dashboard, self-routing AI
+          workflows, and a two-minute setup — all running on the platform we built.
+        </p>
+
+        <div className="mt-8 flex flex-col gap-5">
+          {/* Featured screen */}
+          {GALLERY.filter((g) => g.featured).map((g) => (
+            <motion.figure
+              key={g.src}
+              {...reveal(0.05, reduced)}
+              className="overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)]"
+            >
+              <div className="relative aspect-[16/9] w-full">
+                <Image
+                  src={g.src}
+                  alt={g.title}
+                  fill
+                  sizes="(max-width: 1180px) 100vw, 1116px"
+                  className="object-cover object-top"
+                />
+              </div>
+              <figcaption className="flex flex-col gap-1 border-t border-white/10 bg-black/75 px-5 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <span className="text-[13px] font-medium text-white/85">{g.title}</span>
+                <span className="max-w-[62ch] text-[12px] leading-relaxed text-white/50">
+                  {g.caption}
+                </span>
+              </figcaption>
+            </motion.figure>
+          ))}
+
+          {/* Secondary screens */}
+          <div className="grid gap-5 md:grid-cols-2">
+            {GALLERY.filter((g) => !g.featured).map((g, i) => (
+              <motion.figure
+                key={g.src}
+                {...reveal(0.06 + i * 0.05, reduced)}
+                className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_30px_72px_-40px_rgba(0,0,0,0.85)]"
+              >
+                <div className="relative aspect-[16/10] w-full">
+                  <Image
+                    src={g.src}
+                    alt={g.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 546px"
+                    className="object-cover object-top"
+                  />
+                </div>
+                <figcaption className="flex flex-1 flex-col gap-1 border-t border-white/10 bg-black/75 px-5 py-4 backdrop-blur-md">
+                  <span className="text-[13px] font-medium text-white/85">{g.title}</span>
+                  <span className="text-[12px] leading-relaxed text-white/50">{g.caption}</span>
+                </figcaption>
+              </motion.figure>
+            ))}
+          </div>
         </div>
 
         <Divider />

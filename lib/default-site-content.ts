@@ -125,8 +125,8 @@ const raw: SiteContent = {
     tiles: [
       {
         src: "/projects/warmchats-ai-booking.png",
-        alt: "WarmChats landing page: AI that books appointments from leads, with manual follow-up vs automation comparison",
-        caption: "WarmChats — AI booking",
+        alt: "WarmChats landing page: turn new real estate leads into booked appointments automatically, trusted by agents using Zillow, open houses, and Facebook leads",
+        caption: "WarmChats — real estate AI",
         imgMobileClass: "object-[center_top]",
       },
       {
@@ -269,11 +269,11 @@ const raw: SiteContent = {
     items: [
       {
         src: "/projects/warmchats-ai-booking.png",
-        title: "WarmChats — AI appointment booking",
+        title: "WarmChats — AI booking for real estate",
         outcome:
-          "AI follow-up that's always first to respond: Claude qualifies and routes leads while GPT-4.1 handles instant auto-replies and books appointments—24/7, with every message tracked.",
-        stack: "Web · AI Automation · Microservices",
-        alt: "WarmChats landing page: 'Stop chasing leads—let AI book appointments for you', comparing manual follow-up with WarmChats automation",
+          "Always-first AI follow-up for agents: Claude qualifies and routes every new lead—buyer or seller—while GPT-4.1 replies instantly on email and SMS and books showings 24/7, with every message tracked.",
+        stack: "Real Estate · AI Automation · Microservices",
+        alt: "WarmChats landing page: 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
         imgClass: "object-[center_top]",
         href: "/work/warmchats",
         ctaLabel: "Read the case study",

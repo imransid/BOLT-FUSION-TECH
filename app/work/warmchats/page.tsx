@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import WarmChatsCaseStudy from "@/components/case-studies/WarmChatsCaseStudy";
 
-const TITLE = "WarmChats — AI appointment booking | Case study";
+const TITLE = "WarmChats — AI that books real estate appointments | Case study";
 const DESCRIPTION =
-  "How we built WarmChats: an always-on AI sales assistant that qualifies leads with Claude, replies instantly with GPT-4.1, and books appointments automatically — on an event-driven microservice stack (Next.js, NestJS, Django, PostgreSQL).";
+  "How we built WarmChats: an always-on AI assistant for real estate agents that qualifies every new lead with Claude, replies instantly on email and SMS with GPT-4.1, and books showings automatically — on an event-driven microservice stack (Next.js, NestJS, Django, PostgreSQL).";
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = getSiteUrl();
