@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -40,14 +41,14 @@ export default function Services() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-              style={{ fontFamily: "Satoshi, sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               {s.title}
             </motion.h2>
 
             <p
               className="text-lg text-white/65 opacity-90 sm:text-xl"
-              style={{ fontFamily: "'Inter Display', sans-serif" }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {s.intro}
             </p>
@@ -89,17 +90,15 @@ export default function Services() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 overflow-hidden rounded-[17px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
+            className="relative flex-1 min-w-0 overflow-hidden rounded-[17px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
             style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
           >
-            <img
+            <Image
               src={s.imageSrc}
               alt={s.imageAlt}
-              width={1376}
-              height={768}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-center"
+              fill
+              sizes="(max-width: 1024px) 100vw, 700px"
+              className="object-cover object-center"
             />
           </motion.div>
         </div>
@@ -141,12 +140,12 @@ export default function Services() {
                 <path d="M12 8v8M8 12h8" />
               </svg>
 
-              <h4
+              <h3
                 className="text-xl md:text-2xl text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {card.title}
-              </h4>
+              </h3>
 
               <div className="w-full h-px bg-white/10" />
 

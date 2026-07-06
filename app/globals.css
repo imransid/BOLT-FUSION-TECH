@@ -6,8 +6,8 @@
   --color-muted: rgba(255, 255, 255, 0.65);
   --color-card: #0d0d0d;
   --color-border: rgba(255, 255, 255, 0.1);
-  --font-sans: "Inter", "Inter Display", sans-serif;
-  --font-heading: "Satoshi", sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-heading: var(--font-satoshi), var(--font-inter), system-ui, sans-serif;
 }
 
 /* Scrollbar hide */
@@ -297,6 +297,14 @@
   }
 }
 
+/* Skip rendering + pause CSS animations for below-the-fold sections until they
+   approach the viewport (Baseline 2025). contain-intrinsic-size reserves space
+   to avoid scrollbar jump; `auto` remembers the real size once rendered. */
+.cv-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
@@ -305,7 +313,7 @@ html {
 body {
   background-color: #000000;
   color: #ffffff;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-sans);
 }
 
 ::selection {

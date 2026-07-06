@@ -43,7 +43,7 @@ function SectionHeading({
       <h3
         id={titleId}
         className={`font-medium leading-snug tracking-[-0.02em] text-white ${eyebrow ? "mt-2.5" : ""} text-[clamp(1.2rem,2.4vw,1.65rem)]`}
-        style={{ fontFamily: "Satoshi, sans-serif" }}
+        style={{ fontFamily: "var(--font-heading)" }}
       >
         {title}
       </h3>
@@ -97,7 +97,7 @@ export default function CaseStudy() {
                 id="case-study-heading"
                 {...revealProps(0.04, !!reduced)}
                 className="text-balance text-[clamp(1.85rem,4vw,3.1rem)] font-normal leading-[1.06] tracking-[-0.032em] text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {cs.title}
               </motion.h2>
@@ -180,7 +180,7 @@ export default function CaseStudy() {
               <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                 <span
                   className="text-[1.75rem] font-light tabular-nums leading-none text-cyan-200/95 md:text-[1.95rem]"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {k.value}
                 </span>
@@ -230,7 +230,7 @@ export default function CaseStudy() {
               </div>
               <h4
                 className="mt-5 text-base font-medium leading-snug text-white md:text-lg"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {lane.title}
               </h4>
@@ -313,7 +313,7 @@ export default function CaseStudy() {
                 </p>
                 <h4
                   className="mt-2 text-lg font-medium text-white md:text-xl"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {featuredContext.name}
                 </h4>
@@ -352,7 +352,7 @@ export default function CaseStudy() {
                   {...revealProps(0.04 + ci * 0.03, !!reduced)}
                   className="rounded-2xl border border-white/[0.07] bg-black/28 p-5 md:p-6"
                 >
-                  <h4 className="text-[15px] font-medium text-white" style={{ fontFamily: "Satoshi, sans-serif" }}>
+                  <h4 className="text-[15px] font-medium text-white" style={{ fontFamily: "var(--font-heading)" }}>
                     {ctx.name}
                   </h4>
                   <p className="mt-1 text-[12px] text-white/48 md:text-[13px]">{ctx.tagline}</p>

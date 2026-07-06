@@ -32,14 +32,25 @@ export const industryIconKeySchema = z.enum([
 
 export type IndustryIconKey = z.infer<typeof industryIconKeySchema>;
 
+/** Reject links whose scheme could execute script when rendered as href/src. */
+const DANGEROUS_SCHEME = /^\s*(?:javascript|vbscript|data|file):/i;
+const safeUrl = z
+  .string()
+  .min(1)
+  .refine((v) => !DANGEROUS_SCHEME.test(v), { message: "Unsafe URL scheme" });
+/** Like safeUrl but allows empty/relative/anchor hrefs (only blocks dangerous schemes). */
+const safeHref = z
+  .string()
+  .refine((v) => !DANGEROUS_SCHEME.test(v), { message: "Unsafe URL scheme" });
+
 const navLinkSchema = z.object({
   label: z.string(),
-  href: z.string(),
+  href: safeHref,
 });
 
 const socialLinkSchema = z.object({
   name: z.string(),
-  url: z.string().min(1),
+  url: safeUrl,
 });
 
 const faqItemSchema = z.object({
@@ -70,7 +81,7 @@ const featuredWorkSchema = z.object({
   alt: z.string(),
   imgClass: z.string().optional(),
   /** Optional deep-dive link (e.g. a case study page). Falls back to the contact anchor. */
-  href: z.string().optional(),
+  href: safeHref.optional(),
   /** Short label shown on the card's hover/footer pill when href points to a case study. */
   ctaLabel: z.string().optional(),
 });
@@ -96,7 +107,7 @@ const teamMemberSchema = z.object({
   name: z.string(),
   handle: z.string(),
   image: z.string(),
-  profileUrl: z.string().optional(),
+  profileUrl: safeHref.optional(),
 });
 
 const aiMetricSchema = z.object({
@@ -170,9 +181,9 @@ export const siteContentSchema = z.object({
     logos: z.array(z.string()),
     tagline: z.string(),
     primaryCtaLabel: z.string(),
-    primaryCtaHref: z.string(),
+    primaryCtaHref: safeHref,
     secondaryCtaLabel: z.string(),
-    secondaryCtaHref: z.string(),
+    secondaryCtaHref: safeHref,
     scrollHintLeft: z.string(),
     scrollHintRight: z.string(),
   }),
@@ -182,7 +193,7 @@ export const siteContentSchema = z.object({
     headlineLine3: z.string(),
     intro: z.string(),
     scheduleCtaLabel: z.string(),
-    scheduleCtaHref: z.string(),
+    scheduleCtaHref: safeHref,
     imageSrc: z.string(),
     imageAlt: z.string(),
     metrics: z.array(aiMetricSchema),
@@ -193,7 +204,7 @@ export const siteContentSchema = z.object({
   projects: z.object({
     introStart: z.string(),
     introLinkText: z.string(),
-    introLinkHref: z.string(),
+    introLinkHref: safeHref,
     introEnd: z.string(),
     tiles: z.array(projectTileSchema),
     featuredDetailLabel: z.string(),
@@ -250,9 +261,9 @@ export const siteContentSchema = z.object({
     diagramBadgeRight: z.string(),
     ctaSupportingText: z.string(),
     primaryCtaLabel: z.string(),
-    primaryCtaHref: z.string(),
+    primaryCtaHref: safeHref,
     secondaryCtaLabel: z.string(),
-    secondaryCtaHref: z.string(),
+    secondaryCtaHref: safeHref,
   }),
   process: z.object({
     badge: z.string(),
@@ -292,9 +303,9 @@ export const siteContentSchema = z.object({
     title: z.string(),
     intro: z.string(),
     startConversationLabel: z.string(),
-    startConversationHref: z.string(),
+    startConversationHref: safeHref,
     recentWorkLabel: z.string(),
-    recentWorkHref: z.string(),
+    recentWorkHref: safeHref,
     items: z.array(testimonialSchema),
   }),
   faq: z.object({
@@ -307,9 +318,9 @@ export const siteContentSchema = z.object({
     title: z.string(),
     body: z.string(),
     scheduleLabel: z.string(),
-    scheduleHref: z.string(),
+    scheduleHref: safeHref,
     emailLabel: z.string(),
-    emailHref: z.string(),
+    emailHref: safeHref,
   }),
   scheduleEmbed: z.object({
     blurb: z.string(),

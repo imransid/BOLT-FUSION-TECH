@@ -215,13 +215,13 @@ export default function Logo({ className = "", markOnly = false }: LogoProps) {
         <span className="flex min-w-0 flex-col items-start justify-center gap-0.5">
           <span
             className="text-[0.5625rem] font-normal uppercase tracking-[0.62em] text-zinc-500 sm:text-[0.625rem] sm:tracking-[0.58em]"
-            style={{ fontFamily: "Satoshi, system-ui, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Bolt
           </span>
           <span
             className="bg-gradient-to-r from-amber-50 via-amber-300 to-orange-500 bg-clip-text text-[1.0625rem] font-semibold leading-none tracking-[-0.04em] text-transparent sm:text-[1.125rem]"
-            style={{ fontFamily: "Satoshi, system-ui, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Fusion
           </span>

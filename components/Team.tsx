@@ -168,7 +168,7 @@ function TeamMemberCard({
         <div className="relative z-[1] flex flex-1 flex-col px-4 pb-5 pt-4 sm:pt-5">
           <span
             className="bg-gradient-to-r from-white via-white to-white/75 bg-clip-text text-[15px] font-medium tracking-[-0.03em] text-transparent"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {member.name}
           </span>
@@ -214,7 +214,7 @@ function AnimatedSeatCount({
           ? `text-5xl font-extralight tabular-nums tracking-tighter md:text-6xl ${className}`
           : "text-5xl font-extralight tabular-nums tracking-tighter text-white md:text-6xl"
       }
-      style={{ fontFamily: "Satoshi, sans-serif" }}
+      style={{ fontFamily: "var(--font-heading)" }}
     >
       {display}
     </span>
@@ -398,7 +398,7 @@ export default function Team() {
             <div className="space-y-6">
               <h2
                 className="text-[clamp(2.4rem,5.8vw,5rem)] font-normal leading-[1.02] tracking-[-0.045em] text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 <motion.span
                   className="block"
@@ -435,7 +435,7 @@ export default function Team() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ ...springSoft, delay: 0.14 }}
               className="max-w-lg text-[15px] leading-[1.7] text-white/50 md:text-[17px]"
-              style={{ fontFamily: "'Inter Display', Inter, sans-serif" }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {t.subtext}
             </motion.p>

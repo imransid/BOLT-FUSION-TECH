@@ -1,7 +1,12 @@
 export const ADMIN_COOKIE_NAME = "bft_admin";
 
-/** HMAC signing still works with short strings; use a long random value in production. */
-const MIN_ADMIN_SECRET_LENGTH = 6;
+/**
+ * Enforce a real HMAC key in production (fail closed if too short); stay lenient
+ * in dev so local setup isn't blocked. A short prod secret disables the admin.
+ */
+function minAdminSecretLength(): number {
+  return process.env.NODE_ENV === "production" ? 32 : 6;
+}
 
 const encoder = new TextEncoder();
 
@@ -39,7 +44,7 @@ export async function verifyAdminSession(
   secret: string,
   token: string | undefined,
 ): Promise<boolean> {
-  if (!token || secret.length < MIN_ADMIN_SECRET_LENGTH) return false;
+  if (!token || secret.length < minAdminSecretLength()) return false;
   const parts = token.split(".");
   if (parts.length !== 2) return false;
   const [payload, sig] = parts;
@@ -53,7 +58,7 @@ export async function verifyAdminSession(
 
 export function getSessionSecret(): string | undefined {
   const s = process.env.SITE_ADMIN_SECRET ?? process.env.ADMIN_SESSION_SECRET;
-  if (!s || s.length < MIN_ADMIN_SECRET_LENGTH) return undefined;
+  if (!s || s.length < minAdminSecretLength()) return undefined;
   return s;
 }
 

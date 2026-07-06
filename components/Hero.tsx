@@ -5,10 +5,13 @@ import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
 
-const HeroThreeField = dynamic(() => import("@/components/HeroThreeField"), {
-  ssr: false,
-  loading: () => null,
-});
+const HeroParticleField = dynamic(
+  () => import("@/components/HeroParticleField"),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 export default function Hero() {
   const { hero: h } = useSiteContent();
@@ -21,17 +24,17 @@ export default function Hero() {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black" />
 
-        <div
-          className="pointer-events-none absolute inset-0 z-[2] hidden mix-blend-soft-light opacity-[0.24] md:block"
-          aria-hidden
-        >
-          <HeroThreeField />
+        {/* Interactive curl-noise particle nebula (decorative, cursor-reactive) */}
+        <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+          <HeroParticleField />
         </div>
 
-        <div className="absolute left-1/2 top-[20%] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-cyan-200/[0.07] blur-[88px] md:h-[460px] md:w-[460px] md:blur-[110px]" />
-        <div className="absolute bottom-[10%] right-[8%] hidden h-[300px] w-[300px] rounded-full bg-amber-200/[0.05] blur-[95px] md:block" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,rgba(255,255,255,0.09),transparent_52%)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
+        <div className="absolute left-1/2 top-[20%] z-[2] h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-cyan-200/[0.07] blur-[88px] md:h-[460px] md:w-[460px] md:blur-[110px]" />
+        <div className="absolute bottom-[10%] right-[8%] z-[2] hidden h-[300px] w-[300px] rounded-full bg-amber-200/[0.05] blur-[95px] md:block" />
+        <div className="absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_50%_20%,rgba(255,255,255,0.09),transparent_52%)]" />
+        {/* Center vignette keeps the headline legible over the additive glow */}
+        <div className="absolute inset-0 z-[2] bg-[radial-gradient(ellipse_at_50%_42%,rgba(0,0,0,0.5),rgba(0,0,0,0.16)_36%,transparent_60%)]" />
+        <div className="absolute inset-0 z-[2] bg-gradient-to-b from-transparent via-transparent to-black" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[980px] flex-col items-center gap-7 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
@@ -39,7 +42,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="group relative flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.03] px-4 py-2.5 shadow-[0_12px_30px_-18px_rgba(255,255,255,0.35)] backdrop-blur-[68px]"
+          className="group relative flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.03] px-4 py-2.5 shadow-[0_12px_30px_-18px_rgba(255,255,255,0.35)] backdrop-blur-2xl"
         >
           <span
             className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-100"
@@ -56,11 +59,12 @@ export default function Hero() {
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          // LCP element — render visible immediately (never gate it behind opacity:0).
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          transition={{ duration: 0.6 }}
           className="max-w-[13ch] text-[clamp(2.1rem,6vw+0.35rem,6rem)] font-normal leading-[0.98] tracking-[-0.04em] text-balance sm:leading-[0.98] lg:text-[96px]"
-          style={{ fontFamily: "Satoshi, sans-serif" }}
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           <span className="bg-gradient-to-b from-white via-white to-white/80 bg-clip-text text-transparent">
             {h.headlineLine1}
@@ -157,7 +161,7 @@ export default function Hero() {
               <span
                 key={i}
                 className="text-white/30 text-sm font-medium whitespace-nowrap tracking-widest uppercase flex-shrink-0"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {logo}
               </span>

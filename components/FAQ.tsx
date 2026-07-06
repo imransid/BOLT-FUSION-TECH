@@ -37,7 +37,7 @@ export default function FAQ() {
 
           <h2
             className="px-1 text-[clamp(2rem,8vw,3.5rem)] font-normal leading-[1.05] text-balance sm:text-7xl sm:leading-[1em] lg:text-[80px]"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {faq.title}
           </h2>

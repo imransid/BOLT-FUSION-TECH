@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -36,14 +37,14 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-              style={{ fontFamily: "Satoshi, sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               {te.title}
             </motion.h2>
 
             <p
               className="text-lg text-white/65 opacity-90 sm:text-xl"
-              style={{ fontFamily: "'Inter Display', sans-serif" }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {te.intro}
             </p>
@@ -70,16 +71,14 @@ export default function Testimonials() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="flex-1 min-w-0 overflow-hidden rounded-[8px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
+            className="relative flex-1 min-w-0 overflow-hidden rounded-[8px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
           >
-            <img
+            <Image
               src="/section-testimonials.png"
               alt="Client stakeholders in a trusted advisory conversation"
-              width={1376}
-              height={768}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover object-center"
+              fill
+              sizes="(max-width: 1024px) 100vw, 700px"
+              className="object-cover object-center"
             />
           </motion.div>
         </div>

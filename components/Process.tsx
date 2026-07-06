@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -16,17 +17,15 @@ export default function Process() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="flex-1 min-w-0 lg:min-w-[460px] min-h-[360px] rounded-[17px] overflow-hidden"
+          className="relative flex-1 min-w-0 lg:min-w-[460px] min-h-[360px] rounded-[17px] overflow-hidden"
           style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
         >
-          <img
+          <Image
             src={p.imageSrc}
             alt={p.imageAlt}
-            width={1376}
-            height={768}
-            loading="lazy"
-            decoding="async"
-            className="h-full min-h-[360px] w-full object-cover object-center"
+            fill
+            sizes="(max-width: 1024px) 100vw, 700px"
+            className="object-cover object-center"
           />
         </motion.div>
 
@@ -56,14 +55,14 @@ export default function Process() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {p.title}
           </motion.h2>
 
           <p
             className="max-w-[640px] text-lg text-white/65 sm:text-xl"
-            style={{ fontFamily: "'Inter Display', sans-serif" }}
+            style={{ fontFamily: "var(--font-sans)" }}
           >
             {p.intro}
           </p>
@@ -119,7 +118,7 @@ export default function Process() {
 
                 <h3
                   className="text-2xl md:text-3xl font-normal text-white"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {step.title}
                 </h3>

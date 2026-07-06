@@ -22,7 +22,7 @@ export default function AIDrivenExcellence() {
           >
             <h2
               className="max-w-[14ch] text-[clamp(2rem,4vw,3.4rem)] font-normal leading-[1.02] tracking-[-0.03em] text-white"
-              style={{ fontFamily: "Satoshi, sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               {a.headlineLine1}
               <br />
@@ -70,7 +70,7 @@ export default function AIDrivenExcellence() {
                 <div className="mb-1.5 flex items-baseline gap-2">
                   <span
                     className="text-[1.9rem] font-light leading-none text-cyan-200"
-                    style={{ fontFamily: "Satoshi, sans-serif" }}
+                    style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {metric.value}
                   </span>
@@ -80,7 +80,7 @@ export default function AIDrivenExcellence() {
                 </div>
                 <h3
                   className="text-xl text-white"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {metric.title}
                 </h3>
@@ -102,7 +102,7 @@ export default function AIDrivenExcellence() {
           <div className="border-l-2 border-cyan-200/75 pl-4">
             <p
               className="text-[1.55rem] leading-none text-white"
-              style={{ fontFamily: "Satoshi, sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               {a.footerTitle}
             </p>

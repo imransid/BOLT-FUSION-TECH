@@ -193,7 +193,7 @@ function Heading({ children }: { children: React.ReactNode }) {
   return (
     <h2
       className="mt-2.5 text-[clamp(1.35rem,2.8vw,1.9rem)] font-medium leading-snug tracking-[-0.02em] text-white"
-      style={{ fontFamily: "Satoshi, sans-serif" }}
+      style={{ fontFamily: "var(--font-heading)" }}
     >
       {children}
     </h2>
@@ -251,7 +251,7 @@ export default function WarmChatsCaseStudy() {
             <motion.h1
               {...reveal(0.04, reduced)}
               className="text-balance text-[clamp(2.1rem,5vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.032em] text-white"
-              style={{ fontFamily: "Satoshi, sans-serif" }}
+              style={{ fontFamily: "var(--font-heading)" }}
             >
               {HERO.title}
             </motion.h1>
@@ -345,7 +345,7 @@ export default function WarmChatsCaseStudy() {
               <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                 <span
                   className="text-[1.9rem] font-light leading-none text-cyan-200/95 md:text-[2.1rem]"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {k.value}
                 </span>
@@ -358,7 +358,7 @@ export default function WarmChatsCaseStudy() {
           ))}
         </motion.div>
         <p className="mt-3 text-[11px] leading-relaxed text-white/35">
-          Figures reflect the WarmChats product's automation targets.
+          Figures reflect the WarmChats product&apos;s automation targets.
         </p>
 
         <Divider />
@@ -392,7 +392,7 @@ export default function WarmChatsCaseStudy() {
               </div>
               <h3
                 className="mt-5 text-lg font-medium leading-snug text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {lane.title}
               </h3>
@@ -501,7 +501,7 @@ export default function WarmChatsCaseStudy() {
                 >
                   <h4
                     className="text-[15px] font-medium text-white"
-                    style={{ fontFamily: "Satoshi, sans-serif" }}
+                    style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {svc.name}
                   </h4>
@@ -598,7 +598,7 @@ export default function WarmChatsCaseStudy() {
         >
           <h2
             className="mx-auto max-w-[24ch] text-balance text-[clamp(1.5rem,3.4vw,2.2rem)] font-normal leading-[1.1] tracking-[-0.02em] text-white"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             Want an AI that books appointments while you sleep?
           </h2>

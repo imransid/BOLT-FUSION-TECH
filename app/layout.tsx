@@ -1,13 +1,24 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 import { getSiteUrl } from "@/lib/site-url";
 
+// Variable font (single axis file, all weights) — self-hosted with display:swap
+// and an automatic size-adjusted fallback (eliminates web-font swap CLS).
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  display: "swap",
+});
+
+// Brand display font for headings — was referenced as "Satoshi" in CSS but never
+// actually loaded; now self-hosted via next/font/local.
+const satoshi = localFont({
+  variable: "--font-satoshi",
+  display: "swap",
+  src: [{ path: "../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
 });
 
 export const viewport: Viewport = {
@@ -58,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth scroll-pt-20 md:scroll-pt-24">
       <body
-        className={`${inter.variable} min-h-dvh overflow-x-clip antialiased bg-black text-white`}
+        className={`${inter.variable} ${satoshi.variable} min-h-dvh overflow-x-clip antialiased bg-black text-white`}
       >
         {/* Grain noise overlay */}
         <div className="grain-overlay" aria-hidden="true" />

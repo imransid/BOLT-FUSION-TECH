@@ -35,5 +35,37 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function WarmChatsCaseStudyPage() {
-  return <WarmChatsCaseStudy />;
+  const site = getSiteUrl().toString();
+  const url = new URL("/work/warmchats", site).toString();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: site },
+          { "@type": "ListItem", position: 2, name: "Work", item: new URL("/#recent-work", site).toString() },
+          { "@type": "ListItem", position: 3, name: "WarmChats case study", item: url },
+        ],
+      },
+      {
+        "@type": "Article",
+        headline: TITLE,
+        description: DESCRIPTION,
+        image: new URL("/projects/warmchats-ai-booking.png", site).toString(),
+        mainEntityOfPage: url,
+        author: { "@type": "Organization", name: "Bolt Fusion Tech", url: site },
+        publisher: { "@type": "Organization", name: "Bolt Fusion Tech", url: site },
+      },
+    ],
+  };
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <WarmChatsCaseStudy />
+    </>
+  );
 }

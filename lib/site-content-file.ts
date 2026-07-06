@@ -1,23 +1,42 @@
 import "server-only";
 
-import fs from "fs/promises";
-import path from "path";
+import {
+  getContentStore,
+  type HistoryEntry,
+  type StoredEnvelope,
+  type WriteResult,
+} from "@/lib/site-content-store";
 
-/** Persists under `data/site-content.json` — requires a writable filesystem (local/VPS/Docker). Serverless hosts without disk need an external store. */
-const FILE = path.join(process.cwd(), "data", "site-content.json");
+/**
+ * Thin content-persistence facade over the durable store (Neon in production,
+ * a local JSON file in dev). Keeps the historical `readSiteContentOverrides`
+ * signature so `load-site-content.ts` is unchanged.
+ */
 
+/** The stored override object (deep-merged onto defaults at read time). */
 export async function readSiteContentOverrides(): Promise<unknown> {
-  try {
-    const raw = await fs.readFile(FILE, "utf8");
-    return JSON.parse(raw) as unknown;
-  } catch (e: unknown) {
-    const err = e as { code?: string };
-    if (err.code === "ENOENT") return {};
-    throw e;
-  }
+  const { content } = await getContentStore().read();
+  return content ?? {};
 }
 
+/** Full envelope (version + content) for the admin editor to bootstrap from. */
+export async function readSiteContentEnvelope(): Promise<StoredEnvelope> {
+  return getContentStore().read();
+}
+
+/** Optimistic-concurrency write. Pass the version the editor loaded; null forces. */
+export function writeSiteContent(
+  content: unknown,
+  expectedVersion: number | null,
+): Promise<WriteResult> {
+  return getContentStore().write(content, expectedVersion);
+}
+
+/** Force-write (no version check) — used for seeding/imports. */
 export async function writeSiteContentOverrides(data: unknown): Promise<void> {
-  await fs.mkdir(path.dirname(FILE), { recursive: true });
-  await fs.writeFile(FILE, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  await getContentStore().write(data, null);
+}
+
+export function readSiteContentHistory(): Promise<HistoryEntry[]> {
+  return getContentStore().history();
 }

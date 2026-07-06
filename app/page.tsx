@@ -20,20 +20,18 @@ import CTA from "@/components/CTA";
 import CalendlyInlineEmbed from "@/components/CalendlyInlineEmbed";
 import Footer from "@/components/Footer";
 import { SiteContentProvider } from "@/context/SiteContentContext";
-import { loadSiteContent } from "@/lib/load-site-content";
-import type { SectionId } from "@/lib/site-content-schema";
+import { getSiteContent } from "@/lib/load-site-content";
+import type { SectionId, SiteContent } from "@/lib/site-content-schema";
 
 /** ISR: rebuilds this page periodically so HTML/metadata stay cache-friendly for crawlers. Lower if CMS edits must appear faster. */
 export const revalidate = 60;
 
-const defaultOgImagePath = "/section-services.png";
-
 export async function generateMetadata(): Promise<Metadata> {
-  const c = await loadSiteContent();
+  const c = await getSiteContent();
   const site = getSiteUrl();
   const canonical = site.toString();
-  const ogImageUrl = new URL(defaultOgImagePath, site).toString();
 
+  // Social image comes from app/opengraph-image.tsx (correctly-sized 1200×630).
   return {
     title: { absolute: c.meta.title },
     description: c.meta.description,
@@ -45,13 +43,11 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonical,
       siteName: "Bolt Fusion Tech",
       locale: "en_US",
-      images: [{ url: ogImageUrl, alt: c.meta.ogTitle }],
     },
     twitter: {
       card: "summary_large_image",
       title: c.meta.ogTitle,
       description: c.meta.ogDescription,
-      images: [ogImageUrl],
     },
   };
 }
@@ -95,7 +91,7 @@ function renderSection(id: SectionId, blurb: string) {
       return (
         <div
           id="schedule"
-          className="mx-auto w-full min-w-0 max-w-[min(100%,1200px)] scroll-mt-20 px-4 pb-16 pt-2 sm:scroll-mt-24 sm:px-6 sm:pb-20 md:scroll-mt-28 md:px-10 lg:px-12 xl:px-16"
+          className="cv-section mx-auto w-full min-w-0 max-w-[min(100%,1200px)] scroll-mt-20 px-4 pb-16 pt-2 sm:scroll-mt-24 sm:px-6 sm:pb-20 md:scroll-mt-28 md:px-10 lg:px-12 xl:px-16"
         >
           <p className="mb-4 px-1 text-center text-sm leading-snug text-white/45 text-balance sm:text-base sm:leading-normal">
             {blurb}
@@ -108,31 +104,44 @@ function renderSection(id: SectionId, blurb: string) {
   }
 }
 
-function siteJsonLd(siteUrl: string, sameAs: string[]) {
-  return {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": `${siteUrl}#organization`,
-        name: "Bolt Fusion Tech",
-        url: siteUrl,
-        logo: new URL("/favicon.svg", siteUrl).toString(),
-        sameAs,
-      },
-      {
-        "@type": "WebSite",
-        "@id": `${siteUrl}#website`,
-        url: siteUrl,
-        name: "Bolt Fusion Tech",
-        publisher: { "@id": `${siteUrl}#organization` },
-      },
-    ],
-  };
+function siteJsonLd(siteUrl: string, sameAs: string[], content: SiteContent) {
+  const graph: Record<string, unknown>[] = [
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}#organization`,
+      name: "Bolt Fusion Tech",
+      url: siteUrl,
+      logo: new URL("/favicon.svg", siteUrl).toString(),
+      description: content.meta.description,
+      sameAs,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      url: siteUrl,
+      name: "Bolt Fusion Tech",
+      publisher: { "@id": `${siteUrl}#organization` },
+    },
+  ];
+
+  // FAQ is rendered visibly on the page → eligible for FAQPage structured data.
+  if (content.faq.items.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${siteUrl}#faq`,
+      mainEntity: content.faq.items.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+
+  return { "@context": "https://schema.org", "@graph": graph };
 }
 
 export default async function Home() {
-  const content = await loadSiteContent();
+  const content = await getSiteContent();
   const { sectionOrder, sectionVisibility } = content.site;
   const siteUrl = getSiteUrl().toString();
   const sameAs = content.footer.socialLinks.map((l) => l.url);
@@ -142,7 +151,9 @@ export default async function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(siteJsonLd(siteUrl, sameAs)),
+          // Escape `<` so an admin-entered "</script>" in any string field can't
+          // break out of the JSON-LD block (stored-XSS guard).
+          __html: JSON.stringify(siteJsonLd(siteUrl, sameAs, content)).replace(/</g, "\\u003c"),
         }}
       />
       <Navbar />

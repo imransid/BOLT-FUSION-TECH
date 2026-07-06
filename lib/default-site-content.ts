@@ -2,7 +2,7 @@ import { siteContentSchema, type SiteContent } from "@/lib/site-content-schema";
 
 const raw: SiteContent = {
   meta: {
-    title: "Bolt Fusion Tech",
+    title: "Custom Software & Product Engineering | Bolt Fusion Tech",
     description:
       "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
     ogTitle: "Bolt Fusion Tech – Custom Software & Product Engineering",

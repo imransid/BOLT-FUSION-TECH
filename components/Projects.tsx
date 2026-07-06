@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -45,14 +46,12 @@ function ProjectCard({
       whileHover={isStrip ? undefined : { scale: 1.02 }}
       transition={{ duration: 0.3 }}
     >
-      <img
+      <Image
         src={src}
         alt={alt}
-        width={1376}
-        height={768}
-        loading="lazy"
-        decoding="async"
-        className={`h-full w-full object-cover transition-all duration-500 ${
+        fill
+        sizes="(min-width: 1024px) 520px, min(82vw, 300px)"
+        className={`object-cover transition-all duration-500 ${
           isProfile
             ? "grayscale-0"
             : "grayscale group-hover:grayscale-0 max-md:grayscale-0"

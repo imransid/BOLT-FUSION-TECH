@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "crypto";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import {
@@ -7,6 +8,12 @@ import {
   getSessionSecret,
   signAdminSession,
 } from "@/lib/admin-session-token";
+import {
+  checkLoginRateLimit,
+  clearLoginAttempts,
+  clientIp,
+  recordLoginFailure,
+} from "@/lib/login-rate-limit";
 
 function equalPassword(a: string, b: string): boolean {
   const aa = Buffer.from(a, "utf8");
@@ -25,6 +32,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const ip = clientIp(await headers());
+  const limit = checkLoginRateLimit(ip);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Try again later." },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   let body: { password?: string };
   try {
     body = (await request.json()) as { password?: string };
@@ -34,9 +50,11 @@ export async function POST(request: Request) {
 
   const password = typeof body.password === "string" ? body.password : "";
   if (!equalPassword(password, expected)) {
+    recordLoginFailure(ip);
     return NextResponse.json({ error: "Invalid password" }, { status: 401 });
   }
 
+  clearLoginAttempts(ip);
   const token = await signAdminSession(secret);
   const res = NextResponse.json({ ok: true });
   res.cookies.set({

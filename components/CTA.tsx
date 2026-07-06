@@ -9,7 +9,7 @@ export default function CTA() {
   return (
     <section
       id="contact"
-      className="flex items-center justify-center py-14 px-4 sm:py-20 sm:px-6 md:px-12 lg:px-20"
+      className="cv-section flex items-center justify-center py-14 px-4 sm:py-20 sm:px-6 md:px-12 lg:px-20"
     >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -38,7 +38,7 @@ export default function CTA() {
 
           <h2
             className="max-w-[900px] text-[clamp(2rem,8vw,5rem)] font-normal leading-[1.05] sm:text-7xl lg:text-[80px]"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {c.title}
           </h2>

@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { useSiteContent } from "@/context/SiteContentContext";
 import { INDUSTRY_ICON_PATH_D } from "@/lib/industry-icon-paths";
@@ -14,52 +12,45 @@ export default function Industries() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-
     const section = sectionRef.current;
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
     if (!section || cards.length === 0) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const ctx = gsap.context(() => {
-      gsap.set(cards, {
-        opacity: 0,
-        y: 30,
-        scale: 0.985,
-      });
-      gsap.to(cards, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        stagger: 0.08,
-        duration: 0.65,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: section,
-          start: "top 76%",
-          once: true,
-        },
-      });
-      if (!reduceMotion) {
-        const cta = cards[cards.length - 1];
-        if (cta) {
-          gsap.to(cta, {
-            y: -6,
-            duration: 2.2,
-            repeat: -1,
-            yoyo: true,
-            ease: "sine.inOut",
-          });
+    // gsap is heavy and this section is below the fold — load it lazily so it
+    // never enters the critical-path bundle.
+    let ctx: { revert: () => void } | undefined;
+    let cancelled = false;
+    void (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
+      ctx = gsap.context(() => {
+        gsap.set(cards, { opacity: 0, y: 30, scale: 0.985 });
+        gsap.to(cards, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          stagger: 0.08,
+          duration: 0.65,
+          ease: "power3.out",
+          scrollTrigger: { trigger: section, start: "top 76%", once: true },
+        });
+        if (!reduceMotion) {
+          const cta = cards[cards.length - 1];
+          if (cta) {
+            gsap.to(cta, { y: -6, duration: 2.2, repeat: -1, yoyo: true, ease: "sine.inOut" });
+          }
         }
-      }
-    }, section);
-
-    if (reduceMotion) {
-      return () => ctx.revert();
-    }
+      }, section);
+    })();
 
     return () => {
-      ctx.revert();
+      cancelled = true;
+      ctx?.revert();
     };
   }, [industries.length]);
 
@@ -79,7 +70,7 @@ export default function Industries() {
           </p>
           <h2
             className="text-[clamp(2rem,5.5vw,4rem)] font-normal leading-[1.03] tracking-[-0.03em] text-white"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {ind.titleLine1}
             <br />
@@ -120,7 +111,7 @@ export default function Industries() {
 
               <h3
                 className="mb-2 text-[1.9rem] leading-none text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {industry.title}
               </h3>
@@ -149,7 +140,7 @@ export default function Industries() {
             <div>
               <p
                 className="text-3xl leading-tight text-white"
-                style={{ fontFamily: "Satoshi, sans-serif" }}
+                style={{ fontFamily: "var(--font-heading)" }}
               >
                 {ind.ctaCardTitle}
               </p>

@@ -7,6 +7,7 @@ import {
   useState,
   type RefObject,
 } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -73,15 +74,15 @@ export default function RecentWorks() {
       <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <div className="space-y-3">
-            <motion.p
+            <motion.h2
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               className="text-xl md:text-2xl text-white max-w-[640px]"
-              style={{ fontFamily: "'Inter Display', sans-serif" }}
+              style={{ fontFamily: "var(--font-sans)" }}
             >
               {rw.title}
-            </motion.p>
+            </motion.h2>
             <motion.p
               initial={{ opacity: 0, x: -12 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -140,12 +141,12 @@ export default function RecentWorks() {
                   : `${project.title}: ${project.outcome}. Contact to discuss a similar project.`
               }
             >
-              <img
+              <Image
                 src={project.src}
                 alt={project.alt}
-                loading={i < 2 ? "eager" : "lazy"}
-                decoding="async"
-                className={`absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
+                fill
+                sizes="(min-width: 640px) 300px, calc(100vw - 3.25rem)"
+                className={`object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
                   project.imgClass
                     ? project.imgClass
                     : "object-top sm:object-center"
@@ -161,7 +162,7 @@ export default function RecentWorks() {
                 </p>
                 <h3
                   className="mt-1.5 text-base font-medium leading-snug text-white sm:mt-2 sm:text-lg md:text-xl"
-                  style={{ fontFamily: "Satoshi, sans-serif" }}
+                  style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {project.title}
                 </h3>

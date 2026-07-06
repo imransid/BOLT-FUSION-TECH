@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -28,7 +29,7 @@ export default function AboutMe() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-            style={{ fontFamily: "Satoshi, sans-serif" }}
+            style={{ fontFamily: "var(--font-heading)" }}
           >
             {a.title}
           </motion.h2>
@@ -106,34 +107,19 @@ export default function AboutMe() {
                 "0 0 0 1px rgba(255,255,255,0.04) inset, 0 28px 56px -24px rgba(0,0,0,0.75), 0 12px 32px -16px rgba(0,0,0,0.55)",
             }}
           >
-            <div className="relative h-full w-full overflow-hidden">
-              {reduceMotion ? (
-                <img
-                  src="/about-engineering.png"
-                  alt="Product engineers collaborating on delivery, roadmap, and shipping reliable software"
-                  width={1376}
-                  height={768}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover object-center"
-                />
-              ) : (
-                <motion.img
-                  src="/about-engineering.png"
-                  alt="Product engineers collaborating on delivery, roadmap, and shipping reliable software"
-                  width={1376}
-                  height={768}
-                  loading="lazy"
-                  decoding="async"
-                  variants={{
-                    rest: { scale: 1 },
-                    hover: { scale: 1.06 },
-                  }}
-                  transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full w-full object-cover object-center will-change-transform"
-                />
-              )}
-            </div>
+            <motion.div
+              className="relative h-full w-full overflow-hidden"
+              variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
+              transition={{ duration: 1.05, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Image
+                src="/about-engineering.png"
+                alt="Product engineers collaborating on delivery, roadmap, and shipping reliable software"
+                fill
+                sizes="(max-width: 1024px) 100vw, 700px"
+                className="object-cover object-center"
+              />
+            </motion.div>
 
             {/* Inner glass edge */}
             <div
