@@ -44,6 +44,8 @@ function profileHref(handle: string): string {
     return "https://www.linkedin.com/in/arifur-rahman-3423b021b/";
   }else if (h === "tareq") {
   return `https://x.com/${h}`;
+  } else if(h === "shourab"){
+    return "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/"
   }
   return `https://x.com/${h}`;
 }

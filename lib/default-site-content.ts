@@ -247,7 +247,7 @@ const raw: SiteContent = {
     members: [
       { name: "Rafa", handle: "@rafa", image: "/team/marc-face.svg" },
       { name: "Nadim", handle: "@nadim", image: "/team/szymon-face.svg" },
-      { name: "Joinal", handle: "@joinal", image: "/team/thomas-face.svg" },
+      { name: "Shourab", handle: "@shourab", image: "/team/thomas-face.svg" },
       {
         name: "Arifur Rahman",
         handle: "@arifur",
@@ -257,7 +257,7 @@ const raw: SiteContent = {
       { name: "Nazirul", handle: "@nazirul", image: "/team/mo-face.svg" },
       { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
       { name: "Nihal", handle: "@nihal", image: "/team/eric-face.svg" },
-      { name: "Musfique", handle: "@musfique", image: "/team/matei-face.svg" },
+      { name: "Joinal", handle: "@joinal", image: "/team/matei-face.svg" },
       { name: "Sabbir", handle: "@sabbir", image: "/team/mo-face.svg" },
     ],
   },
@@ -334,7 +334,8 @@ const raw: SiteContent = {
   caseStudy: {
     badge: "Case study · Systems architecture",
     title: "Intelligent restaurant search",
-    titleAccentLine: "Multi-tenant microservice · Tiered search · Observable by design",
+    titleAccentLine:
+      "Multi-tenant microservice · Tiered search · Observable by design",
     subtitle:
       "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
     executiveSummary:
