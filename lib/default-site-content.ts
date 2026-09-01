@@ -57,8 +57,9 @@ const raw: SiteContent = {
   },
   hero: {
     badge: "Custom software & product engineering",
-    headlineLine1: "Elite engineers.",
-    headlineLine2: "Lower hiring cost.",
+    headlineLine1: "Build. Scale. Transform.",
+    headlineLine2: "With elite engineers and lower hiring cost.",
+    headlineLine2Accent: "lower hiring cost",
     subtext:
       "Build with a dedicated remote team of top-tier Bangladeshi engineers trusted to deliver speed, quality, and reliability across web, AI, and IoT products.",
     trustPoints: [

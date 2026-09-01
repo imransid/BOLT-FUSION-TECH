@@ -15,6 +15,21 @@ const HeroParticleField = dynamic(
 
 export default function Hero() {
   const { hero: h } = useSiteContent();
+
+  // Line 2 carries the hero's single amber phrase. Split on the FIRST occurrence
+  // so each fragment renders exactly once; if a CMS edit drops the substring from
+  // line 2, `accentAt` is -1 and line 2 degrades to plain text instead of breaking.
+  const accent = h.headlineLine2Accent.trim();
+  const accentAt = accent ? h.headlineLine2.indexOf(accent) : -1;
+  const line2 =
+    accentAt >= 0
+      ? {
+          before: h.headlineLine2.slice(0, accentAt),
+          accent: h.headlineLine2.slice(accentAt, accentAt + accent.length),
+          after: h.headlineLine2.slice(accentAt + accent.length),
+        }
+      : null;
+
   return (
     <section
       id="hero"
@@ -63,15 +78,50 @@ export default function Hero() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-[13ch] text-[clamp(2.1rem,6vw+0.35rem,6rem)] font-normal leading-[0.98] tracking-[-0.04em] text-balance sm:leading-[0.98] lg:text-[96px]"
-          style={{ fontFamily: "var(--font-heading)" }}
+          // --h1 drives BOTH lines: line 2 is derived from it, so the statement/
+          // qualifier ratio holds at every viewport without a second clamp to keep
+          // in sync.
+          //
+          // The cap is set by the WIDEST face that can render line 1, not by the
+          // one that happens to render today. Measured advance of "Build. Scale.
+          // Transform." at -0.04em: system-ui 8.56em, Satoshi 9.25em, Arial 9.66em.
+          // The content box maxes out at 940px (980 - 2*20 padding), so 6rem/96px
+          // keeps it on one line in all three (Satoshi 888px, Arial 927px). Sizing
+          // to the 8.56em that renders now would have wrapped the moment the
+          // --font-heading wiring is fixed. If a face wider still ever loads, the
+          // break falls at a space — i.e. between sentences, never mid-phrase.
+          className="[--h1:clamp(2rem,9.2vw,6rem)] font-normal"
+          style={{ fontFamily: "var(--font-heading)", fontSize: "var(--h1)" }}
         >
-          <span className="bg-gradient-to-b from-white via-white to-white/80 bg-clip-text text-transparent">
+          <span className="block bg-gradient-to-b from-white via-white to-white/80 bg-clip-text leading-[0.98] tracking-[-0.04em] text-transparent">
             {h.headlineLine1}
           </span>
-          <br />
-          <span className="bg-gradient-to-r from-white via-cyan-100 to-amber-100 bg-clip-text text-transparent">
-            {h.headlineLine2}
+          {/* The qualifier. Tight tracking is a display-size device and smears at
+              this size, so it resets to normal. max-width is in `em` (not `ch`,
+              not nowrap) so longer CMS copy reflows instead of clipping.
+
+              The 0.42 ratio is deliberately allowed to RISE below ~466px. Straight
+              0.42 puts this line at 14.5px on a 375px screen, under the 16px
+              subtext beneath it — the headline's own second line reading smaller
+              than body copy, which inverts the hierarchy. The 1.125rem floor holds
+              it at 18px there (~52% of line 1) and never binds above ~466px, where
+              0.42 already clears 18px and the ratio is exact again. */}
+          <span
+            className="mx-auto block max-w-[22em] leading-[1.2] tracking-normal text-white/70 text-balance"
+            style={{
+              fontSize: "max(1.125rem, calc(var(--h1) * 0.42))",
+              marginTop: "calc(var(--h1) * 0.14)",
+            }}
+          >
+            {line2 ? (
+              <>
+                {line2.before}
+                <span className="text-[#fbbf24]">{line2.accent}</span>
+                {line2.after}
+              </>
+            ) : (
+              h.headlineLine2
+            )}
           </span>
         </motion.h1>
 
@@ -184,24 +234,24 @@ function BeamButton({
 }) {
   const isPrimary = variant === "primary";
   return (
-    <a href={href} className="group relative inline-flex items-center">
+    // Neither variant had a focus ring. Amber is the focus colour here, and
+    // outline-offset puts the ring on the black page rather than on the amber
+    // fill, so it stays visible on the primary too.
+    <a
+      href={href}
+      className="group relative inline-flex items-center rounded-[10px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#fbbf24]"
+    >
       <div
-        className={`beam-button corner-glow relative rounded-[10px] px-6 py-3 text-sm text-white transition-all duration-500 ${
+        className={
           isPrimary
-            ? "border border-cyan-200/35 bg-gradient-to-br from-cyan-200/25 via-white/[0.16] to-amber-200/20 shadow-[0_16px_36px_-20px_rgba(34,211,238,0.9)] group-hover:border-cyan-100/60 group-hover:shadow-[0_22px_44px_-20px_rgba(34,211,238,0.95)]"
-            : "border border-white/14 bg-black/60 group-hover:border-white/30 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
-        }`}
+            ? // The hero's second and last amber, directly under the accented phrase.
+              // `beam-button`/`corner-glow` paint a white hairline, a sliding white
+              // beam and a 25%-white corner wash — tuned for dark glass chips, they
+              // streak across a solid fill — so the primary opts out of both.
+              "relative rounded-[10px] bg-[#fbbf24] px-6 py-3 text-sm text-[#12151A] shadow-[0_16px_36px_-18px_rgba(251,191,36,0.75)] transition-all duration-500 group-hover:bg-[#fcd34d] group-hover:shadow-[0_20px_44px_-18px_rgba(251,191,36,0.9)]"
+            : "beam-button corner-glow relative rounded-[10px] border border-white/14 bg-black/60 px-6 py-3 text-sm text-white transition-all duration-500 group-hover:border-white/30 group-hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
+        }
       >
-        {isPrimary && (
-          <span
-            className="pointer-events-none absolute inset-0 rounded-[10px] opacity-80"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(34,211,238,0.16), rgba(255,255,255,0.02), rgba(251,191,36,0.12))",
-            }}
-            aria-hidden
-          />
-        )}
         <span className="relative z-10">{children}</span>
       </div>
     </a>

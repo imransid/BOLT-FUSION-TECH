@@ -176,6 +176,10 @@ export const siteContentSchema = z.object({
     badge: z.string(),
     headlineLine1: z.string(),
     headlineLine2: z.string(),
+    /** Substring of `headlineLine2` rendered in amber — the hero's one accent.
+     *  Matched on first occurrence; when it is not found in `headlineLine2`,
+     *  line 2 renders plain rather than breaking. Empty string = no accent. */
+    headlineLine2Accent: z.string(),
     subtext: z.string(),
     trustPoints: z.array(z.string()),
     logos: z.array(z.string()),

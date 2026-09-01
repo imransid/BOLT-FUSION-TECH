@@ -10,6 +10,11 @@ export function HeroSection() {
         <TextField name="hero.headlineLine1" label="Headline line 1" />
         <TextField name="hero.headlineLine2" label="Headline line 2" />
       </div>
+      <TextField
+        name="hero.headlineLine2Accent"
+        label="Headline line 2 — amber phrase"
+        placeholder="Must appear verbatim inside line 2"
+      />
       <TextareaField name="hero.subtext" label="Subtext" />
       <StringListEditor name="hero.trustPoints" label="Trust points" placeholder="e.g. SOC2-ready" />
       <StringListEditor name="hero.logos" label="Logo marquee (text)" placeholder="Client name" />
