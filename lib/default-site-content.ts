@@ -13,7 +13,6 @@ const raw: SiteContent = {
     sectionOrder: [
       "hero",
       "ai_excellence",
-      "projects",
       "about",
       "team",
       "recent_works",
@@ -33,11 +32,11 @@ const raw: SiteContent = {
       { label: "Services", href: "#services" },
       { label: "Industry", href: "#industries" },
       { label: "Process", href: "#process" },
-      { label: "Work", href: "#projects" },
+      { label: "Work", href: "#recent-work" },
       { label: "Case study", href: "#case-study" },
       { label: "About", href: "#about" },
       { label: "Team", href: "#team" },
-      { label: "Clients", href: "#testimonials" },
+      { label: "Happy Clients", href: "#testimonials" },
       { label: "Contact", href: "#contact" },
     ],
     scheduleCtaLabel: "Book a call",
@@ -72,140 +71,59 @@ const raw: SiteContent = {
     primaryCtaLabel: "Plan your build",
     primaryCtaHref: "#contact",
     secondaryCtaLabel: "See recent work",
-    secondaryCtaHref: "#projects",
+    secondaryCtaHref: "#recent-work",
     scrollHintLeft: "Scroll down",
     scrollHintRight: "to explore delivery",
   },
   aiExcellence: {
-    headlineLine1: "AI-Driven",
-    headlineLine2: "Development",
-    headlineLine3: "Excellence",
-    intro:
-      "We combine senior engineering with practical AI workflows to ship faster, test deeper, and scale products without compromising reliability.",
-    scheduleCtaLabel: "Schedule a Call",
-    scheduleCtaHref: "#schedule",
-    imageSrc: "/section-services.png",
-    imageAlt: "AI-assisted product engineering team in a modern delivery setup",
-    metrics: [
+    heading: "AI that survives production",
+    subline:
+      "Most AI projects die after launch — too slow, too expensive, too unstable. We build the routing, caching, and cost control that keeps them running.",
+    ctaLabel: "Book a technical call",
+    ctaHref: "#schedule",
+    diagramTitle: "Three-lane retrieval",
+    diagramInLabel: "Inbound query",
+    diagramOutLabel: "Response",
+    lanes: [
+      { name: "Keyword lane", detail: "Deterministic match · Postgres + PostGIS" },
+      { name: "AI lane", detail: "Embeddings + Claude Haiku" },
+      { name: "Cache lane", detail: "Redis · 30-second TTL" },
+    ],
+    // Never add a figure here that is not observed on a shipped system.
+    proofPoints: [
       {
-        value: "70%",
-        label: "Faster Development",
-        title: "Intelligent Coding",
-        desc: "AI-powered workflows reduce manual effort while maintaining enterprise-level code quality.",
+        stat: "<100ms",
+        label: "Search response · 80% of traffic",
+        body: "Queries are classified before any paid inference runs, so most traffic never reaches a model.",
+        sourceLabel: "Source: Restaurant discovery platform",
       },
       {
-        value: "99.9%",
-        label: "Defect-Free Releases",
-        title: "Bulletproof QA",
-        desc: "Automation-assisted QA catches regressions early and keeps releases stable and predictable.",
+        stat: "~$0.001",
+        label: "Average cost per AI query",
+        body: "Tiered retrieval plus a 30-second Redis cache keeps model spend predictable as volume grows.",
+        sourceLabel: "Source: Restaurant discovery platform",
       },
       {
-        value: "40%",
-        label: "Higher Efficiency",
-        title: "Peak Performance",
-        desc: "Smart optimization improves response time and system throughput under production load.",
+        stat: "<60s",
+        label: "First reply to every inbound lead",
+        body: "Claude classifies intent, GPT-4.1 responds across email and SMS, and bookings write straight to the calendar.",
+        sourceLabel: "Source: WarmChats — live at warmchats.com",
+        sourceHref: "https://warmchats.com",
       },
       {
-        value: "90%",
-        label: "Faster Deployments",
-        title: "Zero-Downtime DevOps",
-        desc: "AI-guided pipelines enable safer releases with lower operational risk.",
+        stat: "~90%",
+        label: "Of AI calls routed to Haiku, not a frontier model",
+        body: "Right-sizing the model per task is where AI unit economics are actually won.",
+        sourceLabel: "Source: Restaurant discovery platform",
       },
     ],
-    footerTitle: "10X Faster Delivery",
-    footerSubtitle:
-      "Senior teams leveraging AI-assisted engineering to accelerate output while keeping quality high.",
-    trustPoints: ["100% IP Protection", "Top 1% Talent"],
-  },
-  projects: {
-    introStart:
-      "Selected visuals from shipped work and how we operate—scroll to ",
-    introLinkText: "featured case cards",
-    introLinkHref: "#recent-work",
-    introEnd: " for full context on our seven featured launches.",
-    tiles: [
-      {
-        src: "/projects/warmchats-ai-booking.png",
-        alt: "WarmChats landing page: turn new real estate leads into booked appointments automatically, trusted by agents using Zillow, open houses, and Facebook leads",
-        caption: "WarmChats — real estate AI",
-        imgMobileClass: "object-[center_top]",
-      },
-      {
-        src: "/projects/hospitality-ops-admin.png",
-        alt: "Hospitality staff admin: kitchen, POS, orders, procurement",
-        caption: "Hospitality ops — mobile",
-        imgMobileClass: "object-[center_top]",
-      },
-      {
-        src: "/projects/opal-fashion-tech.png",
-        alt: "OPAL Fashion × Tech storefront hero and navigation",
-        caption: "OPAL — commerce",
-        imgMobileClass: "object-[52%_28%] min-[380px]:object-[center_22%]",
-      },
-      {
-        src: "/projects/immidox-immigration.png",
-        alt: "Immidox immigration services marketing site hero",
-        caption: "Immidox — services web",
-        imgMobileClass: "object-[center_18%]",
-      },
-      {
-        src: "/projects/expert-marketplace-mobile.png",
-        alt: "Expert search, profiles, booking, and trust metrics on mobile",
-        caption: "Expert marketplace",
-        imgMobileClass: "object-[center_top]",
-      },
-      {
-        src: "/projects/godconnect-community.png",
-        alt: "GodConnect onboarding and community app screens",
-        caption: "GodConnect — community",
-        imgMobileClass: "object-[center_20%]",
-      },
-      {
-        src: "/projects/rebellion-brand-agency.png",
-        alt: "REBELLION agency hero and interactive brand showcase",
-        caption: "REBELLION — agency web",
-        imgMobileClass: "object-[center_25%]",
-      },
-      {
-        src: "/about-engineering.png",
-        alt: "Bolt Fusion Tech — product engineering partnership",
-        caption: "How we work with your team",
-        isProfile: true,
-      },
-      {
-        src: "/section-services.png",
-        alt: "Engineers shipping product with clear UI on monitors",
-        caption: "Delivery & architecture",
-        imgMobileClass: "object-[center_35%]",
-      },
-      {
-        src: "/section-process.png",
-        alt: "Sprint planning and stakeholder alignment",
-        caption: "Discovery to launch",
-        imgMobileClass: "object-[center_30%]",
-      },
-      {
-        src: "/section-testimonials.png",
-        alt: "Client trust and advisory conversations",
-        caption: "Stakeholder partnership",
-        imgMobileClass: "object-[center_30%]",
-      },
-      {
-        src: "/gallery-engineering-desk.png",
-        alt: "Engineering workspace with code and systems design",
-        caption: "Build quality",
-        imgMobileClass: "object-[center_40%]",
-      },
-      {
-        src: "/gallery-product-analytics.png",
-        alt: "Product analytics across mobile and web surfaces",
-        caption: "Insights & scale",
-        imgMobileClass: "object-[center_35%]",
-      },
+    proofNote:
+      "Every figure here comes from a system we shipped. Ask on the call and we'll walk you through the architecture.",
+    assurances: [
+      "8–16 weeks to a production MVP",
+      "You own the IP — assigned on payment, NDA before scoping",
+      "UK · Malaysia · Bangladesh — 4–8h overlap with US and EU",
     ],
-    featuredDetailLabel: "Featured launches (detail)",
-    discussLabel: "Discuss your build",
-    mobileStripHint: "Swipe sideways — shorter cards, less scrolling",
   },
   about: {
     title: "Why Bolt Fusion Tech",
@@ -245,21 +163,115 @@ const raw: SiteContent = {
     subtext:
       "Each card opens in a new tab—so you can see who you would work with before you commit scope or budget.",
     statLabel: "specialists",
-    members: [
-      { name: "Rafa", handle: "@rafa", image: "/team/marc-face.svg" },
-      { name: "Nadim", handle: "@nadim", image: "/team/szymon-face.svg" },
-      { name: "Shourab", handle: "@shourab", image: "/team/thomas-face.svg" },
+    // VERIFIED LINKS ONLY. `profileUrl` is present for a member only where the
+    // destination has been confirmed to be that person. Four are deliberately
+    // absent — see the note in each. Nothing here constructs a URL from a handle.
+    roster: [
       {
+        id: "rafa",
+        name: "Rafa",
+        handle: "@rafa",
+        image: "/team/marc-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/imran1993/",
+      },
+      {
+        // NO LINK: the previous value was x.com/nadim, a generic handle
+        // belonging to someone else. Awaiting a verified profile.
+        id: "nadim",
+        name: "Nadim",
+        handle: "@nadim",
+        image: "/team/szymon-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+      },
+      {
+        id: "shourab",
+        name: "Shourab",
+        handle: "@shourab",
+        image: "/team/thomas-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl:
+          "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/",
+      },
+      {
+        // NO LINK: arifur-rahman-3423b021b and joinal-ahmed-3423b021b shared an
+        // identical numeric suffix, so one pointed at the wrong person. Both
+        // removed rather than guess which. Awaiting verified profiles.
+        id: "arifur",
         name: "Arifur Rahman",
         handle: "@arifur",
         image: "/team/christoph-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
       },
-      { name: "Tareq", handle: "@tareq", image: "/team/janic-face.svg" },
-      { name: "Nazirul", handle: "@nazirul", image: "/team/mo-face.svg" },
-      { name: "Talha", handle: "@talha", image: "/team/mo-face.svg" },
-      { name: "Nihal", handle: "@nihal", image: "/team/eric-face.svg" },
-      { name: "Joinal", handle: "@joinal", image: "/team/matei-face.svg" },
-      { name: "Sabbir", handle: "@sabbir", image: "/team/mo-face.svg" },
+      {
+        // NO LINK: the previous value was x.com/tareq, a generic handle
+        // belonging to someone else. Awaiting a verified profile.
+        id: "tareq",
+        name: "Tareq",
+        handle: "@tareq",
+        image: "/team/janic-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+      },
+      {
+        id: "nazirul",
+        name: "Nazirul",
+        handle: "@nazirul",
+        image: "/team/mo-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/imnazirul/",
+      },
+      {
+        id: "talha",
+        name: "Talha",
+        handle: "@talha",
+        image: "/team/mo-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/talhajubair100/",
+      },
+      {
+        id: "nihal",
+        name: "Nihal",
+        handle: "@nihal",
+        image: "/team/eric-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/asif-nihal",
+      },
+      {
+        // NO LINK: see the Arifur Rahman note — shared LinkedIn suffix.
+        id: "joinal",
+        name: "Joinal",
+        handle: "@joinal",
+        image: "/team/matei-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+      },
+      {
+        id: "sabbir",
+        name: "Sabbir",
+        handle: "@sabbir",
+        image: "/team/mo-face.svg",
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/",
+      },
     ],
   },
   recentWorks: {
@@ -646,6 +658,12 @@ const raw: SiteContent = {
           "Lean MVPs, scale-ready architecture, and product iterations designed for speed.",
         iconKey: "startup",
       },
+      {
+        title: "Smart Factory",
+        description:
+          "Production tracking, floor dashboards, QC logging, and order-to-shipment visibility.",
+        iconKey: "factory",
+      },
     ],
     ctaCardTitle: "Is your industry here?",
     ctaCardBody:
@@ -654,14 +672,14 @@ const raw: SiteContent = {
     learnMoreLabel: "Learn More",
   },
   testimonials: {
-    badge: "Client outcomes",
-    title: "Testimonials",
+    badge: "Client feedback",
+    title: "What clients say.",
     intro:
       "Feedback from leaders who needed delivery they could defend—to users, investors, and their own engineering teams.",
     startConversationLabel: "Start a conversation",
     startConversationHref: "#contact",
     recentWorkLabel: "See recent work",
-    recentWorkHref: "#projects",
+    recentWorkHref: "#recent-work",
     items: [
       {
         name: "Sarah K.",

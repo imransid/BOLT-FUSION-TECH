@@ -6,7 +6,6 @@ import { getSiteUrl } from "@/lib/site-url";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import AIDrivenExcellence from "@/components/AIDrivenExcellence";
-import Projects from "@/components/Projects";
 import AboutMe from "@/components/AboutMe";
 import Team from "@/components/Team";
 import RecentWorks from "@/components/RecentWorks";
@@ -65,8 +64,6 @@ function renderSection(id: SectionId, blurb: string) {
       return <Hero />;
     case "ai_excellence":
       return <AIDrivenExcellence />;
-    case "projects":
-      return <Projects />;
     case "about":
       return <AboutMe />;
     case "team":

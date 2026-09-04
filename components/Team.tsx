@@ -2,9 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  animate,
   motion,
-  useInView,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -15,40 +13,25 @@ import {
 import { useSiteContent } from "@/context/SiteContentContext";
 import type { SiteContent } from "@/lib/site-content-schema";
 
-const springSnappy = { type: "spring" as const, stiffness: 420, damping: 26, mass: 0.72 };
 const springSoft = { type: "spring" as const, stiffness: 280, damping: 32, mass: 0.9 };
-const springCard = { type: "spring" as const, stiffness: 380, damping: 22, mass: 0.85 };
 
-type TeamMember = SiteContent["team"]["members"][number];
+type TeamMember = SiteContent["team"]["roster"][number];
 
-function profileHref(handle: string): string {
-  const h = handle.slice(1);
-  if (h === "rafa") {
-    return "https://www.linkedin.com/in/imran1993/";
-  }
-  if (h === "nazirul") {
-    return "https://www.linkedin.com/in/imnazirul/";
-  }
-  if (h === "talha") {
-    return "https://www.linkedin.com/in/talhajubair100/";
-  }
-  if (h === "sabbir") {
-    return "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/";
-  }else if (h === "nihal") {
-    return "https://www.linkedin.com/in/asif-nihal";
-  }else if (h === "musfique") {
-    return "https://www.linkedin.com/in/musfique-ahmed-3423b021b/";
-  }else if (h === "joinal") {
-    return "https://www.linkedin.com/in/joinal-ahmed-3423b021b/";
-  }else if (h === "arifur") {
-    return "https://www.linkedin.com/in/arifur-rahman-3423b021b/";
-  }else if (h === "tareq") {
-  return `https://x.com/${h}`;
-  } else if(h === "shourab"){
-    return "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/"
-  }
-  return `https://x.com/${h}`;
-}
+/**
+ * There is deliberately NO profileHref() helper here any more.
+ *
+ * The old one built `https://x.com/${handle}` for anyone without an explicit
+ * mapping, which is how @nadim and @tareq ended up linking to strangers' X
+ * accounts. A profile link now comes from ONE place — `member.profileUrl` in the
+ * CMS — and a member without one renders a card with no link at all.
+ *
+ * Entrances are the CSS-only `.ai-rise` (globals.css), declared entirely inside
+ * a `prefers-reduced-motion: no-preference` block, so every element's base style
+ * is its final style. The framer `initial={reduceMotion ? false : {opacity:0}}`
+ * pattern this replaced shipped 19 `opacity:0` declarations in the server HTML,
+ * because `useReducedMotion()` returns null during SSR. Scroll parallax below is
+ * transform-only and never hides content, so it stays.
+ */
 
 function ArrowUpRight({ className }: { className?: string }) {
   return (
@@ -65,22 +48,15 @@ function ArrowUpRight({ className }: { className?: string }) {
   );
 }
 
-type ItemVariants = {
-  hidden: { opacity: number; y: number; scale: number };
-  show: {
-    opacity: number;
-    y: number;
-    scale: number;
-    transition:
-      | { duration: number }
-      | {
-          type: "spring";
-          stiffness: number;
-          damping: number;
-          mass: number;
-        };
-  };
-};
+const CARD_BASE =
+  "group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.09] " +
+  "bg-gradient-to-b from-zinc-900/95 via-zinc-950 to-[#070708] outline-none sm:rounded-3xl";
+
+const CARD_INTERACTIVE =
+  " transition-[transform,border-color,box-shadow] duration-500 hover:border-cyan-400/20 " +
+  "hover:shadow-[0_32px_80px_-28px_rgba(0,0,0,0.85),0_0_0_1px_rgba(34,211,238,0.06)] " +
+  "motion-safe:hover:-translate-y-1.5 focus-visible:ring-2 focus-visible:ring-cyan-300/35 " +
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-black";
 
 function TeamMemberCard({
   member,
@@ -88,14 +64,12 @@ function TeamMemberCard({
   scrollProgress,
   reduceMotion,
   scrollMuted,
-  variants,
 }: {
   member: TeamMember;
   index: number;
   scrollProgress: MotionValue<number>;
   reduceMotion: boolean | null;
   scrollMuted: boolean;
-  variants: ItemVariants;
 }) {
   const depth = (index % 5) - 2;
   const portraitY = useTransform(
@@ -104,128 +78,114 @@ function TeamMemberCard({
     scrollMuted ? [0, 0] : [12 + depth * 4, -12 - depth * 4]
   );
 
-  const href = member.profileUrl?.trim() || profileHref(member.handle);
+  const href = member.profileUrl?.trim();
+  const role = member.role?.trim();
+  const experience = member.experience?.trim();
+  const stack = (member.stack ?? []).filter((s) => s.trim());
 
-  return (
-    <motion.li variants={variants} className="min-h-0">
-      <motion.a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        whileHover={
-          reduceMotion
-            ? undefined
-            : { y: -6, scale: 1.02, transition: springCard }
-        }
-        whileTap={reduceMotion ? undefined : { scale: 0.99 }}
-        transition={springCard}
-        className="group relative flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.09] bg-gradient-to-b from-zinc-900/95 via-zinc-950 to-[#070708] outline-none duration-500 hover:border-cyan-400/20 hover:shadow-[0_32px_80px_-28px_rgba(0,0,0,0.85),0_0_0_1px_rgba(34,211,238,0.06),0_0_48px_-20px_rgba(251,191,36,0.12)] focus-visible:ring-2 focus-visible:ring-cyan-300/35 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:rounded-3xl"
+  const chrome = (
+    <>
+      <span
+        className="pointer-events-none absolute inset-0 rounded-[1.35rem] opacity-0 transition-opacity duration-500 group-hover:opacity-100 sm:rounded-3xl"
         style={{
-          boxShadow:
-            "inset 0 1px 0 0 rgba(255,255,255,0.06), inset 0 -1px 0 0 rgba(0,0,0,0.45), 0 18px 40px -26px rgba(0,0,0,0.65)",
+          background:
+            "linear-gradient(145deg, rgba(34,211,238,0.08) 0%, transparent 38%, rgba(167,139,250,0.06) 58%, rgba(251,191,36,0.05) 100%)",
         }}
-        aria-label={`${member.name}, ${member.handle} — open profile`}
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute left-3 top-3 z-[2] rounded-md border border-white/[0.08] bg-black/35 px-1.5 py-0.5 font-mono text-[9px] tabular-nums tracking-[0.16em] text-white/55 backdrop-blur-md"
+        aria-hidden
       >
-        <span
-          className="pointer-events-none absolute inset-0 rounded-[1.35rem] opacity-0 transition-opacity duration-500 group-hover:opacity-100 sm:rounded-3xl"
-          style={{
-            background:
-              "linear-gradient(145deg, rgba(34,211,238,0.08) 0%, transparent 38%, rgba(167,139,250,0.06) 58%, rgba(251,191,36,0.05) 100%)",
-          }}
-          aria-hidden
-        />
+        {String(index + 1).padStart(2, "0")}
+      </span>
 
-        <span
-          className="pointer-events-none absolute inset-0 z-[3] overflow-hidden rounded-[1.35rem] sm:rounded-3xl"
-          aria-hidden
+      <div className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
+        <motion.div
+          className="absolute inset-0 flex items-end justify-center will-change-transform"
+          style={{ y: portraitY }}
         >
-          <span className="absolute inset-y-0 -left-full w-[55%] -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 transition-[transform,opacity] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-[260%] group-hover:opacity-100" />
+          <motion.img
+            src={member.image}
+            alt=""
+            className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
+            loading="lazy"
+            decoding="async"
+            whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
+            transition={springSoft}
+          />
+        </motion.div>
+      </div>
+
+      {/* Hierarchy: name (15px) → role (12px) → experience + stack (10px). Every
+          optional line is conditional, so a blank field leaves no gap and no
+          orphaned separator — the tags are a flex-wrap row, not a "·" list. */}
+      <div className="relative z-[1] flex flex-1 flex-col px-4 pb-5 pt-4 sm:pt-5">
+        <h3
+          className="text-[15px] font-medium leading-tight tracking-[-0.03em] text-white"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          {member.name}
+        </h3>
+
+        {role ? (
+          <p className="mt-1.5 text-[12px] leading-snug text-white/72">{role}</p>
+        ) : null}
+
+        {experience || stack.length > 0 ? (
+          <div className="mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-1.5">
+            {experience ? (
+              /* cyan = measurement, per the codebase convention */
+              <span className="rounded border border-cyan-300/25 bg-cyan-300/[0.07] px-1.5 py-0.5 text-[10px] leading-none text-cyan-100/90">
+                {experience}
+              </span>
+            ) : null}
+            {stack.map((tech) => (
+              <span
+                key={tech}
+                className="rounded border border-white/12 bg-white/[0.04] px-1.5 py-0.5 text-[10px] leading-none text-white/65"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <span className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+          {member.handle}
         </span>
-
-        <span className="pointer-events-none absolute left-3 top-3 z-[2] rounded-md border border-white/[0.08] bg-black/35 px-1.5 py-0.5 font-mono text-[9px] tabular-nums tracking-[0.16em] text-white/40 backdrop-blur-md">
-          {String(index + 1).padStart(2, "0")}
-        </span>
-
-        <span className="pointer-events-none absolute right-2.5 top-2.5 z-[2] flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/45 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-[transform,box-shadow,border-color] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:rotate-12 group-hover:scale-105 group-hover:border-cyan-400/25 group-hover:bg-white/[0.07] group-hover:text-white sm:right-3 sm:top-3">
-          <ArrowUpRight className="opacity-70 transition-opacity duration-300 group-hover:opacity-100" />
-        </span>
-
-        <div className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
-          <motion.div
-            className="absolute inset-0 flex items-end justify-center will-change-transform"
-            style={{ y: portraitY }}
-          >
-            <motion.img
-              src={member.image}
-              alt=""
-              className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
-              loading="lazy"
-              decoding="async"
-              whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
-              transition={springSoft}
-            />
-          </motion.div>
-        </div>
-
-        <div className="relative z-[1] flex flex-1 flex-col px-4 pb-5 pt-4 sm:pt-5">
-          <span
-            className="bg-gradient-to-r from-white via-white to-white/75 bg-clip-text text-[15px] font-medium tracking-[-0.03em] text-transparent"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            {member.name}
-          </span>
-          <span className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">
-            {member.handle}
-          </span>
-        </div>
-      </motion.a>
-    </motion.li>
+      </div>
+    </>
   );
-}
-
-function AnimatedSeatCount({
-  target,
-  reduceMotion,
-  className,
-}: {
-  target: number;
-  reduceMotion: boolean | null;
-  className?: string;
-}) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-12%" });
-  const [n, setN] = useState(0);
-  const display = reduceMotion ? target : n;
-
-  useEffect(() => {
-    if (reduceMotion) return;
-    if (!inView) return;
-    const c = animate(0, target, {
-      duration: 1.35,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => setN(Math.round(v)),
-    });
-    return () => c.stop();
-  }, [inView, target, reduceMotion]);
 
   return (
-    <span
-      ref={ref}
-      className={
-        className?.trim()
-          ? `text-5xl font-extralight tabular-nums tracking-tighter md:text-6xl ${className}`
-          : "text-5xl font-extralight tabular-nums tracking-tighter text-white md:text-6xl"
-      }
-      style={{ fontFamily: "var(--font-heading)" }}
+    <li
+      className="ai-rise min-h-0"
+      style={{ animationDelay: `${Math.min(index * 55, 440)}ms` }}
     >
-      {display}
-    </span>
+      {href ? (
+        <a href={href} target="_blank" rel="noopener noreferrer" className={CARD_BASE + CARD_INTERACTIVE}>
+          <span
+            className="pointer-events-none absolute right-2.5 top-2.5 z-[2] flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-[transform,border-color] duration-300 group-hover:rotate-12 group-hover:border-cyan-400/25 group-hover:text-white sm:right-3 sm:top-3"
+            aria-hidden
+          >
+            <ArrowUpRight />
+          </span>
+          {chrome}
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      ) : (
+        /* No verified profile: the card renders in full, minus the link and the
+           affordances that would imply one. Never an empty href, never "#". */
+        <div className={CARD_BASE}>{chrome}</div>
+      )}
+    </li>
   );
 }
 
 export default function Team() {
   const { team: t } = useSiteContent();
-  const members = t.members;
+  const roster = t.roster;
   const reduceMotion = useReducedMotion();
   const [wideEnoughForScrollParallax, setWideEnoughForScrollParallax] =
     useState(false);
@@ -251,84 +211,20 @@ export default function Team() {
   };
   const scrollProgress = useSpring(scrollYProgress, spring);
 
-  const blobTopY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [64, -64]
-  );
-  const blobAmberY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [-88, 88]
-  );
-  const dotsY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [32, -32]
-  );
-  const dotsScale = useTransform(
-    scrollProgress,
-    [0, 0.5, 1],
-    scrollMuted ? [1, 1, 1] : [1, 1.02, 1]
-  );
-
-  const headerY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [-28, 28]
-  );
-  const statY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [18, -18]
-  );
-
-  const plinthY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [22, -22]
-  );
-  const bracketTopY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [-8, 8]
-  );
-  const bracketBotY = useTransform(
-    scrollProgress,
-    [0, 1],
-    scrollMuted ? [0, 0] : [8, -8]
-  );
-
-  const container = {
-    hidden: { opacity: reduceMotion ? 1 : 0 },
-    show: {
-      opacity: 1,
-      transition: reduceMotion
-        ? { duration: 0 }
-        : { staggerChildren: 0.065, delayChildren: 0.14 },
-    },
-  };
-
-  const item: ItemVariants = {
-    hidden: {
-      opacity: reduceMotion ? 1 : 0,
-      y: reduceMotion ? 0 : 36,
-      scale: reduceMotion ? 1 : 0.94,
-    },
-    show: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: reduceMotion
-        ? { duration: 0 }
-        : { type: "spring", stiffness: 360, damping: 24, mass: 0.82 },
-    },
-  };
+  const blobTopY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [64, -64]);
+  const blobAmberY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [-88, 88]);
+  const dotsY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [32, -32]);
+  const headerY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [-28, 28]);
+  const statY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [18, -18]);
+  const plinthY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [22, -22]);
+  const bracketTopY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [-8, 8]);
+  const bracketBotY = useTransform(scrollProgress, [0, 1], scrollMuted ? [0, 0] : [8, -8]);
 
   return (
     <section
       ref={sectionRef}
       id="team"
+      aria-labelledby="team-heading"
       className="relative overflow-hidden border-t border-white/[0.06]"
     >
       <div className="pointer-events-none absolute inset-0" aria-hidden>
@@ -342,11 +238,7 @@ export default function Team() {
         />
         <motion.div
           className="absolute inset-0 opacity-[0.45] will-change-transform"
-          style={{
-            y: dotsY,
-            scale: dotsScale,
-            transformOrigin: "50% 35%",
-          }}
+          style={{ y: dotsY, transformOrigin: "50% 35%" }}
         >
           <div
             className="h-full w-full"
@@ -374,148 +266,75 @@ export default function Team() {
               aria-hidden
             />
 
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, x: -16, filter: "blur(6px)" }}
-              whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={springSoft}
-              className="flex flex-wrap items-center gap-4"
-            >
-              <motion.span
+            <div className="ai-rise flex flex-wrap items-center gap-4">
+              <span
                 className="inline-flex h-2 w-2 shrink-0 rotate-45 border border-cyan-300/40 bg-gradient-to-br from-cyan-200/30 via-white/20 to-amber-200/25"
-                animate={
-                  reduceMotion
-                    ? undefined
-                    : { opacity: [0.5, 1, 0.5], scale: [1, 1.08, 1] }
-                }
-                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden
               />
-              <span className="bg-gradient-to-r from-white/55 to-white/35 bg-clip-text font-mono text-[10px] font-medium uppercase tracking-[0.38em] text-transparent">
+              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.38em] text-white/60">
                 {t.benchLabel}
               </span>
-              <span className="hidden h-px w-16 bg-gradient-to-r from-cyan-300/45 via-amber-200/35 to-transparent sm:block" />
-              <span className="font-mono text-[10px] text-white/28">{t.codeComment}</span>
-            </motion.div>
+              <span
+                className="hidden h-px w-16 bg-gradient-to-r from-cyan-300/45 via-amber-200/35 to-transparent sm:block"
+                aria-hidden
+              />
+              <span className="font-mono text-[10px] text-white/55">{t.codeComment}</span>
+            </div>
 
             <div className="space-y-6">
               <h2
-                className="text-[clamp(2.4rem,5.8vw,5rem)] font-normal leading-[1.02] tracking-[-0.045em] text-white"
-                style={{ fontFamily: "var(--font-heading)" }}
+                id="team-heading"
+                className="ai-rise text-[clamp(2.4rem,5.8vw,5rem)] font-normal leading-[1.02] tracking-[-0.045em] text-white"
+                style={{ fontFamily: "var(--font-heading)", animationDelay: "60ms" }}
               >
-                <motion.span
-                  className="block"
-                  initial={reduceMotion ? false : { opacity: 0, y: 32 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ ...springSnappy, delay: 0.02 }}
-                >
-                  {t.headlineLine1}
-                </motion.span>
-                <motion.span
-                  className="mt-2 block bg-gradient-to-r from-white via-cyan-100/85 to-amber-100/75 bg-clip-text text-transparent"
-                  initial={reduceMotion ? false : { opacity: 0, y: 36 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ ...springSoft, delay: 0.1 }}
-                >
+                <span className="block">{t.headlineLine1}</span>
+                <span className="mt-2 block bg-gradient-to-r from-white via-cyan-100/85 to-amber-100/75 bg-clip-text text-transparent">
                   {t.headlineLine2}
-                </motion.span>
+                </span>
               </h2>
-              <motion.div
-                initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
-                whileInView={{ scaleX: 1, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ ...springSnappy, delay: 0.18 }}
-                className="h-[2px] max-w-lg origin-left rounded-full bg-gradient-to-r from-cyan-300/60 via-amber-200/55 to-transparent"
+              <div
+                className="h-[2px] max-w-lg rounded-full bg-gradient-to-r from-cyan-300/60 via-amber-200/55 to-transparent"
                 aria-hidden
               />
             </div>
 
-            <motion.p
-              initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ ...springSoft, delay: 0.14 }}
-              className="max-w-lg text-[15px] leading-[1.7] text-white/50 md:text-[17px]"
-              style={{ fontFamily: "var(--font-sans)" }}
+            <p
+              className="ai-rise max-w-lg text-[15px] leading-[1.7] text-white/65 md:text-[17px]"
+              style={{ fontFamily: "var(--font-sans)", animationDelay: "120ms" }}
             >
               {t.subtext}
-            </motion.p>
+            </p>
           </div>
 
           <motion.div
             style={{ y: statY }}
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={springSnappy}
-            className="will-change-transform flex flex-col items-start gap-6 rounded-2xl border border-white/[0.09] bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent px-6 py-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_24px_48px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md lg:items-end"
+            className="ai-rise will-change-transform flex flex-col items-start gap-6 rounded-2xl border border-white/[0.09] bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent px-6 py-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_24px_48px_-28px_rgba(0,0,0,0.5)] backdrop-blur-md lg:items-end"
           >
-            <div className="flex items-baseline gap-2.5">
-              <AnimatedSeatCount
-                target={members.length}
-                reduceMotion={reduceMotion}
-                className="bg-gradient-to-br from-white via-white to-cyan-200/55 bg-clip-text text-transparent"
-              />
-              <span className="pb-1 font-mono text-[9px] uppercase tracking-[0.24em] text-white/38">
+            <p className="flex items-baseline gap-2.5">
+              {/* Plain text. No count-up, no useState — the real number is in the
+                  server-rendered HTML, so crawlers and no-JS visitors see it. */}
+              <span
+                className="text-5xl font-extralight tabular-nums tracking-tighter text-white md:text-6xl"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                {roster.length}
+              </span>
+              <span className="pb-1 font-mono text-[9px] uppercase tracking-[0.24em] text-white/60">
                 {t.statLabel}
               </span>
-            </div>
-            <motion.div
-              className="flex flex-col gap-2"
-              initial={reduceMotion ? false : { opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.35, duration: 0.5 }}
-            >
-              <motion.span
-                className="h-0.5 rounded-full bg-gradient-to-r from-white/50 to-transparent"
-                initial={reduceMotion ? false : { width: 0 }}
-                whileInView={{ width: 64 }}
-                viewport={{ once: true }}
-                transition={{ ...springSnappy, delay: 0.4 }}
-              />
-              <motion.span
-                className="h-0.5 rounded-full bg-gradient-to-r from-white/30 to-transparent"
-                initial={reduceMotion ? false : { width: 0 }}
-                whileInView={{ width: 40 }}
-                viewport={{ once: true }}
-                transition={{ ...springSnappy, delay: 0.48 }}
-              />
-              <motion.span
-                className="h-0.5 rounded-full bg-gradient-to-r from-white/20 to-transparent"
-                initial={reduceMotion ? false : { width: 0 }}
-                whileInView={{ width: 56 }}
-                viewport={{ once: true }}
-                transition={{ ...springSnappy, delay: 0.56 }}
-              />
-            </motion.div>
+            </p>
+            <span className="flex flex-col gap-2" aria-hidden>
+              <span className="h-0.5 w-16 rounded-full bg-gradient-to-r from-white/50 to-transparent" />
+              <span className="h-0.5 w-10 rounded-full bg-gradient-to-r from-white/30 to-transparent" />
+              <span className="h-0.5 w-14 rounded-full bg-gradient-to-r from-white/20 to-transparent" />
+            </span>
           </motion.div>
         </motion.header>
 
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, margin: "-30px" }}
-          transition={springSoft}
           style={{ y: plinthY }}
-          className="relative will-change-transform rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_40px_100px_-48px_rgba(34,211,238,0.06)] backdrop-blur-[3px] sm:rounded-[2rem] sm:p-2 md:p-4"
+          className="ai-rise relative will-change-transform rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent p-1 shadow-[0_0_0_1px_rgba(255,255,255,0.05)_inset,0_40px_100px_-48px_rgba(34,211,238,0.06)] backdrop-blur-[3px] sm:rounded-[2rem] sm:p-2 md:p-4"
         >
-          {!reduceMotion && wideEnoughForScrollParallax && (
-            <motion.div
-              className="pointer-events-none absolute inset-0 z-0 rounded-[inherit] opacity-[0.38]"
-              style={{
-                background:
-                  "conic-gradient(from 200deg at 50% 50%, rgba(34,211,238,0.12), transparent 32%, rgba(167,139,250,0.08), transparent 58%, rgba(251,191,36,0.1), transparent 78%)",
-                maskImage: "linear-gradient(black, transparent 62%)",
-                WebkitMaskImage: "linear-gradient(black, transparent 62%)",
-              }}
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 32, repeat: Infinity, ease: "linear" }}
-              aria-hidden
-            />
-          )}
-
           <motion.div
             style={{ y: bracketTopY }}
             className="pointer-events-none absolute -right-px -top-px z-[2] h-16 w-16 rounded-tr-[1.65rem] border-r border-t border-cyan-400/20 will-change-transform sm:rounded-tr-[1.85rem]"
@@ -527,25 +346,21 @@ export default function Team() {
             aria-hidden
           />
 
-          <motion.ul
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: "-40px", amount: 0.12 }}
+          <ul
+            role="list"
             className="relative z-[1] grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 lg:gap-4 list-none p-0 m-0"
           >
-            {members.map((member, index) => (
+            {roster.map((member, index) => (
               <TeamMemberCard
-                key={member.handle}
+                key={member.id}
                 member={member}
                 index={index}
                 scrollProgress={scrollProgress}
                 reduceMotion={reduceMotion}
                 scrollMuted={scrollMuted}
-                variants={item}
               />
             ))}
-          </motion.ul>
+          </ul>
         </motion.div>
       </div>
     </section>

@@ -130,6 +130,24 @@
 }
 
 /* ═══════════════════════════════════════════
+   AI SECTION ENTRANCE
+   Declared ONLY inside `no-preference`, so the element's base style is its
+   final style. Reduced-motion users, no-JS crawlers and the SSR HTML all get
+   the finished layout — nothing here can ever ship as opacity:0.
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ai-rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+  .ai-rise {
+    animation: ai-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+/* ═══════════════════════════════════════════
    BUTTON BEAM / TOP-EDGE GLOW
    ═══════════════════════════════════════════ */
 @keyframes beam-slide {

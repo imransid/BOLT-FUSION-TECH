@@ -3,7 +3,6 @@ import { z } from "zod";
 export const sectionIds = [
   "hero",
   "ai_excellence",
-  "projects",
   "about",
   "team",
   "recent_works",
@@ -28,6 +27,7 @@ export const industryIconKeySchema = z.enum([
   "retail",
   "software",
   "startup",
+  "factory",
 ]);
 
 export type IndustryIconKey = z.infer<typeof industryIconKeySchema>;
@@ -65,14 +65,6 @@ const testimonialSchema = z.object({
   stars: z.number().min(1).max(5).default(5),
 });
 
-const projectTileSchema = z.object({
-  src: z.string(),
-  alt: z.string(),
-  caption: z.string().optional(),
-  isProfile: z.boolean().optional(),
-  imgMobileClass: z.string().optional(),
-});
-
 const featuredWorkSchema = z.object({
   src: z.string(),
   title: z.string(),
@@ -104,17 +96,39 @@ const industryItemSchema = z.object({
 });
 
 const teamMemberSchema = z.object({
+  /** Stable list key. Names and handles can collide; an id cannot, so React
+   *  reconciliation never mixes two people's cards up. */
+  id: z.string(),
   name: z.string(),
   handle: z.string(),
   image: z.string(),
+  /** Required key — a card must always carry the field, so nobody can be added
+   *  without one. The value ships blank and is filled in via /admin; the card
+   *  omits the line entirely while it is empty rather than reserving a gap. */
+  role: z.string(),
+  experience: z.string().optional(),
+  stack: z.array(z.string()).optional(),
+  /** Omitted entirely unless we hold a VERIFIED profile for this person. There
+   *  is no fallback URL construction anywhere — a missing value renders a card
+   *  with no link, never a dead anchor and never "#". */
   profileUrl: safeHref.optional(),
 });
 
-const aiMetricSchema = z.object({
-  value: z.string(),
+/** One defensible figure from a system we shipped. `sourceLabel` is the
+ *  credibility signal and is required — a stat with no named source must not
+ *  be renderable. */
+const proofPointSchema = z.object({
+  stat: z.string(),
   label: z.string(),
-  title: z.string(),
-  desc: z.string(),
+  body: z.string(),
+  sourceLabel: z.string(),
+  sourceHref: safeHref.optional(),
+});
+
+/** One row of the three-lane retrieval diagram that replaced the stock photo. */
+const retrievalLaneSchema = z.object({
+  name: z.string(),
+  detail: z.string(),
 });
 
 const caseStudyKpiSchema = z.object({
@@ -191,29 +205,24 @@ export const siteContentSchema = z.object({
     scrollHintLeft: z.string(),
     scrollHintRight: z.string(),
   }),
+  /* Every key here is NEW. The old shape (headlineLine1-3, intro, metrics,
+     footerTitle, trustPoints, imageSrc...) carried invented figures — "10X
+     Faster Delivery", "99.9% Defect-Free". Reusing any of those key names would
+     let a stored CMS document keep serving them straight past this rewrite,
+     because deepMerge lets stored values win. Renaming instead means zod strips
+     the stale keys as unknown and every field below falls back to defaults. */
   aiExcellence: z.object({
-    headlineLine1: z.string(),
-    headlineLine2: z.string(),
-    headlineLine3: z.string(),
-    intro: z.string(),
-    scheduleCtaLabel: z.string(),
-    scheduleCtaHref: safeHref,
-    imageSrc: z.string(),
-    imageAlt: z.string(),
-    metrics: z.array(aiMetricSchema),
-    footerTitle: z.string(),
-    footerSubtitle: z.string(),
-    trustPoints: z.array(z.string()),
-  }),
-  projects: z.object({
-    introStart: z.string(),
-    introLinkText: z.string(),
-    introLinkHref: safeHref,
-    introEnd: z.string(),
-    tiles: z.array(projectTileSchema),
-    featuredDetailLabel: z.string(),
-    discussLabel: z.string(),
-    mobileStripHint: z.string(),
+    heading: z.string(),
+    subline: z.string(),
+    ctaLabel: z.string(),
+    ctaHref: safeHref,
+    diagramTitle: z.string(),
+    diagramInLabel: z.string(),
+    diagramOutLabel: z.string(),
+    lanes: z.array(retrievalLaneSchema),
+    proofPoints: z.array(proofPointSchema),
+    proofNote: z.string(),
+    assurances: z.array(z.string()),
   }),
   about: z.object({
     title: z.string(),
@@ -228,7 +237,7 @@ export const siteContentSchema = z.object({
     headlineLine2: z.string(),
     subtext: z.string(),
     statLabel: z.string(),
-    members: z.array(teamMemberSchema),
+    roster: z.array(teamMemberSchema),
   }),
   recentWorks: z.object({
     title: z.string(),

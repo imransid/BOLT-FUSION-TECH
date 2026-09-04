@@ -76,7 +76,7 @@ export default function Process() {
               {p.discussLabel}
             </a>
             <a
-              href="#projects"
+              href="#recent-work"
               className="beam-button corner-glow px-6 py-3 rounded-[10px] bg-black border border-white/10 text-sm text-white hover:border-white/25 transition-all duration-500 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
               {p.workLabel}

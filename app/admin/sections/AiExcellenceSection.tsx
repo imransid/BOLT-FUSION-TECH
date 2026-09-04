@@ -1,44 +1,72 @@
 "use client";
 
-import { ArrayEditor, ImageField, StringListEditor, TextField, TextareaField } from "../fields";
+import { ArrayEditor, StringListEditor, TextField, TextareaField } from "../fields";
 
 export function AiExcellenceSection() {
   return (
     <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <TextField name="aiExcellence.headlineLine1" label="Headline line 1" />
-        <TextField name="aiExcellence.headlineLine2" label="Headline line 2" />
-        <TextField name="aiExcellence.headlineLine3" label="Headline line 3" />
-      </div>
-      <TextareaField name="aiExcellence.intro" label="Intro" />
+      <TextField name="aiExcellence.heading" label="Heading" />
+      <TextareaField name="aiExcellence.subline" label="Sub-line" rows={2} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="aiExcellence.scheduleCtaLabel" label="Schedule CTA label" />
-        <TextField name="aiExcellence.scheduleCtaHref" label="Schedule CTA href" mono />
+        <TextField name="aiExcellence.ctaLabel" label="CTA label" />
+        <TextField name="aiExcellence.ctaHref" label="CTA href" mono />
       </div>
-      <ImageField name="aiExcellence.imageSrc" label="Image" />
-      <TextField name="aiExcellence.imageAlt" label="Image alt" />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <TextField name="aiExcellence.diagramTitle" label="Diagram title" />
+        <TextField name="aiExcellence.diagramInLabel" label="Diagram — input node" />
+        <TextField name="aiExcellence.diagramOutLabel" label="Diagram — output node" />
+      </div>
       <ArrayEditor
-        name="aiExcellence.metrics"
-        label="Metrics"
-        addLabel="+ Add metric"
-        itemTitle={(i) => `Metric ${i + 1}`}
-        defaultItem={() => ({ value: "", label: "", title: "", desc: "" })}
+        name="aiExcellence.lanes"
+        label="Retrieval lanes"
+        addLabel="+ Add lane"
+        itemTitle={(i) => `Lane ${i + 1}`}
+        defaultItem={() => ({ name: "", detail: "" })}
+        renderItem={(i) => (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField name={`aiExcellence.lanes.${i}.name`} label="Lane name" />
+            <TextField name={`aiExcellence.lanes.${i}.detail`} label="Stack / detail" />
+          </div>
+        )}
+      />
+
+      <ArrayEditor
+        name="aiExcellence.proofPoints"
+        label="Proof points"
+        addLabel="+ Add proof point"
+        itemTitle={(i) => `Proof point ${i + 1}`}
+        defaultItem={() => ({ stat: "", label: "", body: "", sourceLabel: "", sourceHref: "" })}
         renderItem={(i) => (
           <>
             <div className="grid gap-3 sm:grid-cols-2">
-              <TextField name={`aiExcellence.metrics.${i}.value`} label="Value" />
-              <TextField name={`aiExcellence.metrics.${i}.label`} label="Label" />
+              <TextField name={`aiExcellence.proofPoints.${i}.stat`} label="Stat" />
+              <TextField name={`aiExcellence.proofPoints.${i}.label`} label="Label" />
             </div>
-            <TextField name={`aiExcellence.metrics.${i}.title`} label="Title" />
-            <TextareaField name={`aiExcellence.metrics.${i}.desc`} label="Description" rows={2} />
+            <TextareaField name={`aiExcellence.proofPoints.${i}.body`} label="Explanation" rows={2} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField
+                name={`aiExcellence.proofPoints.${i}.sourceLabel`}
+                label="Source tag"
+                placeholder="Source: the system this figure came from"
+              />
+              <TextField
+                name={`aiExcellence.proofPoints.${i}.sourceHref`}
+                label="Source link (optional)"
+                placeholder="https://…"
+                mono
+              />
+            </div>
           </>
         )}
       />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <TextField name="aiExcellence.footerTitle" label="Footer title" />
-        <TextField name="aiExcellence.footerSubtitle" label="Footer subtitle" />
-      </div>
-      <StringListEditor name="aiExcellence.trustPoints" label="Trust points" />
+
+      <TextareaField name="aiExcellence.proofNote" label="Note under the proof points" rows={2} />
+      <StringListEditor
+        name="aiExcellence.assurances"
+        label="Bottom bar"
+        placeholder="e.g. 8–16 weeks to a production MVP"
+      />
     </div>
   );
 }
