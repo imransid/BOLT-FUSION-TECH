@@ -28,6 +28,13 @@ export const projects: Project[] = parseContent(
         "WarmChats landing page: turn new real estate leads into booked appointments automatically",
       href: "/work/warmchats",
       state: "published",
+      metricIds: ["first-reply"],
+      // Not yet rewritten to the nine-part template (spec §6 step 2). The body
+      // stays null because problem / constraints / decisions / retrospective have
+      // not been written by anyone, and none of them can be inferred from the
+      // existing page copy.
+      template: "summary",
+      body: null,
     },
     {
       id: "restaurant-search",
@@ -40,6 +47,9 @@ export const projects: Project[] = parseContent(
         "Case study visual for AI-assisted restaurant search and discovery product",
       href: "/work/restaurant-search",
       state: "published",
+      metricIds: ["search-response", "cost-per-query", "haiku-routing"],
+      template: "summary",
+      body: null,
     },
   ],
   "projects.ts",

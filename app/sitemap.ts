@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
+      url: new URL("/work", base).toString(),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: new URL("/work/restaurant-search", base).toString(),
       lastModified: now,
       changeFrequency: "monthly",

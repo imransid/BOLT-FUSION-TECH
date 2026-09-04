@@ -74,6 +74,41 @@ export type TeamMember = z.infer<typeof teamMemberSchema>;
 export const projectStateSchema = z.enum(["published", "awaiting-asset"]);
 export type ProjectState = z.infer<typeof projectStateSchema>;
 
+/* ── the nine-part case-study template (spec §3/§4) ──────────────────────────
+ * A project is EITHER a summary card (`template: "summary"`) or a full nine-part
+ * write-up (`template: "nine-part"`). The fields below are required for the
+ * latter and absent for the former, which is what lets /work ship today while
+ * still refusing a nine-part study that skips the sections carrying the
+ * credibility.
+ *
+ * `tradeoff` and `retrospective` are REQUIRED BY DESIGN. Spec §4: "a decision
+ * with no cost is not a decision", and §7 is the differentiator — "only a team
+ * confident in its work will say what it got wrong". Making them mandatory here
+ * means no future study can quietly omit them.
+ */
+export const decisionSchema = z.object({
+  id: z.string().min(1),
+  /** e.g. "Claude Haiku over a frontier model for intent parsing" */
+  choice: z.string().min(1),
+  reasoning: z.string().min(1),
+  /** Required. A decision with no cost is not a decision. */
+  tradeoff: z.string().min(1),
+});
+export type Decision = z.infer<typeof decisionSchema>;
+
+export const caseStudyBodySchema = z.object({
+  problem: z.string().min(1),
+  constraints: z.array(z.string().min(1)).min(1),
+  decisions: z.array(decisionSchema).min(1),
+  /** Relations into content/metrics.ts, by id. */
+  metricIds: z.array(z.string().min(1)),
+  /** Section 7. Required — this is the proof, not an optional extra. */
+  retrospective: z.string().min(1),
+  shippedAt: z.string().min(1),
+  liveUrl: z.string().url().nullable(),
+});
+export type CaseStudyBody = z.infer<typeof caseStudyBodySchema>;
+
 export const projectSchema = z
   .object({
     id: z.string().min(1),
@@ -86,6 +121,17 @@ export const projectSchema = z
      *  write-up, not a screenshot and a sentence." */
     href: pending(z.string().min(1)),
     state: projectStateSchema,
+    /** Metric ids shown on the /work row. Relations, not copies. */
+    metricIds: z.array(z.string().min(1)),
+    /** "summary" = index card only. "nine-part" = a full write-up, and then
+     *  every field in caseStudyBodySchema is mandatory. */
+    template: z.enum(["summary", "nine-part"]),
+    body: caseStudyBodySchema.nullable(),
+  })
+  .refine((p) => p.template !== "nine-part" || p.body !== null, {
+    message:
+      "A nine-part case study must supply the full body: problem, constraints, decisions (each with a tradeoff), metricIds, retrospective, shippedAt. Use template 'summary' until it is written.",
+    path: ["body"],
   })
   .refine((p) => p.state !== "published" || (p.screenshot !== null && p.href !== null), {
     message:

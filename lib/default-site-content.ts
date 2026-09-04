@@ -29,7 +29,7 @@ const raw: SiteContent = {
       { label: "Services", href: "#services" },
       { label: "How we work", href: "#how-we-work" },
       { label: "Work", href: "#recent-work" },
-      { label: "Case study", href: "/work/restaurant-search" },
+      { label: "Case studies", href: "/work" },
       { label: "About", href: "#about" },
       { label: "Team", href: "#team" },
       { label: "Contact", href: "#contact" },
@@ -157,6 +157,12 @@ const raw: SiteContent = {
     subtext:
       "Each card opens in a new tab—so you can see who you would work with before you commit scope or budget.",
     statLabel: "specialists",
+    // PLACEHOLDER ILLUSTRATIONS. /team/avatar-01..10.svg are line-art drawings
+    // carried over from the original template — not photographs of these engineers.
+    // Renamed so the template is not identifiable, and one distinct file per person
+    // (one file in the old set stood in for three of them). Replace with real
+    // photographs before anyone can mistake them for likenesses.
+    //
     // VERIFIED LINKS ONLY. `profileUrl` is present for a member only where the
     // destination has been confirmed to be that person. Four are deliberately
     // absent — see the note in each. Nothing here constructs a URL from a handle.
@@ -165,7 +171,7 @@ const raw: SiteContent = {
         id: "rafa",
         name: "Rafa",
         handle: "@rafa",
-        image: "/team/marc-face.svg",
+        image: "/team/avatar-01.svg",
         role: "",
         experience: "",
         stack: [],
@@ -177,7 +183,7 @@ const raw: SiteContent = {
         id: "nadim",
         name: "Nadim",
         handle: "@nadim",
-        image: null,
+        image: "/team/avatar-02.svg",
         role: "",
         experience: "",
         stack: [],
@@ -186,7 +192,7 @@ const raw: SiteContent = {
         id: "shourab",
         name: "Shourab",
         handle: "@shourab",
-        image: "/team/thomas-face.svg",
+        image: "/team/avatar-03.svg",
         role: "",
         experience: "",
         stack: [],
@@ -200,7 +206,7 @@ const raw: SiteContent = {
         id: "arifur",
         name: "Arifur Rahman",
         handle: "@arifur",
-        image: null,
+        image: "/team/avatar-04.svg",
         role: "",
         experience: "",
         stack: [],
@@ -211,7 +217,7 @@ const raw: SiteContent = {
         id: "tareq",
         name: "Tareq",
         handle: "@tareq",
-        image: null,
+        image: "/team/avatar-05.svg",
         role: "",
         experience: "",
         stack: [],
@@ -220,7 +226,7 @@ const raw: SiteContent = {
         id: "nazirul",
         name: "Nazirul",
         handle: "@nazirul",
-        image: "/team/mo-face.svg",
+        image: "/team/avatar-06.svg",
         role: "",
         experience: "",
         stack: [],
@@ -230,7 +236,7 @@ const raw: SiteContent = {
         id: "talha",
         name: "Talha",
         handle: "@talha",
-        image: "/team/mo-face.svg",
+        image: "/team/avatar-07.svg",
         role: "",
         experience: "",
         stack: [],
@@ -240,7 +246,7 @@ const raw: SiteContent = {
         id: "nihal",
         name: "Nihal",
         handle: "@nihal",
-        image: "/team/eric-face.svg",
+        image: "/team/avatar-08.svg",
         role: "",
         experience: "",
         stack: [],
@@ -251,7 +257,7 @@ const raw: SiteContent = {
         id: "joinal",
         name: "Joinal",
         handle: "@joinal",
-        image: null,
+        image: "/team/avatar-09.svg",
         role: "",
         experience: "",
         stack: [],
@@ -260,7 +266,7 @@ const raw: SiteContent = {
         id: "sabbir",
         name: "Sabbir",
         handle: "@sabbir",
-        image: "/team/mo-face.svg",
+        image: "/team/avatar-10.svg",
         role: "",
         experience: "",
         stack: [],
@@ -295,16 +301,6 @@ const raw: SiteContent = {
           "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
         stack: "Multi-tenant microservice · Tiered search · Observable by design",
         alt: "Case study visual for AI-assisted restaurant search and discovery product",
-      },
-      {
-        // PLACEHOLDER SLOT. PLAN.md §9 lists "Which 3 projects" as an unresolved
-        // prerequisite, so the third slot carries no claim, no image and no link
-        // until that decision is made. Deliberately not filled in.
-        src: "",
-        title: "Third project — to be confirmed",
-        outcome: "",
-        stack: "",
-        alt: "",
       },
     ],
   },
