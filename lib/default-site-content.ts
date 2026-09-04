@@ -29,7 +29,7 @@ const raw: SiteContent = {
       { label: "Services", href: "#services" },
       { label: "How we work", href: "#how-we-work" },
       { label: "Work", href: "#recent-work" },
-      { label: "Case study", href: "/work/restaurant-search" },
+      { label: "Case studies", href: "/work" },
       { label: "About", href: "#about" },
       { label: "Team", href: "#team" },
       { label: "Contact", href: "#contact" },
@@ -301,16 +301,6 @@ const raw: SiteContent = {
           "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
         stack: "Multi-tenant microservice · Tiered search · Observable by design",
         alt: "Case study visual for AI-assisted restaurant search and discovery product",
-      },
-      {
-        // PLACEHOLDER SLOT. PLAN.md §9 lists "Which 3 projects" as an unresolved
-        // prerequisite, so the third slot carries no claim, no image and no link
-        // until that decision is made. Deliberately not filled in.
-        src: "",
-        title: "Third project — to be confirmed",
-        outcome: "",
-        stack: "",
-        alt: "",
       },
     ],
   },

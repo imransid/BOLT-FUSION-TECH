@@ -211,6 +211,17 @@ export default function RecentWorks() {
           ))}
         </div>
 
+        {/* Internal link path (case-study spec §5): homepage work section ->
+            /work -> each study -> pilot CTA. */}
+        <p className="mt-8 flex justify-center">
+          <a
+            href="/work"
+            className="beam-button corner-glow inline-block rounded-[10px] border border-white/10 bg-black px-6 py-3 text-sm text-white transition-all duration-500 hover:border-white/25 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
+          >
+            See all case studies
+          </a>
+        </p>
+
         <div
           className="mt-4 rounded-[48px] border border-white/10 h-0 w-full"
           style={{ maskImage: "linear-gradient(black 0%, rgba(0,0,0,0.16) 83%)" }}
