@@ -5,22 +5,20 @@ import { getSiteUrl } from "@/lib/site-url";
 
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import AIDrivenExcellence from "@/components/AIDrivenExcellence";
+import Architecture from "@/components/Architecture";
 import AboutMe from "@/components/AboutMe";
 import Team from "@/components/Team";
 import RecentWorks from "@/components/RecentWorks";
-import CaseStudy from "@/components/CaseStudy";
-import Process from "@/components/Process";
+import HowWeWork from "@/components/HowWeWork";
 import Services from "@/components/Services";
-import Industries from "@/components/Industries";
-import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import CTA from "@/components/CTA";
 import CalendlyInlineEmbed from "@/components/CalendlyInlineEmbed";
 import Footer from "@/components/Footer";
 import { SiteContentProvider } from "@/context/SiteContentContext";
 import { getSiteContent } from "@/lib/load-site-content";
-import type { SectionId, SiteContent } from "@/lib/site-content-schema";
+import { breadcrumbLd, buildGraph, jsonLdHtml } from "@/lib/structured-data";
+import type { SectionId } from "@/lib/site-content-schema";
 
 /** ISR: rebuilds this page periodically so HTML/metadata stay cache-friendly for crawlers. Lower if CMS edits must appear faster. */
 export const revalidate = 60;
@@ -62,24 +60,18 @@ function renderSection(id: SectionId, blurb: string) {
   switch (id) {
     case "hero":
       return <Hero />;
-    case "ai_excellence":
-      return <AIDrivenExcellence />;
+    case "architecture":
+      return <Architecture />;
     case "about":
       return <AboutMe />;
     case "team":
       return <Team />;
     case "recent_works":
       return <RecentWorks />;
-    case "case_study":
-      return <CaseStudy />;
-    case "process":
-      return <Process />;
+    case "how_we_work":
+      return <HowWeWork />;
     case "services":
       return <Services />;
-    case "industries":
-      return <Industries />;
-    case "testimonials":
-      return <Testimonials />;
     case "faq":
       return <FAQ />;
     case "cta":
@@ -101,42 +93,6 @@ function renderSection(id: SectionId, blurb: string) {
   }
 }
 
-function siteJsonLd(siteUrl: string, sameAs: string[], content: SiteContent) {
-  const graph: Record<string, unknown>[] = [
-    {
-      "@type": "Organization",
-      "@id": `${siteUrl}#organization`,
-      name: "Bolt Fusion Tech",
-      url: siteUrl,
-      logo: new URL("/favicon.svg", siteUrl).toString(),
-      description: content.meta.description,
-      sameAs,
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${siteUrl}#website`,
-      url: siteUrl,
-      name: "Bolt Fusion Tech",
-      publisher: { "@id": `${siteUrl}#organization` },
-    },
-  ];
-
-  // FAQ is rendered visibly on the page → eligible for FAQPage structured data.
-  if (content.faq.items.length > 0) {
-    graph.push({
-      "@type": "FAQPage",
-      "@id": `${siteUrl}#faq`,
-      mainEntity: content.faq.items.map((f) => ({
-        "@type": "Question",
-        name: f.q,
-        acceptedAnswer: { "@type": "Answer", text: f.a },
-      })),
-    });
-  }
-
-  return { "@context": "https://schema.org", "@graph": graph };
-}
-
 export default async function Home() {
   const content = await getSiteContent();
   const { sectionOrder, sectionVisibility } = content.site;
@@ -150,7 +106,9 @@ export default async function Home() {
         dangerouslySetInnerHTML={{
           // Escape `<` so an admin-entered "</script>" in any string field can't
           // break out of the JSON-LD block (stored-XSS guard).
-          __html: JSON.stringify(siteJsonLd(siteUrl, sameAs, content)).replace(/</g, "\\u003c"),
+          __html: jsonLdHtml(
+            buildGraph(siteUrl, sameAs, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
+          ),
         }}
       />
       <Navbar />

@@ -1,0 +1,98 @@
+# Bolt Fusion Tech — case studies
+
+Every figure below carries a `shipped` or `target` label. `shipped` means observed
+on a running system; `target` means a number we contract to, not one we have
+measured. Nothing here is unlabelled.
+
+---
+
+# WarmChats — AI booking for real estate
+
+Live at https://warmchats.com · Write-up: /work/warmchats
+
+## The problem
+
+Real estate leads go cold fast. An agent who replies first usually wins the
+appointment, but leads arrive at all hours across email, SMS, Zillow, open houses
+and Facebook, and a human cannot be first every time.
+
+## What we built
+
+An always-on follow-up system that is first to every inbound lead.
+
+- **Qualification and routing.** Claude reads each new lead — buyer or seller —
+  and routes it, so the reply is appropriate to intent rather than a template.
+- **Reply.** GPT-4.1 responds across email and SMS in the agent's voice.
+- **Booking.** Confirmed showings write straight to the calendar; no manual step.
+- **Tracking.** Every message is recorded, so the agent can see exactly what was
+  said on their behalf.
+
+## Architecture
+
+Event-driven microservices: Next.js front end, NestJS and Django services,
+PostgreSQL. Each inbound message is an event; qualification, reply generation and
+calendar writes are separate consumers, so a failure in one does not silently drop
+a lead.
+
+## Numbers
+
+| Value | Label | Status |
+|---|---|---|
+| `<60s` | First reply to every inbound lead | target |
+
+Source: WarmChats, live in production.
+
+---
+
+# Intelligent restaurant search — multi-tenant AI retrieval
+
+Write-up: /work/restaurant-search
+
+## The problem
+
+Conversational discovery is easy to demo and expensive to run. A naive
+implementation sends every query to a frontier model, so cost scales linearly with
+traffic and p95 latency is whatever the model gives you that day. Most AI products
+die after launch for exactly this reason — too slow, too expensive, too unstable.
+
+## What we built
+
+Three retrieval lanes, with every query classified *before* any paid inference
+runs, so most traffic never reaches a model.
+
+**Keyword lane** — simple intents, no model call.
+PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
+`$0 marginal cost`
+
+**AI lane** — complex intent becomes structured retrieval.
+Claude Haiku parses intent to JSON, then OpenAI embeddings and pgvector cosine
+similarity in Postgres. Roughly 20% of traffic, under 1200ms.
+`~$0.001 per search`
+
+**Cache lane** — repeat demand disappears at the edge.
+Redis, 30-second TTL. The key is tenant plus query plus geo plus filters plus
+classification, so two tenants never share a result. Under 15ms.
+`30–40% hit rate target`
+
+## Why classification comes first
+
+Routing is deterministic and happens before spend. The expensive path is opt-in,
+chosen by the shape of the query rather than by a model deciding whether it wants
+to answer. That is what makes the unit economics predictable as volume grows.
+
+## Numbers
+
+| Value | Label | Status |
+|---|---|---|
+| `<100ms` | Search response, 80% of traffic | shipped |
+| `~$0.001` | Average cost per AI query | shipped |
+| `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
+
+Source: restaurant discovery platform.
+
+---
+
+## Contact
+
+Two-week paid pilot, fixed price, full IP assigned on payment, NDA before scoping.
+https://boltfusiontech.com/#contact

@@ -17,7 +17,6 @@ export function HeroSection() {
       />
       <TextareaField name="hero.subtext" label="Subtext" />
       <StringListEditor name="hero.trustPoints" label="Trust points" placeholder="e.g. SOC2-ready" />
-      <StringListEditor name="hero.logos" label="Logo marquee (text)" placeholder="Client name" />
       <TextField name="hero.tagline" label="Tagline" />
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField name="hero.primaryCtaLabel" label="Primary CTA label" />

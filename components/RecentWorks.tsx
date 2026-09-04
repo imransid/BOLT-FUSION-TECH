@@ -123,7 +123,7 @@ export default function RecentWorks() {
             const ctaLabel = project.ctaLabel ?? "Discuss a similar build";
             return (
             <motion.a
-              key={project.src}
+              key={project.title}
               data-gallery-slide={i}
               href={project.href ?? "#contact"}
               initial={{ opacity: 0, x: 30 }}
@@ -141,17 +141,19 @@ export default function RecentWorks() {
                   : `${project.title}: ${project.outcome}. Contact to discuss a similar project.`
               }
             >
-              <Image
-                src={project.src}
-                alt={project.alt}
-                fill
-                sizes="(min-width: 640px) 300px, calc(100vw - 3.25rem)"
-                className={`object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
-                  project.imgClass
-                    ? project.imgClass
-                    : "object-top sm:object-center"
-                }`}
-              />
+              {project.src ? (
+                <Image
+                  src={project.src}
+                  alt={project.alt}
+                  fill
+                  sizes="(min-width: 640px) 300px, calc(100vw - 3.25rem)"
+                  className={`object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
+                    project.imgClass
+                      ? project.imgClass
+                      : "object-top sm:object-center"
+                  }`}
+                />
+              ) : null}
               <div
                 className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95"
                 aria-hidden
@@ -196,7 +198,7 @@ export default function RecentWorks() {
         >
           {featuredWork.map((project, i) => (
             <button
-              key={project.src}
+              key={project.title}
               type="button"
               role="tab"
               aria-selected={active === i}

@@ -2,35 +2,18 @@ import { z } from "zod";
 
 export const sectionIds = [
   "hero",
-  "ai_excellence",
+  "architecture",
   "about",
   "team",
   "recent_works",
-  "case_study",
-  "process",
+  "how_we_work",
   "services",
-  "industries",
-  "testimonials",
   "faq",
   "cta",
   "schedule_embed",
 ] as const;
 
 export type SectionId = (typeof sectionIds)[number];
-
-export const industryIconKeySchema = z.enum([
-  "edtech",
-  "fintech",
-  "ecommerce",
-  "pharma",
-  "telecom",
-  "retail",
-  "software",
-  "startup",
-  "factory",
-]);
-
-export type IndustryIconKey = z.infer<typeof industryIconKeySchema>;
 
 /** Reject links whose scheme could execute script when rendered as href/src. */
 const DANGEROUS_SCHEME = /^\s*(?:javascript|vbscript|data|file):/i;
@@ -58,13 +41,6 @@ const faqItemSchema = z.object({
   a: z.string(),
 });
 
-const testimonialSchema = z.object({
-  name: z.string(),
-  role: z.string(),
-  text: z.string(),
-  stars: z.number().min(1).max(5).default(5),
-});
-
 const featuredWorkSchema = z.object({
   src: z.string(),
   title: z.string(),
@@ -89,19 +65,14 @@ const serviceCardSchema = z.object({
   desc: z.string(),
 });
 
-const industryItemSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  iconKey: industryIconKeySchema,
-});
-
 const teamMemberSchema = z.object({
   /** Stable list key. Names and handles can collide; an id cannot, so React
    *  reconciliation never mixes two people's cards up. */
   id: z.string(),
   name: z.string(),
   handle: z.string(),
-  image: z.string(),
+  /** null until a real photo exists — template avatars were deleted in triage. */
+  image: z.string().nullable(),
   /** Required key — a card must always carry the field, so nobody can be added
    *  without one. The value ships blank and is filled in via /admin; the card
    *  omits the line entirely while it is empty rather than reserving a gap. */
@@ -196,7 +167,6 @@ export const siteContentSchema = z.object({
     headlineLine2Accent: z.string(),
     subtext: z.string(),
     trustPoints: z.array(z.string()),
-    logos: z.array(z.string()),
     tagline: z.string(),
     primaryCtaLabel: z.string(),
     primaryCtaHref: safeHref,
@@ -282,8 +252,6 @@ export const siteContentSchema = z.object({
     badge: z.string(),
     title: z.string(),
     intro: z.string(),
-    imageSrc: z.string(),
-    imageAlt: z.string(),
     discussLabel: z.string(),
     workLabel: z.string(),
     steps: z.array(processStepSchema),
@@ -296,30 +264,6 @@ export const siteContentSchema = z.object({
     discussLabel: z.string(),
     workLabel: z.string(),
     cards: z.array(serviceCardSchema),
-    marquee: z.array(z.string()),
-    imageSrc: z.string(),
-    imageAlt: z.string(),
-  }),
-  industries: z.object({
-    badge: z.string(),
-    titleLine1: z.string(),
-    titleLine2: z.string(),
-    subtitle: z.string(),
-    items: z.array(industryItemSchema),
-    ctaCardTitle: z.string(),
-    ctaCardBody: z.string(),
-    ctaCardButton: z.string(),
-    learnMoreLabel: z.string(),
-  }),
-  testimonials: z.object({
-    badge: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    startConversationLabel: z.string(),
-    startConversationHref: safeHref,
-    recentWorkLabel: z.string(),
-    recentWorkHref: safeHref,
-    items: z.array(testimonialSchema),
   }),
   faq: z.object({
     badge: z.string(),

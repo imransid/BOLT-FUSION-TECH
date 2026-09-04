@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
@@ -9,7 +8,6 @@ export default function Services() {
   const { services: s } = useSiteContent();
   const serviceSkills = s.skills;
   const serviceCards = s.cards;
-  const marqueeServices = s.marquee;
   return (
     <section id="services" className="py-20 px-5 md:px-20">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-11">
@@ -83,24 +81,6 @@ export default function Services() {
             </a>
             </div>
           </div>
-
-          {/* Right image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="relative flex-1 min-w-0 overflow-hidden rounded-[17px] ring-1 ring-white/[0.08] grayscale transition-[filter] duration-500 hover:grayscale-0 aspect-[16/10] min-h-[200px] w-full max-h-[min(28rem,58vh)] lg:aspect-auto lg:h-[503px] lg:max-h-none lg:min-w-[460px]"
-            style={{ boxShadow: "20px 30px 20px 8px rgba(0,0,0,0.4)" }}
-          >
-            <Image
-              src={s.imageSrc}
-              alt={s.imageAlt}
-              fill
-              sizes="(max-width: 1024px) 100vw, 700px"
-              className="object-cover object-center"
-            />
-          </motion.div>
         </div>
 
         {/* Service cards grid */}
@@ -156,40 +136,6 @@ export default function Services() {
           ))}
         </div>
 
-        {/* More services marquee */}
-        <div
-          className="w-full max-w-[1400px] mx-auto overflow-hidden"
-          style={{
-            maskImage:
-              "linear-gradient(to right, transparent 0%, black 12.5%, black 87.5%, transparent 100%)",
-          }}
-        >
-          <div className="flex animate-marquee gap-6 items-center">
-            {[...marqueeServices, ...marqueeServices, ...marqueeServices, ...marqueeServices].map(
-              (service, i) => (
-                <span
-                  key={i}
-                  className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-[#0d0d0d] text-sm text-white/80 whitespace-nowrap"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="opacity-50"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
-                  {service}
-                </span>
-              )
-            )}
-          </div>
-        </div>
       </div>
     </section>
   );
