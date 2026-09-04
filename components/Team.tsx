@@ -101,20 +101,22 @@ function TeamMemberCard({
       </span>
 
       <div className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
-        <motion.div
-          className="absolute inset-0 flex items-end justify-center will-change-transform"
-          style={{ y: portraitY }}
-        >
-          <motion.img
-            src={member.image}
-            alt=""
-            className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
-            loading="lazy"
-            decoding="async"
-            whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
-            transition={springSoft}
-          />
-        </motion.div>
+        {member.image ? (
+          <motion.div
+            className="absolute inset-0 flex items-end justify-center will-change-transform"
+            style={{ y: portraitY }}
+          >
+            <motion.img
+              src={member.image}
+              alt=""
+              className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
+              loading="lazy"
+              decoding="async"
+              whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
+              transition={springSoft}
+            />
+          </motion.div>
+        ) : null}
       </div>
 
       {/* Hierarchy: name (15px) → role (12px) → experience + stack (10px). Every

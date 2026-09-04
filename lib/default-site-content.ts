@@ -2,25 +2,22 @@ import { siteContentSchema, type SiteContent } from "@/lib/site-content-schema";
 
 const raw: SiteContent = {
   meta: {
-    title: "Custom Software & Product Engineering | Bolt Fusion Tech",
+    title: "AI systems that are still running in six months | Bolt Fusion Tech",
     description:
-      "We design, build, and ship reliable web and mobile products—clear roadmaps, senior engineers, and delivery you can plan around.",
-    ogTitle: "Bolt Fusion Tech – Custom Software & Product Engineering",
+      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
+    ogTitle: "Bolt Fusion Tech — AI systems that are still running in six months",
     ogDescription:
-      "Partner with a product-minded engineering team to launch faster, reduce risk, and scale with confidence.",
+      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
   },
   site: {
     sectionOrder: [
       "hero",
-      "ai_excellence",
+      "architecture",
       "about",
       "team",
       "recent_works",
-      "case_study",
-      "process",
+          "how_we_work",
       "services",
-      "industries",
-      "testimonials",
       "faq",
       "cta",
       "schedule_embed",
@@ -30,13 +27,11 @@ const raw: SiteContent = {
   navbar: {
     links: [
       { label: "Services", href: "#services" },
-      { label: "Industry", href: "#industries" },
-      { label: "Process", href: "#process" },
+      { label: "How we work", href: "#how-we-work" },
       { label: "Work", href: "#recent-work" },
-      { label: "Case study", href: "#case-study" },
+      { label: "Case study", href: "/work/restaurant-search" },
       { label: "About", href: "#about" },
       { label: "Team", href: "#team" },
-      { label: "Happy Clients", href: "#testimonials" },
       { label: "Contact", href: "#contact" },
     ],
     scheduleCtaLabel: "Book a call",
@@ -66,7 +61,6 @@ const raw: SiteContent = {
       "Timezone overlap",
       "Quality-first delivery",
     ],
-    logos: ["SaaS", "Fintech", "Healthtech", "E-commerce", "AI & IoT products"],
     tagline: "Senior execution, transparent process, enterprise-grade quality",
     primaryCtaLabel: "Plan your build",
     primaryCtaHref: "#contact",
@@ -183,7 +177,7 @@ const raw: SiteContent = {
         id: "nadim",
         name: "Nadim",
         handle: "@nadim",
-        image: "/team/szymon-face.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -206,7 +200,7 @@ const raw: SiteContent = {
         id: "arifur",
         name: "Arifur Rahman",
         handle: "@arifur",
-        image: "/team/christoph-face.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -217,7 +211,7 @@ const raw: SiteContent = {
         id: "tareq",
         name: "Tareq",
         handle: "@tareq",
-        image: "/team/janic-face.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -257,7 +251,7 @@ const raw: SiteContent = {
         id: "joinal",
         name: "Joinal",
         handle: "@joinal",
-        image: "/team/matei-face.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -292,55 +286,25 @@ const raw: SiteContent = {
         ctaLabel: "Read the case study",
       },
       {
-        src: "/projects/hospitality-ops-admin.png",
-        title: "Hospitality operations suite",
+        // Copy below is lifted verbatim from the approved `caseStudy` block —
+        // nothing here is newly written. No `href`: /work/restaurant-search does
+        // not exist yet (PLAN.md §6 moves the write-up there in a later session).
+        src: "/projects/case-fnb-smart-search.png",
+        title: "Intelligent restaurant search",
         outcome:
-          "Staff admin for dashboard, kitchen, procurement, POS, and orders—built for fast floor decisions.",
-        stack: "Mobile · React Native",
-        alt: "Mobile admin app for restaurant operations: kitchen, POS, orders, and procurement",
+          "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
+        stack: "Multi-tenant microservice · Tiered search · Observable by design",
+        alt: "Case study visual for AI-assisted restaurant search and discovery product",
       },
       {
-        src: "/projects/opal-fashion-tech.png",
-        title: "OPAL — Fashion × Tech",
-        outcome:
-          "Luxury commerce experience with a cinematic hero, trust strip, and conversion-focused layout.",
-        stack: "Web · Next.js · Commerce",
-        alt: "OPAL Fashion × Tech e-commerce hero: craft meets circuitry, shop and brand story",
-        imgClass:
-          "object-[50%_24%] min-[380px]:object-[center_20%] sm:object-[center_top]",
-      },
-      {
-        src: "/projects/immidox-immigration.png",
-        title: "Immidox immigration services",
-        outcome:
-          "High-trust services site with clear journeys, proof points, and strong primary calls to action.",
-        stack: "Web · CMS-ready",
-        alt: "Immidox immigration services website hero with confident messaging and CTAs",
-      },
-      {
-        src: "/projects/expert-marketplace-mobile.png",
-        title: "Expert marketplace & booking",
-        outcome:
-          "Search, rich profiles, availability, and booking in one flow—trust signals like ratings and status built in.",
-        stack: "Mobile · Marketplace",
-        alt: "Mobile app to find skilled experts, view profiles, and book services with ratings and availability",
-      },
-      {
-        src: "/projects/godconnect-community.png",
-        title: "GodConnect — faith community",
-        outcome:
-          "Welcome journey, daily encouragement, and community connection—clear onboarding and a focused first-run experience.",
-        stack: "Mobile · Community",
-        alt: "GodConnect app splash and welcome screen for a Christian community platform",
-      },
-      {
-        src: "/projects/rebellion-brand-agency.png",
-        title: "REBELLION — brand agency",
-        outcome:
-          "Statement hero, brutalist energy, and interactive work showcase—built to win bold creative briefs.",
-        stack: "Web · Agency / brand",
-        alt: "REBELLION agency website hero with bold typography and project carousel on orange background",
-        imgClass: "object-[center_22%] sm:object-[center_top]",
+        // PLACEHOLDER SLOT. PLAN.md §9 lists "Which 3 projects" as an unresolved
+        // prerequisite, so the third slot carries no claim, no image and no link
+        // until that decision is made. Deliberately not filled in.
+        src: "",
+        title: "Third project — to be confirmed",
+        outcome: "",
+        stack: "",
+        alt: "",
       },
     ],
   },
@@ -535,9 +499,6 @@ const raw: SiteContent = {
     title: "Process",
     intro:
       "A straightforward process designed for busy product leaders: fewer surprises, clearer tradeoffs, and decisions you can explain to your board or budget owner.",
-    imageSrc: "/section-process.png",
-    imageAlt:
-      "Product and engineering collaboration during discovery and sprint planning",
     discussLabel: "Discuss your roadmap",
     workLabel: "See recent work",
     steps: [
@@ -589,115 +550,6 @@ const raw: SiteContent = {
       {
         title: "UX & frontend craft",
         desc: "Interfaces that match your brand and usability goals: accessible components, responsive layouts, and design-system thinking so new features stay consistent.",
-      },
-    ],
-    marquee: [
-      "Technical discovery",
-      "Sprint delivery",
-      "Code review",
-      "Security-minded defaults",
-      "Documentation",
-      "Post-launch support",
-    ],
-    imageSrc: "/section-services.png",
-    imageAlt:
-      "Engineering team building software products with clear UI and architecture on screen",
-  },
-  industries: {
-    badge: "Industry Focus",
-    titleLine1: "Industries We Power",
-    titleLine2: "with Innovation",
-    subtitle:
-      "We build focused digital products for teams that need reliable outcomes, measurable velocity, and software that scales after launch.",
-    items: [
-      {
-        title: "EdTech",
-        description:
-          "LMS products, live class platforms, and assessment workflows built for scale and compliance.",
-        iconKey: "edtech",
-      },
-      {
-        title: "Fintech",
-        description:
-          "Secure payment, lending, and risk systems with auditability and operational resilience.",
-        iconKey: "fintech",
-      },
-      {
-        title: "E-Commerce",
-        description:
-          "Fast storefronts, theme customization, checkout integrations, and CRO-focused UX.",
-        iconKey: "ecommerce",
-      },
-      {
-        title: "Pharma",
-        description:
-          "Regulatory-aligned healthcare software, portals, analytics, and clinical operations tools.",
-        iconKey: "pharma",
-      },
-      {
-        title: "Telecom",
-        description:
-          "Enterprise-grade telecom dashboards and APIs engineered for high reliability.",
-        iconKey: "telecom",
-      },
-      {
-        title: "Retail",
-        description:
-          "Omnichannel retail systems that connect inventory, customer journeys, and fulfillment.",
-        iconKey: "retail",
-      },
-      {
-        title: "Software/ITES",
-        description:
-          "Custom business software and IT-enabled solutions for long-term product growth.",
-        iconKey: "software",
-      },
-      {
-        title: "Start-Ups",
-        description:
-          "Lean MVPs, scale-ready architecture, and product iterations designed for speed.",
-        iconKey: "startup",
-      },
-      {
-        title: "Smart Factory",
-        description:
-          "Production tracking, floor dashboards, QC logging, and order-to-shipment visibility.",
-        iconKey: "factory",
-      },
-    ],
-    ctaCardTitle: "Is your industry here?",
-    ctaCardBody:
-      "If not, we can still help you design and ship quickly with the same senior delivery standard.",
-    ctaCardButton: "Let's Talk",
-    learnMoreLabel: "Learn More",
-  },
-  testimonials: {
-    badge: "Client feedback",
-    title: "What clients say.",
-    intro:
-      "Feedback from leaders who needed delivery they could defend—to users, investors, and their own engineering teams.",
-    startConversationLabel: "Start a conversation",
-    startConversationHref: "#contact",
-    recentWorkLabel: "See recent work",
-    recentWorkHref: "#recent-work",
-    items: [
-      {
-        name: "Sarah K.",
-        role: "CEO, B2B SaaS",
-        text: "They turned a vague brief into a shipped MVP with sane tradeoffs explained along the way. Our team finally had a release cadence we could plan around.",
-        stars: 5,
-      },
-      {
-        name: "David Chen",
-        role: "Head of Product, Fintech",
-        text: "Strong engineering judgment on integrations and compliance-sensitive flows. We cut rework because they asked the right questions early.",
-        stars: 5,
-      },
-      {
-        name: "Emily Torres",
-        role: "CTO, Healthtech",
-        text: "Clear documentation and handoff after launch. Internal developers picked up the codebase without a weeks-long archaeology project.",
-        stars: 5,
       },
     ],
   },

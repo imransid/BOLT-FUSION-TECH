@@ -199,25 +199,6 @@ export default function Hero() {
           <span className="text-sm text-white/50">{h.scrollHintRight}</span>
         </motion.div>
 
-        <div
-          className="mt-10 w-full overflow-hidden rounded-full border border-white/10 bg-white/[0.02] py-3"
-          style={{
-            maskImage:
-              "linear-gradient(to right, transparent 0%, black 12.5%, black 87.5%, transparent 100%)",
-          }}
-        >
-          <div className="flex animate-marquee gap-24 items-center">
-            {[...h.logos, ...h.logos].map((logo, i) => (
-              <span
-                key={i}
-                className="text-white/30 text-sm font-medium whitespace-nowrap tracking-widest uppercase flex-shrink-0"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {logo}
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

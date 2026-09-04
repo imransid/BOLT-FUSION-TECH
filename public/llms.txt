@@ -1,0 +1,33 @@
+# Bolt Fusion Tech
+
+> We build AI systems that are still running in six months.
+
+Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and
+Bangladesh. We build production AI, custom software and platform work for teams who
+need systems that hold up after launch — not demos.
+
+How we work: named engineers assigned before you sign, 4–8 hours of overlap with US
+and EU working days, IP assigned on payment, and an NDA before scoping. Your first
+call is with the engineer who writes the code.
+
+Most engagements start with a two-week paid pilot: a scoped slice of your real
+product, fixed price, full IP, no obligation.
+
+Every figure published on this site carries a `shipped` or `target` label.
+
+## Key pages
+
+- [Home](/): positioning, the three-lane retrieval architecture, work, engineers,
+  process, the two-week pilot, and answers to buyer due-diligence questions.
+- [Intelligent restaurant search](/work/restaurant-search): multi-tenant AI
+  retrieval. Queries are classified before any paid inference runs; most traffic
+  resolves on a sub-100ms path and average model spend is near $0.001 per
+  AI-assisted query. Both figures are `shipped`.
+- [WarmChats](/work/warmchats): always-on AI follow-up for real estate agents.
+  Claude qualifies and routes each lead, GPT-4.1 replies on email and SMS, and
+  bookings write to the calendar. First-reply-under-60s is a `target`.
+- [Privacy policy](/privacy-policy)
+
+## Full text
+
+- [llms-full.txt](/llms-full.txt): case studies in Markdown.
