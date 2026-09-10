@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════
+   TYPE — three faces, and the tokens that name them
+   Satoshi   headings        --font-heading
+   Inter     body and UI     --font-sans   (Tailwind `font-sans`, and <body>)
+   Commit    machine values  --font-machine, --font-mono (Tailwind `font-mono`)
+   The next/font variables these read (--font-satoshi, --font-inter,
+   --font-commit) are set on <html>, which is :root, so they resolve here.
+   7c62d28 moved those variables to <html> and deleted this block in the same
+   commit; every var(--font-heading) and var(--font-machine) then resolved to
+   nothing, and the whole site rendered in the system font.
+   ═══════════════════════════════════════════ */
+@theme {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-commit), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  --font-heading: var(--font-satoshi), var(--font-inter), system-ui, sans-serif;
+  --font-machine: var(--font-mono);
+}
+
+/* ═══════════════════════════════════════════
    BUTTON BEAM / TOP-EDGE GLOW
    ═══════════════════════════════════════════ */
 @keyframes beam-slide {

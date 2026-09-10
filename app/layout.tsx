@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Instrument_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -21,18 +21,13 @@ const satoshi = localFont({
   src: [{ path: "../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
 });
 
-/* ── Rebuild typefaces (CLAUDE.md) ─────────────────────────────────────────
- * Instrument Sans — display + UI. Variable, 400–700, served by next/font/google.
- * Commit Mono — machine values ONLY (query strings, ms, $, model names, stack
+/* Commit Mono — machine values ONLY (query strings, ms, $, model names, stack
  * items); never decorative labels. Not on Google Fonts, so it is self-hosted
  * from public/fonts/CommitMono-Variable.woff2. Licence: SIL OFL 1.1, text kept
  * beside the file at public/fonts/CommitMono-LICENSE-OFL.txt as the OFL requires.
+ *
+ * The tokens that name these faces are defined in app/globals.css.
  */
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const commitMono = localFont({
   variable: "--font-commit",
@@ -101,7 +96,7 @@ export default function RootLayout({
          the design tokens are declared at :root. With these classes on <body>
          the tokens resolved against an undefined variable, became the
          guaranteed-invalid value, and inherited that invalidity site-wide. */
-      className={`${inter.variable} ${satoshi.variable} ${instrumentSans.variable} ${commitMono.variable} scroll-smooth scroll-pt-20 md:scroll-pt-24`}
+      className={`${inter.variable} ${satoshi.variable} ${commitMono.variable} scroll-smooth scroll-pt-20 md:scroll-pt-24`}
     >
       <body className="min-h-dvh overflow-x-clip antialiased bg-black text-white">
         {children}
