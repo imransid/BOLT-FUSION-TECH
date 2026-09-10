@@ -61,10 +61,13 @@ How the CMS behaves. Each of these has already caused a bug:
   default array whole; it is not merged item by item.
 - **An admin save writes the whole document.** After one save, every value
   comes from the database and editing `default-site-content.ts` changes nothing
-  on the live site. On 2026-09-11 live rendered exactly the code defaults
-  (diffed against a build with an empty store): either nothing has been saved,
-  or the stored copy equals the defaults. Telling those apart needs
-  `DATABASE_URL`, which no local env file holds.
+  on the live site.
+- **In production the admin is switched off.** No session secret is
+  configured: `/admin` redirects to `/admin/login?reason=config` and every
+  `/api/admin/*` call answers `503 Admin not configured`. Nothing has been saved
+  through it, and live renders exactly the code defaults (diffed against a build
+  with an empty store, 2026-09-11). **Until the admin is configured,
+  `lib/default-site-content.ts` is the live content.**
 - **A stored document that fails validation is dropped.** `safeBuild` then
   serves the code defaults for the whole site and logs
   `[site-content] stored document failed validation; serving defaults`. So a
@@ -129,9 +132,10 @@ verify-site checks 1 and 2 catch both.
   skipped for `prefers-reduced-motion` and without WebGL, render loop stopped
   off-screen and when the tab is hidden, dpr capped at 1.75. It is the only
   WebGL on the site.
-- **Reduced motion:** honoured by the particle field and the CSS utilities.
-  The framer reveals call `useReducedMotion` only in CaseStudy, WarmChats, Team
-  and Logo.
+- **Reduced motion:** honoured by the particle field and by every CSS loop
+  except `.beam-button`, whose `beam-slide` animation has no reduced-motion
+  guard (verify-site check 21). The framer reveals call `useReducedMotion` only
+  in CaseStudy, WarmChats, Team and Logo.
 
 ## SEO and AI visibility
 
@@ -151,22 +155,33 @@ verify-site checks 1 and 2 catch both.
   `public/apple-touch-icon.png`, declared in the layout: an explicit `icons`
   object suppresses Next's `app/apple-icon` convention.
 
-## Hard rules — in force
+## Hard rules
+
+Each rule is followed by whether the live site keeps it. "Broken" means the
+rule stands and the site is wrong — except where the conflict is listed as open
+at the end, which means nobody has decided yet.
 
 - **Zero stock photography.** Screenshots, real photographs or SVG diagrams.
-- **No fake faces, ever.** A team card with no real photograph renders no
-  photograph — never a template avatar, a stock face or a generated one.
+  *Holds* (verify-site check 10).
+- **No fake faces, ever** — never a template avatar, a stock face or a
+  generated one, not even as a placeholder. *Broken, and open:* the ten team
+  cards show placeholder illustrations (see the table at the end).
 - **Every metric carries a shipped or target label.** No unlabelled numbers.
   Enforced at build time in `/content/metrics.ts`, by the CMS schema for the
-  case-study KPIs, and by the KPI type in the WarmChats component.
+  case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
+  the WarmChats KPIs are labelled (verify-site check 8).
 - **A published project links to its write-up.** Enforced in both layers
   (`state: published | awaiting-asset`). There is no fallback link: a project
-  without a write-up is shown with no link at all.
-- **Content lives in `/content` or the CMS, not in JSX** — except the
+  without a write-up is shown with no link at all. *Holds* (check 9).
+- **Content lives in `/content` or the CMS, not in JSX.** *Holds*, except the
   WarmChats case study and the privacy policy, which are hardcoded.
-- Semantic HTML, exactly one `h1` per page, no skipped heading levels, visible
-  keyboard focus. verify-site checks 11, 19 and 26.
-- Body text at most 68ch wide (applied in three places; not audited).
+- **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
+  *Broken:* restaurant search has no `h1`; WarmChats goes from `h2` to `h4`
+  (checks 11 and 26).
+- **Visible keyboard focus everywhere.** *Broken:* the featured-work cards set
+  `box-shadow` inline, which overrides their `focus-visible:ring` — they show no
+  focus at all (check 19).
+- Body text at most 68ch wide. *Not audited.*
 
 ## Writing voice
 
@@ -211,6 +226,7 @@ Each row is a rule the previous CLAUDE.md stated that the live design breaks.
 | No single headline word coloured for emphasis | hero line 2 — "lower hiring cost" in amber (`hero.headlineLine2Accent`) |
 | No meta strings joined with middle dots as chrome | featured-work stack lines ("Real Estate · AI Automation · Microservices"), case-study badges ("Case study · Systems architecture"), the WarmChats stack line, the OG image's "WEB · MOBILE · AI" |
 | Mono for machine output only | the logo's "TECH" (hardcodes `ui-monospace` inline), the featured-work stack lines, Team labels, case-study eyebrows |
+| No fake faces, ever — not as a placeholder | the ten team cards show `public/team/avatar-01…10.svg`: `7c62d28` deleted the theme's template faces, and `d64ef52` restored them two days later as "renamed placeholder illustrations" |
 | Hero copy from COPY.md | COPY.md's approved hero is "We build AI systems that are still running in six months."; the live hero is "Build. Scale. Transform. / With elite engineers and lower hiring cost." from the CMS defaults |
 
 Lesser, same question: gradient washes used as decoration (the hero headline's
