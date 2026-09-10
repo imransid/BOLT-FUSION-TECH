@@ -26,12 +26,17 @@ const HERO = {
     "For real estate agents, speed-to-lead decides who gets the showing and wins the listing. WarmChats removes the human delay entirely: Claude reads and qualifies every new lead — buyer or seller — GPT-4.1 holds a natural, on-brand conversation across email and SMS, and the system books the appointment straight into the calendar, 24/7, with every message tracked. We delivered it as an event-driven microservice platform built to scale from a solo agent's first pilot to a brokerage running thousands of concurrent conversations.",
 } as const;
 
-const KPIS = [
-  { value: "<60s", label: "First response", hint: "AI replies the moment a new lead lands — Zillow, open house, or Facebook." },
-  { value: "3×", label: "More replies", hint: "Instant, conversational follow-up keeps buyers and sellers engaged." },
-  { value: "24/7", label: "Autonomous", hint: "Qualifies, nurtures, and books showings with no agent in the loop." },
-  { value: "100%", label: "Tracked", hint: "Every lead, message, and booking logged across email and SMS." },
-] as const;
+type Kpi = { value: string; label: string; hint: string; status: "shipped" | "target" };
+
+/* Every figure carries a shipped or target label (CLAUDE.md hard rule; the
+   /work/warmchats lock yields to it). The caption under the grid calls these
+   figures the product's "automation targets"; <60s is also content/metrics.ts
+   `first-reply`, status target. */
+const KPIS: readonly Kpi[] = [
+  { value: "<60s", label: "First response", hint: "AI replies the moment a new lead lands — Zillow, open house, or Facebook.", status: "target" },
+  { value: "24/7", label: "Autonomous", hint: "Qualifies, nurtures, and books showings with no agent in the loop.", status: "target" },
+  { value: "100%", label: "Tracked", hint: "Every lead, message, and booking logged across email and SMS.", status: "target" },
+];
 
 const LANES = [
   {
@@ -338,24 +343,40 @@ export default function WarmChatsCaseStudy() {
         <Heading>Built for speed-to-lead.</Heading>
         <motion.div
           {...reveal(0.06, reduced)}
-          className="mt-8 grid grid-cols-1 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-black/28 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4 [&>*:nth-child(3)]:border-t [&>*:nth-child(3)]:border-white/[0.07] sm:[&>*:nth-child(3)]:border-t-0 sm:[&>*:nth-child(odd)]:border-t-0 sm:[&>*:nth-child(2)]:border-t-0"
+          className="mt-8 grid grid-cols-1 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-black/28 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
         >
-          {KPIS.map((k) => (
-            <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 lg:px-7">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                <span
-                  className="text-[1.9rem] font-light leading-none text-cyan-200/95 md:text-[2.1rem]"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  {k.value}
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-100/60">
-                  {k.label}
-                </span>
-              </div>
-              <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p>
-            </article>
-          ))}
+          {KPIS.map((k) => {
+            /* Same encoding as the homepage metric band: cyan = shipped, amber = target. */
+            const shipped = k.status === "shipped";
+            return (
+              <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 lg:px-7">
+                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                  <span
+                    className={`text-[1.9rem] font-light leading-none md:text-[2.1rem] ${shipped ? "text-cyan-200/95" : "text-amber-300"}`}
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {k.value}
+                  </span>
+                  <span
+                    className={`text-[10px] font-medium uppercase tracking-[0.16em] ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
+                  >
+                    {k.label}
+                  </span>
+                </div>
+                <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p>
+                <p className="mt-auto pt-3">
+                  <span
+                    className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                      shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
+                    }`}
+                    style={{ fontFamily: "var(--font-machine)" }}
+                  >
+                    {k.status}
+                  </span>
+                </p>
+              </article>
+            );
+          })}
         </motion.div>
         <p className="mt-3 text-[11px] leading-relaxed text-white/35">
           Figures reflect the WarmChats product&apos;s automation targets.
