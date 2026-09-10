@@ -519,6 +519,8 @@ async function measureContrast(page) {
       return [...cx.getImageData(0, 0, 1, 1).data];
     };
     const out = [];
+    const keep = [];
+    const frames = [...document.querySelectorAll("iframe")].map((f) => f.getBoundingClientRect());
     for (const el of document.body.querySelectorAll("*")) {
       if (el.closest("script, style, noscript, template, svg, [aria-hidden='true']")) continue;
       if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
@@ -544,18 +546,34 @@ async function measureContrast(page) {
       const clipText = s.backgroundClip === "text" || s.webkitBackgroundClip === "text";
       const fill = s.webkitTextFillColor;
       const color = rgba(fill && fill !== "rgba(0, 0, 0, 0)" && fill !== s.color ? fill : s.color);
-      out.push({ x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, color, op, pinned, clipped, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
+      /* an embedded frame (Calendly) paints over whatever sits beneath it */
+      const underFrame = frames.some((f) => f.width && r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top);
+      keep.push(el);
+      out.push({ x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
       if (out.length >= 700) break;
     }
+    window.__vsKeep = keep;
     return out;
   });
   await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}" });
   await page.waitForTimeout(250);
   const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
+  /* where each element is now: anything that moved or was replaced between the
+     measurement and the capture is not under the pixels we sampled */
+  const now = await page.evaluate(() =>
+    (window.__vsKeep || []).map((el) => {
+      if (!el.isConnected) return null;
+      const r = el.getBoundingClientRect();
+      return { x: r.left + scrollX, y: r.top + scrollY };
+    }),
+  );
   const res = { measured: 0, unmeasured: [], fails: [] };
-  for (const e of els) {
-    if (e.clipText || e.pinned || e.clipped) {
-      res.unmeasured.push({ text: e.text, why: e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : "scrolled out of view in a container" });
+  for (const [idx, e] of els.entries()) {
+    const n = now[idx];
+    const moved = !n || Math.abs(n.x - e.x) > 1 || Math.abs(n.y - e.y) > 1;
+    if (e.clipText || e.pinned || e.clipped || e.underFrame || moved) {
+      const why = e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "moved while measuring";
+      res.unmeasured.push({ text: e.text, why });
       continue;
     }
     const a = (e.color[3] / 255) * e.op;
@@ -1117,7 +1135,10 @@ check(22, "No console errors, page errors, hydration warnings or failed requests
       const key = `${m.type}|${m.text}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      F.push(`${at(k)}: ${m.type} — ${m.text}${m.src ? ` [${m.src.replace(BASE, "")}]` : ""}`);
+      const line = `${at(k)}: ${m.type} — ${m.text}${m.src ? ` [${short(m.src)}]` : ""}`;
+      /* raised by another site's code in its own frame (e.g. Calendly's reCAPTCHA) */
+      if (m.src && !isSameSite(m.src)) I.push(`${line} (third party)`);
+      else F.push(line);
     }
     for (const f of v.failed) {
       const key = `${f.url}|${f.why}`;
@@ -1471,7 +1492,10 @@ await (async () => {
     }
   } else I.push("eslint not installed in the checkout — skipped");
   const imports = sh("git", ["grep", "-hoE", `(from|import|require\\()[[:space:]]*\\(?["'][^"']+["']`, "--", "*.ts", "*.tsx", "*.js", "*.mjs", "*.cjs", "*.css"]).out;
+  /* required by the framework, never imported by name */
+  const IMPLICIT = new Set(["react-dom"]);
   for (const dep of Object.keys(pkg.dependencies || {})) {
+    if (IMPLICIT.has(dep)) continue;
     const esc = dep.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
     if (!new RegExp(`["']${esc}(/[^"']*)?["']`).test(imports)) F.push(`dependency "${dep}" is imported nowhere`);
   }
