@@ -433,13 +433,23 @@ function collectInPage() {
     stuckHidden.push({ text: snip(el, 60), hider: `${hider.tagName.toLowerCase()}${hider.id ? "#" + hider.id : ""}`, style: (hider.getAttribute("style") || "").slice(0, 70), section: sectionOf(el) });
   }
 
+  /* 27 ── people: every card that presents a person, and every photo slot */
+  const personCards = [...document.querySelectorAll("[data-person-card]")];
+  const peopleFallback = !personCards.length && document.getElementById("team");
+  const people = {
+    marked: personCards.length,
+    fallback: Boolean(peopleFallback),
+    images: [...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
+    emptySlots: [...document.querySelectorAll("[data-photo-slot]")].filter((s) => !s.querySelector("img")).length,
+  };
+
   /* 25 ── scripts the page loaded */
   const scripts = performance
     .getEntriesByType("resource")
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, metrics, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, metrics, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people };
 }
 
 /* 4 ── with JavaScript off, is the text there? (runs in the browser) ───── */
@@ -1230,7 +1240,7 @@ check(7, "Each line of the homepage headline breaks only between sentences", "th
 });
 
 /* 10 */
-check(10, "Every image loads, has alt text, comes from this site, and a person's picture is a photograph", "a broken or unlabelled image; stock photography; a template avatar standing in for an engineer", (F, I) => {
+check(10, "Every image loads, has alt text, and comes from this site", "a broken or unlabelled image; stock photography", (F, I) => {
   const STOCK = /unsplash|pexels|pixabay|shutterstock|istock|gettyimages|pravatar|randomuser|ui-avatars|gravatar|placehold|picsum|dicebear/i;
   const seen = new Set();
   const once = (key, line) => {
@@ -1248,9 +1258,6 @@ check(10, "Every image loads, has alt text, comes from this site, and a person's
       if (img.alt === null) once(`${route}|alt|${img.src}`, `${route}: ${short(img.src)} has no alt attribute`);
       if (!img.src.startsWith("data:") && !isSameSite(img.src)) once(`${route}|host|${img.src}`, `${route}: ${short(img.src)} is served from another site`);
       if (STOCK.test(img.src)) once(`${route}|stock|${img.src}`, `${route}: ${short(img.src)} looks like stock photography or a template avatar`);
-      /* CLAUDE.md: no fake faces, ever. A team member's picture is a photograph;
-         an SVG in that slot is by definition an illustration. */
-      if (/\/team\/[^?&]+\.svg\b/i.test(img.src)) once(`${route}|face|${img.src}`, `${route}: ${short(img.src)} is an illustration where a team member's photograph goes`);
     }
   }
 });
@@ -1477,6 +1484,8 @@ await (async () => {
   if (locks.length !== 1) F.push(`${locks.length} lockfiles are tracked (${locks.join(", ") || "none"}); there should be exactly one`);
   const lockFor = { yarn: "yarn.lock", npm: "package-lock.json", pnpm: "pnpm-lock.yaml", bun: "bun.lockb" }[pm];
   if (lockFor && !locks.includes(lockFor)) F.push(`packageManager is ${pm}, but ${lockFor} is not tracked`);
+  const faces = files.filter((f) => /^public\//.test(f) && /\.(svg|png|jpe?g|webp|avif|gif)$/i.test(f) && /(^|[\/_.-])(avatars?|placeholders?|generated|fake|faces?)([-_.\d]|$)/i.test(f));
+  if (faces.length) F.push(`placeholder or avatar image files are in the repository: ${faces.slice(0, 4).join(", ")}${faces.length > 4 ? ` and ${faces.length - 4} more` : ""}`);
   const built = files.filter((f) => /^(\.next|node_modules|out|dist|coverage)\//.test(f));
   if (built.length) F.push(`build output is tracked in git: ${built.slice(0, 4).join(", ")}${built.length > 4 ? ` and ${built.length - 4} more` : ""}`);
   const bin = (n) => path.join(REPO, "node_modules", ".bin", n);
@@ -1536,6 +1545,31 @@ await (async () => {
   }
   results.push({ id: 25, title: "three.js loads only on the homepage; no font is preloaded that nothing uses", catches: "the 3D bundle leaking onto other routes; Instrument Sans preloaded and unused", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
 })();
+
+/* 27 */
+check(27, "No template, placeholder or generated faces — a person's picture is a real photograph", "the ten template avatars d64ef52 restored as 'placeholder illustrations'", (F, I) => {
+  /* A file named for what it is: avatar-*, placeholder, generated, fake, a face drawing. */
+  const FAKE = /(^|[\/_.-])(avatars?|placeholders?|generated|fake|faces?|illustrations?|default-user|user-default)([-_.\d]|$)/i;
+  const PHOTO = /\.(jpe?g|png|webp|avif)$/i;
+  const file = (src) => decodeURIComponent(src).replace(/^.*[?&]url=/, "").replace(/[?&#].*$/, "");
+  const seen = new Set();
+  const once = (key, line) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    F.push(line);
+  };
+  for (const [k, v] of Object.entries(visits)) {
+    const route = k.split("@")[0];
+    for (const img of v.allImages) if (FAKE.test(file(img.src))) once(`${route}|name|${file(img.src)}`, `${route}: ${short(file(img.src))} is named as a placeholder or avatar`);
+    for (const src of v.people.images) {
+      const f = file(src);
+      if (!PHOTO.test(f)) once(`${route}|photo|${f}`, `${route}: ${short(f)} sits in a person card and is not a photograph`);
+    }
+    if (v.people.emptySlots) once(`${route}|slots`, `${at(k)}: ${v.people.emptySlots} empty photo frame(s) — the slot should not render without a photograph`);
+    if (v.people.fallback) I.push(`${at(k)}: no [data-person-card] markers; checked the images inside #team`);
+    else if (v.people.marked) I.push(`${at(k)}: ${v.people.marked} person card(s), ${v.people.images.length} picture(s)`);
+  }
+});
 
 /* 26 */
 check(26, "Headings step down one level at a time; title, description, canonical and robots are right", "a skipped heading level; a page with no description or the wrong canonical", (F) => {
