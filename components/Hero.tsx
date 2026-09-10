@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
 import { reveal } from "@/lib/reveal";
@@ -15,6 +15,7 @@ const HeroParticleField = dynamic(
 );
 
 export default function Hero() {
+  const reduceMotion = useReducedMotion();
   const { hero: h } = useSiteContent();
 
   // Line 2 carries the hero's single amber phrase. Split on the FIRST occurrence
@@ -171,7 +172,7 @@ export default function Hero() {
           <span className="text-sm text-white/50">{h.scrollHintLeft}</span>
           <div className="flex-1 h-px bg-white/10" />
           <motion.div
-            animate={{ y: [0, 5, 0] }}
+            animate={reduceMotion ? undefined : { y: [0, 5, 0] }}
             transition={{ repeat: Infinity, duration: 2 }}
           >
             <svg

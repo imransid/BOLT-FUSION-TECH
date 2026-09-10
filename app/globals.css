@@ -38,6 +38,11 @@
 .beam-button:hover::after {
   animation-duration: 2s;
 }
+@media (prefers-reduced-motion: reduce) {
+  .beam-button::after {
+    animation: none;
+  }
+}
 
 /* Top left corner glow for buttons */
 .corner-glow {
