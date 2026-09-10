@@ -125,10 +125,17 @@ const retrievalLaneSchema = z.object({
   detail: z.string(),
 });
 
+/* Every figure carries a shipped or target label (CLAUDE.md hard rule).
+   Required here because the case-study KPIs were the one path where the rule
+   was not enforced: content/metrics.ts gates its figures at build time, but a
+   KPI could reach the page through the CMS with no label at all. */
+export const kpiStatusSchema = z.enum(["shipped", "target"]);
+
 const caseStudyKpiSchema = z.object({
   value: z.string(),
   label: z.string(),
   hint: z.string().optional(),
+  status: kpiStatusSchema,
 });
 
 const caseStudyLaneSchema = z.object({

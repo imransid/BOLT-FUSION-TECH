@@ -2,6 +2,7 @@
 
 import {
   ArrayEditor,
+  EnumSelect,
   ImageField,
   NumberField,
   StringListEditor,
@@ -46,10 +47,19 @@ export function CaseStudySection() {
           itemTitle={(i) => `KPI ${i + 1}`}
           defaultItem={() => ({ value: "", label: "" })}
           renderItem={(i) => (
-            <div className="grid gap-3 sm:grid-cols-3">
-              <TextField name={`caseStudy.kpis.${i}.value`} label="Value" />
-              <TextField name={`caseStudy.kpis.${i}.label`} label="Label" />
-              <TextField name={`caseStudy.kpis.${i}.hint`} label="Hint (optional)" />
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <TextField name={`caseStudy.kpis.${i}.value`} label="Value" />
+                <TextField name={`caseStudy.kpis.${i}.label`} label="Label" />
+                <TextField name={`caseStudy.kpis.${i}.hint`} label="Hint (optional)" />
+              </div>
+              {/* Required. Shipped = measured on a system we shipped; target = not yet. */}
+              <EnumSelect
+                name={`caseStudy.kpis.${i}.status`}
+                label="Status — every figure is shipped or target"
+                options={["shipped", "target"]}
+                placeholder="Choose shipped or target"
+              />
             </div>
           )}
         />

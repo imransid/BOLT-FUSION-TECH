@@ -145,10 +145,13 @@ export function EnumSelect({
   name,
   label,
   options,
+  placeholder,
 }: {
   name: ContentPath;
   label: string;
   options: readonly string[];
+  /** Shown while no option is chosen. It cannot be saved: the choice must be made. */
+  placeholder?: string;
 }) {
   const { control } = useFormContext<SiteContent>();
   const { field, fieldState } = useController({ name, control });
@@ -160,6 +163,11 @@ export function EnumSelect({
         value={(field.value as string) ?? ""}
         className={`${inputCls} max-w-[260px]`}
       >
+        {placeholder ? (
+          <option value="" disabled className="bg-[#0d0d10]">
+            {placeholder}
+          </option>
+        ) : null}
         {options.map((o) => (
           <option key={o} value={o} className="bg-[#0d0d10]">
             {o}

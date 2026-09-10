@@ -96,7 +96,9 @@ All motion ≤400ms, `cubic-bezier(0.16, 1, 0.3, 1)`.
 - No layout shift from any animation
 
 ## Do not touch
-`/app/work/warmchats` — copy approved, structure locked.
+`/app/work/warmchats` — copy approved, structure locked. The lock yields to the
+hard rule that every metric carries a shipped or target label: the approved copy
+predates the rule, and the rule wins.
 
 ## Writing voice
 Plain verbs, sentence case, active voice. A CTA says what happens: "Start a pilot",

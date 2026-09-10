@@ -55,6 +55,23 @@ function migrateStored(merged: Record<string, unknown>): void {
       ),
     };
   }
+
+  // caseStudy.kpis[].status — added when the label rule reached the CMS. A
+  // stored KPI takes the status of the default KPI with the SAME value; those
+  // labels are sourced (content/metrics.ts). A stored KPI with no match stays
+  // unlabelled and fails validation — labelling it here would be inventing.
+  const cs = merged.caseStudy as { kpis?: unknown } | undefined;
+  if (cs && Array.isArray(cs.kpis)) {
+    const known = new Map<string, string>(defaultSiteContent.caseStudy.kpis.map((k) => [k.value, k.status]));
+    merged.caseStudy = {
+      ...cs,
+      kpis: cs.kpis.map((k) => {
+        if (!k || typeof k !== "object" || "status" in k) return k;
+        const status = known.get(String((k as { value?: unknown }).value));
+        return status ? { ...k, status } : k;
+      }),
+    };
+  }
 }
 
 function buildContent(overrides: unknown): SiteContent {

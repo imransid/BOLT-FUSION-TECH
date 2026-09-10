@@ -319,26 +319,35 @@ const raw: SiteContent = {
     imageSrc: "/projects/case-fnb-smart-search.png",
     imageAlt:
       "Case study visual for AI-assisted restaurant search and discovery product",
+    // Every KPI carries a status. <100ms and ~$0.001 are content/metrics.ts
+    // `search-response` and `cost-per-query`, both shipped. Multi-tenant and
+    // Observable are properties of the delivered system, as the executive
+    // summary above states ("We delivered a multi-tenant … ships with the
+    // metrics, logging, and guardrails").
     kpis: [
       {
         value: "<100ms",
         label: "Search SLA",
         hint: "~80% of queries hit the fast lane",
+        status: "shipped",
       },
       {
         value: "~$0.001",
         label: "Avg. cost / AI search",
         hint: "Budgeted hybrid retrieval",
+        status: "shipped",
       },
       {
         value: "Multi-tenant",
         label: "Postgres RLS",
         hint: "Isolated rows per tenant",
+        status: "shipped",
       },
       {
         value: "Observable",
         label: "Production-ready",
         hint: "Metrics, logs, safe limits",
+        status: "shipped",
       },
     ],
     kpiSectionEyebrow: "Service commitments",

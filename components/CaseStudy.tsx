@@ -175,22 +175,39 @@ export default function CaseStudy() {
           {...revealProps(0.06, !!reduced)}
           className="mt-7 grid grid-cols-1 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-black/28 sm:mt-8 sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4"
         >
-          {cs.kpis.map((k) => (
-            <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 sm:py-6 lg:px-7">
-              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                <span
-                  className="text-[1.75rem] font-light tabular-nums leading-none text-cyan-200/95 md:text-[1.95rem]"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  {k.value}
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-100/60">
-                  {k.label}
-                </span>
-              </div>
-              {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p> : null}
-            </article>
-          ))}
+          {cs.kpis.map((k) => {
+            /* Same encoding as the homepage metric band: cyan = shipped,
+               amber = target, and the label is always shown. */
+            const shipped = k.status === "shipped";
+            return (
+              <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 sm:py-6 lg:px-7">
+                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                  <span
+                    className={`text-[1.75rem] font-light tabular-nums leading-none md:text-[1.95rem] ${shipped ? "text-cyan-200/95" : "text-amber-300"}`}
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {k.value}
+                  </span>
+                  <span
+                    className={`text-[10px] font-medium uppercase tracking-[0.16em] ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
+                  >
+                    {k.label}
+                  </span>
+                </div>
+                {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p> : null}
+                <p className="mt-auto pt-3">
+                  <span
+                    className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                      shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
+                    }`}
+                    style={{ fontFamily: "var(--font-machine)" }}
+                  >
+                    {k.status}
+                  </span>
+                </p>
+              </article>
+            );
+          })}
         </motion.div>
 
         <div className="my-11 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent md:my-12" />
