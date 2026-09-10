@@ -3,16 +3,16 @@ import type { Metadata } from "next";
 import { getSiteUrl } from "@/lib/site-url";
 import WarmChatsCaseStudy from "@/components/case-studies/WarmChatsCaseStudy";
 
-const TITLE = "WarmChats — AI that books real estate appointments | Case study";
+const TITLE = "WarmChats — AI that books real estate appointments";
 const DESCRIPTION =
-  "How we built WarmChats: an always-on AI assistant for real estate agents that qualifies every new lead with Claude, replies instantly on email and SMS with GPT-4.1, and books showings automatically — on an event-driven microservice stack (Next.js, NestJS, Django, PostgreSQL).";
+  "How we built WarmChats: an always-on AI assistant that qualifies every new real estate lead with Claude and books showings automatically.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = getSiteUrl();
   const canonical = new URL("/work/warmchats", site).toString();
-  const ogImage = new URL("/projects/warmchats-ai-booking.png", site).toString();
+  const ogImage = new URL("/projects/warmchats-ai-booking-og.png", site).toString();
   return {
-    title: { absolute: TITLE },
+    title: TITLE,
     description: DESCRIPTION,
     alternates: { canonical },
     openGraph: {
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonical,
       siteName: "Bolt Fusion Tech",
       locale: "en_US",
-      images: [{ url: ogImage, alt: "WarmChats — AI appointment booking" }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: "WarmChats — AI appointment booking" }],
     },
     twitter: {
       card: "summary_large_image",

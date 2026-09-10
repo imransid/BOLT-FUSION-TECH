@@ -316,7 +316,7 @@ export default function Team() {
               {/* Plain text. No count-up, no useState — the real number is in the
                   server-rendered HTML, so crawlers and no-JS visitors see it. */}
               <span
-                className="text-5xl font-extralight tabular-nums tracking-tighter text-white md:text-6xl"
+                className="text-5xl font-light tabular-nums tracking-tighter text-white md:text-6xl"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 {roster.length}

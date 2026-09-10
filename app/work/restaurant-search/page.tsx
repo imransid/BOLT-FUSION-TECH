@@ -15,16 +15,16 @@ import { getSiteUrl } from "@/lib/site-url";
  * The existing CaseStudy component and its approved copy are reused verbatim —
  * this is a move, not a rewrite. Nothing here is newly written.
  */
-const TITLE = "Intelligent restaurant search — multi-tenant AI retrieval | Case study";
+const TITLE = "Intelligent restaurant search — multi-tenant AI retrieval";
 const DESCRIPTION =
-  "How we built a multi-tenant restaurant discovery microservice: natural-language queries classified before any paid inference runs, keeping most traffic on a sub-100ms path and average model spend near $0.001 per AI-assisted query.";
+  "How we built a multi-tenant restaurant search service that classifies queries before any paid inference, keeping most traffic under 100ms.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = getSiteUrl();
   const canonical = new URL("/work/restaurant-search", site).toString();
-  const ogImage = new URL("/projects/case-fnb-smart-search.png", site).toString();
+  const ogImage = new URL("/projects/case-fnb-smart-search-og.png", site).toString();
   return {
-    title: { absolute: TITLE },
+    title: TITLE,
     description: DESCRIPTION,
     alternates: { canonical },
     openGraph: {
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonical,
       siteName: "Bolt Fusion Tech",
       locale: "en_US",
-      images: [{ url: ogImage, alt: "Intelligent restaurant search — case study" }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: "Intelligent restaurant search — case study" }],
     },
     twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
   };

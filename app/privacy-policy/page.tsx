@@ -21,6 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonical,
       siteName: "Bolt Fusion Tech",
       locale: "en_US",
+      images: [
+        {
+          url: new URL("/opengraph-image", site).toString(),
+          width: 1200,
+          height: 630,
+          alt: "Bolt Fusion Tech — We build AI systems that are still running in six months.",
+        },
+      ],
     },
     robots: { index: true, follow: true },
   };
