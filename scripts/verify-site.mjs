@@ -908,6 +908,16 @@ async function visitNoJs(browser, route, width) {
      fires, and the infinite loops on the page never finish. The longest entrance
      on this site is 1.6s. */
   await page.waitForTimeout(2500);
+  /* ...and scroll it once at reading speed, as a reader without script would:
+     sections with content-visibility: auto render — and run their entrances —
+     only when they come near the viewport. Driven from outside the page, since
+     page timers do not run with scripts off. */
+  const docH = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y <= docH; y += 100) {
+    await page.evaluate((yy) => window.scrollTo(0, yy), y);
+    await page.waitForTimeout(60);
+  }
+  await page.waitForTimeout(1200);
   const r = await page.evaluate(hiddenWithoutJs);
   await ctx.close();
   return r;
@@ -1250,7 +1260,7 @@ check(6, "No sideways scrolling or cut-off content at any width", "content wider
 });
 
 /* 7 */
-check(7, "Each line of the homepage headline breaks only between sentences", "the Hero sizing contract in 7c62d28: a wider face may wrap, but only at a full stop", (F, I) => {
+check(7, "The homepage headline wraps cleanly — no line of it is a single orphaned word", "a headline sized for one line of copy showing another: the H1 became a sentence (COPY.md §1)", (F, I) => {
   for (const [k, v] of Object.entries(widthRuns)) {
     if (!k.startsWith("/@")) continue;
     if (!v.headline) {
@@ -1258,10 +1268,9 @@ check(7, "Each line of the homepage headline breaks only between sentences", "th
       continue;
     }
     I.push(`${at(k)}: ${v.headline.map((lines) => lines.length).join(" + ")} line(s)`);
-    /* The contract (Hero.tsx) is about line 1 only: it is sized so the widest
-       face keeps it on one line, and if it ever wraps, it wraps between sentences. */
-    v.headline[0].slice(0, -1).forEach((l) => {
-      if (!/[.!?]$/.test(l)) F.push(`${at(k)}: headline line 1 breaks mid-sentence, after "${l.split(" ").slice(-3).join(" ")}"`);
+    v.headline.forEach((lines, i) => {
+      const last = lines[lines.length - 1] || "";
+      if (lines.length > 1 && last.split(" ").length === 1) F.push(`${at(k)}: headline part ${i + 1} ends on a single word, "${last}"`);
     });
   }
 });
