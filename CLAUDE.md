@@ -87,8 +87,12 @@ Dark, rounded cards, no photography. **Not tokenised:** colours are Tailwind
 utilities and a few inline values, not CSS variables.
 
 - Ground `#000` (body); raised surfaces `#0d0d0d`; the WarmChats page `#0a0a0a`.
-- Text is white at opacity steps — `white/80`, `/60`, `/50`, `/40`. Hairlines
-  `white/10` and `white/[0.07]`.
+- Text is white at opacity steps — `white/80`, `/65`, `/55`. **Nothing that
+  must be read goes below `white/55`** on the dark ground: 22–48% measured
+  3.0–4.5:1 and failed AA (verify-site checks 18 and 20). Hairlines `white/10`
+  and `white/[0.07]`.
+- The navbar shows the full nav from `xl` (1280px) and the burger below it: the
+  nav needs ~1,100px, and at `md` it cut off "Book a call" on portrait tablets.
 - Two accents that carry meaning: **cyan** (`cyan-200`) = shipped, measured;
   **amber** (`amber-200`, `amber-300`) = target, and the primary call to
   action. Red (`red-300`) is for errors only.
@@ -119,13 +123,18 @@ verify-site checks 1 and 2 catch both.
 
 ## Motion, as built
 
-- **Reveal on scroll.** framer-motion `whileInView` (once): opacity 0 → 1 with
-  a 14–40px slide, in ten components — AboutMe, Architecture, CTA, CaseStudy,
-  FAQ, Footer, HowWeWork, RecentWorks, Services, WarmChats. The server HTML
-  renders these at `opacity:0`, so with JavaScript off most of both case
-  studies is invisible (verify-site check 4). A fix is proposed, not built.
-- **Hero entrance:** framer `animate` on mount, staggered.
-- **FAQ accordion and the mobile menu:** `AnimatePresence`.
+- **Reveals** (`lib/reveal.ts`, `components/RevealController.tsx`, REVEAL in
+  `app/globals.css`). The server HTML is always visible: an element that
+  animates in carries `data-reveal` and CSS variables, never `opacity:0`. On
+  first paint every reveal plays a CSS entrance — no script needed, and it ends
+  visible. After hydration the controller hides only what is still below the
+  viewport, reveals it on entry (-40px bottom margin), and reveals at once
+  anything a flick or a jump carried past. Under reduced motion nothing hides and
+  nothing moves. Use `reveal({ x, y, duration, delay })`; never add a framer
+  `initial={{ opacity: 0 }}`.
+- **Hero entrance:** the same CSS entrance, staggered by delay; the H1 is never hidden.
+- **framer-motion remains** for the FAQ accordion and the mobile menu
+  (`AnimatePresence`), Team's scroll parallax, and the hero's scroll arrow.
 - **Hero background:** a WebGL curl-noise particle nebula
   (`components/HeroParticleField.tsx`) — the one place WebGL is allowed. One
   `THREE.Points` cloud of ~28k
@@ -133,10 +142,10 @@ verify-site checks 1 and 2 catch both.
   skipped for `prefers-reduced-motion` and without WebGL, render loop stopped
   off-screen and when the tab is hidden, dpr capped at 1.75. It is the only
   WebGL on the site.
-- **Reduced motion:** honoured by the particle field and by every CSS loop
-  except `.beam-button`, whose `beam-slide` animation has no reduced-motion
-  guard (verify-site check 21). The framer reveals call `useReducedMotion` only
-  in CaseStudy, WarmChats, Team and Logo.
+- **Reduced motion:** nothing loops. The particle field is skipped, every CSS
+  loop has a reduced-motion guard (`.beam-button` included), the hero arrow uses
+  `useReducedMotion`, the CTA's status dot is `motion-safe:`. verify-site
+  checks 21 and 23.
 
 ## SEO and AI visibility
 
@@ -166,14 +175,14 @@ at the end, which means nobody has decided yet.
   *Holds* (verify-site check 10).
 - **No fake faces, ever** — never a template avatar, a stock face or a
   generated one, not even as a placeholder. A section ships without the photo
-  slot until real photographs exist. *Broken* until `fix/team-no-template-avatars`
-  lands (verify-site check 27).
+  slot until real photographs exist. *Holds* with `fix/team-no-template-avatars`
+  (verify-site check 27).
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
-  element the server sends at `opacity:0` is not. *Broken* until the reveal
-  rewrite lands (check 4).
+  element the server sends at `opacity:0` is not. *Holds* with
+  `fix/reveal-visible-html` (checks 4 and 5).
 - **No tracked-out ALL-CAPS labels, no single headline word coloured for
   emphasis, no meta strings joined with middle dots, mono for machine output
-  only.** *Broken* until the design-rules batch lands.
+  only.** *Holds* with `design/rules-decided`.
 - **Every metric carries a shipped or target label.** No unlabelled numbers.
   Enforced at build time in `/content/metrics.ts`, by the CMS schema for the
   case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
@@ -184,11 +193,10 @@ at the end, which means nobody has decided yet.
 - **Content lives in `/content` or the CMS, not in JSX.** *Holds*, except the
   WarmChats case study and the privacy policy, which are hardcoded.
 - **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
-  *Broken:* restaurant search has no `h1`; WarmChats goes from `h2` to `h4`
-  (checks 11 and 26).
-- **Visible keyboard focus everywhere.** *Broken:* the featured-work cards set
-  `box-shadow` inline, which overrides their `focus-visible:ring` — they show no
-  focus at all (check 19).
+  *Holds* with `fix/case-study-headings` (checks 11 and 26).
+- **Visible keyboard focus everywhere.** *Holds* with `fix/featured-card-focus`. Watch for
+  this one: an inline `box-shadow` overrides every Tailwind `ring`, so a card
+  that sets its shadow inline needs an outline for focus (check 19).
 - Body text at most 68ch wide. *Not audited.*
 
 ## Writing voice
@@ -230,13 +238,13 @@ and the site is wrong.
 | rule | decision | where the fix is |
 |---|---|---|
 | No fake faces, ever — not as a placeholder | **Rule stands.** The ten template avatars `d64ef52` restored as "renamed placeholder illustrations" are removed; Team is text-forward (COPY.md §5) until real photographs exist | `fix/team-no-template-avatars` |
-| No fade-and-slide-up on every section | **Rule removed.** Fade-on-scroll is allowed. The defect was never the reveal; it was the server HTML shipping at `opacity:0`. Reveals now render visible in the HTML (see Motion) | the reveal rewrite |
-| No tracked-out ALL-CAPS labels | **Rule stands.** All 31 go | design-rules batch |
+| No fade-and-slide-up on every section | **Rule removed.** Fade-on-scroll is allowed. The defect was never the reveal; it was the server HTML shipping at `opacity:0`. Reveals now render visible in the HTML (see Motion) | `fix/reveal-visible-html` |
+| No tracked-out ALL-CAPS labels | **Rule stands.** All 31 go | `design/rules-decided` |
 | No particle backgrounds | **Rule rewritten:** WebGL, and the particle field, belong to the hero and nowhere else — which is what exists | — |
-| No single headline word coloured for emphasis | **Rule stands.** "lower hiring cost" goes with the hero copy | design-rules batch |
-| No meta strings joined with middle dots as chrome | **Rule stands,** the OG image included | design-rules batch |
-| Mono for machine output only | **Rule stands.** The logo's "TECH", stack lines and Team labels move to the body face | design-rules batch |
-| Hero copy from COPY.md | **COPY.md's approved hero wins** | design-rules batch |
+| No single headline word coloured for emphasis | **Rule stands.** "lower hiring cost" goes with the hero copy | `design/rules-decided` |
+| No meta strings joined with middle dots as chrome | **Rule stands,** the OG image included | `design/rules-decided` |
+| Mono for machine output only | **Rule stands.** The logo's "TECH", stack lines and Team labels move to the body face | `design/rules-decided` |
+| Hero copy from COPY.md | **COPY.md's approved hero wins** | `design/rules-decided` |
 
 Still open: gradient washes used as decoration (the hero headline's gradient
 text, gradients in CTA and Team), and one card shadow repeated across sections.
