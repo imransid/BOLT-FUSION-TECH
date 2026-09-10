@@ -33,13 +33,13 @@ function SectionHeading({
       {eyebrow ? (
         <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/45">{eyebrow}</p>
       ) : null}
-      <h3
+      <h2
         id={titleId}
         className={`font-medium leading-snug tracking-[-0.02em] text-white ${eyebrow ? "mt-2.5" : ""} text-[clamp(1.2rem,2.4vw,1.65rem)]`}
         style={{ fontFamily: "var(--font-heading)" }}
       >
         {title}
-      </h3>
+      </h2>
       {description ? (
         <p
           id={descriptionId}
@@ -85,14 +85,14 @@ export default function CaseStudy() {
             </div>
 
             <div className="space-y-5">
-              <h2
+              <h1
                 id="case-study-heading"
                 {...revealProps(0.04)}
                 className="text-balance text-[clamp(1.85rem,4vw,3.1rem)] font-normal leading-[1.06] tracking-[-0.032em] text-white"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 {cs.title}
-              </h2>
+              </h1>
               <p
                 id="case-study-lead"
                 {...revealProps(0.07)}
@@ -235,12 +235,12 @@ export default function CaseStudy() {
                   {lane.latency}
                 </span>
               </div>
-              <h4
+              <h3
                 className="mt-5 text-base font-medium leading-snug text-white md:text-lg"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 {lane.title}
-              </h4>
+              </h3>
               <p className="mt-2 text-[13px] leading-relaxed text-white/52">{lane.summary}</p>
               <ul className="mt-5 flex flex-1 flex-col gap-2 text-[13px] leading-relaxed text-white/66">
                 {lane.bullets.map((b) => (
@@ -316,12 +316,12 @@ export default function CaseStudy() {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/42">
                   Primary bounded context
                 </p>
-                <h4
+                <h3
                   className="mt-2 text-lg font-medium text-white md:text-xl"
                   style={{ fontFamily: "var(--font-heading)" }}
                 >
                   {featuredContext.name}
-                </h4>
+                </h3>
                 <p className="mt-1.5 text-[13px] text-white/52 md:text-sm">{featuredContext.tagline}</p>
                 <ul className="mt-5 space-y-2.5 text-[13px] leading-relaxed text-white/70 md:text-[15px]">
                   {featuredContext.bullets.map((b) => (
@@ -357,9 +357,9 @@ export default function CaseStudy() {
                   {...revealProps(0.04 + ci * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-black/28 p-5 md:p-6"
                 >
-                  <h4 className="text-[15px] font-medium text-white" style={{ fontFamily: "var(--font-heading)" }}>
+                  <h3 className="text-[15px] font-medium text-white" style={{ fontFamily: "var(--font-heading)" }}>
                     {ctx.name}
-                  </h4>
+                  </h3>
                   <p className="mt-1 text-[12px] text-white/48 md:text-[13px]">{ctx.tagline}</p>
                   <ul className="mt-3.5 space-y-2 text-[12px] leading-relaxed text-white/60 md:text-[13px]">
                     {ctx.bullets.map((b) => (

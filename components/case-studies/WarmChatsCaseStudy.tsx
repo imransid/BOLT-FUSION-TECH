@@ -514,12 +514,12 @@ export default function WarmChatsCaseStudy() {
                   {...rise(0.04 + i * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
-                  <h4
+                  <h3
                     className="text-[15px] font-medium text-white"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
                     {svc.name}
-                  </h4>
+                  </h3>
                   <p className="mt-1 font-mono text-[11px] tracking-[0.04em] text-amber-200/70">
                     {svc.tagline}
                   </p>
