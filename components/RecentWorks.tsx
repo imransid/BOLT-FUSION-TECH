@@ -146,7 +146,7 @@ export default function RecentWorks() {
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95"
                   aria-hidden
                 />
-                <div className="absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20">
+                <div className={`absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20 ${published ? "pb-[3.75rem] sm:pb-[4.25rem] md:pb-5" : ""}`}>
                   <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/85">
                     {project.stack}
                   </p>
