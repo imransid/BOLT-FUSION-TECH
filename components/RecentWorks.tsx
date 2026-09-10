@@ -121,7 +121,7 @@ export default function RecentWorks() {
             const ctaLabel = project.ctaLabel ?? "Read the case study";
             const cardProps = {
               className:
-                "group relative flex h-[min(400px,68dvh)] w-[min(100%,calc(100dvw-3.25rem))] max-w-[360px] shrink-0 snap-center snap-always overflow-hidden rounded-2xl bg-[#0d0d0d] ring-1 ring-white/10 outline-none first:ml-3 focus-visible:ring-2 focus-visible:ring-amber-200/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[min(440px,72dvh)] sm:w-[300px] sm:max-w-none sm:first:ml-0 md:snap-start",
+                "group relative flex h-[min(400px,68dvh)] w-[min(100%,calc(100dvw-3.25rem))] max-w-[360px] shrink-0 snap-center snap-always overflow-hidden rounded-2xl bg-[#0d0d0d] outline-none first:ml-3 sm:h-[min(440px,72dvh)] sm:w-[300px] sm:max-w-none sm:first:ml-0 md:snap-start",
               ...reveal(
                 { x: 30, duration: 0.5, delay: i * 0.1 },
                 { boxShadow: "0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 48px -28px rgba(0,0,0,0.65)" },
@@ -171,6 +171,12 @@ export default function RecentWorks() {
                 {...cardProps}
               >
                 {body}
+                {/* Keyboard focus: its own top layer. An inline box-shadow overrides a
+                    ring on the card, and the image paints over an inset outline. */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 z-[3] rounded-2xl ring-2 ring-inset ring-transparent group-focus-visible:ring-amber-200/80"
+                />
                 <span className="pointer-events-none absolute inset-x-4 bottom-4 z-[2] flex justify-center sm:inset-x-5 sm:bottom-5 md:opacity-0 md:transition-opacity md:duration-300 md:group-hover:opacity-100">
                   <span
                     className="inline-flex items-center gap-2 rounded-full border border-amber-200/40 bg-amber-300/90 px-4 py-2 text-[11px] font-medium text-[#1a1d22] backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs"
