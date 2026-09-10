@@ -585,7 +585,11 @@ async function measureContrast(page) {
       /* an embedded frame (Calendly) paints over whatever sits beneath it */
       const underFrame = frames.some((f) => f.width && r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top);
       keep.push(el);
-      out.push({ x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
+      /* sample the content box only: a chip's own border is not the ground under its text */
+      const inset = (side) => parseFloat(s[`border${side}Width`]) + parseFloat(s[`padding${side}`]);
+      const cx = r.left + inset("Left"), cy = r.top + inset("Top");
+      const cw = Math.max(1, r.width - inset("Left") - inset("Right")), ch = Math.max(1, r.height - inset("Top") - inset("Bottom"));
+      out.push({ dx: inset("Left"), dy: inset("Top"), x: cx + scrollX, y: cy + scrollY, w: cw, h: ch, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
       if (out.length >= 700) break;
     }
     window.__vsKeep = keep;
@@ -606,7 +610,7 @@ async function measureContrast(page) {
   const res = { measured: 0, unmeasured: [], fails: [] };
   for (const [idx, e] of els.entries()) {
     const n = now[idx];
-    const moved = !n || Math.abs(n.x - e.x) > 1 || Math.abs(n.y - e.y) > 1;
+    const moved = !n || Math.abs(n.x - e.x) > e.dx + 1 || Math.abs(n.y - e.y) > e.dy + 1;
     if (e.clipText || e.pinned || e.clipped || e.underFrame || moved) {
       const why = e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "moved while measuring";
       res.unmeasured.push({ text: e.text, why });
