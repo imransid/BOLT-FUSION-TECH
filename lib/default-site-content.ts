@@ -485,10 +485,12 @@ const raw: SiteContent = {
     diagramBadgeRight: "Production posture",
     ctaSupportingText:
       "If you are evaluating search, ranking, or multi-tenant isolation under cost and latency constraints, we can walk through a comparable architecture and delivery approach on a short call.",
+    // The case study renders on /work/restaurant-search. Both targets live on
+    // the homepage, so a bare "#contact" or "#schedule" goes nowhere here.
     primaryCtaLabel: "Discuss a similar engagement",
-    primaryCtaHref: "#contact",
+    primaryCtaHref: "/#contact",
     secondaryCtaLabel: "Book a technical call",
-    secondaryCtaHref: "#schedule",
+    secondaryCtaHref: "/#schedule",
   },
   process: {
     badge: "How we work",
