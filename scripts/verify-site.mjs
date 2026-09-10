@@ -806,17 +806,18 @@ async function visit(browser, route, width) {
 
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const data = await page.evaluate(collectInPage);
-  /* check 5: a candidate is only "stuck" if it is still invisible after being
-     scrolled into view on its own and given time — otherwise a busy machine
-     reads a reveal in progress as a reveal that never fired */
+  /* check 5: a candidate is only "stuck" if it is still invisible after three
+     more seconds IN PLACE — that rules out a reveal still in progress on a busy
+     machine. Do NOT scroll it into view to re-check: that fires the very reveal
+     under test. An earlier version did, and passed the Featured work heading,
+     which stays invisible after a reading-speed scroll in 5 of 6 passes. */
   if (data.stuckHidden.length) {
     const still = [];
     for (const c of data.stuckHidden) {
       const hidden = await page.evaluate(async (text) => {
         const el = [...document.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span")].find((e) => e.textContent.trim().replace(/\s+/g, " ").startsWith(text));
         if (!el) return false;
-        el.scrollIntoView({ block: "center" });
-        await new Promise((r) => setTimeout(r, 1500));
+        await new Promise((r) => setTimeout(r, 3000));
         for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
           const st = getComputedStyle(a);
           if (parseFloat(st.opacity) < 0.05 || st.visibility === "hidden") return true;
