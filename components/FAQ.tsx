@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 export default function FAQ() {
   const { faq } = useSiteContent();
@@ -14,10 +15,8 @@ export default function FAQ() {
     <section className="py-20 px-5 md:px-20">
       <div className="max-w-[900px] mx-auto flex flex-col gap-8">
         {/* Section heading */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <div
+          {...reveal({ y: 20, duration: 0.5 })}
           className="flex flex-col gap-4 items-center text-center"
         >
           <div
@@ -41,17 +40,14 @@ export default function FAQ() {
           >
             {faq.title}
           </h2>
-        </motion.div>
+        </div>
 
         {/* FAQ items */}
         <div className="flex flex-col gap-0">
           {faqs.map((item, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.08 }}
+              {...reveal({ y: 20, duration: 0.4, delay: i * 0.08 })}
               className="border-b border-white/10"
             >
               <button
@@ -91,7 +87,7 @@ export default function FAQ() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

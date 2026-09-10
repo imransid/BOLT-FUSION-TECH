@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { LogoMark } from "@/components/Logo";
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 export default function Footer() {
   const { footer: f } = useSiteContent();
@@ -11,10 +11,8 @@ export default function Footer() {
     <footer className="py-8 px-5 md:px-20 border-t border-white/5">
       <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         {/* Brand */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+        <div
+          {...reveal({ duration: 0.5 })}
           className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4"
         >
           <a
@@ -30,7 +28,7 @@ export default function Footer() {
           <span className="text-xs text-white/35 sm:text-sm sm:text-white/50">
             {f.rightsLine}
           </span>
-        </motion.div>
+        </div>
 
         {/* Social links */}
         <div className="flex flex-wrap items-center justify-center gap-2">

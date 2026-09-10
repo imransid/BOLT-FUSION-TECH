@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 import { processSteps, services } from "@/content";
+import { reveal } from "@/lib/reveal";
 
 /**
  * Section 6 — How we work. COPY.md §6, verbatim. Replaces the old Process section.
@@ -25,26 +25,19 @@ export default function HowWeWork() {
   return (
     <section id="how-we-work" className="py-20 px-5 md:px-20">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-11">
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <h2
+          {...reveal({ y: 20, duration: 0.5 }, { fontFamily: "var(--font-heading)" })}
           className="max-w-[16ch] text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-          style={{ fontFamily: "var(--font-heading)" }}
         >
           How a project actually runs.
-        </motion.h2>
+        </h2>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {processSteps.map((step, i) => (
-            <motion.article
+            <article
               key={step.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.15 }}
+              {...reveal({ y: 30, duration: 0.5, delay: i * 0.15 }, { boxShadow: CARD_SHADOW })}
               className="relative flex flex-col gap-6 rounded-[30px] bg-[#0d0d0d] p-8 md:p-11"
-              style={{ boxShadow: CARD_SHADOW }}
             >
               <div className="w-[30px] h-[29px] text-white/80">
                 <svg
@@ -81,17 +74,14 @@ export default function HowWeWork() {
               >
                 {i + 1}
               </div>
-            </motion.article>
+            </article>
           ))}
         </div>
 
         {/* Engagement models. No price column in v1 — COPY.md §6. */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <div
+          {...reveal({ y: 20, duration: 0.5 }, { boxShadow: CARD_SHADOW })}
           className="overflow-x-auto rounded-[30px] bg-[#0d0d0d] p-8 md:p-11"
-          style={{ boxShadow: CARD_SHADOW }}
         >
           <table className="w-full min-w-[520px] border-collapse text-left">
             <caption className="sr-only">Engagement models</caption>
@@ -118,7 +108,7 @@ export default function HowWeWork() {
               ))}
             </tbody>
           </table>
-        </motion.div>
+        </div>
 
         <div className="flex flex-col gap-4">
           <p className="max-w-[720px] text-sm leading-relaxed text-white/65">

@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 import { lanes, metrics } from "@/content";
+import { reveal } from "@/lib/reveal";
 
 /**
  * Section 3 — Architecture. COPY.md §3, verbatim.
@@ -30,15 +30,12 @@ export default function Architecture() {
     <section id="architecture" className="py-20 px-5 md:px-20">
       <div className="max-w-[1600px] mx-auto flex flex-col gap-11">
         <div className="flex flex-col gap-6">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <h2
+            {...reveal({ y: 20, duration: 0.5 }, { fontFamily: "var(--font-heading)" })}
             className="max-w-[16ch] text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-            style={{ fontFamily: "var(--font-heading)" }}
           >
             Type a query. Watch what it costs.
-          </motion.h2>
+          </h2>
 
           <p
             className="max-w-[640px] text-lg text-white/65 sm:text-xl"
@@ -53,14 +50,10 @@ export default function Architecture() {
         {/* The three lanes, in the old card treatment. */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {lanes.map((lane, i) => (
-            <motion.article
+            <article
               key={lane.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.15 }}
+              {...reveal({ y: 30, duration: 0.5, delay: i * 0.15 }, { boxShadow: CARD_SHADOW })}
               className="relative flex flex-col gap-5 rounded-[30px] bg-[#0d0d0d] p-8 md:p-11"
-              style={{ boxShadow: CARD_SHADOW }}
             >
               <h3
                 className="text-2xl md:text-3xl font-normal text-white"
@@ -78,7 +71,7 @@ export default function Architecture() {
               >
                 {lane.cost}
               </p>
-            </motion.article>
+            </article>
           ))}
         </div>
 
@@ -90,12 +83,9 @@ export default function Architecture() {
           {metrics.map((m, i) => {
             const shipped = m.status === "shipped";
             return (
-              <motion.div
+              <div
                 key={m.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
+                {...reveal({ y: 20, duration: 0.5, delay: i * 0.1 })}
                 className="flex flex-col gap-2"
               >
                 <p
@@ -118,7 +108,7 @@ export default function Architecture() {
                   </span>
                   <span className="text-xs text-white/50">{m.source}</span>
                 </p>
-              </motion.div>
+              </div>
             );
           })}
         </div>

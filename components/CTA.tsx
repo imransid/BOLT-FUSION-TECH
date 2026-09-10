@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 export default function CTA() {
   const { cta: c } = useSiteContent();
@@ -11,11 +11,8 @@ export default function CTA() {
       id="contact"
       className="cv-section flex items-center justify-center py-14 px-4 sm:py-20 sm:px-6 md:px-12 lg:px-20"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
+      <div
+        {...reveal({ y: 40, duration: 0.8 })}
         className="relative w-full min-w-0 max-w-[1200px] overflow-hidden rounded-2xl sm:rounded-[30px]"
       >
         {/* Animated smoky gradient background */}
@@ -76,7 +73,7 @@ export default function CTA() {
             </a>
           </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

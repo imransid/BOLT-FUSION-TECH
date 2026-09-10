@@ -3,6 +3,7 @@ import { Inter, Instrument_Sans } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
+import RevealController from "@/components/RevealController";
 import { getSiteUrl } from "@/lib/site-url";
 
 // Variable font (single axis file, all weights) — self-hosted with display:swap
@@ -104,6 +105,7 @@ export default function RootLayout({
       className={`${inter.variable} ${satoshi.variable} ${instrumentSans.variable} ${commitMono.variable} scroll-smooth scroll-pt-20 md:scroll-pt-24`}
     >
       <body className="min-h-dvh overflow-x-clip antialiased bg-black text-white">
+        <RevealController />
         {children}
       </body>
     </html>

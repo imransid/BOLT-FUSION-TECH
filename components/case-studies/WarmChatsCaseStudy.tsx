@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { reveal } from "@/lib/reveal";
 
 import { LogoMark } from "@/components/Logo";
 
@@ -170,14 +170,9 @@ const OUTCOMES = [
 const linkFocus =
   "outline-none focus-visible:ring-2 focus-visible:ring-amber-200/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]";
 
-function reveal(delay: number, reduced: boolean) {
-  if (reduced) return {};
-  return {
-    initial: { opacity: 0, y: 14 } as const,
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: "-40px" },
-    transition: { duration: 0.48, delay, ease: [0.25, 0.1, 0.25, 1] as const },
-  };
+/* Visible in the server HTML; motion is CSS (see lib/reveal.ts). */
+function rise(delay: number) {
+  return reveal({ y: 14, duration: 0.48, delay });
 }
 
 function Divider() {
@@ -210,7 +205,6 @@ function Heading({ children }: { children: React.ReactNode }) {
 /* -------------------------------------------------------------------------- */
 
 export default function WarmChatsCaseStudy() {
-  const reduced = !!useReducedMotion();
 
   return (
     <div className="min-h-dvh bg-[#0a0a0a] text-white">
@@ -245,37 +239,37 @@ export default function WarmChatsCaseStudy() {
         {/* ---------------------------------------------------------------- */}
         <section className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
           <div className="flex min-w-0 flex-col gap-7">
-            <motion.span
-              {...reveal(0, reduced)}
+            <span
+              {...rise(0)}
               className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-amber-200/90"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
               {HERO.badge}
-            </motion.span>
+            </span>
 
-            <motion.h1
-              {...reveal(0.04, reduced)}
+            <h1
+              {...rise(0.04)}
               className="text-balance text-[clamp(2.1rem,5vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.032em] text-white"
               style={{ fontFamily: "var(--font-heading)" }}
             >
               {HERO.title}
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              {...reveal(0.07, reduced)}
+            <p
+              {...rise(0.07)}
               className="max-w-[58ch] text-[15px] leading-[1.7] text-white/65 md:text-base"
             >
               {HERO.subtitle}
-            </motion.p>
+            </p>
 
-            <motion.p
-              {...reveal(0.09, reduced)}
+            <p
+              {...rise(0.09)}
               className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-white/45 md:text-[12px]"
             >
               {HERO.accentLine}
-            </motion.p>
+            </p>
 
-            <motion.div {...reveal(0.12, reduced)} className="flex flex-wrap gap-3 pt-1">
+            <div {...rise(0.12)} className="flex flex-wrap gap-3 pt-1">
               <a
                 href={SITE_URL}
                 target="_blank"
@@ -293,11 +287,11 @@ export default function WarmChatsCaseStudy() {
               >
                 Book a similar build
               </Link>
-            </motion.div>
+            </div>
           </div>
 
-          <motion.figure
-            {...reveal(0.06, reduced)}
+          <figure
+            {...rise(0.06)}
             className="relative overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)]"
           >
             <div className="relative aspect-[16/10] w-full">
@@ -318,12 +312,12 @@ export default function WarmChatsCaseStudy() {
                 warmchats.com
               </span>
             </figcaption>
-          </motion.figure>
+          </figure>
         </section>
 
         {/* Executive summary */}
-        <motion.div
-          {...reveal(0.1, reduced)}
+        <div
+          {...rise(0.1)}
           className="mt-12 rounded-2xl border border-white/[0.07] bg-black/25 py-6 pl-6 pr-5 md:mt-14 md:py-7 md:pl-7 md:pr-6"
         >
           <div className="border-l-2 border-amber-300/40 pl-5">
@@ -332,7 +326,7 @@ export default function WarmChatsCaseStudy() {
               {HERO.summary}
             </p>
           </div>
-        </motion.div>
+        </div>
 
         <Divider />
 
@@ -341,8 +335,8 @@ export default function WarmChatsCaseStudy() {
         {/* ---------------------------------------------------------------- */}
         <Eyebrow>By the numbers</Eyebrow>
         <Heading>Built for speed-to-lead.</Heading>
-        <motion.div
-          {...reveal(0.06, reduced)}
+        <div
+          {...rise(0.06)}
           className="mt-8 grid grid-cols-1 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-black/28 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
         >
           {KPIS.map((k) => {
@@ -377,7 +371,7 @@ export default function WarmChatsCaseStudy() {
               </article>
             );
           })}
-        </motion.div>
+        </div>
         <p className="mt-3 text-[11px] leading-relaxed text-white/35">
           Figures reflect the WarmChats product&apos;s automation targets.
         </p>
@@ -397,9 +391,9 @@ export default function WarmChatsCaseStudy() {
 
         <div className="mt-8 grid gap-5 md:grid-cols-3 md:items-stretch">
           {LANES.map((lane, i) => (
-            <motion.article
+            <article
               key={lane.step}
-              {...reveal(0.05 + i * 0.05, reduced)}
+              {...rise(0.05 + i * 0.05)}
               className="flex h-full flex-col rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-6 md:p-7"
               style={{ boxShadow: "12px 20px 28px -16px rgba(0,0,0,0.5)" }}
             >
@@ -429,7 +423,7 @@ export default function WarmChatsCaseStudy() {
               <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/48">
                 {lane.foot}
               </p>
-            </motion.article>
+            </article>
           ))}
         </div>
 
@@ -448,9 +442,9 @@ export default function WarmChatsCaseStudy() {
         <div className="mt-8 flex flex-col gap-5">
           {/* Featured screen */}
           {GALLERY.filter((g) => g.featured).map((g) => (
-            <motion.figure
+            <figure
               key={g.src}
-              {...reveal(0.05, reduced)}
+              {...rise(0.05)}
               className="overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)]"
             >
               <div className="relative aspect-[16/9] w-full">
@@ -468,15 +462,15 @@ export default function WarmChatsCaseStudy() {
                   {g.caption}
                 </span>
               </figcaption>
-            </motion.figure>
+            </figure>
           ))}
 
           {/* Secondary screens */}
           <div className="grid gap-5 md:grid-cols-2">
             {GALLERY.filter((g) => !g.featured).map((g, i) => (
-              <motion.figure
+              <figure
                 key={g.src}
-                {...reveal(0.06 + i * 0.05, reduced)}
+                {...rise(0.06 + i * 0.05)}
                 className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_30px_72px_-40px_rgba(0,0,0,0.85)]"
               >
                 <div className="relative aspect-[16/10] w-full">
@@ -492,7 +486,7 @@ export default function WarmChatsCaseStudy() {
                   <span className="text-[13px] font-medium text-white/85">{g.title}</span>
                   <span className="text-[12px] leading-relaxed text-white/50">{g.caption}</span>
                 </figcaption>
-              </motion.figure>
+              </figure>
             ))}
           </div>
         </div>
@@ -515,9 +509,9 @@ export default function WarmChatsCaseStudy() {
 
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               {SERVICES.map((svc, i) => (
-                <motion.div
+                <div
                   key={svc.name}
-                  {...reveal(0.04 + i * 0.03, reduced)}
+                  {...rise(0.04 + i * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
                   <h4
@@ -537,11 +531,11 @@ export default function WarmChatsCaseStudy() {
                       </li>
                     ))}
                   </ul>
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            <motion.div {...reveal(0.08, reduced)} className="mt-6">
+            <div {...rise(0.08)} className="mt-6">
               <Eyebrow>Engineering patterns</Eyebrow>
               <ul className="mt-3 flex flex-wrap gap-2">
                 {PATTERNS.map((p) => (
@@ -553,7 +547,7 @@ export default function WarmChatsCaseStudy() {
                   </li>
                 ))}
               </ul>
-            </motion.div>
+            </div>
           </div>
 
           {/* Stack */}
@@ -562,9 +556,9 @@ export default function WarmChatsCaseStudy() {
             <Heading>The full stack.</Heading>
             <div className="mt-7 flex flex-col gap-4">
               {STACK_GROUPS.map((g, gi) => (
-                <motion.div
+                <div
                   key={g.title}
-                  {...reveal(0.04 + gi * 0.03, reduced)}
+                  {...rise(0.04 + gi * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">
@@ -580,7 +574,7 @@ export default function WarmChatsCaseStudy() {
                       </li>
                     ))}
                   </ul>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -595,9 +589,9 @@ export default function WarmChatsCaseStudy() {
         <Heading>What the business gets.</Heading>
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {OUTCOMES.map((o, i) => (
-            <motion.div
+            <div
               key={o}
-              {...reveal(0.04 + i * 0.04, reduced)}
+              {...rise(0.04 + i * 0.04)}
               className="flex gap-4 rounded-2xl border border-white/[0.07] bg-black/28 p-5 md:p-6"
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-200/30 bg-cyan-300/10 text-cyan-200/90" aria-hidden>
@@ -606,15 +600,15 @@ export default function WarmChatsCaseStudy() {
                 </svg>
               </span>
               <p className="text-[14px] leading-relaxed text-white/72 md:text-[15px]">{o}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* ---------------------------------------------------------------- */}
         {/* CTA                                                              */}
         {/* ---------------------------------------------------------------- */}
-        <motion.section
-          {...reveal(0.04, reduced)}
+        <section
+          {...rise(0.04)}
           className="mt-14 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.012] px-6 py-10 text-center shadow-[0_28px_72px_-36px_rgba(0,0,0,0.88)] md:px-10 md:py-12"
         >
           <h2
@@ -641,7 +635,7 @@ export default function WarmChatsCaseStudy() {
               See more work
             </Link>
           </div>
-        </motion.section>
+        </section>
 
         <footer className="mt-12 flex flex-col items-center gap-2 border-t border-white/5 pt-8 text-center">
           <Link

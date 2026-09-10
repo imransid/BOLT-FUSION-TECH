@@ -191,3 +191,35 @@ body {
   background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
+
+/* ═══════════════════════════════════════════
+   REVEAL — visible in the HTML; animated only where nobody is looking
+   The server sends every [data-reveal] element fully visible, and without
+   script it stays that way. The rules below apply only when motion is allowed:
+   every reveal element plays an entrance on first paint; RevealController then
+   marks what is still below the viewport "pending" (hidden off-screen) and
+   "in" when it scrolls into view; "done" drops the reveal styles afterwards.
+   lib/reveal.ts sets the per-element travel, duration and delay.
+   ═══════════════════════════════════════════ */
+@keyframes reveal-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--reveal-x, 0px), var(--reveal-y, 0px), 0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal=""] {
+    animation: reveal-enter var(--reveal-duration, 0.5s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--reveal-delay, 0s) both;
+  }
+  [data-reveal="pending"] {
+    opacity: 0;
+    transform: translate3d(var(--reveal-x, 0px), var(--reveal-y, 0px), 0);
+  }
+  [data-reveal="in"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--reveal-duration, 0.5s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--reveal-delay, 0s),
+      transform var(--reveal-duration, 0.5s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--reveal-delay, 0s);
+  }
+}

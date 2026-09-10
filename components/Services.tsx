@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 export default function Services() {
   const { services: s } = useSiteContent();
@@ -16,15 +16,13 @@ export default function Services() {
           {/* Left content */}
           <div className="flex-1 min-w-0 lg:min-w-[460px] flex flex-col gap-6 lg:pr-10">
             {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#0d0d0d] w-fit"
-              style={{
+            <div
+              {...reveal({ y: 20, duration: 0.5 }, {
                 boxShadow:
                   "16px 24px 20px 8px rgba(0,0,0,0.4), inset 0 2px 0 0 rgba(184,180,180,0.08)",
-              }}
+              })}
+              
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#0d0d0d] w-fit"
             >
               <span className="w-[11px] h-[11px] rounded-[10px] bg-white flex items-center justify-center">
                 <span className="w-[8px] h-[9px] rounded-[10px] bg-[#0d0d0d] flex items-center justify-center">
@@ -32,17 +30,14 @@ export default function Services() {
                 </span>
               </span>
               <span className="text-sm text-white">{s.badge}</span>
-            </motion.div>
+            </div>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+            <h2
+              {...reveal({ y: 20, duration: 0.5 }, { fontFamily: "var(--font-heading)" })}
               className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-              style={{ fontFamily: "var(--font-heading)" }}
             >
               {s.title}
-            </motion.h2>
+            </h2>
 
             <p
               className="text-lg text-white/65 opacity-90 sm:text-xl"
@@ -86,16 +81,13 @@ export default function Services() {
         {/* Service cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {serviceCards.map((card, i) => (
-            <motion.div
+            <div
               key={card.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="bg-[#0d0d0d] rounded-[20px] p-8 md:p-10 flex flex-col gap-5"
-              style={{
+              {...reveal({ y: 30, duration: 0.5, delay: i * 0.1 }, {
                 boxShadow: "16px 24px 20px 8px rgba(0,0,0,0.4)",
-              }}
+              })}
+              
+              className="bg-[#0d0d0d] rounded-[20px] p-8 md:p-10 flex flex-col gap-5"
             >
               {/* Icon */}
               <svg
@@ -132,7 +124,7 @@ export default function Services() {
               <p className="text-sm text-white/65 leading-relaxed">
                 {card.desc}
               </p>
-            </motion.div>
+            </div>
           ))}
         </div>
 

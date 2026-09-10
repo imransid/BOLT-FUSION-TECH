@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 export default function AboutMe() {
   const { about: a } = useSiteContent();
@@ -22,15 +22,12 @@ export default function AboutMe() {
             boxShadow: "16px 24px 20px 8px rgba(0,0,0,0.4)",
           }}
         >
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+          <h2
+            {...reveal({ y: 20, duration: 0.5 }, { fontFamily: "var(--font-heading)" })}
             className="text-5xl sm:text-7xl lg:text-[92px] font-normal leading-[1em]"
-            style={{ fontFamily: "var(--font-heading)" }}
           >
             {a.title}
-          </motion.h2>
+          </h2>
 
           {/* Bio */}
           <div className="flex flex-col gap-8">

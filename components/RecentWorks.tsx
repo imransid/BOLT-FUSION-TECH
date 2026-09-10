@@ -8,9 +8,9 @@ import {
   type RefObject,
 } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 function useGalleryActiveIndex(
   scrollerRef: RefObject<HTMLDivElement | null>,
@@ -74,23 +74,18 @@ export default function RecentWorks() {
       <div className="max-w-[1600px] mx-auto">
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
           <div className="space-y-3">
-            <motion.h2
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <h2
+              {...reveal({ x: -20, duration: 0.5 }, { fontFamily: "var(--font-sans)" })}
               className="text-xl md:text-2xl text-white max-w-[640px]"
-              style={{ fontFamily: "var(--font-sans)" }}
             >
               {rw.title}
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, x: -12 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            </h2>
+            <p
+              {...reveal({ x: -12, duration: 0.5 })}
               className="text-sm text-white/55 max-w-[560px] leading-relaxed"
             >
               {rw.subtitle}
-            </motion.p>
+            </p>
           </div>
           <div className="opacity-75 shrink-0 hidden sm:block">
             <svg
@@ -125,16 +120,12 @@ export default function RecentWorks() {
             const published = project.state === "published" && Boolean(project.href);
             const ctaLabel = project.ctaLabel ?? "Read the case study";
             const cardProps = {
-              initial: { opacity: 0, x: 30 },
-              whileInView: { opacity: 1, x: 0 },
-              viewport: { once: true },
-              transition: { duration: 0.5, delay: i * 0.1 },
               className:
                 "group relative flex h-[min(400px,68dvh)] w-[min(100%,calc(100dvw-3.25rem))] max-w-[360px] shrink-0 snap-center snap-always overflow-hidden rounded-2xl bg-[#0d0d0d] ring-1 ring-white/10 outline-none first:ml-3 focus-visible:ring-2 focus-visible:ring-amber-200/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[min(440px,72dvh)] sm:w-[300px] sm:max-w-none sm:first:ml-0 md:snap-start",
-              style: {
-                boxShadow:
-                  "0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 48px -28px rgba(0,0,0,0.65)",
-              },
+              ...reveal(
+                { x: 30, duration: 0.5, delay: i * 0.1 },
+                { boxShadow: "0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 48px -28px rgba(0,0,0,0.65)" },
+              ),
             };
             const body = (
               <>
@@ -172,7 +163,7 @@ export default function RecentWorks() {
               </>
             );
             return published ? (
-              <motion.a
+              <a
                 key={project.title}
                 data-gallery-slide={i}
                 href={project.href}
@@ -190,11 +181,11 @@ export default function RecentWorks() {
                     </svg>
                   </span>
                 </span>
-              </motion.a>
+              </a>
             ) : (
-              <motion.div key={project.title} data-gallery-slide={i} {...cardProps}>
+              <div key={project.title} data-gallery-slide={i} {...cardProps}>
                 {body}
-              </motion.div>
+              </div>
             );
           })}
         </div>

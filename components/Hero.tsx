@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import { reveal } from "@/lib/reveal";
 
 const HeroParticleField = dynamic(
   () => import("@/components/HeroParticleField"),
@@ -53,10 +54,8 @@ export default function Hero() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[980px] flex-col items-center gap-7 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+        <div
+          {...reveal({ y: 20, duration: 0.6 })}
           className="group relative flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.03] px-4 py-2.5 shadow-[0_12px_30px_-18px_rgba(255,255,255,0.35)] backdrop-blur-2xl"
         >
           <span
@@ -71,7 +70,7 @@ export default function Hero() {
           <span className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/80">
             {h.badge}
           </span>
-        </motion.div>
+        </div>
 
         <motion.h1
           // LCP element — render visible immediately (never gate it behind opacity:0).
@@ -125,19 +124,15 @@ export default function Hero() {
           </span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+        <p
+          {...reveal({ y: 20, duration: 0.8, delay: 0.6 })}
           className="max-w-[640px] text-base leading-relaxed text-white/65 sm:text-[1.15rem]"
         >
           {h.subtext}
-        </motion.p>
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.68 }}
+        <div
+          {...reveal({ y: 14, duration: 0.7, delay: 0.68 })}
           className="flex flex-wrap items-center justify-center gap-2.5"
         >
           {h.trustPoints.map((point) => (
@@ -148,21 +143,17 @@ export default function Hero() {
               {point}
             </span>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.72 }}
+        <p
+          {...reveal({ y: 14, duration: 0.8, delay: 0.72 })}
           className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/35"
         >
           {h.tagline}
-        </motion.p>
+        </p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+        <div
+          {...reveal({ y: 20, duration: 0.8, delay: 0.8 })}
           className="mt-2 flex flex-wrap items-center justify-center gap-4"
         >
           <BeamButton href={h.primaryCtaHref} variant="primary">
@@ -171,12 +162,10 @@ export default function Hero() {
           <BeamButton href={h.secondaryCtaHref} variant="ghost">
             {h.secondaryCtaLabel}
           </BeamButton>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
+        <div
+          {...reveal({ duration: 0.5, delay: 1.2 })}
           className="hidden md:flex items-center gap-4 mt-12 w-full max-w-[640px]"
         >
           <span className="text-sm text-white/50">{h.scrollHintLeft}</span>
@@ -197,7 +186,7 @@ export default function Hero() {
           </motion.div>
           <div className="flex-1 h-px bg-white/10" />
           <span className="text-sm text-white/50">{h.scrollHintRight}</span>
-        </motion.div>
+        </div>
 
       </div>
     </section>
