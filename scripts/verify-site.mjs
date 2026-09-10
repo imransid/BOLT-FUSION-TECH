@@ -121,11 +121,16 @@ function httpBin(url) {
 const pngSize = (buf) => (buf.length > 24 && buf.readUInt32BE(12) === 0x49484452 ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : null);
 const short = (u) => String(u).replace(BASE, "").replace(/^https?:\/\/(www\.)?boltfusiontech\.com/, "").slice(0, 90);
 
+/* ~670 px/s: 100px every 150ms, the pace of a mouse wheel, measured to reveal
+   every section a person scrolls past. The first version stepped 150px every
+   60ms (~2,500 px/s) — a flick, not reading — and at that speed the Featured
+   work heading is skipped in 5 of 6 passes. That is a finding about fast
+   scrolling, not about reading; see the check 4 notes. */
 async function readingSpeedScroll(page) {
   await page.evaluate(async () => {
-    for (let y = 0; y <= document.documentElement.scrollHeight; y += 150) {
+    for (let y = 0; y <= document.documentElement.scrollHeight; y += 100) {
       window.scrollTo(0, y);
-      await new Promise((r) => setTimeout(r, 60));
+      await new Promise((r) => setTimeout(r, 150));
     }
   });
 }
