@@ -82,7 +82,7 @@ function renderSection(id: SectionId, blurb: string) {
           id="schedule"
           className="cv-section mx-auto w-full min-w-0 max-w-[min(100%,1200px)] scroll-mt-20 px-4 pb-16 pt-2 sm:scroll-mt-24 sm:px-6 sm:pb-20 md:scroll-mt-28 md:px-10 lg:px-12 xl:px-16"
         >
-          <p className="mb-4 px-1 text-center text-sm leading-snug text-white/45 text-balance sm:text-base sm:leading-normal">
+          <p className="mb-4 px-1 text-center text-sm leading-snug text-white/55 text-balance sm:text-base sm:leading-normal">
             {blurb}
           </p>
           <CalendlyInlineEmbed />

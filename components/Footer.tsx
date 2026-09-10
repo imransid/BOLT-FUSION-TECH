@@ -25,7 +25,7 @@ export default function Footer() {
           <span className="hidden text-white/25 sm:inline" aria-hidden>
             ·
           </span>
-          <span className="text-xs text-white/35 sm:text-sm sm:text-white/50">
+          <span className="text-xs text-white/55 sm:text-sm sm:text-white/50">
             {f.rightsLine}
           </span>
         </div>

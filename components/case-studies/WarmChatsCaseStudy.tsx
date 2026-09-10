@@ -183,7 +183,7 @@ function Divider() {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/45">
+    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">
       {children}
     </p>
   );
@@ -264,7 +264,7 @@ export default function WarmChatsCaseStudy() {
 
             <p
               {...rise(0.09)}
-              className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-white/45 md:text-[12px]"
+              className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-white/55 md:text-[12px]"
             >
               {HERO.accentLine}
             </p>
@@ -305,7 +305,7 @@ export default function WarmChatsCaseStudy() {
               />
             </div>
             <figcaption className="flex items-center justify-between gap-3 border-t border-white/10 bg-black/75 px-4 py-3 backdrop-blur-md">
-              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/42">
+              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/55">
                 Live product
               </span>
               <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
@@ -372,7 +372,7 @@ export default function WarmChatsCaseStudy() {
             );
           })}
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-white/35">
+        <p className="mt-3 text-[11px] leading-relaxed text-white/55">
           Figures reflect the WarmChats product&apos;s automation targets.
         </p>
 
@@ -420,7 +420,7 @@ export default function WarmChatsCaseStudy() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/48">
+              <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
                 {lane.foot}
               </p>
             </article>
@@ -561,7 +561,7 @@ export default function WarmChatsCaseStudy() {
                   {...rise(0.04 + gi * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
                     {g.title}
                   </p>
                   <ul className="mt-4 flex flex-wrap gap-2">
@@ -645,7 +645,7 @@ export default function WarmChatsCaseStudy() {
             <LogoMark className="h-6 w-6 opacity-80" />
             Bolt Fusion Tech
           </Link>
-          <p className="text-xs text-white/35">
+          <p className="text-xs text-white/55">
             Custom software &amp; product engineering · UK · Malaysia · Bangladesh
           </p>
         </footer>

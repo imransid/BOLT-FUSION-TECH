@@ -177,7 +177,7 @@ export default function PrivacyPolicyPage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           Privacy Policy — Bolt Fusion Tech
         </h1>
-        <p className="mt-2 text-sm text-white/45">
+        <p className="mt-2 text-sm text-white/55">
           Last updated: {LAST_UPDATED}
         </p>
 

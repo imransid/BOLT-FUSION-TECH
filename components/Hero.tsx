@@ -148,7 +148,7 @@ export default function Hero() {
 
         <p
           {...reveal({ y: 14, duration: 0.8, delay: 0.72 })}
-          className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/35"
+          className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/55"
         >
           {h.tagline}
         </p>

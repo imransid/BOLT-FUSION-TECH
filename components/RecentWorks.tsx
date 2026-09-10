@@ -105,7 +105,7 @@ export default function RecentWorks() {
 
         <div className="w-full h-px bg-white/10 mb-8" />
 
-        <p className="mb-3 text-center text-xs text-white/40 md:hidden">
+        <p className="mb-3 text-center text-xs text-white/55 md:hidden">
           {rw.mobileSwipeHint}
         </p>
 
@@ -147,7 +147,7 @@ export default function RecentWorks() {
                   aria-hidden
                 />
                 <div className={`absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20 ${published ? "pb-[3.75rem] sm:pb-[4.25rem] md:pb-5" : ""}`}>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/85">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200">
                     {project.stack}
                   </p>
                   <h3

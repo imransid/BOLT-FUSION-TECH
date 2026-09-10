@@ -81,7 +81,10 @@ export default function HowWeWork() {
         {/* Engagement models. No price column in v1 — COPY.md §6. */}
         <div
           {...reveal({ y: 20, duration: 0.5 }, { boxShadow: CARD_SHADOW })}
-          className="overflow-x-auto rounded-[30px] bg-[#0d0d0d] p-8 md:p-11"
+          tabIndex={0}
+          role="region"
+          aria-label="Engagement models"
+          className="overflow-x-auto rounded-[30px] bg-[#0d0d0d] p-8 outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-amber-200/70 md:p-11"
         >
           <table className="w-full min-w-[520px] border-collapse text-left">
             <caption className="sr-only">Engagement models</caption>
