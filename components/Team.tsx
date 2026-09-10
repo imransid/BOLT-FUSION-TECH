@@ -93,12 +93,6 @@ function TeamMemberCard({
         }}
         aria-hidden
       />
-      <span
-        className="pointer-events-none absolute left-3 top-3 z-[2] rounded-md border border-white/[0.08] bg-black/35 px-1.5 py-0.5 font-mono text-[9px] tabular-nums tracking-[0.16em] text-white/55 backdrop-blur-md"
-        aria-hidden
-      >
-        {String(index + 1).padStart(2, "0")}
-      </span>
 
       <div className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
         {member.image ? (
@@ -153,7 +147,7 @@ function TeamMemberCard({
           </div>
         ) : null}
 
-        <span className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-400">
+        <span className="mt-2.5 text-[10px] text-zinc-400">
           {member.handle}
         </span>
       </div>
@@ -273,14 +267,14 @@ export default function Team() {
                 className="inline-flex h-2 w-2 shrink-0 rotate-45 border border-cyan-300/40 bg-gradient-to-br from-cyan-200/30 via-white/20 to-amber-200/25"
                 aria-hidden
               />
-              <span className="font-mono text-[10px] font-medium uppercase tracking-[0.38em] text-white/60">
+              <span className="text-[10px] font-medium text-white/60">
                 {t.benchLabel}
               </span>
               <span
                 className="hidden h-px w-16 bg-gradient-to-r from-cyan-300/45 via-amber-200/35 to-transparent sm:block"
                 aria-hidden
               />
-              <span className="font-mono text-[10px] text-white/55">{t.codeComment}</span>
+              <span className="text-[10px] text-white/55">{t.codeComment}</span>
             </div>
 
             <div className="space-y-6">
@@ -321,7 +315,7 @@ export default function Team() {
               >
                 {roster.length}
               </span>
-              <span className="pb-1 font-mono text-[9px] uppercase tracking-[0.24em] text-white/60">
+              <span className="pb-1 text-[9px] text-white/60">
                 {t.statLabel}
               </span>
             </p>

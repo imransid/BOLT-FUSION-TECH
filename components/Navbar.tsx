@@ -93,7 +93,7 @@ export default function Navbar() {
                   className="mb-2 flex items-center gap-2 border-b border-white/10 pb-4"
                 >
                   <Logo markOnly />
-                  <span className="text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+                  <span className="text-xs font-medium text-white/50">
                     Menu
                   </span>
                 </a>

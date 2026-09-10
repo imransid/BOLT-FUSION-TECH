@@ -13,12 +13,12 @@ import { LogoMark } from "@/components/Logo";
 const SITE_URL = "https://www.warmchats.com/";
 
 const HERO = {
-  badge: "Case study · Real Estate AI",
+  badge: "Case study: real estate AI",
   title: "WarmChats: turn new real estate leads into booked appointments — automatically.",
   subtitle:
     "An always-on AI assistant for real estate agents. WarmChats instantly answers every new lead from Zillow, open houses, and Facebook, qualifies buyers and sellers, follows up 24/7 on email and SMS, and books showings straight into the calendar — so no lead ever goes cold.",
   accentLine:
-    "Next.js · NestJS · Django · PostgreSQL · Claude · GPT-4.1 · event-driven microservices",
+    "Next.js, NestJS, Django, PostgreSQL, Claude, GPT-4.1 and event-driven microservices",
   image: "/projects/warmchats-ai-booking.png",
   imageAlt:
     "WarmChats landing page — 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
@@ -139,7 +139,7 @@ const SERVICES = [
   },
   {
     name: "Messaging & scheduling",
-    tagline: "Telephony · Calendar",
+    tagline: "Telephony and calendar",
     bullets: [
       "Inbound/outbound across SMS and chat channels",
       "Availability lookup and automated booking writes",
@@ -183,7 +183,7 @@ function Divider() {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">
+    <p className="text-[10px] font-semibold text-white/55">
       {children}
     </p>
   );
@@ -241,7 +241,7 @@ export default function WarmChatsCaseStudy() {
           <div className="flex min-w-0 flex-col gap-7">
             <span
               {...rise(0)}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-amber-200/90"
+              className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-medium text-amber-200/90"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
               {HERO.badge}
@@ -264,7 +264,7 @@ export default function WarmChatsCaseStudy() {
 
             <p
               {...rise(0.09)}
-              className="font-mono text-[11px] leading-relaxed tracking-[0.04em] text-white/55 md:text-[12px]"
+              className="text-[11px] leading-relaxed tracking-[0.04em] text-white/55 md:text-[12px]"
             >
               {HERO.accentLine}
             </p>
@@ -305,7 +305,7 @@ export default function WarmChatsCaseStudy() {
               />
             </div>
             <figcaption className="flex items-center justify-between gap-3 border-t border-white/10 bg-black/75 px-4 py-3 backdrop-blur-md">
-              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/55">
+              <span className="text-[10px] font-medium text-white/55">
                 Live product
               </span>
               <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
@@ -352,7 +352,7 @@ export default function WarmChatsCaseStudy() {
                     {k.value}
                   </span>
                   <span
-                    className={`text-[10px] font-medium uppercase tracking-[0.16em] ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
+                    className={`text-[10px] font-medium ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
                   >
                     {k.label}
                   </span>
@@ -401,7 +401,7 @@ export default function WarmChatsCaseStudy() {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.09] bg-white/[0.03] text-[13px] font-semibold text-white/90">
                   {lane.step}
                 </span>
-                <span className="rounded-full border border-amber-200/25 bg-amber-300/10 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-200/85">
+                <span className="rounded-full border border-amber-200/25 bg-amber-300/10 px-3 py-1 text-[10px] font-medium text-amber-200/85">
                   {lane.tag}
                 </span>
               </div>
@@ -420,7 +420,7 @@ export default function WarmChatsCaseStudy() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
+              <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold text-white/55">
                 {lane.foot}
               </p>
             </article>
@@ -520,7 +520,7 @@ export default function WarmChatsCaseStudy() {
                   >
                     {svc.name}
                   </h3>
-                  <p className="mt-1 font-mono text-[11px] tracking-[0.04em] text-amber-200/70">
+                  <p className="mt-1 text-[11px] tracking-[0.04em] text-amber-200/70">
                     {svc.tagline}
                   </p>
                   <ul className="mt-3.5 space-y-2 text-[12px] leading-relaxed text-white/60 md:text-[13px]">
@@ -561,7 +561,7 @@ export default function WarmChatsCaseStudy() {
                   {...rise(0.04 + gi * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+                  <p className="text-[10px] font-semibold text-white/55">
                     {g.title}
                   </p>
                   <ul className="mt-4 flex flex-wrap gap-2">
@@ -646,7 +646,7 @@ export default function WarmChatsCaseStudy() {
             Bolt Fusion Tech
           </Link>
           <p className="text-xs text-white/55">
-            Custom software &amp; product engineering · UK · Malaysia · Bangladesh
+            Custom software &amp; product engineering in the UK, Malaysia and Bangladesh
           </p>
         </footer>
       </main>

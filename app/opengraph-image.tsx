@@ -55,22 +55,6 @@ export default function OpengraphImage() {
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "14px",
-            fontSize: 22,
-            color: "rgba(255,255,255,0.5)",
-            textTransform: "uppercase",
-            letterSpacing: "0.18em",
-          }}
-        >
-          <span>Web</span>
-          <span>·</span>
-          <span>Mobile</span>
-          <span>·</span>
-          <span>AI</span>
-        </div>
       </div>
     ),
     { ...size },

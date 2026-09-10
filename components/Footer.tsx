@@ -22,9 +22,6 @@ export default function Footer() {
             <LogoMark className="h-7 w-7 opacity-90" />
             <span className="text-sm text-white/50">{f.copyrightName}</span>
           </a>
-          <span className="hidden text-white/25 sm:inline" aria-hidden>
-            ·
-          </span>
           <span className="text-xs text-white/55 sm:text-sm sm:text-white/50">
             {f.rightsLine}
           </span>

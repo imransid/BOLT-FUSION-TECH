@@ -55,6 +55,7 @@ export default function Hero() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-w-0 w-full max-w-[980px] flex-col items-center gap-7 px-4 pt-36 pb-16 text-center sm:px-5 sm:pt-40">
+        {h.badge.trim() ? (
         <div
           {...reveal({ y: 20, duration: 0.6 })}
           className="group relative flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-white/[0.03] px-4 py-2.5 shadow-[0_12px_30px_-18px_rgba(255,255,255,0.35)] backdrop-blur-2xl"
@@ -68,11 +69,14 @@ export default function Hero() {
             aria-hidden
           />
           <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
-          <span className="text-[12px] font-medium uppercase tracking-[0.18em] text-white/80">
+          <span className="text-[12px] font-medium text-white/80">
             {h.badge}
           </span>
         </div>
+        ) : null}
 
+        {/* The approved H1 (COPY.md §1) is one sentence, so it wraps — balanced.
+            The line-1 cap below was sized for "Build. Scale. Transform." */}
         <motion.h1
           // LCP element — render visible immediately (never gate it behind opacity:0).
           initial={false}
@@ -93,7 +97,7 @@ export default function Hero() {
           className="[--h1:clamp(2rem,9.2vw,6rem)] font-normal"
           style={{ fontFamily: "var(--font-heading)", fontSize: "var(--h1)" }}
         >
-          <span className="block bg-gradient-to-b from-white via-white to-white/80 bg-clip-text leading-[0.98] tracking-[-0.04em] text-transparent">
+          <span className="block bg-gradient-to-b from-white via-white to-white/80 bg-clip-text leading-[0.98] tracking-[-0.04em] text-transparent text-balance">
             {h.headlineLine1}
           </span>
           {/* The qualifier. Tight tracking is a display-size device and smears at
@@ -106,7 +110,8 @@ export default function Hero() {
               than body copy, which inverts the hierarchy. The 1.125rem floor holds
               it at 18px there (~52% of line 1) and never binds above ~466px, where
               0.42 already clears 18px and the ratio is exact again. */}
-          <span
+          {h.headlineLine2.trim() ? (
+            <span
             className="mx-auto block max-w-[22em] leading-[1.2] tracking-normal text-white/70 text-balance"
             style={{
               fontSize: "max(1.125rem, calc(var(--h1) * 0.42))",
@@ -123,6 +128,7 @@ export default function Hero() {
               h.headlineLine2
             )}
           </span>
+            ) : null}
         </motion.h1>
 
         <p
@@ -132,6 +138,7 @@ export default function Hero() {
           {h.subtext}
         </p>
 
+        {h.trustPoints.length > 0 ? (
         <div
           {...reveal({ y: 14, duration: 0.7, delay: 0.68 })}
           className="flex flex-wrap items-center justify-center gap-2.5"
@@ -139,16 +146,17 @@ export default function Hero() {
           {h.trustPoints.map((point) => (
             <span
               key={point}
-              className="rounded-full border border-white/12 bg-white/[0.03] px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] text-white/58"
+              className="rounded-full border border-white/12 bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/58"
             >
               {point}
             </span>
           ))}
         </div>
+        ) : null}
 
         <p
           {...reveal({ y: 14, duration: 0.8, delay: 0.72 })}
-          className="max-w-[560px] text-[0.83rem] uppercase tracking-[0.2em] text-white/55"
+          className="max-w-[560px] text-[0.83rem] text-white/55"
         >
           {h.tagline}
         </p>

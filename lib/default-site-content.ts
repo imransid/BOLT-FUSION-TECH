@@ -50,22 +50,23 @@ const raw: SiteContent = {
     backToTopLabel: "Back to top",
   },
   hero: {
-    badge: "Custom software & product engineering",
-    headlineLine1: "Build. Scale. Transform.",
-    headlineLine2: "With elite engineers and lower hiring cost.",
-    headlineLine2Accent: "lower hiring cost",
+    // COPY.md §1, approved: one-sentence H1, the sub, a plain supporting line
+    // (not chips, not a dotted meta string), and its two buttons. No badge, no
+    // second headline line and no coloured word — the Hero renders none of them
+    // when empty.
+    badge: "",
+    headlineLine1: "We build AI systems that are still running in six months.",
+    headlineLine2: "",
+    headlineLine2Accent: "",
     subtext:
-      "Build with a dedicated remote team of top-tier Bangladeshi engineers trusted to deliver speed, quality, and reliability across web, AI, and IoT products.",
-    trustPoints: [
-      "Senior-only team",
-      "Timezone overlap",
-      "Quality-first delivery",
-    ],
-    tagline: "Senior execution, transparent process, enterprise-grade quality",
-    primaryCtaLabel: "Plan your build",
+      "Senior engineers, published architecture, and a named team before you sign. Production MVP in 8–16 weeks.",
+    trustPoints: [],
+    tagline:
+      "Senior-only teams, named engineers up front, 4–8 hours of overlap with US and EU, and you own the IP.",
+    primaryCtaLabel: "Start a 2-week pilot",
     primaryCtaHref: "#contact",
-    secondaryCtaLabel: "See recent work",
-    secondaryCtaHref: "#recent-work",
+    secondaryCtaLabel: "Book a technical call",
+    secondaryCtaHref: "#schedule",
     scrollHintLeft: "Scroll down",
     scrollHintRight: "to explore delivery",
   },
@@ -79,15 +80,15 @@ const raw: SiteContent = {
     diagramInLabel: "Inbound query",
     diagramOutLabel: "Response",
     lanes: [
-      { name: "Keyword lane", detail: "Deterministic match · Postgres + PostGIS" },
+      { name: "Keyword lane", detail: "Deterministic match, Postgres + PostGIS" },
       { name: "AI lane", detail: "Embeddings + Claude Haiku" },
-      { name: "Cache lane", detail: "Redis · 30-second TTL" },
+      { name: "Cache lane", detail: "Redis, 30-second TTL" },
     ],
     // Never add a figure here that is not observed on a shipped system.
     proofPoints: [
       {
         stat: "<100ms",
-        label: "Search response · 80% of traffic",
+        label: "Search response, 80% of traffic",
         body: "Queries are classified before any paid inference runs, so most traffic never reaches a model.",
         sourceLabel: "Source: Restaurant discovery platform",
       },
@@ -116,7 +117,7 @@ const raw: SiteContent = {
     assurances: [
       "8–16 weeks to a production MVP",
       "You own the IP — assigned on payment, NDA before scoping",
-      "UK · Malaysia · Bangladesh — 4–8h overlap with US and EU",
+      "UK, Malaysia and Bangladesh — 4–8h overlap with US and EU",
     ],
   },
   about: {
@@ -285,7 +286,7 @@ const raw: SiteContent = {
         title: "WarmChats — AI booking for real estate",
         outcome:
           "Always-first AI follow-up for agents: Claude qualifies and routes every new lead—buyer or seller—while GPT-4.1 replies instantly on email and SMS and books showings 24/7, with every message tracked.",
-        stack: "Real Estate · AI Automation · Microservices",
+        stack: "Real estate, AI automation, microservices",
         alt: "WarmChats landing page: 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
         imgClass: "object-[center_top]",
         state: "published",
@@ -299,7 +300,7 @@ const raw: SiteContent = {
         title: "Intelligent restaurant search",
         outcome:
           "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
-        stack: "Multi-tenant microservice · Tiered search · Observable by design",
+        stack: "Multi-tenant microservice, tiered search, observable by design",
         alt: "Case study visual for AI-assisted restaurant search and discovery product",
         state: "published",
         href: "/work/restaurant-search",
@@ -308,10 +309,10 @@ const raw: SiteContent = {
     ],
   },
   caseStudy: {
-    badge: "Case study · Systems architecture",
+    badge: "Case study: systems architecture",
     title: "Intelligent restaurant search",
     titleAccentLine:
-      "Multi-tenant microservice · Tiered search · Observable by design",
+      "Multi-tenant microservice, tiered search, observable by design",
     subtitle:
       "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
     executiveSummary:

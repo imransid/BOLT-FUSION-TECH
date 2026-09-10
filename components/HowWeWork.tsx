@@ -90,9 +90,9 @@ export default function HowWeWork() {
             <caption className="sr-only">Engagement models</caption>
             <thead>
               <tr className="border-b border-white/10">
-                <th scope="col" className="pb-4 pr-6 text-xs font-normal uppercase tracking-[0.14em] text-white/50">Model</th>
-                <th scope="col" className="pb-4 pr-6 text-xs font-normal uppercase tracking-[0.14em] text-white/50">Shape</th>
-                <th scope="col" className="pb-4 text-xs font-normal uppercase tracking-[0.14em] text-white/50">Timeline</th>
+                <th scope="col" className="pb-4 pr-6 text-xs font-normal text-white/50">Model</th>
+                <th scope="col" className="pb-4 pr-6 text-xs font-normal text-white/50">Shape</th>
+                <th scope="col" className="pb-4 text-xs font-normal text-white/50">Timeline</th>
               </tr>
             </thead>
             <tbody>

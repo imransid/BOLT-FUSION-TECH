@@ -214,7 +214,7 @@ export default function Logo({ className = "", markOnly = false }: LogoProps) {
       {!markOnly && (
         <span className="flex min-w-0 flex-col items-start justify-center gap-0.5">
           <span
-            className="text-[0.5625rem] font-normal uppercase tracking-[0.62em] text-zinc-500 sm:text-[0.625rem] sm:tracking-[0.58em]"
+            className="text-[0.5625rem] font-normal text-zinc-500 sm:text-[0.625rem]"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             Bolt
@@ -235,8 +235,7 @@ export default function Logo({ className = "", markOnly = false }: LogoProps) {
               aria-hidden
             />
             <span
-              className="font-mono text-[0.5rem] font-medium uppercase tracking-[0.52em] text-zinc-600 sm:text-[0.5625rem] sm:tracking-[0.48em]"
-              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              className="text-[0.5rem] font-medium text-zinc-600 sm:text-[0.5625rem]"
             >
               Tech
             </span>

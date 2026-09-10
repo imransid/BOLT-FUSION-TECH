@@ -31,7 +31,7 @@ function SectionHeading({
   return (
     <div {...revealProps(delay)} className="max-w-[68ch]">
       {eyebrow ? (
-        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-white/55">{eyebrow}</p>
+        <p className="text-[10px] font-medium text-white/55">{eyebrow}</p>
       ) : null}
       <h2
         id={titleId}
@@ -102,7 +102,7 @@ export default function CaseStudy() {
               </p>
               <p
                 {...revealProps(0.09)}
-                className="font-mono text-[11px] leading-relaxed tracking-[0.06em] text-white/55 md:text-[12px]"
+                className="text-[11px] leading-relaxed tracking-[0.06em] text-white/55 md:text-[12px]"
               >
                 {cs.titleAccentLine}
               </p>
@@ -113,7 +113,7 @@ export default function CaseStudy() {
               className="rounded-2xl border border-white/[0.07] bg-black/25 py-6 pl-6 pr-5 md:py-7 md:pl-7 md:pr-6"
             >
               <div className="border-l-2 border-white/20 pl-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/55">
+                <p className="text-[10px] font-semibold text-white/55">
                   Executive summary
                 </p>
                 <p
@@ -141,10 +141,10 @@ export default function CaseStudy() {
             </div>
             <figcaption className="sr-only">{cs.imageAlt}</figcaption>
             <div className="flex items-center justify-between gap-3 border-t border-white/10 bg-black/75 px-4 py-3 backdrop-blur-md">
-              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/55">
+              <span className="text-[10px] font-medium text-white/55">
                 {cs.diagramBadgeLeft}
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/55">
+              <span className="text-[10px] font-medium text-white/55">
                 {cs.diagramBadgeRight}
               </span>
             </div>
@@ -180,7 +180,7 @@ export default function CaseStudy() {
                     {k.value}
                   </span>
                   <span
-                    className={`text-[10px] font-medium uppercase tracking-[0.16em] ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
+                    className={`text-[10px] font-medium ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
                   >
                     {k.label}
                   </span>
@@ -229,9 +229,9 @@ export default function CaseStudy() {
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.09] bg-white/[0.03] text-[13px] font-semibold tabular-nums text-white/90">
                   {lane.lane}
                 </span>
-                <span className="text-right text-[10px] font-medium uppercase leading-snug tracking-[0.14em] text-white/55">
+                <span className="text-right text-[10px] font-medium leading-snug text-white/55">
                   {lane.traffic}
-                  <span className="text-white/22"> · </span>
+                  <span>, </span>
                   {lane.latency}
                 </span>
               </div>
@@ -251,7 +251,7 @@ export default function CaseStudy() {
                 ))}
               </ul>
               {lane.costLine ? (
-                <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">
+                <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold text-white/55">
                   {lane.costLine}
                 </p>
               ) : null}
@@ -280,7 +280,7 @@ export default function CaseStudy() {
                   {...revealProps(0.04 + gi * 0.03)}
                   className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">{g.title}</p>
+                  <p className="text-[10px] font-semibold text-white/55">{g.title}</p>
                   <ul className="mt-4 flex flex-wrap gap-2">
                     {g.items.map((item) => (
                       <li
@@ -313,7 +313,7 @@ export default function CaseStudy() {
                 style={{ boxShadow: "12px 20px 28px -16px rgba(0,0,0,0.5)" }}
                 aria-label={`${featuredContext.name} bounded context`}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/55">
+                <p className="text-[10px] font-semibold text-white/55">
                   Primary bounded context
                 </p>
                 <h3
@@ -335,7 +335,7 @@ export default function CaseStudy() {
             ) : null}
 
             <div {...revealProps(0.08)} className="mt-8">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">
+              <p className="text-[10px] font-semibold text-white/55">
                 {cs.patternsSectionTitle}
               </p>
               <ul className="mt-3 flex flex-wrap gap-2" aria-label={cs.patternsSectionTitle}>
@@ -377,8 +377,8 @@ export default function CaseStudy() {
               {...revealProps(0.1)}
               className="mt-8 rounded-2xl border border-white/[0.07] bg-black/30 p-5 md:p-6"
             >
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/55">{cs.sharedKernelTitle}</p>
-              <ul className="mt-4 grid gap-x-6 gap-y-2 font-mono text-[11px] leading-relaxed text-white/62 sm:grid-cols-2 md:text-[12px]">
+              <p className="text-[10px] font-semibold text-white/55">{cs.sharedKernelTitle}</p>
+              <ul className="mt-4 grid gap-x-6 gap-y-2 text-[11px] leading-relaxed text-white/62 sm:grid-cols-2 md:text-[12px]">
                 {cs.sharedKernelItems.map((item) => (
                   <li key={item} className="border-l border-white/[0.08] pl-3">
                     {item}

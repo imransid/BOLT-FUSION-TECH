@@ -44,7 +44,7 @@ const sections: Section[] = [
     heading: "1. Who we are",
     body: (
       <p>
-        Bolt Fusion Tech · Offices: United Kingdom · Malaysia · Bangladesh ·
+        Bolt Fusion Tech, with offices in the United Kingdom, Malaysia and Bangladesh.
         Contact:{" "}
         <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
       </p>
