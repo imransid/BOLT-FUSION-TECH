@@ -146,7 +146,10 @@ export default function RecentWorks() {
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95"
                   aria-hidden
                 />
-                <div className={`absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20 ${published ? "pb-[3.75rem] sm:pb-[4.25rem] md:pb-5" : ""}`}>
+                {/* The scrim follows the text, not the card: 85% black behind every line, fading
+                    out only across the top padding. The card-wide gradient alone put the text
+                    on whatever part of the screenshot it landed over. */}
+                <div className={`absolute inset-x-0 bottom-0 z-[1] bg-[linear-gradient(to_top,rgb(0_0_0/0.85)_calc(100%_-_4rem),transparent)] p-4 pt-16 sm:p-5 sm:pt-20 ${published ? "pb-[3.75rem] sm:pb-[4.25rem] md:pb-5" : ""}`}>
                   <p className="text-[10px] text-amber-200">
                     {project.stack}
                   </p>
