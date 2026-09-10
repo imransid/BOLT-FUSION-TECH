@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrayEditor, ImageField, TextField, TextareaField } from "../fields";
+import { ArrayEditor, EnumSelect, ImageField, TextField, TextareaField } from "../fields";
 
 export function RecentWorksSection() {
   return (
@@ -15,7 +15,7 @@ export function RecentWorksSection() {
         label="Featured works"
         addLabel="+ Add work"
         itemTitle={(i) => `Work ${i + 1}`}
-        defaultItem={() => ({ src: "", title: "", outcome: "", stack: "", alt: "" })}
+        defaultItem={() => ({ src: "", title: "", outcome: "", stack: "", alt: "", state: "awaiting-asset" as const })}
         renderItem={(i) => (
           <>
             <ImageField name={`recentWorks.items.${i}.src`} label="Image" />
@@ -25,8 +25,13 @@ export function RecentWorksSection() {
             </div>
             <TextareaField name={`recentWorks.items.${i}.outcome`} label="Outcome" rows={2} />
             <TextField name={`recentWorks.items.${i}.stack`} label="Stack" />
+            <EnumSelect
+              name={`recentWorks.items.${i}.state`}
+              label="State — published needs a write-up link"
+              options={["published", "awaiting-asset"]}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
-              <TextField name={`recentWorks.items.${i}.href`} label="Link (optional)" mono />
+              <TextField name={`recentWorks.items.${i}.href`} label="Write-up link (required when published)" mono />
               <TextField name={`recentWorks.items.${i}.ctaLabel`} label="CTA label (optional)" />
             </div>
             <TextField name={`recentWorks.items.${i}.imgClass`} label="Image class (optional)" mono />

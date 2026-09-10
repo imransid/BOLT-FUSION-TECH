@@ -33,8 +33,33 @@ export function normalizeSectionOrder(order: SectionId[]): SectionId[] {
   return out;
 }
 
+/**
+ * Shape migrations for a STORED document written before a field became
+ * required. Each derives the new field from what the document already says and
+ * never invents content. Without them, a stored document missing a newly
+ * required field fails validation and safeBuild serves the code defaults for
+ * the whole site, hiding every admin edit without a word.
+ */
+function migrateStored(merged: Record<string, unknown>): void {
+  // recentWorks.items[].state — added with the published-project gate. A card
+  // with a link was presented as published; a card without one was quietly
+  // linked to #contact, which is what the gate now refuses.
+  const rw = merged.recentWorks as { items?: unknown } | undefined;
+  if (rw && Array.isArray(rw.items)) {
+    merged.recentWorks = {
+      ...rw,
+      items: rw.items.map((it) =>
+        it && typeof it === "object" && !("state" in it)
+          ? { ...it, state: (it as { href?: unknown }).href ? "published" : "awaiting-asset" }
+          : it,
+      ),
+    };
+  }
+}
+
 function buildContent(overrides: unknown): SiteContent {
   const merged = deepMerge(defaultSiteContent, overrides) as Record<string, unknown>;
+  migrateStored(merged);
   // Sanitize sectionOrder BEFORE parse: a removed/renamed section id (no longer
   // in the enum) would otherwise throw at parse instead of being dropped.
   const site = merged.site as { sectionOrder?: unknown } | undefined;

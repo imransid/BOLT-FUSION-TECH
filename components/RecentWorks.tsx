@@ -119,74 +119,82 @@ export default function RecentWorks() {
           className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden scroll-pl-4 scroll-pr-6 pb-4 pl-1 pr-6 [-webkit-overflow-scrolling:touch] md:scroll-p-0 md:gap-4 md:px-0 md:pr-2"
         >
           {featuredWork.map((project, i) => {
-            const hasCaseStudy = Boolean(project.href);
-            const ctaLabel = project.ctaLabel ?? "Discuss a similar build";
-            return (
-            <motion.a
-              key={project.title}
-              data-gallery-slide={i}
-              href={project.href ?? "#contact"}
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group relative flex h-[min(400px,68dvh)] w-[min(100%,calc(100dvw-3.25rem))] max-w-[360px] shrink-0 snap-center snap-always overflow-hidden rounded-2xl bg-[#0d0d0d] ring-1 ring-white/10 outline-none first:ml-3 focus-visible:ring-2 focus-visible:ring-amber-200/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[min(440px,72dvh)] sm:w-[300px] sm:max-w-none sm:first:ml-0 md:snap-start"
-              style={{
+            /* Only a published project links anywhere, and it links to its
+               write-up: the schema refuses a published project without one.
+               There is deliberately no fallback. */
+            const published = project.state === "published" && Boolean(project.href);
+            const ctaLabel = project.ctaLabel ?? "Read the case study";
+            const cardProps = {
+              initial: { opacity: 0, x: 30 },
+              whileInView: { opacity: 1, x: 0 },
+              viewport: { once: true },
+              transition: { duration: 0.5, delay: i * 0.1 },
+              className:
+                "group relative flex h-[min(400px,68dvh)] w-[min(100%,calc(100dvw-3.25rem))] max-w-[360px] shrink-0 snap-center snap-always overflow-hidden rounded-2xl bg-[#0d0d0d] ring-1 ring-white/10 outline-none first:ml-3 focus-visible:ring-2 focus-visible:ring-amber-200/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:h-[min(440px,72dvh)] sm:w-[300px] sm:max-w-none sm:first:ml-0 md:snap-start",
+              style: {
                 boxShadow:
                   "0 0 0 1px rgba(255,255,255,0.04) inset, 0 24px 48px -28px rgba(0,0,0,0.65)",
-              }}
-              aria-label={
-                hasCaseStudy
-                  ? `${project.title}: ${project.outcome}. ${ctaLabel}.`
-                  : `${project.title}: ${project.outcome}. Contact to discuss a similar project.`
-              }
-            >
-              {project.src ? (
-                <Image
-                  src={project.src}
-                  alt={project.alt}
-                  fill
-                  sizes="(min-width: 640px) 300px, calc(100vw - 3.25rem)"
-                  className={`object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
-                    project.imgClass
-                      ? project.imgClass
-                      : "object-top sm:object-center"
-                  }`}
+              },
+            };
+            const body = (
+              <>
+                {project.src ? (
+                  <Image
+                    src={project.src}
+                    alt={project.alt}
+                    fill
+                    sizes="(min-width: 640px) 300px, calc(100vw - 3.25rem)"
+                    className={`object-cover transition-transform duration-700 ease-out active:scale-[1.02] md:group-hover:scale-[1.03] ${
+                      project.imgClass
+                        ? project.imgClass
+                        : "object-top sm:object-center"
+                    }`}
+                  />
+                ) : null}
+                <div
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95"
+                  aria-hidden
                 />
-              ) : null}
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-transparent opacity-95"
-                aria-hidden
-              />
-              <div className="absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20">
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/85">
-                  {project.stack}
-                </p>
-                <h3
-                  className="mt-1.5 text-base font-medium leading-snug text-white sm:mt-2 sm:text-lg md:text-xl"
-                  style={{ fontFamily: "var(--font-heading)" }}
-                >
-                  {project.title}
-                </h3>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-white/60 line-clamp-3 sm:mt-2 sm:text-xs">
-                  {project.outcome}
-                </p>
-              </div>
-              <span className="pointer-events-none absolute inset-x-4 bottom-4 z-[2] flex justify-center sm:inset-x-5 sm:bottom-5 md:opacity-0 md:transition-opacity md:duration-300 md:group-hover:opacity-100">
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-medium backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs ${
-                    hasCaseStudy
-                      ? "border-amber-200/40 bg-amber-300/90 text-[#1a1d22]"
-                      : "border-white/25 bg-white/15 text-white"
-                  }`}
-                >
-                  {ctaLabel}
-                  <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden>
-                    <path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" />
-                  </svg>
+                <div className="absolute inset-x-0 bottom-0 z-[1] p-4 pt-16 sm:p-5 sm:pt-20">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/85">
+                    {project.stack}
+                  </p>
+                  <h3
+                    className="mt-1.5 text-base font-medium leading-snug text-white sm:mt-2 sm:text-lg md:text-xl"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {project.title}
+                  </h3>
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-white/60 line-clamp-3 sm:mt-2 sm:text-xs">
+                    {project.outcome}
+                  </p>
+                </div>
+              </>
+            );
+            return published ? (
+              <motion.a
+                key={project.title}
+                data-gallery-slide={i}
+                href={project.href}
+                aria-label={`${project.title}: ${project.outcome}. ${ctaLabel}.`}
+                {...cardProps}
+              >
+                {body}
+                <span className="pointer-events-none absolute inset-x-4 bottom-4 z-[2] flex justify-center sm:inset-x-5 sm:bottom-5 md:opacity-0 md:transition-opacity md:duration-300 md:group-hover:opacity-100">
+                  <span
+                    className="inline-flex items-center gap-2 rounded-full border border-amber-200/40 bg-amber-300/90 px-4 py-2 text-[11px] font-medium text-[#1a1d22] backdrop-blur-md sm:px-5 sm:py-2.5 sm:text-xs"
+                  >
+                    {ctaLabel}
+                    <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden>
+                      <path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" />
+                    </svg>
+                  </span>
                 </span>
-              </span>
-            </motion.a>
+              </motion.a>
+            ) : (
+              <motion.div key={project.title} data-gallery-slide={i} {...cardProps}>
+                {body}
+              </motion.div>
             );
           })}
         </div>

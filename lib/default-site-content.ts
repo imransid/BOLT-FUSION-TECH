@@ -288,19 +288,22 @@ const raw: SiteContent = {
         stack: "Real Estate · AI Automation · Microservices",
         alt: "WarmChats landing page: 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
         imgClass: "object-[center_top]",
+        state: "published",
         href: "/work/warmchats",
         ctaLabel: "Read the case study",
       },
       {
         // Copy below is lifted verbatim from the approved `caseStudy` block —
-        // nothing here is newly written. No `href`: /work/restaurant-search does
-        // not exist yet (PLAN.md §6 moves the write-up there in a later session).
+        // nothing here is newly written. The write-up is /work/restaurant-search.
         src: "/projects/case-fnb-smart-search.png",
         title: "Intelligent restaurant search",
         outcome:
           "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
         stack: "Multi-tenant microservice · Tiered search · Observable by design",
         alt: "Case study visual for AI-assisted restaurant search and discovery product",
+        state: "published",
+        href: "/work/restaurant-search",
+        ctaLabel: "Read the case study",
       },
     ],
   },

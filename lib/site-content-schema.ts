@@ -41,18 +41,41 @@ const faqItemSchema = z.object({
   a: z.string(),
 });
 
-const featuredWorkSchema = z.object({
-  src: z.string(),
-  title: z.string(),
-  outcome: z.string(),
-  stack: z.string(),
-  alt: z.string(),
-  imgClass: z.string().optional(),
-  /** Optional deep-dive link (e.g. a case study page). Falls back to the contact anchor. */
-  href: safeHref.optional(),
-  /** Short label shown on the card's hover/footer pill when href points to a case study. */
-  ctaLabel: z.string().optional(),
-});
+/* A featured work is a claim about something we shipped, so it has to be
+   backed — the same gate content/schema.ts puts on /work. "published" means
+   there is a write-up, and its link is REQUIRED: there is no fallback. The old
+   `href ?? "#contact"` quietly turned any project without a write-up into a
+   contact link. "awaiting-asset" renders as a plain card with no link and no
+   call to action. */
+export const featuredWorkStateSchema = z.enum(["published", "awaiting-asset"]);
+
+const featuredWorkSchema = z
+  .object({
+    src: z.string(),
+    title: z.string(),
+    outcome: z.string(),
+    stack: z.string(),
+    alt: z.string(),
+    imgClass: z.string().optional(),
+    state: featuredWorkStateSchema,
+    /** The write-up this card links to. Required when published, absent otherwise. */
+    href: safeHref.optional(),
+    /** Label on the card's pill. Defaults to "Read the case study". */
+    ctaLabel: z.string().optional(),
+  })
+  .superRefine((work, ctx) => {
+    const hasHref = Boolean(work.href?.trim());
+    if (work.state === "published" && !hasHref) {
+      ctx.addIssue({ code: "custom", path: ["href"], message: "A published project needs a write-up link." });
+    }
+    if (work.state === "awaiting-asset" && hasHref) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["href"],
+        message: "Only a published project links anywhere. Set the state to published, or clear the link.",
+      });
+    }
+  });
 
 const processStepSchema = z.object({
   num: z.number(),
