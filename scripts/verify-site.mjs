@@ -117,8 +117,29 @@ function httpBin(url) {
   }
   return binCache.get(url);
 }
-/* PNG width and height, straight from the IHDR chunk. */
-const pngSize = (buf) => (buf.length > 24 && buf.readUInt32BE(12) === 0x49484452 ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : null);
+/* Width and height from the file's own header: PNG (IHDR), JPEG (SOFn), WebP
+   (VP8 / VP8L / VP8X). null when the format is none of these — which check 16
+   reports, rather than passing an image it could not measure. */
+function imageSize(buf) {
+  if (buf.length > 24 && buf.readUInt32BE(12) === 0x49484452) return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20), type: "png" };
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    for (let i = 2; i + 9 < buf.length; ) {
+      if (buf[i] !== 0xff) return null;
+      const m = buf[i + 1];
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { h: buf.readUInt16BE(i + 5), w: buf.readUInt16BE(i + 7), type: "jpeg" };
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+    return null;
+  }
+  if (buf.length > 30 && buf.toString("ascii", 0, 4) === "RIFF" && buf.toString("ascii", 8, 12) === "WEBP") {
+    const kind = buf.toString("ascii", 12, 16);
+    if (kind === "VP8X") return { w: 1 + buf.readUIntLE(24, 3), h: 1 + buf.readUIntLE(27, 3), type: "webp" };
+    if (kind === "VP8 ") return { w: buf.readUInt16LE(26) & 0x3fff, h: buf.readUInt16LE(28) & 0x3fff, type: "webp" };
+    if (kind === "VP8L") { const b = buf.readUInt32LE(21); return { w: 1 + (b & 0x3fff), h: 1 + ((b >> 14) & 0x3fff), type: "webp" }; }
+  }
+  return null;
+}
+const pngSize = (buf) => { const s = imageSize(buf); return s && s.type === "png" ? s : null; };
 const short = (u) => String(u).replace(BASE, "").replace(/^https?:\/\/(www\.)?boltfusiontech\.com/, "").slice(0, 90);
 
 /* ~670 px/s: 100px every 150ms, the pace of a mouse wheel, measured to reveal
@@ -881,6 +902,12 @@ async function visitNoJs(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, javaScriptEnabled: false });
   const page = await ctx.newPage();
   await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  /* A CSS entrance runs without script and ends visible; judge the page once
+     every such animation has finished, not in the middle of one. */
+  /* ...waiting from outside the page: with scripts off, an in-page timer never
+     fires, and the infinite loops on the page never finish. The longest entrance
+     on this site is 1.6s. */
+  await page.waitForTimeout(2500);
   const r = await page.evaluate(hiddenWithoutJs);
   await ctx.close();
   return r;
@@ -1366,9 +1393,10 @@ await (async () => {
       continue;
     }
     const r = await httpBin(toBase(m.ogImage));
-    const size = pngSize(r.buf);
+    const size = imageSize(r.buf);
     if (r.status !== 200) F.push(`${route}: og:image ${short(m.ogImage)} → ${r.status || r.error}`);
-    else if (size && (size.w !== 1200 || size.h !== 630)) F.push(`${route}: og:image is ${size.w}×${size.h}, not 1200×630`);
+    else if (!size) F.push(`${route}: og:image ${short(m.ogImage)} is ${r.type || "an unknown format"} — could not read its size`);
+    else if (size.w !== 1200 || size.h !== 630) F.push(`${route}: og:image is ${size.w}×${size.h} ${size.type}, not 1200×630`);
     if (!m.ogImageAlt) F.push(`${route}: the og:image has no alt text`);
     if (!m.twitterImage) F.push(`${route}: no twitter:image`);
   }
