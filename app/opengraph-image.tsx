@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 // Site-wide default social share card (1200×630). Used for every route unless a
 // page provides its own opengraph-image — replaces the oversized 1.5 MB PNG.
-export const alt = "Bolt Fusion Tech — Custom Software & Product Engineering";
+export const alt = "Bolt Fusion Tech — We build AI systems that are still running in six months.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -48,7 +48,7 @@ export default function OpengraphImage() {
               maxWidth: "900px",
             }}
           >
-            Custom Software & Product Engineering
+            We build AI systems that are still running in six months.
           </div>
           <div style={{ fontSize: 30, color: "rgba(255,255,255,0.7)", maxWidth: "880px" }}>
             Senior engineers, clear roadmaps, and delivery you can plan around.
