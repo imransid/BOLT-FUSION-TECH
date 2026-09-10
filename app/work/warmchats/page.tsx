@@ -44,7 +44,7 @@ export default function WarmChatsCaseStudyPage() {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: site },
-          { "@type": "ListItem", position: 2, name: "Work", item: new URL("/#recent-work", site).toString() },
+          { "@type": "ListItem", position: 2, name: "Work", item: new URL("/work", site).toString() },
           { "@type": "ListItem", position: 3, name: "WarmChats case study", item: url },
         ],
       },
