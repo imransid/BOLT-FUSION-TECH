@@ -9,6 +9,8 @@
  *   yarn verify:site                                   against production
  *   yarn verify:site --base http://localhost:3000      against a local build
  *   options:  --widths 1440,390   --only 1,2,8   --json report.json
+ *             --repo <checkout>   runs check 24 (lockfile, tsc, eslint, tracked build output)
+ *             --probe-writes      check 17 also sends unauthenticated PUT/POST to the admin API
  *
  * Routes come from the site's own /sitemap.xml, so a page is covered the day
  * it is published.
@@ -23,7 +25,15 @@
  * reports it, and a human decides; it does not pass it.
  */
 import { chromium } from "playwright";
-import { writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import path from "node:path";
+import pngjs from "pngjs";
+
+const { PNG } = pngjs;
+const require = createRequire(import.meta.url);
 
 /* ── options ─────────────────────────────────────────────────────────────── */
 const argv = process.argv.slice(2);
@@ -35,7 +45,17 @@ const BASE = String(opt("base", "https://boltfusiontech.com")).replace(/\/$/, ""
 const WIDTHS = String(opt("widths", "1440,390")).split(",").map(Number);
 const ONLY = opt("only") ? new Set(String(opt("only")).split(",")) : null;
 const JSON_OUT = opt("json");
+const REPO = opt("repo");
+const PROBE_WRITES = argv.includes("--probe-writes");
 const PROD_HOST = "boltfusiontech.com";
+const PROD_ORIGIN = `https://${PROD_HOST}`;
+
+/* Check 6 sweeps these widths, and compares each breakpoint's two sides. */
+const SWEEP_WIDTHS = [360, 390, 767, 768, 1023, 1024, 1280, 1440, 1920];
+const EDGE_PAIRS = [
+  [767, 768],
+  [1023, 1024],
+];
 
 /* Text that may legitimately render in a system face, by the first family of
    its declared stack. Empty: this site loads web faces for everything it
@@ -76,13 +96,30 @@ function http(url) {
       fetch(url, { redirect: "follow" })
         .then(async (r) => {
           const type = r.headers.get("content-type") || "";
-          return { status: r.status, final: r.url, type, html: type.includes("html") ? await r.text() : null };
+          const text = /^text\/|html|json|xml|javascript/.test(type) ? await r.text() : null;
+          return { status: r.status, final: r.url, type, html: type.includes("html") ? text : null, text, robots: r.headers.get("x-robots-tag") || "" };
         })
         .catch((e) => ({ status: 0, error: String(e?.cause?.code || e?.message || e) })),
     );
   }
   return httpCache.get(url);
 }
+
+const binCache = new Map();
+function httpBin(url) {
+  if (!binCache.has(url)) {
+    binCache.set(
+      url,
+      fetch(url, { redirect: "follow" })
+        .then(async (r) => ({ status: r.status, type: r.headers.get("content-type") || "", buf: Buffer.from(await r.arrayBuffer()) }))
+        .catch((e) => ({ status: 0, type: "", error: String(e?.cause?.code || e?.message || e), buf: Buffer.alloc(0) })),
+    );
+  }
+  return binCache.get(url);
+}
+/* PNG width and height, straight from the IHDR chunk. */
+const pngSize = (buf) => (buf.length > 24 && buf.readUInt32BE(12) === 0x49484452 ? { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) } : null);
+const short = (u) => String(u).replace(BASE, "").replace(/^https?:\/\/(www\.)?boltfusiontech\.com/, "").slice(0, 90);
 
 async function readingSpeedScroll(page) {
   await page.evaluate(async () => {
@@ -265,6 +302,8 @@ function collectInPage() {
   }
   const stampedInfo = [...document.querySelectorAll("[data-vs-t]")].map((el) => ({
     declared: getComputedStyle(el).fontFamily.split(",")[0].replace(/["']/g, "").trim(),
+    weight: getComputedStyle(el).fontWeight,
+    style: getComputedStyle(el).fontStyle,
     el: describe(el),
     section: sectionOf(el),
   }));
@@ -325,7 +364,77 @@ function collectInPage() {
   const links = [...document.querySelectorAll("a[href]")].map((a) => ({ href: a.getAttribute("href"), abs: a.href, el: describe(a) }));
   const ids = [...document.querySelectorAll("[id]")].map((e) => e.id);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, metrics, images, cards: [...cardEls.values()], jsonld, links, ids };
+  /* 11, 26 ── headings as rendered */
+  const headings = [...document.querySelectorAll("h1,h2,h3,h4,h5,h6")]
+    .filter((h) => h.getClientRects().length)
+    .map((h) => ({ level: Number(h.tagName[1]), text: snip(h, 60) }));
+
+  /* 12, 13, 16, 26 ── what the page declares about itself */
+  const metaContent = (sel) => document.querySelector(sel)?.getAttribute("content") ?? null;
+  const meta = {
+    title: document.title,
+    description: metaContent('meta[name="description"]'),
+    robots: metaContent('meta[name="robots"]'),
+    canonical: document.querySelector('link[rel="canonical"]')?.href ?? null,
+    ogDescription: metaContent('meta[property="og:description"]'),
+    ogImage: metaContent('meta[property="og:image"]'),
+    ogImageAlt: metaContent('meta[property="og:image:alt"]'),
+    twitterImage: metaContent('meta[name="twitter:image"]'),
+    icons: [...document.querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]')].map((l) => ({ rel: l.getAttribute("rel"), href: l.href, type: l.type || "", sizes: l.getAttribute("sizes") || "" })),
+  };
+
+  /* 10 ── every image */
+  const allImages = [...document.images].map((i) => ({
+    src: srcOf(i),
+    loaded: i.complete && i.naturalWidth > 0,
+    alt: i.hasAttribute("alt") ? i.getAttribute("alt") : null,
+    visible: visible(i),
+  }));
+
+  /* 3, 25 ── declared faces, and which file each comes from */
+  const fontFaces = faces.map((f) => ({ family: fam(f), weight: f.weight, style: f.style, status: f.status }));
+  const fontFaceRules = [];
+  const walkFaces = (list) => {
+    for (const r of list) {
+      if (r instanceof CSSFontFaceRule) fontFaceRules.push({ family: r.style.getPropertyValue("font-family").replace(/["']/g, "").trim(), src: r.style.getPropertyValue("src") });
+      else if (r.cssRules) walkFaces(r.cssRules);
+    }
+  };
+  for (const sheet of document.styleSheets) {
+    try {
+      walkFaces(sheet.cssRules);
+    } catch {
+      /* cross-origin sheet */
+    }
+  }
+
+  /* 5 ── after the reading-speed scroll: text that should be readable and is not */
+  const stuckHidden = [];
+  for (const el of document.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span")) {
+    if (el.closest("script, style, noscript, template, [aria-hidden='true'], [hidden], details:not([open])")) continue;
+    if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
+    if (!el.getClientRects().length) continue;
+    let hider = null;
+    for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+      const st = getComputedStyle(a);
+      if (parseFloat(st.opacity) < 0.05 || st.visibility === "hidden") {
+        hider = a;
+        break;
+      }
+    }
+    if (!hider) continue;
+    const cls = typeof hider.className === "string" ? hider.className : "";
+    if (/(^|\s)(\S*:)?(group-|peer-)?(hover|focus|focus-visible|focus-within|checked|open):/.test(cls)) continue; /* an interaction reveal, by design */
+    stuckHidden.push({ text: snip(el, 60), hider: `${hider.tagName.toLowerCase()}${hider.id ? "#" + hider.id : ""}`, style: (hider.getAttribute("style") || "").slice(0, 70), section: sectionOf(el) });
+  }
+
+  /* 25 ── scripts the page loaded */
+  const scripts = performance
+    .getEntriesByType("resource")
+    .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
+    .map((e) => e.name);
+
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, metrics, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts };
 }
 
 /* 4 ── with JavaScript off, is the text there? (runs in the browser) ───── */
@@ -358,9 +467,305 @@ function hiddenWithoutJs() {
   return { out, total };
 }
 
+/* 7 ── the homepage headline: the words on each rendered line, per span */
+function headlineLines() {
+  const h1 = document.querySelector("#hero h1") || document.querySelector("h1");
+  if (!h1) return null;
+  const parts = h1.children.length ? [...h1.children] : [h1];
+  return parts.map((p) => {
+    const words = [];
+    const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const re = /\S+/g;
+      let m;
+      while ((m = re.exec(n.textContent))) {
+        const r = document.createRange();
+        r.setStart(n, m.index);
+        r.setEnd(n, m.index + m[0].length);
+        const rect = r.getClientRects()[0];
+        if (rect) words.push({ w: m[0], top: Math.round(rect.top) });
+      }
+    }
+    const lines = [];
+    for (const w of words) {
+      const last = lines[lines.length - 1];
+      if (last && Math.abs(last.top - w.top) < 4) last.words.push(w.w);
+      else lines.push({ top: w.top, words: [w.w] });
+    }
+    return lines.map((l) => l.words.join(" "));
+  });
+}
+
+/* 20 ── WCAG 2.x luminance and contrast */
+const lin = (c) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+const contrastRatio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+
+/* Contrast against the pixels actually behind the text. One full-page capture
+   with every glyph made transparent gives the real ground — particle field,
+   gradient or photograph — under each text box; the text colour (converted to
+   sRGB by the browser, alpha and ancestor opacity applied) is composited over
+   each sampled pixel and the WORST sample is the element's ratio. */
+async function measureContrast(page) {
+  const els = await page.evaluate(() => {
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 1;
+    const cx = cv.getContext("2d", { willReadFrequently: true });
+    const rgba = (c) => {
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = "#000";
+      cx.fillStyle = c;
+      cx.fillRect(0, 0, 1, 1);
+      return [...cx.getImageData(0, 0, 1, 1).data];
+    };
+    const out = [];
+    for (const el of document.body.querySelectorAll("*")) {
+      if (el.closest("script, style, noscript, template, svg, [aria-hidden='true']")) continue;
+      if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) continue;
+      const s = getComputedStyle(el);
+      if (s.visibility === "hidden") continue;
+      let op = 1;
+      let pinned = false;
+      for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+        const as = getComputedStyle(a);
+        op *= parseFloat(as.opacity);
+        if (as.position === "fixed" || as.position === "sticky") pinned = true;
+      }
+      if (op < 0.05) continue;
+      /* text scrolled out of view inside a carousel is not on screen at all */
+      let clipped = false;
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (!/(hidden|clip|auto|scroll)/.test(getComputedStyle(a).overflowX + getComputedStyle(a).overflowY)) continue;
+        const c = a.getBoundingClientRect();
+        if (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1) clipped = true;
+      }
+      const clipText = s.backgroundClip === "text" || s.webkitBackgroundClip === "text";
+      const fill = s.webkitTextFillColor;
+      const color = rgba(fill && fill !== "rgba(0, 0, 0, 0)" && fill !== s.color ? fill : s.color);
+      out.push({ x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, color, op, pinned, clipped, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
+      if (out.length >= 700) break;
+    }
+    return out;
+  });
+  await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}" });
+  await page.waitForTimeout(250);
+  const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
+  const res = { measured: 0, unmeasured: [], fails: [] };
+  for (const e of els) {
+    if (e.clipText || e.pinned || e.clipped) {
+      res.unmeasured.push({ text: e.text, why: e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : "scrolled out of view in a container" });
+      continue;
+    }
+    const a = (e.color[3] / 255) * e.op;
+    /* Judged on the 10th-percentile sample: a text box over a particle field
+       touches the odd bright speck, and one speck is not what the reader sees.
+       A tenth of the box being too light is. */
+    const samples = [];
+    const nx = Math.min(24, Math.max(2, Math.floor(e.w / 6)));
+    const ny = Math.min(8, Math.max(2, Math.floor(e.h / 6)));
+    for (let ix = 0; ix < nx; ix++)
+      for (let iy = 0; iy < ny; iy++) {
+        const px = Math.floor(e.x + ((ix + 0.5) * e.w) / nx);
+        const py = Math.floor(e.y + ((iy + 0.5) * e.h) / ny);
+        if (px < 0 || py < 0 || px >= png.width || py >= png.height) continue;
+        const o = (py * png.width + px) * 4;
+        const bg = [png.data[o], png.data[o + 1], png.data[o + 2]];
+        const fg = [0, 1, 2].map((k) => a * e.color[k] + (1 - a) * bg[k]);
+        samples.push({ c: contrastRatio(lum(...fg), lum(...bg)), bg });
+      }
+    if (!samples.length) continue;
+    samples.sort((x, y) => x.c - y.c);
+    const p10 = samples[Math.floor(samples.length * 0.1)];
+    const worst = p10.c;
+    const worstBg = p10.bg;
+    res.measured++;
+    const need = e.size >= 24 || (e.size >= 18.66 && e.weight >= 700) ? 3 : 4.5;
+    if (worst < need) res.fails.push({ text: e.text, ratio: +worst.toFixed(2), need, color: e.color, bg: worstBg });
+  }
+  return res;
+}
+
+/* 6, 7 ── one route at one sweep width */
+async function visitWidth(browser, route, width) {
+  const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.evaluate(async () => {
+    for (let y = 0; y <= document.documentElement.scrollHeight; y += 300) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 40));
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.waitForTimeout(600);
+  const r = await page.evaluate(() => {
+    const vw = document.documentElement.clientWidth;
+    const clipped = (el) => {
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) if (/(hidden|clip|auto|scroll)/.test(getComputedStyle(a).overflowX)) return true;
+      return false;
+    };
+    const offenders = [...document.body.querySelectorAll("*")]
+      .filter((el) => {
+        const b = el.getBoundingClientRect();
+        if (!b.width || (b.right <= vw + 1 && b.left >= -1)) return false;
+        const st = getComputedStyle(el);
+        if (st.position === "fixed") return false;
+        if (!el.textContent.trim() && (el.closest("[aria-hidden='true']") || st.pointerEvents === "none")) return false; /* decorative glow */
+        return !clipped(el);
+      })
+      .map((el) => ({ el: `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""} "${el.textContent.trim().replace(/\s+/g, " ").slice(0, 30)}"`, right: Math.round(el.getBoundingClientRect().right) }))
+      .slice(0, 3);
+    const sig = [...document.body.querySelectorAll("*")].slice(0, 4000).map((el) => {
+      const st = getComputedStyle(el);
+      return `${st.display}|${st.flexDirection}|${st.gridTemplateColumns.split(" ").length}`;
+    });
+    return { overflowX: document.documentElement.scrollWidth - vw, offenders, sig };
+  });
+  r.headline = route === "/" ? await page.evaluate(headlineLines) : null;
+  await ctx.close();
+  return r;
+}
+
+/* 19 ── Tab through the page; each stop must look different focused vs not */
+async function visitFocus(browser, route) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.addStyleTag({ content: "*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}canvas,iframe{visibility:hidden!important}" });
+  await page.waitForTimeout(600);
+  const stops = [];
+  const seen = new Set();
+  for (let n = 0; n < 45; n++) {
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(60);
+    const info = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (!el || el === document.body) return null;
+      if (!el.dataset.vsFocus) el.dataset.vsFocus = String(Math.random()).slice(2);
+      const r = el.getBoundingClientRect();
+      let op = 1;
+      for (let a = el; a && a.nodeType === 1; a = a.parentElement) op *= parseFloat(getComputedStyle(a).opacity);
+      const label = (el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") || "").trim().replace(/\s+/g, " ").slice(0, 40);
+      return { id: el.dataset.vsFocus, desc: `${el.tagName.toLowerCase()} "${label}"`, x: r.left, y: r.top, w: r.width, h: r.height, op };
+    });
+    if (!info || seen.has(info.id)) break; /* left the page, or wrapped round */
+    seen.add(info.id);
+    if (info.w < 1 || info.h < 1 || info.op < 0.05) {
+      const recheck = await page.evaluate(async (id) => {
+        const el = document.querySelector(`[data-vs-focus="${id}"]`);
+        el.scrollIntoView({ block: "center" });
+        await new Promise((r) => setTimeout(r, 1500));
+        const r = el.getBoundingClientRect();
+        let op = 1;
+        for (let a = el; a && a.nodeType === 1; a = a.parentElement) op *= parseFloat(getComputedStyle(a).opacity);
+        return r.width >= 1 && r.height >= 1 && op >= 0.05;
+      }, info.id);
+      if (!recheck) stops.push({ ...info, visibleFocus: false, why: "focus lands on something you cannot see" });
+      else stops.push({ ...info, visibleFocus: true, why: "" });
+      continue;
+    }
+    const vp = page.viewportSize();
+    const pad = 6;
+    const clip = { x: Math.max(0, info.x - pad), y: Math.max(0, info.y - pad) };
+    clip.width = Math.min(vp.width - clip.x, info.w + 2 * pad);
+    clip.height = Math.min(vp.height - clip.y, info.h + 2 * pad);
+    if (clip.width < 1 || clip.height < 1) {
+      stops.push({ ...info, visibleFocus: false, why: "off screen while focused" });
+      continue;
+    }
+    const focused = PNG.sync.read(await page.screenshot({ clip }));
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.waitForTimeout(40);
+    const blurred = PNG.sync.read(await page.screenshot({ clip }));
+    await page.evaluate((id) => document.querySelector(`[data-vs-focus="${id}"]`)?.focus(), info.id);
+    let diff = 0;
+    for (let k = 0; k < focused.data.length; k += 4) {
+      if (Math.abs(focused.data[k] - blurred.data[k]) + Math.abs(focused.data[k + 1] - blurred.data[k + 1]) + Math.abs(focused.data[k + 2] - blurred.data[k + 2]) > 30) diff++;
+    }
+    stops.push({ ...info, visibleFocus: diff >= 8, why: diff >= 8 ? "" : "no visible change when focused" });
+  }
+  await ctx.close();
+  return stops;
+}
+
+/* 21 ── reduced motion requested: what is still moving */
+async function visitReduced(browser, route) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await readingSpeedScroll(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(2500);
+  const anims = await page.evaluate(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.playState === "running")
+      .map((a) => {
+        const t = a.effect?.getTiming?.() || {};
+        const el = a.effect?.target;
+        const cls = el && typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : "";
+        return { name: a.animationName || a.transitionProperty || "script animation", infinite: t.iterations === Infinity, el: el ? `${el.tagName.toLowerCase()}${cls}` : "" };
+      }),
+  );
+  const canvases = await page.$$("canvas");
+  let canvasMoving = null;
+  if (canvases.length) {
+    const box = await canvases[0].boundingBox();
+    if (box && box.width > 0 && box.height > 0) {
+      const a = await page.screenshot({ clip: box });
+      await page.waitForTimeout(700);
+      canvasMoving = !a.equals(await page.screenshot({ clip: box }));
+    }
+  }
+  const n = canvases.length;
+  await ctx.close();
+  return { anims, canvasMoving, canvases: n };
+}
+
+/* 23 ── a full-page capture with every time-driven thing pinned */
+async function stableCapture(browser, route) {
+  /* reduced motion pins what CSS cannot: framer loops that honour it. Anything
+     still differing is either non-deterministic or ignores reduced motion. */
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await readingSpeedScroll(page);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(2500); /* count-ups (~1.1s) and reveals (<1s) finish */
+  await page.addStyleTag({ content: "*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}canvas,iframe{visibility:hidden!important}" });
+  await page.waitForTimeout(400);
+  const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
+  await ctx.close();
+  return png;
+}
+function comparePng(a, b) {
+  if (a.width !== b.width || a.height !== b.height) return { sizeDiffers: `${a.width}×${a.height} vs ${b.width}×${b.height}` };
+  let n = 0;
+  let minY = Infinity;
+  let maxY = -1;
+  for (let i = 0; i < a.data.length; i += 4) {
+    if (a.data[i] !== b.data[i] || a.data[i + 1] !== b.data[i + 1] || a.data[i + 2] !== b.data[i + 2]) {
+      n++;
+      const y = Math.floor(i / 4 / a.width);
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return { n, pct: (100 * n) / (a.width * a.height), minY, maxY };
+}
+
 /* ── one route at one width, JavaScript on ───────────────────────────────── */
 async function visit(browser, route, width) {
-  const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 } });
+  const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, bypassCSP: true });
   const page = await ctx.newPage();
   const consoleMsgs = [];
   const failed = [];
@@ -381,7 +786,29 @@ async function visit(browser, route, width) {
   await page.evaluate(() => document.fonts.ready.then(() => true));
   await page.waitForTimeout(800);
 
+  await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const data = await page.evaluate(collectInPage);
+  /* check 5: a candidate is only "stuck" if it is still invisible after being
+     scrolled into view on its own and given time — otherwise a busy machine
+     reads a reveal in progress as a reveal that never fired */
+  if (data.stuckHidden.length) {
+    const still = [];
+    for (const c of data.stuckHidden) {
+      const hidden = await page.evaluate(async (text) => {
+        const el = [...document.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span")].find((e) => e.textContent.trim().replace(/\s+/g, " ").startsWith(text));
+        if (!el) return false;
+        el.scrollIntoView({ block: "center" });
+        await new Promise((r) => setTimeout(r, 1500));
+        for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+          const st = getComputedStyle(a);
+          if (parseFloat(st.opacity) < 0.05 || st.visibility === "hidden") return true;
+        }
+        return false;
+      }, c.text);
+      if (hidden) still.push(c);
+    }
+    data.stuckHidden = still;
+  }
 
   /* which platform font actually painted each stamped element */
   const cdp = await ctx.newCDPSession(page);
@@ -396,6 +823,20 @@ async function visit(browser, route, width) {
     data.rendered.push({ ...data.stampedInfo[i], painted: top?.familyName || "?", custom: !!top?.isCustomFont });
   }
   delete data.stampedInfo;
+
+  /* 18 ── axe-core, serious and critical only */
+  if (want(18)) {
+    await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
+    data.axe = await page.evaluate(async () => {
+      const r = await window.axe.run(document, { resultTypes: ["violations"] });
+      return r.violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length, sample: v.nodes.slice(0, 2).map((n) => n.target.join(" ")) }));
+    });
+  }
+  /* 20 ── last, because it repaints the page */
+  if (want(20)) data.contrast = await measureContrast(page);
+
   data.console = consoleMsgs;
   data.failed = failed;
   await ctx.close();
@@ -429,6 +870,31 @@ for (const route of ROUTES)
     process.stderr.write(`  visiting ${route} @${w}\n`);
     visits[`${route}@${w}`] = await visit(browser, route, w);
     if (want(4)) noJs[`${route}@${w}`] = await visitNoJs(browser, route, w);
+  }
+const widthRuns = {};
+if (want(6) || want(7))
+  for (const route of ROUTES)
+    for (const w of SWEEP_WIDTHS) {
+      process.stderr.write(`  sweeping ${route} @${w}\n`);
+      widthRuns[`${route}@${w}`] = await visitWidth(browser, route, w);
+    }
+const focusRuns = {};
+if (want(19))
+  for (const route of ROUTES) {
+    process.stderr.write(`  tabbing through ${route}\n`);
+    focusRuns[route] = await visitFocus(browser, route);
+  }
+const reducedRuns = {};
+if (want(21))
+  for (const route of ROUTES) {
+    process.stderr.write(`  reduced motion ${route}\n`);
+    reducedRuns[route] = await visitReduced(browser, route);
+  }
+const detRuns = {};
+if (want(23))
+  for (const route of ROUTES) {
+    process.stderr.write(`  capturing ${route} twice\n`);
+    detRuns[route] = comparePng(await stableCapture(browser, route), await stableCapture(browser, route));
   }
 await browser.close();
 
@@ -665,6 +1131,407 @@ check(22, "No console errors, page errors, hydration warnings or failed requests
   }
 });
 
+/* 3 */
+check(3, "No text is drawn with a faked weight or style", "a missing face the browser quietly synthesises — the replica's Barlow 500", (F) => {
+  const num = (x) => (x === "normal" ? 400 : x === "bold" ? 700 : Number(x));
+  const covers = (face, w, italic) => {
+    const [lo, hi = lo] = String(face.weight).split(/\s+/).map(num);
+    return w >= lo && w <= hi && (italic ? /italic|oblique/.test(face.style) : /^normal/.test(face.style));
+  };
+  const seen = new Set();
+  for (const [k, v] of Object.entries(visits))
+    for (const r of v.rendered) {
+      if (!r.custom) continue; /* painted in a system face: check 2 */
+      const own = v.fontFaces.filter((f) => f.family.toLowerCase() === r.declared.toLowerCase());
+      if (!own.length) continue;
+      const w = parseInt(r.weight, 10) || 400;
+      const italic = /italic|oblique/.test(r.style);
+      if (own.some((f) => covers(f, w, italic))) continue;
+      const key = `${r.declared}|${w}|${italic}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const max = Math.max(...own.map((f) => num(String(f.weight).split(/\s+/).pop())));
+      const min = Math.min(...own.map((f) => num(String(f.weight).split(/\s+/)[0])));
+      const what = italic && !own.some((f) => /italic|oblique/.test(f.style)) ? "no italic face — the browser slants it"
+        : w >= 600 && max < 600 ? `no face above ${max} — the browser fakes the bold`
+        : w < min ? `the face starts at ${min}, so it renders at ${min}, heavier than asked`
+        : `no face covers ${w}`;
+      F.push(`${at(k)}: ${r.declared} ${w}${italic ? " italic" : ""} — ${what}; e.g. ${r.el}`);
+    }
+});
+
+/* 5 */
+check(5, "After one reading-speed scroll, nothing meant to be read is still invisible", "reveals that never fire — framer variants eating whileInView", (F) => {
+  for (const [k, v] of Object.entries(visits)) {
+    if (!v.stuckHidden.length) continue;
+    F.push(`${at(k)}: ${v.stuckHidden.length} text element(s) still invisible — e.g. ${v.stuckHidden.slice(0, 3).map((x) => `"${x.text}" (${x.hider}${x.style ? ` ${x.style}` : ""}${x.section ? ` in ${x.section}` : ""})`).join("; ")}`);
+  }
+});
+
+/* 6 */
+check(6, "No sideways scrolling or cut-off content at any width", "content wider than the screen at a width nobody tested", (F, I) => {
+  for (const [k, v] of Object.entries(widthRuns)) {
+    if (v.overflowX > 0) F.push(`${at(k)}: the page scrolls sideways by ${v.overflowX}px`);
+    if (v.offenders.length) F.push(`${at(k)}: content runs past the screen edge — ${v.offenders.map((o) => `${o.el} (right edge ${o.right}px)`).join(", ")}`);
+  }
+  for (const route of ROUTES)
+    for (const [a, b] of EDGE_PAIRS) {
+      const A = widthRuns[`${route}@${a}`];
+      const B = widthRuns[`${route}@${b}`];
+      if (!A || !B) continue;
+      let d = 0;
+      for (let i = 0; i < Math.min(A.sig.length, B.sig.length); i++) if (A.sig[i] !== B.sig[i]) d++;
+      I.push(`${route}: ${d} element(s) change layout between ${a} and ${b}px`);
+    }
+});
+
+/* 7 */
+check(7, "Each line of the homepage headline breaks only between sentences", "the Hero sizing contract in 7c62d28: a wider face may wrap, but only at a full stop", (F, I) => {
+  for (const [k, v] of Object.entries(widthRuns)) {
+    if (!k.startsWith("/@")) continue;
+    if (!v.headline) {
+      F.push(`${at(k)}: no headline found`);
+      continue;
+    }
+    I.push(`${at(k)}: ${v.headline.map((lines) => lines.length).join(" + ")} line(s)`);
+    /* The contract (Hero.tsx) is about line 1 only: it is sized so the widest
+       face keeps it on one line, and if it ever wraps, it wraps between sentences. */
+    v.headline[0].slice(0, -1).forEach((l) => {
+      if (!/[.!?]$/.test(l)) F.push(`${at(k)}: headline line 1 breaks mid-sentence, after "${l.split(" ").slice(-3).join(" ")}"`);
+    });
+  }
+});
+
+/* 10 */
+check(10, "Every image loads, has alt text, comes from this site, and a person's picture is a photograph", "a broken or unlabelled image; stock photography; a template avatar standing in for an engineer", (F, I) => {
+  const STOCK = /unsplash|pexels|pixabay|shutterstock|istock|gettyimages|pravatar|randomuser|ui-avatars|gravatar|placehold|picsum|dicebear/i;
+  const seen = new Set();
+  const once = (key, line) => {
+    if (seen.has(key)) return;
+    seen.add(key);
+    F.push(line);
+  };
+  for (const [k, v] of Object.entries(visits)) {
+    const route = k.split("@")[0];
+    for (const img of v.allImages) {
+      if (!img.loaded) {
+        if (img.visible) once(`${route}|load|${img.src}`, `${at(k)}: ${short(img.src)} did not load`);
+        else I.push(`${at(k)}: ${short(img.src)} not loaded (not visible at this width)`);
+      }
+      if (img.alt === null) once(`${route}|alt|${img.src}`, `${route}: ${short(img.src)} has no alt attribute`);
+      if (!img.src.startsWith("data:") && !isSameSite(img.src)) once(`${route}|host|${img.src}`, `${route}: ${short(img.src)} is served from another site`);
+      if (STOCK.test(img.src)) once(`${route}|stock|${img.src}`, `${route}: ${short(img.src)} looks like stock photography or a template avatar`);
+      /* CLAUDE.md: no fake faces, ever. A team member's picture is a photograph;
+         an SVG in that slot is by definition an illustration. */
+      if (/\/team\/[^?&]+\.svg\b/i.test(img.src)) once(`${route}|face|${img.src}`, `${route}: ${short(img.src)} is an illustration where a team member's photograph goes`);
+    }
+  }
+});
+
+/* 11 */
+check(11, "Every public page has exactly one h1", "restaurant search had none — found in passing, now asserted", (F) => {
+  for (const [k, v] of Object.entries(visits)) {
+    const h1 = v.headings.filter((h) => h.level === 1);
+    if (h1.length === 1) continue;
+    F.push(`${at(k)}: ${h1.length} h1${h1.length ? ` — ${h1.map((h) => `"${h.text}"`).join(", ")}` : `; the first heading is h${v.headings[0]?.level ?? "?"} "${v.headings[0]?.text ?? ""}"`}`);
+  }
+});
+
+/* 12 */
+await (async () => {
+  if (!want(12)) return;
+  const F = [];
+  const I = [];
+  const home = visits[`/@${WIDTHS[0]}`];
+  let org = null;
+  for (const raw of home?.jsonld || []) {
+    try {
+      const j = JSON.parse(raw);
+      for (const n of j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Organization")) org = n;
+    } catch {
+      /* check 14 reports it */
+    }
+  }
+  const canon = org?.description ? org.description.split(/(?<=\.)\s/)[0].trim() : null;
+  if (!canon) F.push("no Organization description on / to take the canonical line from");
+  else {
+    I.push(`canonical line (first sentence of the Organization description): "${canon}"`);
+    const places = { "meta description on /": home.meta.description, "og:description on /": home.meta.ogDescription, "OG image alt text": home.meta.ogImageAlt };
+    for (const f of ["/llms.txt"]) {
+      const r = await http(BASE + f);
+      if (r.status !== 200) F.push(`${f} returns ${r.status || r.error}`);
+      else places[f] = r.text;
+    }
+    for (const [where, text] of Object.entries(places)) if (text != null && !text.includes(canon)) F.push(`${where} does not contain it — it says "${String(text).slice(0, 90)}"`);
+  }
+  results.push({ id: 12, title: "The canonical description is word for word the same everywhere it appears", catches: "the OG image saying one thing and the metadata another", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
+
+/* 13 */
+await (async () => {
+  if (!want(13)) return;
+  const F = [];
+  const I = [];
+  const rb = await http(`${BASE}/robots.txt`);
+  const disallow = [];
+  let applies = false;
+  for (const line of (rb.text || "").split(/\r?\n/)) {
+    const i = line.indexOf(":");
+    if (i < 0) continue;
+    const key = line.slice(0, i).trim().toLowerCase();
+    const val = line.slice(i + 1).trim();
+    if (key === "user-agent") applies = val === "*";
+    else if (applies && key === "disallow" && val) disallow.push(val);
+  }
+  I.push(`robots.txt disallows: ${disallow.join(" ") || "nothing"}`);
+  const blocked = (p) => disallow.some((d) => p.startsWith(d));
+  for (const route of ROUTES) {
+    const v = visits[`${route}@${WIDTHS[0]}`];
+    const r = await http(toBase(route));
+    if (r.status !== 200) F.push(`${route} is in the sitemap and returns ${r.status || r.error}`);
+    if (blocked(route)) F.push(`${route} is in the sitemap and disallowed by robots.txt`);
+    if (/noindex/i.test(v.meta.robots || "") || /noindex/i.test(r.robots || "")) F.push(`${route} is in the sitemap and marked noindex`);
+  }
+  const reachable = new Set();
+  for (const v of Object.values(visits)) for (const l of v.links) if (isSameSite(l.abs)) reachable.add(new URL(l.abs).pathname);
+  for (const p of reachable) {
+    if (ROUTES.includes(p) || blocked(p)) continue;
+    const r = await http(toBase(p));
+    if (r.status !== 200 || !r.html) continue;
+    const noindex = /noindex/i.test(r.robots || "") || /<meta[^>]+name="robots"[^>]+noindex/i.test(r.html);
+    if (!noindex) F.push(`${p} is linked, returns 200 and is indexable, but is not in the sitemap`);
+  }
+  results.push({ id: 13, title: "The sitemap, the pages you can reach, and robots.txt agree", catches: "a published page missing from the sitemap; a sitemap page that is blocked or noindexed", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
+
+/* 16 */
+await (async () => {
+  if (!want(16)) return;
+  const F = [];
+  const I = [];
+  const icons = visits[`/@${WIDTHS[0]}`].meta.icons;
+  if (!icons.some((i) => /\bicon\b/.test(i.rel) && !/apple/.test(i.rel))) F.push("/ declares no favicon");
+  if (!icons.some((i) => i.rel === "apple-touch-icon")) F.push("/ declares no apple-touch-icon");
+  for (const i of icons) {
+    const r = await httpBin(toBase(i.href));
+    if (r.status !== 200) {
+      F.push(`${i.rel} ${short(i.href)} → ${r.status || r.error}`);
+      continue;
+    }
+    if (i.rel === "apple-touch-icon") {
+      const size = pngSize(r.buf);
+      if (!size) F.push(`apple-touch-icon ${short(i.href)} is ${r.type || "not an image"}, not a PNG — iOS ignores it`);
+      else if (size.w < 180 || size.h < 180) F.push(`apple-touch-icon is ${size.w}×${size.h}; iOS wants 180×180`);
+      else I.push(`apple-touch-icon: ${size.w}×${size.h} PNG`);
+    }
+  }
+  for (const route of ROUTES) {
+    const m = visits[`${route}@${WIDTHS[0]}`].meta;
+    if (!m.ogImage) {
+      F.push(`${route}: no og:image`);
+      continue;
+    }
+    const r = await httpBin(toBase(m.ogImage));
+    const size = pngSize(r.buf);
+    if (r.status !== 200) F.push(`${route}: og:image ${short(m.ogImage)} → ${r.status || r.error}`);
+    else if (size && (size.w !== 1200 || size.h !== 630)) F.push(`${route}: og:image is ${size.w}×${size.h}, not 1200×630`);
+    if (!m.ogImageAlt) F.push(`${route}: the og:image has no alt text`);
+    if (!m.twitterImage) F.push(`${route}: no twitter:image`);
+  }
+  results.push({ id: 16, title: "Favicon, touch icon and share image are declared, load, and have the right format", catches: "an SVG apple-touch-icon iOS ignores; a share image that 404s", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+})();
+
+/* 17 */
+await (async () => {
+  if (!want(17)) return;
+  const F = [];
+  const I = [];
+  const a = await http(`${BASE}/admin`);
+  const finalPath = a.final ? new URL(a.final).pathname : "";
+  I.push(`/admin, signed out: ${a.status} at ${short(a.final || "")}`);
+  if (a.status === 200 && !finalPath.startsWith("/admin/login") && !/type="password"/i.test(a.html || "")) F.push("/admin shows a signed-out visitor something other than the sign-in page");
+  if (!(/noindex/i.test(a.robots || "") || /<meta[^>]+name="robots"[^>]+noindex/i.test(a.html || ""))) F.push("/admin is not marked noindex");
+  const g = await fetch(`${BASE}/api/admin/content`).catch(() => ({ status: 0 }));
+  if (g.status === 503) I.push("the admin API answers 503 “Admin not configured” — the admin is switched off on this deployment");
+  else if (g.status !== 401 && g.status !== 403) F.push(`GET /api/admin/content with no session → ${g.status}, expected 401`);
+  if (PROBE_WRITES) {
+    /* Both bodies are invalid on purpose: if the auth guard ever failed, the
+       request would still be rejected before anything is written. */
+    const p = await fetch(`${BASE}/api/admin/content`, { method: "PUT", headers: { "content-type": "application/json" }, body: "not json — verify-site probe" }).catch(() => ({ status: 0 }));
+    if (p.status < 400) F.push(`PUT /api/admin/content with no session → ${p.status}: accepted`);
+    else I.push(`PUT /api/admin/content with no session → ${p.status}`);
+    const u = await fetch(`${BASE}/api/admin/upload`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: "blob.generate-client-token", payload: { pathname: "verify-site-probe.txt", callbackUrl: `${BASE}/api/admin/upload`, clientPayload: null, multipart: false } }) }).catch(() => ({ status: 0 }));
+    if (u.status < 400) F.push(`POST /api/admin/upload asking for an upload token with no session → ${u.status}: a token was issued`);
+    else I.push(`POST /api/admin/upload asking for an upload token with no session → ${u.status}`);
+  } else I.push("write probes skipped — pass --probe-writes to send unauthenticated PUT/POST to the admin API");
+  const rb = await http(`${BASE}/robots.txt`);
+  for (const p of ["/admin", "/api/"]) if (!new RegExp(`Disallow:\\s*${p}`, "i").test(rb.text || "")) F.push(`robots.txt does not disallow ${p}`);
+  results.push({ id: 17, title: "The admin is noindexed and refuses anyone signed out", catches: "an editor or a write endpoint reachable without a session", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
+
+/* 18 */
+check(18, "axe finds no serious or critical accessibility violations", "what a screen-reader or keyboard user hits first", (F) => {
+  const seen = new Set();
+  for (const [k, v] of Object.entries(visits))
+    for (const x of v.axe || []) {
+      const key = `${k.split("@")[0]}|${x.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      F.push(`${at(k)}: ${x.impact} — ${x.id}: ${x.help} (${x.nodes} element(s), e.g. ${x.sample.join("; ")})`);
+    }
+});
+
+/* 19 */
+check(19, "Every keyboard stop shows a visible focus state", "CLAUDE.md: visible keyboard focus everywhere", (F, I) => {
+  for (const [route, stops] of Object.entries(focusRuns)) {
+    I.push(`${route}: ${stops.length} tab stop(s) checked`);
+    for (const s of stops.filter((x) => !x.visibleFocus)) F.push(`${route}: ${s.desc} — ${s.why}`);
+  }
+});
+
+/* 20 */
+check(20, "Text meets WCAG AA contrast against the pixels behind it", "text over the particle field, gradients and screenshots, where the flat colour proves nothing", (F, I) => {
+  for (const [k, v] of Object.entries(visits)) {
+    if (!v.contrast) continue;
+    const why = {};
+    v.contrast.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
+    I.push(`${at(k)}: ${v.contrast.measured} measured; not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}`);
+    const seen = new Set();
+    for (const f of [...v.contrast.fails].sort((a, b) => a.ratio - b.ratio)) {
+      if (seen.has(f.text)) continue;
+      seen.add(f.text);
+      F.push(`${at(k)}: "${f.text}" ${f.ratio}:1, needs ${f.need}:1 — rgb(${f.color.slice(0, 3).join(",")}) at ${Math.round((f.color[3] / 255) * 100)}% over rgb(${f.bg.join(",")})`);
+    }
+  }
+});
+
+/* 21 */
+check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions", (F, I) => {
+  for (const [route, r] of Object.entries(reducedRuns)) {
+    const loops = r.anims.filter((a) => a.infinite);
+    const late = r.anims.filter((a) => !a.infinite);
+    if (loops.length) F.push(`${route}: ${loops.length} looping animation(s) still running — ${[...new Set(loops.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
+    if (late.length) F.push(`${route}: ${late.length} animation(s) still running 2.5s after load — ${[...new Set(late.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
+    if (r.canvasMoving) F.push(`${route}: the WebGL canvas is still animating`);
+    I.push(`${route}: ${r.canvases} canvas element(s)`);
+  }
+});
+
+/* 23 */
+check(23, "Two captures of each page are identical once motion is pinned", "anything order- or time-dependent that makes the page differ between visits", (F) => {
+  for (const [route, d] of Object.entries(detRuns)) {
+    if (d.sizeDiffers) F.push(`${route}: the page is a different size on each visit (${d.sizeDiffers})`);
+    else if (d.n) F.push(`${route}: ${d.n} pixel(s) differ (${d.pct.toFixed(4)}%), between y=${d.minY} and y=${d.maxY}`);
+  }
+});
+
+/* 24 */
+await (async () => {
+  if (!want(24)) return;
+  const title = "The repository: one lockfile, no build output tracked, tsc and eslint clean, no unused dependencies";
+  const catches = "the stray package-lock.json; build files committed to git";
+  if (!REPO) {
+    results.push({ id: 24, title, catches, status: "SKIP", findings: [], info: ["pass --repo <path to a checkout with node_modules> to run it"] });
+    return;
+  }
+  const F = [];
+  const I = [];
+  const sh = (cmd, args) => {
+    try {
+      return { ok: true, out: execFileSync(cmd, args, { cwd: REPO, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 256e6 }) };
+    } catch (e) {
+      return { ok: false, out: `${e.stdout || ""}${e.stderr || ""}` };
+    }
+  };
+  const files = sh("git", ["ls-files"]).out.split("\n").filter(Boolean);
+  const locks = ["yarn.lock", "package-lock.json", "pnpm-lock.yaml", "bun.lockb"].filter((f) => files.includes(f));
+  const pkg = JSON.parse(await readFile(path.join(REPO, "package.json"), "utf8"));
+  const pm = (pkg.packageManager || "").split("@")[0];
+  if (locks.length !== 1) F.push(`${locks.length} lockfiles are tracked (${locks.join(", ") || "none"}); there should be exactly one`);
+  const lockFor = { yarn: "yarn.lock", npm: "package-lock.json", pnpm: "pnpm-lock.yaml", bun: "bun.lockb" }[pm];
+  if (lockFor && !locks.includes(lockFor)) F.push(`packageManager is ${pm}, but ${lockFor} is not tracked`);
+  const built = files.filter((f) => /^(\.next|node_modules|out|dist|coverage)\//.test(f));
+  if (built.length) F.push(`build output is tracked in git: ${built.slice(0, 4).join(", ")}${built.length > 4 ? ` and ${built.length - 4} more` : ""}`);
+  const bin = (n) => path.join(REPO, "node_modules", ".bin", n);
+  if (existsSync(bin("tsc"))) {
+    const r = sh(bin("tsc"), ["--noEmit", "-p", REPO]);
+    const n = (r.out.match(/error TS/g) || []).length;
+    if (n || !r.ok) F.push(`tsc: ${n} error(s)`);
+  } else I.push("tsc not installed in the checkout — skipped");
+  if (existsSync(bin("eslint"))) {
+    const r = sh(bin("eslint"), [".", "--format", "json"]);
+    try {
+      const j = JSON.parse(r.out);
+      const errs = j.reduce((a, f) => a + f.errorCount, 0);
+      const warns = j.reduce((a, f) => a + f.warningCount, 0);
+      if (errs) F.push(`eslint: ${errs} error(s)`);
+      I.push(`eslint: ${warns} warning(s)`);
+    } catch {
+      F.push("eslint did not produce a report");
+    }
+  } else I.push("eslint not installed in the checkout — skipped");
+  const imports = sh("git", ["grep", "-hoE", `(from|import|require\\()[[:space:]]*\\(?["'][^"']+["']`, "--", "*.ts", "*.tsx", "*.js", "*.mjs", "*.cjs", "*.css"]).out;
+  for (const dep of Object.keys(pkg.dependencies || {})) {
+    const esc = dep.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+    if (!new RegExp(`["']${esc}(/[^"']*)?["']`).test(imports)) F.push(`dependency "${dep}" is imported nowhere`);
+  }
+  results.push({ id: 24, title, catches, status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
+
+/* 25 */
+await (async () => {
+  if (!want(25)) return;
+  const F = [];
+  const I = [];
+  for (const [k, v] of Object.entries(visits)) {
+    let three = false;
+    for (const u of v.scripts.filter((s) => isSameSite(s))) {
+      const r = await http(toBase(u));
+      if (r.text && /THREE\.WebGLRenderer|WebGLRenderer|three\.module/.test(r.text)) {
+        three = true;
+        break;
+      }
+    }
+    if (k.split("@")[0] !== "/" && three) F.push(`${at(k)}: loads three.js — WebGL belongs to the homepage hero only`);
+    if (k.split("@")[0] === "/") I.push(`${at(k)}: three.js ${three ? "loaded" : "not loaded"}`);
+  }
+  const loaded = new Set();
+  for (const v of Object.values(visits)) v.fontsLoaded.forEach((f) => loaded.add(f.toLowerCase()));
+  const home = visits[`/@${WIDTHS[0]}`];
+  for (const href of new Set(Object.values(visits).flatMap((v) => v.fontPreloads))) {
+    const file = href.split("/").pop();
+    const face = home.fontFaceRules.find((r) => r.src.includes(file));
+    if (!face) I.push(`preloaded ${file}: no @font-face found for it`);
+    else if (!loaded.has(face.family.toLowerCase())) F.push(`${file} (${face.family}) is preloaded on every page and never used`);
+  }
+  results.push({ id: 25, title: "three.js loads only on the homepage; no font is preloaded that nothing uses", catches: "the 3D bundle leaking onto other routes; Instrument Sans preloaded and unused", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
+
+/* 26 */
+check(26, "Headings step down one level at a time; title, description, canonical and robots are right", "a skipped heading level; a page with no description or the wrong canonical", (F) => {
+  for (const route of ROUTES) {
+    const v = visits[`${route}@${WIDTHS[0]}`];
+    let prev = 0;
+    let skips = 0;
+    for (const h of v.headings) {
+      if (prev && h.level > prev + 1 && skips++ < 3) F.push(`${route}: h${prev} → h${h.level} skips a level at "${h.text}"`);
+      prev = h.level;
+    }
+    const t = v.meta.title || "";
+    if (route === "/" ? !t.includes("Bolt Fusion Tech") : !t.endsWith(" | Bolt Fusion Tech")) F.push(`${route}: the title "${t}" does not follow "%s | Bolt Fusion Tech"`);
+    const d = v.meta.description || "";
+    if (!d) F.push(`${route}: no meta description`);
+    else if (d.length < 50 || d.length > 160) F.push(`${route}: the meta description is ${d.length} characters (50–160)`);
+    if (!v.meta.canonical) F.push(`${route}: no canonical link`);
+    else {
+      const c = new URL(v.meta.canonical);
+      if (baseUrl.host === PROD_HOST && c.origin !== PROD_ORIGIN) F.push(`${route}: the canonical points at ${c.origin}`);
+      if (c.pathname.replace(/\/$/, "") !== route.replace(/\/$/, "")) F.push(`${route}: the canonical path is ${c.pathname}`);
+    }
+    if (/noindex|nofollow/i.test(v.meta.robots || "")) F.push(`${route}: meta robots is "${v.meta.robots}"`);
+  }
+});
+
 /* ── report ──────────────────────────────────────────────────────────────── */
 results.sort((a, b) => a.id - b.id);
 const LIMIT = 14;
@@ -678,6 +1545,7 @@ for (const r of results) {
   console.log("");
 }
 const failed = results.filter((r) => r.status === "FAIL");
-console.log(`${results.length - failed.length} passed, ${failed.length} failed${failed.length ? `: ${failed.map((r) => r.id).join(", ")}` : ""}`);
+const skipped = results.filter((r) => r.status === "SKIP");
+console.log(`${results.length - failed.length - skipped.length} passed, ${failed.length} failed${failed.length ? `: ${failed.map((r) => r.id).join(", ")}` : ""}${skipped.length ? `, ${skipped.length} skipped: ${skipped.map((r) => r.id).join(", ")}` : ""}`);
 if (JSON_OUT) await writeFile(JSON_OUT, JSON.stringify({ base: BASE, routes: ROUTES, widths: WIDTHS, started, results, visits, noJs }, null, 1));
 process.exit(failed.length ? 1 : 0);
