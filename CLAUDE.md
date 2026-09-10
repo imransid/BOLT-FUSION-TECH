@@ -127,7 +127,8 @@ verify-site checks 1 and 2 catch both.
 - **Hero entrance:** framer `animate` on mount, staggered.
 - **FAQ accordion and the mobile menu:** `AnimatePresence`.
 - **Hero background:** a WebGL curl-noise particle nebula
-  (`components/HeroParticleField.tsx`). One `THREE.Points` cloud of ~28k
+  (`components/HeroParticleField.tsx`) — the one place WebGL is allowed. One
+  `THREE.Points` cloud of ~28k
   particles (9k on coarse pointers), dynamically imported with `ssr: false`,
   skipped for `prefers-reduced-motion` and without WebGL, render loop stopped
   off-screen and when the tab is hidden, dpr capped at 1.75. It is the only
@@ -164,8 +165,15 @@ at the end, which means nobody has decided yet.
 - **Zero stock photography.** Screenshots, real photographs or SVG diagrams.
   *Holds* (verify-site check 10).
 - **No fake faces, ever** — never a template avatar, a stock face or a
-  generated one, not even as a placeholder. *Broken, and open:* the ten team
-  cards show placeholder illustrations (see the table at the end).
+  generated one, not even as a placeholder. A section ships without the photo
+  slot until real photographs exist. *Broken* until `fix/team-no-template-avatars`
+  lands (verify-site check 27).
+- **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
+  element the server sends at `opacity:0` is not. *Broken* until the reveal
+  rewrite lands (check 4).
+- **No tracked-out ALL-CAPS labels, no single headline word coloured for
+  emphasis, no meta strings joined with middle dots, mono for machine output
+  only.** *Broken* until the design-rules batch lands.
 - **Every metric carries a shipped or target label.** No unlabelled numbers.
   Enforced at build time in `/content/metrics.ts`, by the CMS schema for the
   case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
@@ -213,25 +221,25 @@ reports the absence of the behaviour as a fact about the site.
 Lighthouse 95+ in all four categories · LCP under 2.0s · no layout shift from
 any animation. Nothing measures these yet.
 
-## Open: the rule or the design?
+## Decided 2026-09-11: the rule or the design
 
-Each row is a rule the previous CLAUDE.md stated that the live design breaks.
-**Undecided. Do not "fix" either side until the owner decides.**
+Each of these was a rule the live design broke. The owner decided; the code is
+being brought into line in the order below. Until a fix lands, the rule stands
+and the site is wrong.
 
-| rule | where the live site breaks it |
-|---|---|
-| No tracked-out ALL-CAPS labels | 31 instances in 8 components: CaseStudy (11), WarmChats (7), Hero (3), HowWeWork (3), Team (3), Logo (2), Navbar (1), RecentWorks (1) |
-| No fade-and-slide-up on every section | framer `whileInView` in the ten components listed under Motion |
-| No particle backgrounds | the hero's WebGL nebula |
-| No single headline word coloured for emphasis | hero line 2 — "lower hiring cost" in amber (`hero.headlineLine2Accent`) |
-| No meta strings joined with middle dots as chrome | featured-work stack lines ("Real Estate · AI Automation · Microservices"), case-study badges ("Case study · Systems architecture"), the WarmChats stack line, the OG image's "WEB · MOBILE · AI" |
-| Mono for machine output only | the logo's "TECH" (hardcodes `ui-monospace` inline), the featured-work stack lines, Team labels, case-study eyebrows |
-| No fake faces, ever — not as a placeholder | the ten team cards show `public/team/avatar-01…10.svg`: `7c62d28` deleted the theme's template faces, and `d64ef52` restored them two days later as "renamed placeholder illustrations" |
-| Hero copy from COPY.md | COPY.md's approved hero is "We build AI systems that are still running in six months."; the live hero is "Build. Scale. Transform. / With elite engineers and lower hiring cost." from the CMS defaults |
+| rule | decision | where the fix is |
+|---|---|---|
+| No fake faces, ever — not as a placeholder | **Rule stands.** The ten template avatars `d64ef52` restored as "renamed placeholder illustrations" are removed; Team is text-forward (COPY.md §5) until real photographs exist | `fix/team-no-template-avatars` |
+| No fade-and-slide-up on every section | **Rule removed.** Fade-on-scroll is allowed. The defect was never the reveal; it was the server HTML shipping at `opacity:0`. Reveals now render visible in the HTML (see Motion) | the reveal rewrite |
+| No tracked-out ALL-CAPS labels | **Rule stands.** All 31 go | design-rules batch |
+| No particle backgrounds | **Rule rewritten:** WebGL, and the particle field, belong to the hero and nowhere else — which is what exists | — |
+| No single headline word coloured for emphasis | **Rule stands.** "lower hiring cost" goes with the hero copy | design-rules batch |
+| No meta strings joined with middle dots as chrome | **Rule stands,** the OG image included | design-rules batch |
+| Mono for machine output only | **Rule stands.** The logo's "TECH", stack lines and Team labels move to the body face | design-rules batch |
+| Hero copy from COPY.md | **COPY.md's approved hero wins** | design-rules batch |
 
-Lesser, same question: gradient washes used as decoration (the hero headline's
-gradient text, gradients in CTA and Team), and one card shadow repeated across
-sections.
+Still open: gradient washes used as decoration (the hero headline's gradient
+text, gradients in CTA and Team), and one card shadow repeated across sections.
 
 ## Reference documents
 
