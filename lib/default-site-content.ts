@@ -155,7 +155,7 @@ const raw: SiteContent = {
     headlineLine1: "Senior engineers.",
     headlineLine2: "One delivery standard.",
     subtext:
-      "Each card opens in a new tab—so you can see who you would work with before you commit scope or budget.",
+      "Cards with a verified LinkedIn profile open it in a new tab—so you can see who you would work with before you commit scope or budget.",
     statLabel: "specialists",
     // NO PHOTOGRAPHS YET, SO NO IMAGES. `image` stays null until a real
     // photograph of that engineer exists; the card then gains its photo slot.
