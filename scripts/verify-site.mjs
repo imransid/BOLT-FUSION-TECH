@@ -939,19 +939,42 @@ async function visit(browser, route, width) {
   return data;
 }
 
-/* 14 (FAQ) — the FAQPage structured data is the FAQ the page renders, question
-   for question and answer for answer. The answers mount only when opened, so
-   each question is clicked and its answer read off the page. */
+/* 14 (FAQ) — the FAQPage structured data is the FAQ the page renders:
+     · every question and answer is in the SERVED HTML — what a crawler reads,
+       with scripts stripped, because the RSC payload repeats the content and
+       must not count. A check that clicks and reads the DOM cannot see this;
+     · the page renders the same questions, with the same answers once opened;
+     · each question tells assistive technology whether it is open — read from
+       Chrome's accessibility tree, before and after opening. */
 async function visitFaq(browser) {
+  const norm = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
+  const decode = (s) =>
+    s
+      .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+      .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&");
+  const raw = await (await fetch(`${BASE}/`)).text();
+  const served = norm(
+    decode(
+      raw
+        .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<!--[\s\S]*?-->/g, "")
+        .replace(/<[^>]+>/g, " "),
+    ),
+  );
   const ctx = await browser.newContext({ viewport: { width: WIDTHS[0], height: 900 } });
   const page = await ctx.newPage();
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  const norm = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
   const ld = [];
-  for (const raw of await page.$$eval('script[type="application/ld+json"]', (ss) => ss.map((s) => s.textContent))) {
+  for (const block of await page.$$eval('script[type="application/ld+json"]', (ss) => ss.map((x) => x.textContent))) {
     let j;
     try {
-      j = JSON.parse(raw);
+      j = JSON.parse(block);
     } catch {
       continue; /* reported by check 14's parse */
     }
@@ -959,26 +982,41 @@ async function visitFaq(browser) {
       if ([].concat(n["@type"]).includes("FAQPage"))
         for (const q of [].concat(n.mainEntity || [])) ld.push({ q: norm(q.name), a: norm(q.acceptedAnswer?.text) });
   }
+  const CONTROLS = "[data-vs-faq] summary, [data-vs-faq] button";
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Accessibility.enable");
+  const expanded = async (i) => {
+    const { root } = await cdp.send("DOM.getDocument", { depth: 0 });
+    const { nodeIds } = await cdp.send("DOM.querySelectorAll", { nodeId: root.nodeId, selector: CONTROLS });
+    if (!nodeIds[i]) return undefined;
+    const { nodes } = await cdp.send("Accessibility.getPartialAXTree", { nodeId: nodeIds[i], fetchRelatives: false });
+    const p = (nodes[0]?.properties || []).find((x) => x.name === "expanded");
+    return p ? Boolean(p.value.value) : undefined;
+  };
   let rendered = null;
   if (ld.length) {
-    /* the FAQ section is the one holding a button that asks any FAQPage question */
+    /* the FAQ section is the one holding a control that asks any FAQPage question */
     const questions = await page.evaluate((qs) => {
       const n = (s) => s.replace(/\s+/g, " ").trim();
-      const sec = [...document.querySelectorAll("button")].find((x) => qs.includes(n(x.textContent)))?.closest("section");
+      const sec = [...document.querySelectorAll("summary, button")].find((x) => qs.includes(n(x.textContent)))?.closest("section");
       if (!sec) return null;
       sec.setAttribute("data-vs-faq", "");
-      return [...sec.querySelectorAll("button")].map((x) => n(x.textContent));
+      return [...sec.querySelectorAll("summary, button")].map((x) => n(x.textContent));
     }, ld.map((x) => x.q));
     if (questions) {
       rendered = [];
       for (let i = 0; i < questions.length; i++) {
-        const btn = page.locator("[data-vs-faq] button").nth(i);
+        const ctl = page.locator("[data-vs-faq] :is(summary, button)").nth(i);
         let a = null;
+        let before;
+        let after;
         try {
-          await btn.scrollIntoViewIfNeeded();
-          await btn.click({ timeout: 5000 });
+          await ctl.evaluate((el) => el.scrollIntoView({ block: "center" }));
+          before = await expanded(i);
+          await ctl.click({ timeout: 5000 });
           await page.waitForTimeout(400);
-          a = await btn.evaluate((b) => {
+          after = await expanded(i);
+          a = await ctl.evaluate((b) => {
             const n = (s) => s.replace(/\s+/g, " ").trim();
             const all = n(b.parentElement.textContent);
             const q = n(b.textContent);
@@ -987,12 +1025,12 @@ async function visitFaq(browser) {
         } catch {
           /* a question that cannot be opened is reported as having no answer */
         }
-        rendered.push({ q: questions[i], a });
+        rendered.push({ q: questions[i], a, before, after });
       }
     }
   }
   await ctx.close();
-  return { ld, rendered };
+  return { ld, rendered, served };
 }
 
 async function visitNoJs(browser, route, width) {
@@ -1223,19 +1261,31 @@ await (async () => {
         if (hash) F.push(`${route}: breadcrumb "${item.name}" points at an anchor (${u}), not a page`);
       }
   }
-  /* FAQPage is generated from the rendered FAQ, so this fails only if a second copy creeps back */
+  /* FAQPage — see visitFaq. It is generated from the rendered FAQ, so a mismatch
+     means a second copy crept back; an answer missing from the served HTML means
+     the page stopped sending it, whatever the DOM shows after a click. */
   if (faqRun) {
-    const { ld, rendered } = faqRun;
+    const { ld, rendered, served } = faqRun;
     if (!ld.length) I.push("/: no FAQPage in the structured data");
-    else if (!rendered) F.push(`/: none of the ${ld.length} FAQPage questions is a question the page renders`);
     else {
-      const byQ = new Map(rendered.map((r) => [r.q, r.a]));
-      for (const x of ld)
-        if (!byQ.has(x.q)) F.push(`/: FAQPage asks "${x.q.slice(0, 60)}", which the page does not render`);
-        else if (byQ.get(x.q) !== x.a) F.push(`/: FAQPage answers "${x.q.slice(0, 50)}" differently from the page`);
-      const ldQ = new Set(ld.map((x) => x.q));
-      for (const r of rendered) if (!ldQ.has(r.q)) F.push(`/: the page renders "${r.q.slice(0, 60)}", which FAQPage leaves out`);
-      I.push(`/: FAQPage ${ld.length} question(s), the page ${rendered.length}`);
+      for (const x of ld) {
+        if (!served.includes(x.q)) F.push(`/: FAQPage asks "${x.q.slice(0, 60)}", which is not in the served HTML`);
+        if (!served.includes(x.a)) F.push(`/: the answer to "${x.q.slice(0, 50)}" is not in the served HTML — the markup describes text a crawler cannot find on the page`);
+      }
+      if (!rendered) F.push(`/: none of the ${ld.length} FAQPage questions is a question the page renders`);
+      else {
+        const byQ = new Map(rendered.map((r) => [r.q, r.a]));
+        for (const x of ld)
+          if (!byQ.has(x.q)) F.push(`/: FAQPage asks "${x.q.slice(0, 60)}", which the page does not render`);
+          else if (byQ.get(x.q) !== x.a) F.push(`/: FAQPage answers "${x.q.slice(0, 50)}" differently from the page`);
+        const ldQ = new Set(ld.map((x) => x.q));
+        for (const r of rendered) {
+          if (!ldQ.has(r.q)) F.push(`/: the page renders "${r.q.slice(0, 60)}", which FAQPage leaves out`);
+          if (r.before === undefined || r.after === undefined) F.push(`/: the question "${r.q.slice(0, 50)}" does not tell assistive technology whether it is open`);
+          else if (r.before || !r.after) F.push(`/: the question "${r.q.slice(0, 50)}" reports expanded=${r.before} before opening and ${r.after} after`);
+        }
+        I.push(`/: FAQPage ${ld.length} question(s), the page ${rendered.length}; every answer checked in the served HTML`);
+      }
     }
   }
   for (const [u, where] of urls) {
@@ -1248,7 +1298,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
