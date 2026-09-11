@@ -939,6 +939,62 @@ async function visit(browser, route, width) {
   return data;
 }
 
+/* 14 (FAQ) — the FAQPage structured data is the FAQ the page renders, question
+   for question and answer for answer. The answers mount only when opened, so
+   each question is clicked and its answer read off the page. */
+async function visitFaq(browser) {
+  const ctx = await browser.newContext({ viewport: { width: WIDTHS[0], height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  const norm = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
+  const ld = [];
+  for (const raw of await page.$$eval('script[type="application/ld+json"]', (ss) => ss.map((s) => s.textContent))) {
+    let j;
+    try {
+      j = JSON.parse(raw);
+    } catch {
+      continue; /* reported by check 14's parse */
+    }
+    for (const n of Array.isArray(j) ? j : j["@graph"] || [j])
+      if ([].concat(n["@type"]).includes("FAQPage"))
+        for (const q of [].concat(n.mainEntity || [])) ld.push({ q: norm(q.name), a: norm(q.acceptedAnswer?.text) });
+  }
+  let rendered = null;
+  if (ld.length) {
+    /* the FAQ section is the one holding a button that asks any FAQPage question */
+    const questions = await page.evaluate((qs) => {
+      const n = (s) => s.replace(/\s+/g, " ").trim();
+      const sec = [...document.querySelectorAll("button")].find((x) => qs.includes(n(x.textContent)))?.closest("section");
+      if (!sec) return null;
+      sec.setAttribute("data-vs-faq", "");
+      return [...sec.querySelectorAll("button")].map((x) => n(x.textContent));
+    }, ld.map((x) => x.q));
+    if (questions) {
+      rendered = [];
+      for (let i = 0; i < questions.length; i++) {
+        const btn = page.locator("[data-vs-faq] button").nth(i);
+        let a = null;
+        try {
+          await btn.scrollIntoViewIfNeeded();
+          await btn.click({ timeout: 5000 });
+          await page.waitForTimeout(400);
+          a = await btn.evaluate((b) => {
+            const n = (s) => s.replace(/\s+/g, " ").trim();
+            const all = n(b.parentElement.textContent);
+            const q = n(b.textContent);
+            return all.startsWith(q) ? all.slice(q.length).trim() : null;
+          });
+        } catch {
+          /* a question that cannot be opened is reported as having no answer */
+        }
+        rendered.push({ q: questions[i], a });
+      }
+    }
+  }
+  await ctx.close();
+  return { ld, rendered };
+}
+
 async function visitNoJs(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, javaScriptEnabled: false });
   const page = await ctx.newPage();
@@ -1008,6 +1064,11 @@ if (want(23))
     process.stderr.write(`  capturing ${route} twice\n`);
     detRuns[route] = comparePng(await stableCapture(browser, route), await stableCapture(browser, route));
   }
+let faqRun = null;
+if (want(14)) {
+  process.stderr.write("  opening every FAQ answer on /\n");
+  faqRun = await visitFaq(browser);
+}
 await browser.close();
 
 const results = [];
@@ -1162,6 +1223,21 @@ await (async () => {
         if (hash) F.push(`${route}: breadcrumb "${item.name}" points at an anchor (${u}), not a page`);
       }
   }
+  /* FAQPage is generated from the rendered FAQ, so this fails only if a second copy creeps back */
+  if (faqRun) {
+    const { ld, rendered } = faqRun;
+    if (!ld.length) I.push("/: no FAQPage in the structured data");
+    else if (!rendered) F.push(`/: none of the ${ld.length} FAQPage questions is a question the page renders`);
+    else {
+      const byQ = new Map(rendered.map((r) => [r.q, r.a]));
+      for (const x of ld)
+        if (!byQ.has(x.q)) F.push(`/: FAQPage asks "${x.q.slice(0, 60)}", which the page does not render`);
+        else if (byQ.get(x.q) !== x.a) F.push(`/: FAQPage answers "${x.q.slice(0, 50)}" differently from the page`);
+      const ldQ = new Set(ld.map((x) => x.q));
+      for (const r of rendered) if (!ldQ.has(r.q)) F.push(`/: the page renders "${r.q.slice(0, 60)}", which FAQPage leaves out`);
+      I.push(`/: FAQPage ${ld.length} question(s), the page ${rendered.length}`);
+    }
+  }
   for (const [u, where] of urls) {
     if (!isSameSite(u)) {
       I.push(`not fetched (another site): ${u}`);
@@ -1172,7 +1248,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
