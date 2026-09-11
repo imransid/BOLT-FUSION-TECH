@@ -24,7 +24,9 @@ Radius  3 inputs · 6 cards · 0 lane bands
 Grid    12 col · 1200px max · 24px gutter
 ```
 
-Fonts: Instrument Sans (display + UI), Commit Mono (machine values only).
+Fonts: Satoshi for headings (`--font-heading`), Inter for body and UI (`--font-sans`),
+Commit Mono for machine values only (`--font-machine`, and Tailwind's `font-mono`).
+Defined in `app/globals.css`.
 
 ## Layout motif — the trace rail
 A 1px `--rule` vertical line runs down the left of the content column for the whole
