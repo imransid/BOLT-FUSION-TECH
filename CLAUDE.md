@@ -238,6 +238,18 @@ filler. Never claim a metric without a source label.
 hard rule that every metric carries a shipped or target label: the approved
 copy predates the rule, and the rule wins.
 
+The FAQ is `<details name="faq">` — decided 2026-09-11. **Do not turn it back
+into a button accordion, and do not add `aria-expanded`.** Native semantics beat
+hand-written ARIA: `<summary>` reports open and closed to assistive technology
+itself, so there is no attribute to keep in sync, and a hand-kept one is a second
+source that can drift. The answers are in the served HTML, which the FAQPage
+structured data depends on, and the browser opens them with or without script —
+a button accordion does nothing without it. One open at a time comes from the
+shared `name`. verify-site check 14 reads the answers from the served HTML (with
+Next's embedded page data stripped: a check that passes because the framework
+repeated the content proves nothing) and the open state from the accessibility
+tree, so a regression to click-mounted answers fails it.
+
 ## Verify before pushing
 
 `yarn verify:site` runs `scripts/verify-site.mjs`, a black-box suite, against
