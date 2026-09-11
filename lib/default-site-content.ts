@@ -241,9 +241,11 @@ const raw: SiteContent = {
     ],
   },
   recentWorks: {
-    title: "Featured client work",
-    subtitle:
-      "Seven shipped experiences—AI lead automation, operations, commerce, regulated services, marketplaces, community, and agency brands—each tuned to real users and conversion.",
+    // COPY.md §4, approved. The previous subtitle claimed "seven shipped
+    // experiences" above two cards; there are two write-ups, and the section
+    // says so.
+    title: "Two products, two write-ups.",
+    subtitle: "Each one has a full technical write-up, not a screenshot and a sentence.",
     mobileSwipeHint: "Swipe sideways for more — tap dots to jump",
     items: [
       {
