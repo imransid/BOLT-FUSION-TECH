@@ -27,8 +27,13 @@ Placeholders in `{{ }}` need a decision before build. Do not invent values for t
 
 ## 2. Trust rail
 
-> Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
+> Live in production at warmchats.com. Six engineers across the UK, Malaysia and
 > Bangladesh.
+
+**Amended 2026-09-11: ten → six.** The site lists six engineers — the six with a
+verified LinkedIn (§5, amended). A draft saying ten while the site shows six is
+exactly what a later copy pass would restore by accident. Raise the number when a
+verified profile is added to the Team section, not before.
 
 ---
 
