@@ -44,15 +44,14 @@ Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 ## Two content layers — know which one you are editing
 
 **1. Typed files in `/content`** (`schema.ts`, `metrics.ts`, `projects.ts`,
-`team.ts`, `services.ts`, `process.ts`, `pilot.ts`, `architecture.ts`).
+`services.ts`, `process.ts`, `pilot.ts`, `architecture.ts`).
 Parsed with Zod at module load, so a malformed entry fails the build. Read by
 `/work`, the homepage metric band (`Architecture.tsx`), `HowWeWork.tsx` and
 `lib/structured-data.ts`. There is no FAQ here: the FAQ exists once, in the site
 content below, and its structured data is generated from it
-(`fix/faq-one-source`). Person structured data still reads `content/team.ts`
-while the Team section renders the site content — the same two-source shape,
-removed in the Team PR — and the CMS removal collapses it regardless, since
-both sources become `/content`.
+(`fix/faq-one-source`). There is no team file either: the Team
+section and the Person structured data both come from the site content's
+`team.roster` (`feat/team-verified-six`).
 
 **2. The CMS site content.** Schema `lib/site-content-schema.ts`, code defaults
 `lib/default-site-content.ts` (parsed at module load — invalid defaults fail
@@ -198,6 +197,14 @@ at the end, which means nobody has decided yet.
   generated one, not even as a placeholder. A section ships without the photo
   slot until real photographs exist. *Holds* with `fix/team-no-template-avatars`
   (verify-site check 27).
+- **A person is listed only with a verified LinkedIn profile — enforced at
+  load, not by convention.** A team member's `profileUrl` is required and must
+  be a `linkedin.com/in/` URL. The site content is parsed when it loads, so a
+  member without one fails the build, and no link can be built from a handle;
+  a stored member without one is dropped by `migrateStored()`, never given a
+  link. Role, experience and stack stay empty until real data exists — never
+  examples. Person structured data comes from the same roster, emitting only
+  the fields that exist. *Holds* with `feat/team-verified-six` (checks 14, 27).
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
   element the server sends at `opacity:0` is not. *Holds* with
   `fix/reveal-visible-html` (checks 4 and 5).
@@ -303,12 +310,13 @@ text, gradients in CTA and Team), and one card shadow repeated across sections.
 
 | question | decision | where |
 |---|---|---|
-| The Team section | **The six people with a verified LinkedIn**, each with role, stack and years. COPY.md §5 amended: a member without a verified profile is not listed | its own PR, once the owner supplies the data |
+| The Team section | **The six people with a verified LinkedIn**, shown with name, handle and link. Role, stack and years stay empty until real data exists — thin cards because the data is thin. COPY.md §5 amended: a member without a verified profile is not listed | `feat/team-verified-six` |
 | The logo wordmark's contrast | **The check was wrong, not the mark.** WCAG 1.4.3 exempts logotypes; the exemption is scoped to the wordmark and guarded | `tooling/verify-site` |
 | FAQ vs FAQPage structured data | **The rendered five are canonical**, and the markup is generated from them: one source, not a corrected second copy | `fix/faq-one-source` |
 | COPY.md §4 layout note | **Superseded.** The section is a carousel; two cards on a two-column grid is a separate decision, not made | `docs/copy-md-decisions` |
 | The "under 100ms" meta description | **Stays unlabelled**: a scoped exception to the label rule, recorded under Hard rules | `chore/low-findings` |
 | FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
+| COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
 | The CMS | **Removed**, in its own PR after this batch merges (see Two content layers) | not started |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
 
