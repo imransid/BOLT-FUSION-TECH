@@ -95,8 +95,12 @@ own promise, which is that every card leads somewhere. Add a third when a real
 screenshot and a real write-up both exist; the content layer takes it without any
 component change.
 
-**Layout note:** two cards on a three-column grid leaves a hole. Use a two-column
-grid at `md` and up, letting each card run larger — the screenshots benefit.
+~~**Layout note:** two cards on a three-column grid leaves a hole. Use a two-column
+grid at `md` and up, letting each card run larger — the screenshots benefit.~~
+
+**Superseded 2026-09-11 — leave the layout alone.** The section is a horizontal
+carousel, not a grid, so the note describes a layout that does not exist. Two cards
+on a two-column grid is a different decision, and it has not been made.
 
 ---
 
@@ -118,8 +122,16 @@ deliberate.
 Add the photo slot when real photographs exist. Never a template avatar, a stock
 face, or a generated one — see CLAUDE.md, "No fake faces, ever."
 
-**If a member has no LinkedIn yet,** render the card without the link rather than
-omitting the person or linking to an unverified profile.
+~~**If a member has no LinkedIn yet,** render the card without the link rather than
+omitting the person or linking to an unverified profile.~~
+
+**Amended 2026-09-11 — only people with a verified LinkedIn are listed.** A member
+without one is not shown until it exists, and an unverified profile is never linked.
+The struck rule was written when there were no photos and no roles and a card was only
+a name. It now conflicts with the stronger rule that every claim on the site is
+verifiable: a named engineer nobody can look up is exactly the claim this section
+exists to disprove. With the amendment, the body's "every profile links to a public
+LinkedIn" is true of every card.
 
 ---
 
@@ -195,6 +207,12 @@ number; full bands move to /how-we-work in Phase 2.
 
 **H2**
 > The questions you should be asking.
+
+**Superseded for the site, 2026-09-11.** The FAQ the homepage renders — five
+questions, `faq.items` in the site content — is canonical, and the FAQPage structured
+data is generated from it. The six below are not rendered anywhere; they reached the
+site only as structured data, which is how the markup and the page came to disagree.
+Do not copy them back into a second source.
 
 **Who exactly writes my code?**
 > Named engineers, assigned before the contract, with public LinkedIn profiles. Your
