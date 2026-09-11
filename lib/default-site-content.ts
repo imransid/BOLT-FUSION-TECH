@@ -156,13 +156,13 @@ const raw: SiteContent = {
     headlineLine1: "Senior engineers.",
     headlineLine2: "One delivery standard.",
     subtext:
-      "Each card opens in a new tab—so you can see who you would work with before you commit scope or budget.",
+      "Cards with a verified LinkedIn profile open it in a new tab—so you can see who you would work with before you commit scope or budget.",
     statLabel: "specialists",
-    // PLACEHOLDER ILLUSTRATIONS. /team/avatar-01..10.svg are line-art drawings
-    // carried over from the original template — not photographs of these engineers.
-    // Renamed so the template is not identifiable, and one distinct file per person
-    // (one file in the old set stood in for three of them). Replace with real
-    // photographs before anyone can mistake them for likenesses.
+    // NO PHOTOGRAPHS YET, SO NO IMAGES. `image` stays null until a real
+    // photograph of that engineer exists; the card then gains its photo slot.
+    // Never a template avatar, a stock face or a generated one (CLAUDE.md, "No
+    // fake faces, ever"; COPY.md §5). The template line-art that stood here was
+    // removed, not renamed.
     //
     // VERIFIED LINKS ONLY. `profileUrl` is present for a member only where the
     // destination has been confirmed to be that person. Four are deliberately
@@ -172,7 +172,7 @@ const raw: SiteContent = {
         id: "rafa",
         name: "Rafa",
         handle: "@rafa",
-        image: "/team/avatar-01.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -184,7 +184,7 @@ const raw: SiteContent = {
         id: "nadim",
         name: "Nadim",
         handle: "@nadim",
-        image: "/team/avatar-02.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -193,7 +193,7 @@ const raw: SiteContent = {
         id: "shourab",
         name: "Shourab",
         handle: "@shourab",
-        image: "/team/avatar-03.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -207,7 +207,7 @@ const raw: SiteContent = {
         id: "arifur",
         name: "Arifur Rahman",
         handle: "@arifur",
-        image: "/team/avatar-04.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -218,7 +218,7 @@ const raw: SiteContent = {
         id: "tareq",
         name: "Tareq",
         handle: "@tareq",
-        image: "/team/avatar-05.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -227,7 +227,7 @@ const raw: SiteContent = {
         id: "nazirul",
         name: "Nazirul",
         handle: "@nazirul",
-        image: "/team/avatar-06.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -237,7 +237,7 @@ const raw: SiteContent = {
         id: "talha",
         name: "Talha",
         handle: "@talha",
-        image: "/team/avatar-07.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -247,7 +247,7 @@ const raw: SiteContent = {
         id: "nihal",
         name: "Nihal",
         handle: "@nihal",
-        image: "/team/avatar-08.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -258,7 +258,7 @@ const raw: SiteContent = {
         id: "joinal",
         name: "Joinal",
         handle: "@joinal",
-        image: "/team/avatar-09.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],
@@ -267,7 +267,7 @@ const raw: SiteContent = {
         id: "sabbir",
         name: "Sabbir",
         handle: "@sabbir",
-        image: "/team/avatar-10.svg",
+        image: null,
         role: "",
         experience: "",
         stack: [],

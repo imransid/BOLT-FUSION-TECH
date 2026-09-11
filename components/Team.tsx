@@ -94,29 +94,33 @@ function TeamMemberCard({
         aria-hidden
       />
 
-      <div className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
-        {member.image ? (
-          <motion.div
-            className="absolute inset-0 flex items-end justify-center will-change-transform"
-            style={{ y: portraitY }}
-          >
-            <motion.img
-              src={member.image}
-              alt=""
-              className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
-              loading="lazy"
-              decoding="async"
-              whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
-              transition={springSoft}
-            />
-          </motion.div>
-        ) : null}
-      </div>
+      {/* COPY.md §5: the photo slot exists only when a real photograph does —
+          no frame, no monogram, no placeholder tile. Until then the card is
+          text-forward. Never a template avatar (CLAUDE.md: no fake faces). */}
+      {member.image ? (
+        <div data-photo-slot className="relative z-[1] mx-2.5 mt-11 isolate aspect-[4/5] overflow-hidden rounded-2xl bg-gradient-to-b from-[#faf8f5] to-[#e8e2d9] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.65),inset_0_12px_32px_rgba(255,255,255,0.35),0_12px_28px_-12px_rgba(0,0,0,0.55)] ring-1 ring-black/20 sm:mx-3 sm:mt-12">
+            <motion.div
+              className="absolute inset-0 flex items-end justify-center will-change-transform"
+              style={{ y: portraitY }}
+            >
+              <motion.img
+                src={member.image}
+                alt=""
+                className="h-[92%] w-[90%] object-contain object-bottom mix-blend-multiply"
+                loading="lazy"
+                decoding="async"
+                whileHover={reduceMotion ? undefined : { y: -6, scale: 1.03 }}
+                transition={springSoft}
+              />
+            </motion.div>
+
+        </div>
+      ) : null}
 
       {/* Hierarchy: name (15px) → role (12px) → experience + stack (10px). Every
           optional line is conditional, so a blank field leaves no gap and no
           orphaned separator — the tags are a flex-wrap row, not a "·" list. */}
-      <div className="relative z-[1] flex flex-1 flex-col px-4 pb-5 pt-4 sm:pt-5">
+      <div className={`relative z-[1] flex flex-1 flex-col px-4 pb-5 ${member.image ? "pt-4 sm:pt-5" : "pt-11 sm:pt-12"}`}>
         <h3
           className="text-[15px] font-medium leading-tight tracking-[-0.03em] text-white"
           style={{ fontFamily: "var(--font-heading)" }}
@@ -160,7 +164,7 @@ function TeamMemberCard({
       style={{ animationDelay: `${Math.min(index * 55, 440)}ms` }}
     >
       {href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" className={CARD_BASE + CARD_INTERACTIVE}>
+        <a href={href} target="_blank" rel="noopener noreferrer" data-person-card className={CARD_BASE + CARD_INTERACTIVE}>
           <span
             className="pointer-events-none absolute right-2.5 top-2.5 z-[2] flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-[transform,border-color] duration-300 group-hover:rotate-12 group-hover:border-cyan-400/25 group-hover:text-white sm:right-3 sm:top-3"
             aria-hidden
@@ -173,7 +177,7 @@ function TeamMemberCard({
       ) : (
         /* No verified profile: the card renders in full, minus the link and the
            affordances that would imply one. Never an empty href, never "#". */
-        <div className={CARD_BASE}>{chrome}</div>
+        <div data-person-card className={CARD_BASE}>{chrome}</div>
       )}
     </li>
   );
