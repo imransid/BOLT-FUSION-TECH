@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-
 import { useSiteContent } from "@/context/SiteContentContext";
 import { reveal } from "@/lib/reveal";
 
+/* The answers are in the served HTML. Each item is a <details>: the browser
+   opens and closes it — one at a time, through the shared `name` — with or
+   without script, and reports its expanded state to assistive technology
+   itself. The open/close animation is CSS (FAQ in app/globals.css). The
+   FAQPage structured data is built from these same items. */
 export default function FAQ() {
   const { faq } = useSiteContent();
   const faqs = faq.items;
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <section className="py-20 px-5 md:px-20">
@@ -45,20 +46,17 @@ export default function FAQ() {
         {/* FAQ items */}
         <div className="flex flex-col gap-0">
           {faqs.map((item, i) => (
-            <div
+            <details
               key={i}
+              name="faq"
               {...reveal({ y: 20, duration: 0.4, delay: i * 0.08 })}
-              className="border-b border-white/10"
+              className="faq-item group border-b border-white/10"
             >
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full flex items-center justify-between py-6 text-left cursor-pointer"
-              >
+              <summary className="w-full flex items-center justify-between py-6 text-left cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 <span className="text-lg text-white/90 pr-6">{item.q}</span>
-                <motion.div
-                  animate={{ rotate: openIndex === i ? 45 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex-shrink-0"
+                <span
+                  className="flex flex-shrink-0 motion-safe:transition-transform motion-safe:duration-200 group-open:rotate-45"
+                  aria-hidden
                 >
                   <svg
                     width="24"
@@ -69,25 +67,12 @@ export default function FAQ() {
                   >
                     <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
                   </svg>
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {openIndex === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <p className="text-sm text-white/60 pb-6 leading-relaxed max-w-[640px]">
-                      {item.a}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                </span>
+              </summary>
+              <p className="text-sm text-white/60 pb-6 leading-relaxed max-w-[640px]">
+                {item.a}
+              </p>
+            </details>
           ))}
         </div>
       </div>

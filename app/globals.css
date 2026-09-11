@@ -228,3 +228,29 @@ body {
       transform var(--reveal-duration, 0.5s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--reveal-delay, 0s);
   }
 }
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────────
+   The answers are in the served HTML, inside <details>. Where the browser can
+   animate ::details-content, opening eases height and opacity over 0.3s, as
+   the old script-driven accordion did; elsewhere it opens at once. Nothing
+   moves under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports selector(::details-content) {
+    .faq-item {
+      interpolate-size: allow-keywords;
+    }
+    .faq-item::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow-y: clip;
+      transition:
+        block-size 0.3s,
+        opacity 0.3s,
+        content-visibility 0.3s allow-discrete;
+    }
+    .faq-item[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+}
