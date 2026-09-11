@@ -44,16 +44,26 @@ Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 ## Two content layers — know which one you are editing
 
 **1. Typed files in `/content`** (`schema.ts`, `metrics.ts`, `projects.ts`,
-`team.ts`, `services.ts`, `process.ts`, `pilot.ts`, `architecture.ts`,
-`faqs.ts`). Parsed with Zod at module load, so a malformed entry fails the
-build. Read by `/work`, the homepage metric band (`Architecture.tsx`),
-`HowWeWork.tsx` and `lib/structured-data.ts`.
+`team.ts`, `services.ts`, `process.ts`, `pilot.ts`, `architecture.ts`).
+Parsed with Zod at module load, so a malformed entry fails the build. Read by
+`/work`, the homepage metric band (`Architecture.tsx`), `HowWeWork.tsx` and
+`lib/structured-data.ts`. There is no FAQ here: the FAQ exists once, in the site
+content below, and its structured data is generated from it
+(`fix/faq-one-source`). Person structured data still reads `content/team.ts`
+while the Team section renders the site content — the same two-source shape,
+removed when the Team section is rebuilt.
 
 **2. The CMS site content.** Schema `lib/site-content-schema.ts`, code defaults
 `lib/default-site-content.ts` (parsed at module load — invalid defaults fail
 the build), edited at `/admin`, stored in Neon as ONE override document that is
 deep-merged onto the defaults when read. Read by every other homepage section
 and by the restaurant case study.
+
+**Decided 2026-09-11: the CMS is removed**, in its own PR after this batch
+merges. The first admin save would silently shadow every code change to these
+fields, this batch included. The default content, schema and Zod validation move
+into `/content`; the admin UI, login, storage, API and their seven dependencies
+go. Until that PR lands, the behaviour below is what exists.
 
 How the CMS behaves. Each of these has already caused a bug:
 
@@ -159,6 +169,10 @@ verify-site checks 1 and 2 catch both.
   WebSite, Service, FAQPage, Person (only engineers with a verified LinkedIn),
   BreadcrumbList. `/work` and both case studies emit their own; each case study
   is BreadcrumbList + Article. Breadcrumbs point at pages, never at anchors.
+- **FAQPage is generated from the FAQ the page renders** — the same `faq.items`
+  the section is given, and only when the section renders. There is no second
+  copy to keep in sync. verify-site check 14 compares them question for
+  question and answer for answer.
 - `robots.txt` disallows `/admin/` and `/api/` (and `/tokens`, `/rebuild`,
   routes that no longer exist). The sitemap lists the five public routes.
 - The OG image is `app/opengraph-image.tsx`. The apple-touch-icon is
@@ -224,6 +238,17 @@ reveals, count-ups — must be measured on a fresh page scrolled at reading
 speed. Measured on a page that has already been scrolled, or never scrolled, it
 reports the absence of the behaviour as a fact about the site.
 
+**Run it against the merged result**, not a single branch or the stack: build
+`main` with every open branch merged in order, then run the whole suite. Three
+contrast failures on the featured-work cards (3.92, 3.95 and 4.1:1) existed only
+in the merged state — the real fonts and the pill's bottom padding together moved
+the text into the light half of the card gradient. Neither branch alone showed it.
+
+**The one contrast exemption is the wordmark** — WCAG 2.2 SC 1.4.3, "Logotypes".
+It covers the element marked `data-logotype` in `components/Logo.tsx`, for checks
+18 and 20 only, and check 18 fails if that element ever holds anything but "Bolt
+Fusion Tech". It is not a small-text exemption and must not become one.
+
 ## Performance targets
 
 Lighthouse 95+ in all four categories · LCP under 2.0s · no layout shift from
@@ -248,6 +273,17 @@ and the site is wrong.
 
 Still open: gradient washes used as decoration (the hero headline's gradient
 text, gradients in CTA and Team), and one card shadow repeated across sections.
+
+## Decided 2026-09-11, second round
+
+| question | decision | where |
+|---|---|---|
+| The Team section | **The six people with a verified LinkedIn**, each with role, stack and years. COPY.md §5 amended: a member without a verified profile is not listed | its own PR, once the owner supplies the data |
+| The logo wordmark's contrast | **The check was wrong, not the mark.** WCAG 1.4.3 exempts logotypes; the exemption is scoped to the wordmark and guarded | `tooling/verify-site` |
+| FAQ vs FAQPage structured data | **The rendered five are canonical**, and the markup is generated from them: one source, not a corrected second copy | `fix/faq-one-source` |
+| COPY.md §4 layout note | **Superseded.** The section is a carousel; two cards on a two-column grid is a separate decision, not made | `docs/copy-md-decisions` |
+| The CMS | **Removed**, in its own PR after this batch merges (see Two content layers) | not started |
+| Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
 
 ## Reference documents
 
