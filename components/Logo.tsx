@@ -212,7 +212,15 @@ export default function Logo({ className = "", markOnly = false }: LogoProps) {
     >
       <LogoMark framed={!markOnly} className={markOnly ? "h-8 w-8 sm:h-9 sm:w-9" : undefined} />
       {!markOnly && (
-        <span className="flex min-w-0 flex-col items-start justify-center gap-0.5">
+        <span
+          /* The wordmark. WCAG 2.2 SC 1.4.3 exempts logotypes: "Text that is part of a
+             logo or brand name has no contrast requirement." verify-site exempts THIS
+             element from its two contrast checks (18, 20) and nothing else, and fails
+             if it ever holds anything but the brand name, so the attribute cannot
+             quietly become a small-text exemption. */
+          data-logotype
+          className="flex min-w-0 flex-col items-start justify-center gap-0.5"
+        >
           <span
             className="text-[0.5625rem] font-normal uppercase tracking-[0.62em] text-zinc-500 sm:text-[0.625rem] sm:tracking-[0.58em]"
             style={{ fontFamily: "var(--font-heading)" }}

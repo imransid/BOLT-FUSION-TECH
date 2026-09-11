@@ -71,6 +71,19 @@ const EXPECT_LD = [
 
 const want = (id) => !ONLY || ONLY.has(String(id));
 
+/* WCAG 2.2 Success Criterion 1.4.3 Contrast (Minimum), exception "Logotypes":
+   "Text that is part of a logo or brand name has no contrast requirement."
+   The exemption is scoped, and the scope is enforced:
+     · it covers the one element marked data-logotype — the wordmark in
+       components/Logo.tsx — and the text inside it;
+     · it applies to contrast only: axe's color-contrast rule (check 18) and the
+       pixel check (check 20). Every other axe rule still runs on the wordmark;
+     · check 18 FAILS if a data-logotype element ever holds anything but
+       LOGOTYPE_TEXT, so moving the attribute onto other small text cannot
+       quietly widen it. It is not a small-text exemption. */
+const LOGOTYPE = "[data-logotype]";
+const LOGOTYPE_TEXT = "Bolt Fusion Tech";
+
 /* ── helpers ─────────────────────────────────────────────────────────────── */
 const baseUrl = new URL(BASE);
 const isSameSite = (u) => {
@@ -543,7 +556,7 @@ const contrastRatio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05
    sRGB by the browser, alpha and ancestor opacity applied) is composited over
    each sampled pixel and the WORST sample is the element's ratio. */
 async function measureContrast(page) {
-  const els = await page.evaluate(() => {
+  const els = await page.evaluate((logotype) => {
     const cv = document.createElement("canvas");
     cv.width = cv.height = 1;
     const cx = cv.getContext("2d", { willReadFrequently: true });
@@ -589,12 +602,12 @@ async function measureContrast(page) {
       const inset = (side) => parseFloat(s[`border${side}Width`]) + parseFloat(s[`padding${side}`]);
       const cx = r.left + inset("Left"), cy = r.top + inset("Top");
       const cw = Math.max(1, r.width - inset("Left") - inset("Right")), ch = Math.max(1, r.height - inset("Top") - inset("Bottom"));
-      out.push({ dx: inset("Left"), dy: inset("Top"), x: cx + scrollX, y: cy + scrollY, w: cw, h: ch, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
+      out.push({ logotype: !!el.closest(logotype), dx: inset("Left"), dy: inset("Top"), x: cx + scrollX, y: cy + scrollY, w: cw, h: ch, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
       if (out.length >= 700) break;
     }
     window.__vsKeep = keep;
     return out;
-  });
+  }, LOGOTYPE);
   await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}" });
   await page.waitForTimeout(250);
   const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
@@ -611,8 +624,8 @@ async function measureContrast(page) {
   for (const [idx, e] of els.entries()) {
     const n = now[idx];
     const moved = !n || Math.abs(n.x - e.x) > e.dx + 1 || Math.abs(n.y - e.y) > e.dy + 1;
-    if (e.clipText || e.pinned || e.clipped || e.underFrame || moved) {
-      const why = e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "moved while measuring";
+    if (e.logotype || e.clipText || e.pinned || e.clipped || e.underFrame || moved) {
+      const why = e.logotype ? "the wordmark (WCAG 1.4.3 logotype)" : e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "moved while measuring";
       res.unmeasured.push({ text: e.text, why });
       continue;
     }
@@ -886,12 +899,36 @@ async function visit(browser, route, width) {
   /* 18 ── axe-core, serious and critical only */
   if (want(18)) {
     await page.addScriptTag({ path: require.resolve("axe-core/axe.min.js") });
-    data.axe = await page.evaluate(async () => {
-      const r = await window.axe.run(document, { resultTypes: ["violations"] });
-      return r.violations
-        .filter((v) => v.impact === "serious" || v.impact === "critical")
-        .map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length, sample: v.nodes.slice(0, 2).map((n) => n.target.join(" ")) }));
-    });
+    Object.assign(
+      data,
+      await page.evaluate(async (logotype) => {
+        const r = await window.axe.run(document, { resultTypes: ["violations"] });
+        /* the logotype exemption (see LOGOTYPE): color-contrast only, wordmark nodes only */
+        const inLogotype = (n) => {
+          if (n.target.length !== 1 || typeof n.target[0] !== "string") return false;
+          try {
+            return !!document.querySelector(n.target[0])?.closest(logotype);
+          } catch {
+            return false;
+          }
+        };
+        let axeExempt = 0;
+        const axe = r.violations
+          .filter((v) => v.impact === "serious" || v.impact === "critical")
+          .map((v) => {
+            const nodes = v.id !== "color-contrast" ? v.nodes : v.nodes.filter((n) => (inLogotype(n) ? (axeExempt++, false) : true));
+            return { id: v.id, impact: v.impact, help: v.help, nodes: nodes.length, sample: nodes.slice(0, 2).map((n) => n.target.join(" ")) };
+          })
+          .filter((v) => v.nodes > 0);
+        const textOf = (el) => {
+          const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+          const parts = [];
+          while (w.nextNode()) if (w.currentNode.textContent.trim()) parts.push(w.currentNode.textContent.trim());
+          return parts.join(" ");
+        };
+        return { axe, axeExempt, logotypes: [...document.querySelectorAll(logotype)].map(textOf) };
+      }, LOGOTYPE),
+    );
   }
   /* 20 ── last, because it repaints the page */
   if (want(20)) data.contrast = await measureContrast(page);
@@ -1445,8 +1482,19 @@ await (async () => {
 })();
 
 /* 18 */
-check(18, "axe finds no serious or critical accessibility violations", "what a screen-reader or keyboard user hits first", (F) => {
+check(18, "axe finds no serious or critical accessibility violations", "what a screen-reader or keyboard user hits first", (F, I) => {
   const seen = new Set();
+  let exempt = 0;
+  for (const [k, v] of Object.entries(visits)) {
+    exempt += v.axeExempt || 0;
+    /* the guard that keeps the exemption to the wordmark (see LOGOTYPE) */
+    for (const t of new Set(v.logotypes || []))
+      if (t !== LOGOTYPE_TEXT && !seen.has(`logotype|${t}`)) {
+        seen.add(`logotype|${t}`);
+        F.push(`${at(k)}: an element marked data-logotype holds "${t.slice(0, 60)}", not the brand name "${LOGOTYPE_TEXT}" — the WCAG 1.4.3 logotype exemption covers the wordmark and nothing else`);
+      }
+  }
+  I.push(`contrast not applied to the wordmark (WCAG 2.2 SC 1.4.3, logotypes): ${exempt} node(s) across all visits`);
   for (const [k, v] of Object.entries(visits))
     for (const x of v.axe || []) {
       const key = `${k.split("@")[0]}|${x.id}`;
