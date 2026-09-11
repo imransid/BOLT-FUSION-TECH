@@ -149,16 +149,6 @@ export const serviceSchema = z.object({
 });
 export type Service = z.infer<typeof serviceSchema>;
 
-/* ── faqs ───────────────────────────────────────────────────────────────────
- * Rendered server-side and emitted as FAQPage JSON-LD (PLAN.md §7).
- */
-export const faqSchema = z.object({
-  id: z.string().min(1),
-  question: z.string().min(1),
-  answer: z.string().min(1),
-});
-export type Faq = z.infer<typeof faqSchema>;
-
 /**
  * Parse at module load. A malformed content file fails `next build` with the
  * offending path, rather than rendering a broken section in production.

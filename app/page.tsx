@@ -98,6 +98,10 @@ export default async function Home() {
   const { sectionOrder, sectionVisibility } = content.site;
   const siteUrl = getSiteUrl().toString();
   const sameAs = content.footer.socialLinks.map((l) => l.url);
+  // FAQPage is built from the very items the FAQ section renders, and only when
+  // it renders: one source, so the markup and the page cannot diverge.
+  const renderedFaq =
+    sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
 
   return (
     <SiteContentProvider value={content}>
@@ -107,7 +111,7 @@ export default async function Home() {
           // Escape `<` so an admin-entered "</script>" in any string field can't
           // break out of the JSON-LD block (stored-XSS guard).
           __html: jsonLdHtml(
-            buildGraph(siteUrl, sameAs, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
+            buildGraph(siteUrl, sameAs, renderedFaq, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
           ),
         }}
       />

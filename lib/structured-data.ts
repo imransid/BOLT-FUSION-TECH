@@ -1,4 +1,4 @@
-import { faqs, services, team } from "@/content";
+import { services, team } from "@/content";
 
 /**
  * JSON-LD — PLAN.md §7.
@@ -50,16 +50,25 @@ export function serviceLd(siteUrl: string): Json[] {
   }));
 }
 
-export function faqPageLd(siteUrl: string): Json {
-  return {
-    "@type": "FAQPage",
-    "@id": `${siteUrl}#faq`,
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
-    })),
-  };
+/** The FAQ the page renders, and nothing else. Pass the SAME items the FAQ
+ *  section is given (`content.faq.items`). There is deliberately no second copy
+ *  of the FAQ anywhere, so the markup and the page cannot disagree. Pass an
+ *  empty array when the section is hidden: no visible FAQ, no FAQPage. */
+export type RenderedFaq = { q: string; a: string }[];
+
+export function faqPageLd(siteUrl: string, renderedFaq: RenderedFaq): Json[] {
+  if (renderedFaq.length === 0) return [];
+  return [
+    {
+      "@type": "FAQPage",
+      "@id": `${siteUrl}#faq`,
+      mainEntity: renderedFaq.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ];
 }
 
 /** Only engineers whose profile has been verified. */
@@ -91,7 +100,12 @@ export function breadcrumbLd(
   };
 }
 
-export function buildGraph(siteUrl: string, sameAs: string[], extra: Json[] = []) {
+export function buildGraph(
+  siteUrl: string,
+  sameAs: string[],
+  renderedFaq: RenderedFaq,
+  extra: Json[] = [],
+) {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -104,7 +118,7 @@ export function buildGraph(siteUrl: string, sameAs: string[], extra: Json[] = []
         publisher: { "@id": `${siteUrl}#organization` },
       },
       ...serviceLd(siteUrl),
-      faqPageLd(siteUrl),
+      ...faqPageLd(siteUrl, renderedFaq),
       ...personLd(siteUrl),
       ...extra,
     ],
