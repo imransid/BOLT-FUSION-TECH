@@ -1617,16 +1617,19 @@ await (async () => {
   const I = [];
   /* The CMS was removed on 2026-09-11. Its routes must stay gone: an admin or
      an API that quietly comes back is a sign-in surface nobody is watching. */
-  const RETIRED = ["/admin", "/admin/login", "/api/admin/content", "/api/admin/login", "/api/admin/upload"];
+  const RETIRED = ["/admin", "/admin/login", "/api/admin/content", "/api/admin/login", "/api/admin/logout", "/api/admin/upload"];
   for (const p of RETIRED) {
     const r = await fetch(`${BASE}${p}`, { redirect: "manual" }).catch(() => ({ status: 0 }));
     if (r.status !== 404) F.push(`${p} answers ${r.status} — the retired admin must return 404`);
   }
   const rb = await http(`${BASE}/robots.txt`);
-  if (/\/admin|\/api\//i.test(rb.text || "")) F.push("robots.txt still names /admin or /api/ — a route that does not exist needs no rule");
+  /* unsure is a failure: a robots.txt that cannot be read cannot be cleared */
+  if (rb.status !== 200) F.push(`robots.txt answered ${rb.status} — cannot confirm it no longer names the admin`);
+  else if (/^\s*(dis)?allow:\s*\/(admin|api)(\/|\s|$)/im.test(rb.text || "")) F.push("robots.txt still names /admin or /api — a route that does not exist needs no rule");
   const seen = new Set();
   for (const [k, v] of Object.entries(visits))
     for (const l of v.links || []) {
+      if (!isSameSite(l.abs)) continue; /* another site's /admin is not ours */
       let path = "";
       try {
         path = new URL(l.abs).pathname;

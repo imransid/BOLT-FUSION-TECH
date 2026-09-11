@@ -8,7 +8,7 @@ import { z } from "zod";
  * superseded. The shape rules below still hold — they keep the files easy to
  * read, diff and check:
  *  · a stable `id` is the slug / document key
- *  · media is a path string, which becomes a media-collection relation
+ *  · media is a path string under /public
  *  · relations are id strings, not nested objects
  *  · no nested arrays-of-objects deeper than one level
  *  · nothing derived — anything computable is computed at render, not stored

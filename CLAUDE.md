@@ -44,11 +44,14 @@ Every word on the site that is not hardcoded in a component lives in a typed
 file in `/content`, parsed with Zod when the module loads, so a malformed entry
 fails `next build` with the file named:
 
-- `site.ts` (schema `site-schema.ts`) — navigation, the hero, every homepage
-  section, the restaurant case study (`caseStudy`), FAQ, team and footer. It is
+- `site.ts` (schema `site-schema.ts`) — navigation, the hero, the homepage
+  sections except Architecture and How we work, the restaurant case study
+  (`caseStudy`), FAQ, team and footer. It is
   server-only and deep-frozen: pages pass it to `<SiteContentProvider>`, and
   client components read their slice with `useSiteContent()`. Never re-export
   `./site` from the `/content` barrel — client components import that barrel.
+  Two blocks in it, `aiExcellence` and `process`, are validated but rendered by
+  nothing: editing them changes nothing. They go with the homepage rebuild.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
   metric band (`Architecture.tsx`), `HowWeWork.tsx` and `lib/structured-data.ts`.
@@ -236,7 +239,8 @@ tree, so a regression to click-mounted answers fails it.
 production; `--base http://localhost:3000` runs it against a local build. It
 asserts what must hold whatever the content says; each check names the bug it
 exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retired admin gone:
-`/admin` and `/api/admin/*` must answer 404.
+`/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
+robots.txt must not name them, and no page may link to them.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
