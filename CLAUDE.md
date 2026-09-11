@@ -51,7 +51,8 @@ Parsed with Zod at module load, so a malformed entry fails the build. Read by
 content below, and its structured data is generated from it
 (`fix/faq-one-source`). Person structured data still reads `content/team.ts`
 while the Team section renders the site content — the same two-source shape,
-removed when the Team section is rebuilt.
+removed in the Team PR — and the CMS removal collapses it regardless, since
+both sources become `/content`.
 
 **2. The CMS site content.** Schema `lib/site-content-schema.ts`, code defaults
 `lib/default-site-content.ts` (parsed at module load — invalid defaults fail
@@ -143,8 +144,9 @@ verify-site checks 1 and 2 catch both.
   nothing moves. Use `reveal({ x, y, duration, delay })`; never add a framer
   `initial={{ opacity: 0 }}`.
 - **Hero entrance:** the same CSS entrance, staggered by delay; the H1 is never hidden.
-- **framer-motion remains** for the FAQ accordion and the mobile menu
-  (`AnimatePresence`), Team's scroll parallax, and the hero's scroll arrow.
+- **framer-motion remains** for the mobile menu (`AnimatePresence`), Team's
+  scroll parallax, and the hero's scroll arrow. The FAQ uses none of it: each
+  item is a `<details name="faq">` with a CSS open/close (FAQ in `app/globals.css`).
 - **Hero background:** a WebGL curl-noise particle nebula
   (`components/HeroParticleField.tsx`) — the one place WebGL is allowed. One
   `THREE.Points` cloud of ~28k
@@ -173,6 +175,11 @@ verify-site checks 1 and 2 catch both.
   the section is given, and only when the section renders. There is no second
   copy to keep in sync. verify-site check 14 compares them question for
   question and answer for answer.
+  The answers are in the served HTML: each item is a `<details name="faq">`,
+  opened by the browser one at a time, with or without script, and the open
+  state is native to `<summary>`. Check 14 reads the answers from the served
+  HTML — not from the DOM after a click — and the open state from the
+  accessibility tree.
 - `robots.txt` disallows `/admin/` and `/api/` (and `/tokens`, `/rebuild`,
   routes that no longer exist). The sitemap lists the five public routes.
 - The OG image is `app/opengraph-image.tsx`. The apple-touch-icon is
@@ -201,6 +208,12 @@ at the end, which means nobody has decided yet.
   Enforced at build time in `/content/metrics.ts`, by the CMS schema for the
   case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
   the WarmChats KPIs are labelled (verify-site check 8).
+  **One scoped exception, decided 2026-09-11:** the restaurant-search meta
+  description says "keeping most traffic under 100ms" with no label. The figure
+  is `search-response` in `/content/metrics.ts`, labelled shipped everywhere the
+  site shows it, and a meta description is not a page claim. The exception is
+  that one string in `app/work/restaurant-search/page.tsx` and nothing else: any
+  other figure in metadata, and every figure on a page, carries a label or goes.
 - **A published project links to its write-up.** Enforced in both layers
   (`state: published | awaiting-asset`). There is no fallback link: a project
   without a write-up is shown with no link at all. *Holds* (check 9).
@@ -282,6 +295,8 @@ text, gradients in CTA and Team), and one card shadow repeated across sections.
 | The logo wordmark's contrast | **The check was wrong, not the mark.** WCAG 1.4.3 exempts logotypes; the exemption is scoped to the wordmark and guarded | `tooling/verify-site` |
 | FAQ vs FAQPage structured data | **The rendered five are canonical**, and the markup is generated from them: one source, not a corrected second copy | `fix/faq-one-source` |
 | COPY.md §4 layout note | **Superseded.** The section is a carousel; two cards on a two-column grid is a separate decision, not made | `docs/copy-md-decisions` |
+| The "under 100ms" meta description | **Stays unlabelled**: a scoped exception to the label rule, recorded under Hard rules | `chore/low-findings` |
+| FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
 | The CMS | **Removed**, in its own PR after this batch merges (see Two content layers) | not started |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
 
