@@ -17,79 +17,54 @@ Do not resolve those by editing either side.
 ## Stack
 
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Zod 4 ·
-framer-motion · three.js through @react-three/fiber (hero only) · Neon Postgres
-(CMS store) · Vercel Blob (admin uploads) · deployed on Vercel.
+framer-motion · three.js through @react-three/fiber (hero only) · deployed on
+Vercel. There is no CMS and no database: the content is typed files in `/content`.
 
 - Package manager: yarn 4 (`packageManager` in package.json), `nodeLinker:
   node-modules` — Turbopack does not support Plug'n'Play. `yarn.lock` is the
   only lockfile.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
-- `gsap` is listed in `dependencies` and imported nowhere.
 
 ## Routes
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage, sections in CMS order (`site.sectionOrder`) | CMS, plus `/content` for the metric band and How we work · ISR, `revalidate = 60` |
+| `/` | homepage, sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, plus the metric band and How we work · static |
 | `/work` | index of the write-ups | `/content` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
-| `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | CMS `caseStudy` block |
+| `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
-| `/admin`, `/admin/login` | the CMS editor, noindex | — |
-| `/api/admin/*` | content GET/PUT, login, logout, upload | — |
 
 Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 `public/llms.txt`, `public/llms-full.txt`.
 
-## Two content layers — know which one you are editing
+## Content — one layer, in `/content`
 
-**1. Typed files in `/content`** (`schema.ts`, `metrics.ts`, `projects.ts`,
-`services.ts`, `process.ts`, `pilot.ts`, `architecture.ts`).
-Parsed with Zod at module load, so a malformed entry fails the build. Read by
-`/work`, the homepage metric band (`Architecture.tsx`), `HowWeWork.tsx` and
-`lib/structured-data.ts`. There is no FAQ here: the FAQ exists once, in the site
-content below, and its structured data is generated from it
-(`fix/faq-one-source`). There is no team file either: the Team
-section and the Person structured data both come from the site content's
-`team.roster` (`feat/team-verified-six`).
+Every word on the site that is not hardcoded in a component lives in a typed
+file in `/content`, parsed with Zod when the module loads, so a malformed entry
+fails `next build` with the file named:
 
-**2. The CMS site content.** Schema `lib/site-content-schema.ts`, code defaults
-`lib/default-site-content.ts` (parsed at module load — invalid defaults fail
-the build), edited at `/admin`, stored in Neon as ONE override document that is
-deep-merged onto the defaults when read. Read by every other homepage section
-and by the restaurant case study.
+- `site.ts` (schema `site-schema.ts`) — navigation, the hero, every homepage
+  section, the restaurant case study (`caseStudy`), FAQ, team and footer. It is
+  server-only and deep-frozen: pages pass it to `<SiteContentProvider>`, and
+  client components read their slice with `useSiteContent()`. Never re-export
+  `./site` from the `/content` barrel — client components import that barrel.
+- `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
+  `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
+  metric band (`Architecture.tsx`), `HowWeWork.tsx` and `lib/structured-data.ts`.
 
-**Decided 2026-09-11: the CMS is removed**, in its own PR after this batch
-merges. The first admin save would silently shadow every code change to these
-fields, this batch included. The default content, schema and Zod validation move
-into `/content`; the admin UI, login, storage, API and their seven dependencies
-go. Until that PR lands, the behaviour below is what exists.
+There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
+data is generated from the same items the sections render (`fix/faq-one-source`,
+`feat/team-verified-six`). `site.sectionOrder` must list every section exactly
+once — a bad order fails the build. To hide a section, set
+`site.sectionVisibility[id]` to `false`.
 
-How the CMS behaves. Each of these has already caused a bug:
-
-- **Stored values win, and arrays replace.** A stored array replaces the
-  default array whole; it is not merged item by item.
-- **An admin save writes the whole document.** After one save, every value
-  comes from the database and editing `default-site-content.ts` changes nothing
-  on the live site.
-- **In production the admin is switched off.** No session secret is
-  configured: `/admin` redirects to `/admin/login?reason=config` and every
-  `/api/admin/*` call answers `503 Admin not configured`. Nothing has been saved
-  through it, and live renders exactly the code defaults (diffed against a build
-  with an empty store, 2026-09-11). **Until the admin is configured,
-  `lib/default-site-content.ts` is the live content.**
-- **A stored document that fails validation is dropped.** `safeBuild` then
-  serves the code defaults for the whole site and logs
-  `[site-content] stored document failed validation; serving defaults`. So a
-  new required field makes every existing stored document invalid. **Every
-  newly required field needs an entry in `migrateStored()`**
-  (`lib/load-site-content.ts`) that derives it from what the document already
-  says — never by inventing a value.
-- Production writes need `DATABASE_URL`. Without it the store is a local file
-  (`data/site-content.json`, gitignored) that refuses writes in production.
-- Writes use optimistic concurrency (a version number) and keep a history for
-  undo. Admin auth: `ADMIN_PASSWORD` / `SITE_ADMIN_PASSWORD` plus a session
-  secret, rate-limited login, a same-origin check on every write.
+**The CMS was removed on 2026-09-11** (`chore/remove-cms`): the admin UI, login,
+Neon store, Blob uploads, admin API, `proxy.ts` and seven dependencies. The admin
+was never configured in production, so nothing was ever saved through it, and
+its first save would have silently shadowed every later code change to those
+fields. A content change is now a code change: edit the file, and the build
+validates it.
 
 ## Design language, as built
 
@@ -179,8 +154,8 @@ verify-site checks 1 and 2 catch both.
   state is native to `<summary>`. Check 14 reads the answers from the served
   HTML — not from the DOM after a click — and the open state from the
   accessibility tree.
-- `robots.txt` disallows `/admin/` and `/api/` (and `/tokens`, `/rebuild`,
-  routes that no longer exist). The sitemap lists the five public routes.
+- `robots.txt` disallows only `/tokens` and `/rebuild`, routes that no longer
+  exist. The sitemap lists the five public routes.
 - The OG image is `app/opengraph-image.tsx`. The apple-touch-icon is
   `public/apple-touch-icon.png`, declared in the layout: an explicit `icons`
   object suppresses Next's `app/apple-icon` convention.
@@ -200,9 +175,7 @@ at the end, which means nobody has decided yet.
 - **A person is listed only with a verified LinkedIn profile — enforced at
   load, not by convention.** A team member's `profileUrl` is required and must
   be a `linkedin.com/in/` URL. The site content is parsed when it loads, so a
-  member without one fails the build, and no link can be built from a handle;
-  a stored member without one is dropped by `migrateStored()`, never given a
-  link. Role, experience and stack stay empty until real data exists — never
+  member without one fails the build, and no link can be built from a handle. Role, experience and stack stay empty until real data exists — never
   examples. Person structured data comes from the same roster, emitting only
   the fields that exist. *Holds* with `feat/team-verified-six` (checks 14, 27).
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
@@ -212,8 +185,8 @@ at the end, which means nobody has decided yet.
   emphasis, no meta strings joined with middle dots, mono for machine output
   only.** *Holds* with `design/rules-decided`.
 - **Every metric carries a shipped or target label.** No unlabelled numbers.
-  Enforced at build time in `/content/metrics.ts`, by the CMS schema for the
-  case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
+  Enforced at build time in `/content/metrics.ts`, by the site-content schema
+  for the case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
   the WarmChats KPIs are labelled (verify-site check 8).
   **One scoped exception, decided 2026-09-11:** the restaurant-search meta
   description says "keeping most traffic under 100ms" with no label. The figure
@@ -221,10 +194,10 @@ at the end, which means nobody has decided yet.
   site shows it, and a meta description is not a page claim. The exception is
   that one string in `app/work/restaurant-search/page.tsx` and nothing else: any
   other figure in metadata, and every figure on a page, carries a label or goes.
-- **A published project links to its write-up.** Enforced in both layers
-  (`state: published | awaiting-asset`). There is no fallback link: a project
+- **A published project links to its write-up.** Enforced by both schemas in
+  `/content` (`state: published | awaiting-asset`). There is no fallback link: a project
   without a write-up is shown with no link at all. *Holds* (check 9).
-- **Content lives in `/content` or the CMS, not in JSX.** *Holds*, except the
+- **Content lives in `/content`, not in JSX.** *Holds*, except the
   WarmChats case study and the privacy policy, which are hardcoded.
 - **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
   *Holds* with `fix/case-study-headings` (checks 11 and 26).
@@ -262,8 +235,8 @@ tree, so a regression to click-mounted answers fails it.
 `yarn verify:site` runs `scripts/verify-site.mjs`, a black-box suite, against
 production; `--base http://localhost:3000` runs it against a local build. It
 asserts what must hold whatever the content says; each check names the bug it
-exists to catch. `--repo .` adds the repository checks; `--probe-writes` sends
-unauthenticated writes to the admin API (harmless while the guard holds).
+exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retired admin gone:
+`/admin` and `/api/admin/*` must answer 404.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
@@ -317,7 +290,7 @@ text, gradients in CTA and Team), and one card shadow repeated across sections.
 | The "under 100ms" meta description | **Stays unlabelled**: a scoped exception to the label rule, recorded under Hard rules | `chore/low-findings` |
 | FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
 | COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
-| The CMS | **Removed**, in its own PR after this batch merges (see Two content layers) | not started |
+| The CMS | **Removed**: content, schema and validation moved to `/content`; admin, store, API and seven dependencies deleted (see Content) | `chore/remove-cms` |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
 
 ## Reference documents

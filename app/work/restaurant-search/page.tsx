@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import CaseStudy from "@/components/CaseStudy";
 import { SiteContentProvider } from "@/context/SiteContentContext";
-import { getSiteContent } from "@/lib/load-site-content";
+import { siteContent } from "@/content/site";
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RestaurantSearchPage() {
-  const content = await getSiteContent();
+  const content = siteContent;
   const site = getSiteUrl().toString();
   const url = new URL("/work/restaurant-search", site).toString();
   /* The same BreadcrumbList + Article graph as /work/warmchats — this page had

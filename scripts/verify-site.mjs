@@ -10,7 +10,6 @@
  *   yarn verify:site --base http://localhost:3000      against a local build
  *   options:  --widths 1440,390   --only 1,2,8   --json report.json
  *             --repo <checkout>   runs check 24 (lockfile, tsc, eslint, tracked build output)
- *             --probe-writes      check 17 also sends unauthenticated PUT/POST to the admin API
  *
  * Routes come from the site's own /sitemap.xml, so a page is covered the day
  * it is published.
@@ -46,7 +45,6 @@ const WIDTHS = String(opt("widths", "1440,390")).split(",").map(Number);
 const ONLY = opt("only") ? new Set(String(opt("only")).split(",")) : null;
 const JSON_OUT = opt("json");
 const REPO = opt("repo");
-const PROBE_WRITES = argv.includes("--probe-writes");
 const PROD_HOST = "boltfusiontech.com";
 const PROD_ORIGIN = `https://${PROD_HOST}`;
 
@@ -1617,27 +1615,31 @@ await (async () => {
   if (!want(17)) return;
   const F = [];
   const I = [];
-  const a = await http(`${BASE}/admin`);
-  const finalPath = a.final ? new URL(a.final).pathname : "";
-  I.push(`/admin, signed out: ${a.status} at ${short(a.final || "")}`);
-  if (a.status === 200 && !finalPath.startsWith("/admin/login") && !/type="password"/i.test(a.html || "")) F.push("/admin shows a signed-out visitor something other than the sign-in page");
-  if (!(/noindex/i.test(a.robots || "") || /<meta[^>]+name="robots"[^>]+noindex/i.test(a.html || ""))) F.push("/admin is not marked noindex");
-  const g = await fetch(`${BASE}/api/admin/content`).catch(() => ({ status: 0 }));
-  if (g.status === 503) I.push("the admin API answers 503 “Admin not configured” — the admin is switched off on this deployment");
-  else if (g.status !== 401 && g.status !== 403) F.push(`GET /api/admin/content with no session → ${g.status}, expected 401`);
-  if (PROBE_WRITES) {
-    /* Both bodies are invalid on purpose: if the auth guard ever failed, the
-       request would still be rejected before anything is written. */
-    const p = await fetch(`${BASE}/api/admin/content`, { method: "PUT", headers: { "content-type": "application/json" }, body: "not json — verify-site probe" }).catch(() => ({ status: 0 }));
-    if (p.status < 400) F.push(`PUT /api/admin/content with no session → ${p.status}: accepted`);
-    else I.push(`PUT /api/admin/content with no session → ${p.status}`);
-    const u = await fetch(`${BASE}/api/admin/upload`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: "blob.generate-client-token", payload: { pathname: "verify-site-probe.txt", callbackUrl: `${BASE}/api/admin/upload`, clientPayload: null, multipart: false } }) }).catch(() => ({ status: 0 }));
-    if (u.status < 400) F.push(`POST /api/admin/upload asking for an upload token with no session → ${u.status}: a token was issued`);
-    else I.push(`POST /api/admin/upload asking for an upload token with no session → ${u.status}`);
-  } else I.push("write probes skipped — pass --probe-writes to send unauthenticated PUT/POST to the admin API");
+  /* The CMS was removed on 2026-09-11. Its routes must stay gone: an admin or
+     an API that quietly comes back is a sign-in surface nobody is watching. */
+  const RETIRED = ["/admin", "/admin/login", "/api/admin/content", "/api/admin/login", "/api/admin/upload"];
+  for (const p of RETIRED) {
+    const r = await fetch(`${BASE}${p}`, { redirect: "manual" }).catch(() => ({ status: 0 }));
+    if (r.status !== 404) F.push(`${p} answers ${r.status} — the retired admin must return 404`);
+  }
   const rb = await http(`${BASE}/robots.txt`);
-  for (const p of ["/admin", "/api/"]) if (!new RegExp(`Disallow:\\s*${p}`, "i").test(rb.text || "")) F.push(`robots.txt does not disallow ${p}`);
-  results.push({ id: 17, title: "The admin is noindexed and refuses anyone signed out", catches: "an editor or a write endpoint reachable without a session", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+  if (/\/admin|\/api\//i.test(rb.text || "")) F.push("robots.txt still names /admin or /api/ — a route that does not exist needs no rule");
+  const seen = new Set();
+  for (const [k, v] of Object.entries(visits))
+    for (const l of v.links || []) {
+      let path = "";
+      try {
+        path = new URL(l.abs).pathname;
+      } catch {
+        continue;
+      }
+      if (/^\/(admin|api)(\/|$)/.test(path) && !seen.has(path)) {
+        seen.add(path);
+        F.push(`${at(k)}: a link to ${l.href} — the admin is gone`);
+      }
+    }
+  I.push(`${RETIRED.join(", ")} checked for 404`);
+  results.push({ id: 17, title: "The retired admin stays gone: /admin and /api answer 404", catches: "an admin or an API route coming back unnoticed", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
 })();
 
 /* 18 */

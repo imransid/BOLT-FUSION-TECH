@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 /**
- * Typed content schemas — PLAN.md §8.
+ * Typed content schemas.
  *
- * "Build every section reading from typed files in /content during the sprint.
- *  Those files become Payload collections in Phase 2."
- *
- * Every schema below is shaped to migrate 1:1 onto a Payload collection:
+ * The site's content lives in these typed files, parsed at load. There is no
+ * CMS: it was removed on 2026-09-11, and PLAN.md §8's Payload plan is
+ * superseded. The shape rules below still hold — they keep the files easy to
+ * read, diff and check:
  *  · a stable `id` is the slug / document key
  *  · media is a path string, which becomes a media-collection relation
  *  · relations are id strings, not nested objects

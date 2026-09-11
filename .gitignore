@@ -24,9 +24,6 @@
 .DS_Store
 *.pem
 
-# local dev CMS content (prod uses Neon Postgres)
-/data/site-content.json
-/data/site-content-history.json
 
 # debug
 npm-debug.log*

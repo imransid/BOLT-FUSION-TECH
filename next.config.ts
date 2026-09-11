@@ -12,10 +12,6 @@ const nextConfig: NextConfig = {
     root: projectRoot,
   },
   images: {
-    remotePatterns: [
-      // Admin-uploaded images (Vercel Blob).
-      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
-    ],
     // AVIF first (best compression for the large section photos), then WebP.
     formats: ["image/avif", "image/webp"],
     // Optimized image variants rarely change — cache them for 31 days.

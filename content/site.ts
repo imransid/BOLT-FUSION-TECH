@@ -1,4 +1,18 @@
-import { siteContentSchema, type SiteContent } from "@/lib/site-content-schema";
+import "server-only";
+
+import { parseContent } from "./schema";
+import { siteContentSchema, type SiteContent } from "./site-schema";
+
+/**
+ * The site's content — navigation, hero, every homepage section, the case
+ * study, FAQ, team and footer — as one typed object. It was the CMS's code
+ * defaults; the CMS was removed on 2026-09-11 and this is simply the content.
+ * Parsed when the module loads, like every other /content file, so a malformed
+ * entry fails `next build` with the file named, instead of reaching a page.
+ *
+ * Server-only: pages hand it to <SiteContentProvider>. Never re-export it from
+ * the /content barrel — client components import that barrel.
+ */
 
 const raw: SiteContent = {
   meta: {
@@ -571,4 +585,15 @@ const raw: SiteContent = {
   },
 };
 
-export const defaultSiteContent: SiteContent = siteContentSchema.parse(raw);
+/* One object now serves every page and every render, where each request used to
+   get a freshly parsed copy — so it is frozen: a mutation throws instead of
+   silently changing another page. */
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const v of Object.values(value)) deepFreeze(v);
+  }
+  return value;
+}
+
+export const siteContent: SiteContent = deepFreeze(parseContent(siteContentSchema, raw, "site.ts"));

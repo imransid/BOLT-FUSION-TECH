@@ -19,7 +19,7 @@ export default function Hero() {
   const { hero: h } = useSiteContent();
 
   // Line 2 carries the hero's single amber phrase. Split on the FIRST occurrence
-  // so each fragment renders exactly once; if a CMS edit drops the substring from
+  // so each fragment renders exactly once; if a content edit drops the substring from
   // line 2, `accentAt` is -1 and line 2 degrades to plain text instead of breaking.
   const accent = h.headlineLine2Accent.trim();
   const accentAt = accent ? h.headlineLine2.indexOf(accent) : -1;
@@ -102,7 +102,7 @@ export default function Hero() {
           </span>
           {/* The qualifier. Tight tracking is a display-size device and smears at
               this size, so it resets to normal. max-width is in `em` (not `ch`,
-              not nowrap) so longer CMS copy reflows instead of clipping.
+              not nowrap) so longer copy reflows instead of clipping.
 
               The 0.42 ratio is deliberately allowed to RISE below ~466px. Straight
               0.42 puts this line at 14.5px on a 375px screen, under the 16px

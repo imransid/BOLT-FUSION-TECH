@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 
-import type { SiteContent } from "@/lib/site-content-schema";
+import type { SiteContent } from "@/content/site-schema";
 
 const SiteContentContext = createContext<SiteContent | null>(null);
 

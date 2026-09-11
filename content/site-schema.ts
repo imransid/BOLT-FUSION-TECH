@@ -91,7 +91,7 @@ const serviceCardSchema = z.object({
 const LINKEDIN_PROFILE = /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?$/;
 
 /** role, experience and stack are deliberately blank for every member until
- *  real data exists — see the note on `team.roster` in default-site-content.ts. */
+ *  real data exists — see the note on `team.roster` in content/site.ts. */
 const teamMemberSchema = z.object({
   /** Stable list key. Names and handles can collide; an id cannot, so React
    *  reconciliation never mixes two people's cards up. */
@@ -132,9 +132,8 @@ const retrievalLaneSchema = z.object({
 });
 
 /* Every figure carries a shipped or target label (CLAUDE.md hard rule).
-   Required here because the case-study KPIs were the one path where the rule
-   was not enforced: content/metrics.ts gates its figures at build time, but a
-   KPI could reach the page through the CMS with no label at all. */
+   Required here as well as in content/metrics.ts, so no KPI can reach a page
+   without one. */
 export const kpiStatusSchema = z.enum(["shipped", "target"]);
 
 const caseStudyKpiSchema = z.object({
@@ -180,7 +179,14 @@ export const siteContentSchema = z.object({
     ogDescription: z.string(),
   }),
   site: z.object({
-    sectionOrder: z.array(z.enum(sectionIds)),
+    /* Every section exactly once. The old loader repaired a bad order by
+       appending whatever was missing; now a bad order fails the build. To hide
+       a section, set sectionVisibility[id] to false. */
+    sectionOrder: z
+      .array(z.enum(sectionIds))
+      .refine((order) => order.length === sectionIds.length && sectionIds.every((id) => order.includes(id)), {
+        message: "site.sectionOrder must list every section exactly once",
+      }),
     sectionVisibility: z.record(z.string(), z.boolean()).default({}),
   }),
   navbar: z.object({
@@ -213,10 +219,7 @@ export const siteContentSchema = z.object({
   }),
   /* Every key here is NEW. The old shape (headlineLine1-3, intro, metrics,
      footerTitle, trustPoints, imageSrc...) carried invented figures — "10X
-     Faster Delivery", "99.9% Defect-Free". Reusing any of those key names would
-     let a stored CMS document keep serving them straight past this rewrite,
-     because deepMerge lets stored values win. Renaming instead means zod strips
-     the stale keys as unknown and every field below falls back to defaults. */
+     Faster Delivery", "99.9% Defect-Free" — and was replaced, not renamed. */
   aiExcellence: z.object({
     heading: z.string(),
     subline: z.string(),

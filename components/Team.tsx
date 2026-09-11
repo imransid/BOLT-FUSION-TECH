@@ -11,7 +11,7 @@ import {
 } from "framer-motion";
 
 import { useSiteContent } from "@/context/SiteContentContext";
-import type { SiteContent } from "@/lib/site-content-schema";
+import type { SiteContent } from "@/content/site-schema";
 
 const springSoft = { type: "spring" as const, stiffness: 280, damping: 32, mass: 0.9 };
 
@@ -81,7 +81,7 @@ function TeamMemberCard({
 
   const href = member.profileUrl;
   // role, experience and stack are deliberately empty until each engineer
-  // supplies real values (default-site-content.ts). Each renders only when
+  // supplies real values (content/site.ts). Each renders only when
   // present: never a placeholder, never an example.
   const role = member.role?.trim();
   const experience = member.experience?.trim();

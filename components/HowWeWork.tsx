@@ -15,8 +15,7 @@ import { reveal } from "@/lib/reveal";
  * 01/02/03 numbering exactly where the content is genuinely a sequence, and
  * COPY.md §6 says so explicitly.
  *
- * Data comes from /content (processSteps, services), not from the CMS document and
- * not hardcoded, so these become Payload collections unchanged in Phase 2.
+ * Data comes from /content (processSteps, services), not hardcoded.
  */
 
 const CARD_SHADOW = "16px 24px 20px 8px rgba(0,0,0,0.4)";

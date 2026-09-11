@@ -212,6 +212,10 @@ Schema is the part that reliably pays. `llms.txt` is cheap optionality.
 
 ## 8. Dynamic layer (Phase 2 — after the sprint)
 
+> **Superseded 2026-09-11.** The site has no CMS. An admin was built, never
+> configured in production, and removed without ever saving content; the
+> content stays in typed `/content` files. This section is kept as history.
+
 **Payload CMS 3**, inside the same Next.js repo, Postgres, self-hosted.
 
 **Collections:** `team_members` · `projects` · `metrics` (enforced `shipped|target` field) · `services` · `testimonials` (with `verified` flag) · `faqs` · `posts` · `clients` · `leads` · `media` · `users`
@@ -303,8 +307,8 @@ All of it goes in `content/team.ts` and section 5 picks it up with no component 
 | Week | Work |
 |---|---|
 | 2 | Case studies for the other 2 projects |
-| 2–3 | Payload install, collections, migrate `/content` |
-| 3 | Admin panel: nav global, section builder, leads inbox, roles |
+| 2–3 | ~~Payload install, collections, migrate `/content`~~ — dropped 2026-09-11, there is no CMS |
+| 3 | ~~Admin panel: nav global, section builder, leads inbox, roles~~ — dropped 2026-09-11 |
 | 3–4 | `/services/*`, 3 industry pages, `/insights` |
 | Ongoing | One real named testimonial, Clutch profile, LinkedIn headcount match, blog 1–2×/month |
 

@@ -16,15 +16,12 @@ import CTA from "@/components/CTA";
 import CalendlyInlineEmbed from "@/components/CalendlyInlineEmbed";
 import Footer from "@/components/Footer";
 import { SiteContentProvider } from "@/context/SiteContentContext";
-import { getSiteContent } from "@/lib/load-site-content";
+import { siteContent } from "@/content/site";
 import { breadcrumbLd, buildGraph, jsonLdHtml } from "@/lib/structured-data";
-import type { SectionId } from "@/lib/site-content-schema";
-
-/** ISR: rebuilds this page periodically so HTML/metadata stay cache-friendly for crawlers. Lower if CMS edits must appear faster. */
-export const revalidate = 60;
+import type { SectionId } from "@/content/site-schema";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const c = await getSiteContent();
+  const c = siteContent;
   const site = getSiteUrl();
   const canonical = site.toString();
 
@@ -94,7 +91,7 @@ function renderSection(id: SectionId, blurb: string) {
 }
 
 export default async function Home() {
-  const content = await getSiteContent();
+  const content = siteContent;
   const { sectionOrder, sectionVisibility } = content.site;
   const siteUrl = getSiteUrl().toString();
   const sameAs = content.footer.socialLinks.map((l) => l.url);
@@ -111,8 +108,8 @@ export default async function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          // Escape `<` so an admin-entered "</script>" in any string field can't
-          // break out of the JSON-LD block (stored-XSS guard).
+          // Escape `<` so a "</script>" in any content string can't break out of
+          // the JSON-LD block.
           __html: jsonLdHtml(
             buildGraph(siteUrl, sameAs, renderedFaq, renderedTeam, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
           ),
