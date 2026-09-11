@@ -69,6 +69,29 @@ const EXPECT_LD = [
 
 const want = (id) => !ONLY || ONLY.has(String(id));
 
+/* A page's SERVED text, as a crawler reads it: scripts, styles and templates
+   stripped (Next's RSC payload repeats the content and must not count),
+   entities decoded, and — for matching — every whitespace character removed,
+   so text split across inline tags still matches. */
+const decodeEntities = (s) =>
+  s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
+const squash = (s) => String(s).replace(/[\s\u00a0\u202f\u2009]+/g, "");
+const servedSquashed = (html) =>
+  squash(
+    decodeEntities(
+      html
+        .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<!--[\s\S]*?-->/g, "")
+        /* an image's alt text is content — it describes the screenshot — so it is
+           lifted out of the tag before the tags are dropped */
+        .replace(/<img\b[^>]*?\balt="([^"]*)"[^>]*>/gi, " $1 ")
+        .replace(/<[^>]+>/g, " "),
+    ),
+  );
+
 /* WCAG 2.2 Success Criterion 1.4.3 Contrast (Minimum), exception "Logotypes":
    "Text that is part of a logo or brand name has no contrast requirement."
    The exemption is scoped, and the scope is enforced:
@@ -1848,6 +1871,38 @@ check(26, "Headings step down one level at a time; title, description, canonical
     if (/noindex|nofollow/i.test(v.meta.robots || "")) F.push(`${route}: meta robots is "${v.meta.robots}"`);
   }
 });
+
+/* 30 — content parity: the inventory is a test, not a document */
+await (async () => {
+  if (!want(30)) return;
+  const F = [];
+  const I = [];
+  let inv;
+  try {
+    inv = JSON.parse(await readFile(new URL("./content-inventory.json", import.meta.url), "utf8"));
+  } catch (e) {
+    results.push({ id: 30, title: "Every inventoried piece of content is on its page", catches: "a redesign losing content silently", status: "FAIL", findings: [`scripts/content-inventory.json could not be read (${e.message})`], info: [] });
+    return;
+  }
+  const listed = Object.keys(inv.routes);
+  for (const r of ROUTES) if (!listed.includes(r)) F.push(`${r} is in the sitemap but has no inventory — every public page needs one before it ships`);
+  for (const r of listed) if (!ROUTES.includes(r)) F.push(`${r} is inventoried but no longer in the sitemap — a page with content has gone`);
+  for (const route of listed.filter((r) => ROUTES.includes(r))) {
+    const res = await fetch(BASE + route).catch(() => null);
+    if (!res || res.status !== 200) { F.push(`${route}: answered ${res ? res.status : "nothing"} — cannot check its content`); continue; }
+    const text = servedSquashed(await res.text());
+    let req = 0, present = 0;
+    for (const row of inv.routes[route]) {
+      for (const needle of row.needles) {
+        const hit = text.includes(squash(needle));
+        if (row.status === "cut") { if (hit) F.push(`${route}: "${row.item}" was cut${row.cut ? ` (${row.cut})` : ""}, but "${needle.slice(0, 60)}" is back`); }
+        else { req++; if (hit) present++; else F.push(`${route}: "${row.item}" is missing — "${needle.slice(0, 70)}" is not in the served HTML`); }
+      }
+    }
+    I.push(`${route}: ${present}/${req} required needles present across ${inv.routes[route].length} items`);
+  }
+  results.push({ id: 30, title: "Every inventoried piece of content is on its page", catches: "a redesign losing content silently", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+})();
 
 /* ── report ──────────────────────────────────────────────────────────────── */
 results.sort((a, b) => a.id - b.id);

@@ -1,0 +1,776 @@
+{
+  "about": [
+    "The content inventory — what every public page must carry. verify-site check 30 reads each page's SERVED HTML",
+    "(scripts stripped, entities decoded, whitespace ignored) and fails if a required needle is missing, if a cut item",
+    "is back, or if a page in the sitemap has no inventory. Drafted 2026-09-11 from the pages as served, grouped under",
+    "the section heading each item sits beneath. Changing content means changing this file on purpose: that is the point."
+  ],
+  "excludedAsInterfaceText": [
+    ", LinkedIn profile (opens in a new tab)",
+    "Bolt",
+    "Bolt Fusion Tech",
+    "Fusion",
+    "One delivery standard.",
+    "Scroll down",
+    "Senior engineers.",
+    "Swipe sideways for more — tap dots to jump",
+    "Tech",
+    "for Intelligent restaurant search",
+    "for WarmChats",
+    "to explore delivery"
+  ],
+  "routes": {
+    "/": [
+      {
+        "item": "Navigation",
+        "proves": "Wayfinding to every section",
+        "status": "required",
+        "needles": [
+          "Services",
+          "How we work",
+          "Work",
+          "Case studies",
+          "About",
+          "Team",
+          "Contact",
+          "Book a call"
+        ]
+      },
+      {
+        "item": "Hero: headline, subtext, tagline, calls to action",
+        "proves": "The positioning and three checkable promises",
+        "status": "required",
+        "needles": [
+          "We build AI systems that are still running in six months.",
+          "Senior engineers, published architecture, and a named team befor",
+          "Senior-only teams, named engineers up front, 4–8 hours of overla",
+          "Start a 2-week pilot",
+          "Book a technical call"
+        ]
+      },
+      {
+        "item": "Architecture: three lanes and the four labelled metrics",
+        "proves": "The published architecture and shipped results",
+        "status": "required",
+        "needles": [
+          "Type a query. Watch what it costs.",
+          "Most AI products die after launch — too slow, too expensive, too",
+          "Keyword lane",
+          "— simple intents, no model call.",
+          "PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.",
+          "$0 marginal cost",
+          "AI lane",
+          "— complex intent becomes structured retrieval.",
+          "Claude Haiku parses intent to JSON, then OpenAI embeddings and p",
+          "~$0.001 per search",
+          "Cache lane",
+          "— repeat demand disappears at the edge.",
+          "Redis, 30-second TTL, key is tenant plus query plus geo plus fil",
+          "30–40% hit rate target",
+          "<100ms",
+          "Search response, 80% of traffic",
+          "Restaurant discovery platform",
+          "~$0.001",
+          "Average cost per AI query",
+          "~90%",
+          "Of AI calls routed to Haiku, not a frontier model",
+          "<60s",
+          "First reply to every inbound lead",
+          "WarmChats",
+          "Every figure here comes from a system we shipped, and every one",
+          "Read the full architecture"
+        ]
+      },
+      {
+        "item": "About: bio, capability list, engagement types",
+        "proves": "A delivery claim; cut in the rebuild once decided",
+        "status": "required",
+        "needles": [
+          "Why Bolt Fusion Tech",
+          "Clients come to us when delivery has to be predictable: clear re",
+          "Web & mobile apps",
+          "APIs & integrations",
+          "Cloud & DevOps",
+          "Product discovery",
+          "UI/UX engineering",
+          "Quality & launch readiness",
+          "MVP & greenfield builds",
+          "Scope, architecture, and a shippable first version",
+          "Typical 8–16 weeks",
+          "Embedded product teams",
+          "Roadmap delivery with your PMs and stakeholders",
+          "Ongoing",
+          "Stabilize & scale",
+          "Performance, reliability, and maintainability for live systems",
+          "As needed"
+        ]
+      },
+      {
+        "item": "Team: six verified engineers",
+        "proves": "Named people you can check",
+        "status": "required",
+        "needles": [
+          "Senior engineers.One delivery standard.",
+          "Each card opens the engineer's LinkedIn profile in a new tab—so",
+          "specialists",
+          "Rafa",
+          "@rafa",
+          "Shourab",
+          "@shourab",
+          "Nazirul",
+          "@nazirul",
+          "Talha",
+          "@talha",
+          "Nihal",
+          "@nihal",
+          "Sabbir",
+          "@sabbir",
+          "Your bench",
+          "// who builds with you"
+        ]
+      },
+      {
+        "item": "Proof: the two write-ups",
+        "proves": "Real systems, each with a technical write-up",
+        "status": "required",
+        "needles": [
+          "Two products, two write-ups.",
+          "Each one has a full technical write-up, not a screenshot and a sentence.",
+          "WarmChats landing page: 'Turn new real estate leads into booked appoin",
+          "Real estate, AI automation, microservices",
+          "WarmChats — AI booking for real estate",
+          "Always-first AI follow-up for agents: Claude qualifies and route",
+          "Read the case study",
+          "Case study visual for AI-assisted restaurant search and discovery prod",
+          "Multi-tenant microservice, tiered search, observable by design",
+          "Intelligent restaurant search",
+          "Conversational discovery with explicit routing, predictable AI u",
+          "See all case studies"
+        ]
+      },
+      {
+        "item": "How we work: process, engagement models, pilot",
+        "proves": "What a founder buys and how it runs",
+        "status": "required",
+        "needles": [
+          "How a project actually runs.",
+          "Discovery and plan",
+          "We agree on users, success metrics, constraints and risks, then",
+          "Build in iterations",
+          "Working software every cycle, with demos, an open backlog, and e",
+          "Launch and operate",
+          "Release with monitoring, runbooks and a sensible cutover. We sup",
+          "Model",
+          "Shape",
+          "Timeline",
+          "MVP build",
+          "Scope, architecture, shippable v1",
+          "8–16 weeks",
+          "Embedded team",
+          "Roadmap delivery with your PMs",
+          "Stabilise and scale",
+          "Performance, reliability, maintainability",
+          "Most engagements start with the two-week pilot below. We’ll give",
+          "Two-week sprints, a demo at the end of each, a named escalation",
+          "See recent work"
+        ]
+      },
+      {
+        "item": "Services: intro, stack list, four cards",
+        "proves": "Capabilities; cut in the rebuild once decided",
+        "status": "required",
+        "needles": [
+          "Practical engineering aligned to your roadmap: you get transpare",
+          "TypeScript & React",
+          "Next.js & Node",
+          "Mobile (iOS / Android)",
+          "AWS & cloud-native",
+          "API design",
+          "Automated testing",
+          "Discuss your project",
+          "Custom product development",
+          "End-to-end web and mobile builds: discovery workshops, technical",
+          "Platforms & integrations",
+          "Connect products to payments, CRMs, data pipelines, and internal",
+          "Reliability & scale",
+          "Hardening for real traffic: performance tuning, monitoring and a",
+          "UX & frontend craft",
+          "Interfaces that match your brand and usability goals: accessible",
+          "What we deliver"
+        ]
+      },
+      {
+        "item": "FAQ: five questions and answers",
+        "proves": "Objections answered",
+        "status": "required",
+        "needles": [
+          "Questions? Answers.",
+          "What kinds of projects do you take on?",
+          "We focus on custom web and mobile products, internal tools, inte",
+          "How do you estimate timeline and cost?",
+          "After a short discovery, we break work into milestones with acce",
+          "What does your delivery process look like?",
+          "Discovery and plan first, then iterative builds with demos and a",
+          "Can you work with our existing codebase?",
+          "Yes. We routinely join live products: code review, refactors, te",
+          "How do we get started?",
+          "Use the contact section to book a call or email us with goals, t",
+          "FAQ"
+        ]
+      },
+      {
+        "item": "Contact and booking",
+        "proves": "Routes to a conversation",
+        "status": "required",
+        "needles": [
+          "Tell us what you need to ship",
+          "Share goals, timeline, and constraints—we'll reply with honest f",
+          "Pick a time (30 min)",
+          "Email the team",
+          "Or grab an open slot below — same 30‑minute intro call.",
+          "Taking new engagements"
+        ]
+      },
+      {
+        "item": "Footer",
+        "proves": "Ownership and social links",
+        "status": "required",
+        "needles": [
+          "© 2026 Bolt Fusion Tech",
+          "All rights reserved.",
+          "LinkedIn",
+          "Facebook",
+          "X (Twitter)",
+          "Privacy Policy",
+          "Back to top"
+        ]
+      }
+    ],
+    "/work": [
+      {
+        "item": "The systems, and how they were built.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "The systems, and how they were built.",
+          "Two write-ups so far. Each one covers the actual architecture —"
+        ]
+      },
+      {
+        "item": "WarmChats",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "WarmChats",
+          "Always-first AI follow-up for real estate agents: Claude qualifi",
+          "<60s",
+          "First reply to every inbound lead",
+          "Claude",
+          "GPT-4.1",
+          "Microservices",
+          "Read the write-up for WarmChats"
+        ]
+      },
+      {
+        "item": "Intelligent restaurant search",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Intelligent restaurant search",
+          "Conversational discovery with explicit routing, predictable AI u",
+          "<100ms",
+          "Search response, 80% of traffic",
+          "~$0.001",
+          "Average cost per AI query",
+          "~90%",
+          "Of AI calls routed to Haiku, not a frontier model",
+          "NestJS",
+          "PostGIS",
+          "pgvector",
+          "Redis",
+          "Read the write-up for Intelligent restaurant search"
+        ]
+      },
+      {
+        "item": "Building something with a constraint like these?",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Building something with a constraint like these?",
+          "Start a pilot"
+        ]
+      }
+    ],
+    "/work/warmchats": [
+      {
+        "item": "Page header",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "← All work",
+          "Case study: real estate AI"
+        ]
+      },
+      {
+        "item": "WarmChats: turn new real estate leads into booked appointments — automatically.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "WarmChats: turn new real estate leads into booked appointments — automatically.",
+          "An always-on AI assistant for real estate agents. WarmChats inst",
+          "Next.js, NestJS, Django, PostgreSQL, Claude, GPT-4.1 and event-driven microservices",
+          "Visit warmchats.com",
+          "Book a similar build",
+          "WarmChats landing page — 'Turn new real estate leads into booked appoi",
+          "Live product",
+          "warmchats.com",
+          "Executive summary",
+          "For real estate agents, speed-to-lead decides who gets the showi",
+          "By the numbers"
+        ]
+      },
+      {
+        "item": "Built for speed-to-lead.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Built for speed-to-lead.",
+          "<60s",
+          "First response",
+          "AI replies the moment a new lead lands — Zillow, open house, or Facebook.",
+          "24/7",
+          "Autonomous",
+          "Qualifies, nurtures, and books showings with no agent in the loop.",
+          "100%",
+          "Tracked",
+          "Every lead, message, and booking logged across email and SMS.",
+          "Figures reflect the WarmChats product's automation targets.",
+          "How it works"
+        ]
+      },
+      {
+        "item": "Qualify → Engage → Book, fully automated.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Qualify → Engage → Book, fully automated.",
+          "Each new lead flows through three AI stages. The model handles t",
+          "Qualify",
+          "Lead intake & buyer/seller routing",
+          "Claude reads every new lead, works out whether they're a buyer o",
+          "Claude classifies intent — buyer, seller, urgency, and fit",
+          "Leads self-route: Buyer → Nurture, Seller → Nurture, Appointment → Booking",
+          "Spam and tyre-kickers filtered before they reach the agent",
+          "AI lead routing",
+          "Engage",
+          "Instant replies on email & SMS",
+          "GPT-4.1 answers within 60 seconds in the agent's voice, asks the",
+          "GPT-4.1 replies in under 60s, tuned to the agent's brand voice",
+          "Context carried across the whole thread and both channels",
+          "Hands off to the agent the moment a human is genuinely needed",
+          "Conversational AI",
+          "Book",
+          "Showings booked automatically",
+          "The assistant detects intent to meet, offers real availability,",
+          "Detects booking intent and proposes open slots",
+          "Confirms and writes appointments automatically",
+          "Reminders and re-engagement close the no-show gap",
+          "Zero-touch booking",
+          "The product"
+        ]
+      },
+      {
+        "item": "Inside WarmChats.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Inside WarmChats.",
+          "The agent-facing product — a live operator dashboard, self-routi",
+          "Operator dashboard",
+          "Estimated pipeline value, hot leads, appointments, and AI wins —",
+          "AI Agent — leads route themselves",
+          "Buyer Nurture, Seller Nurture, Re-Engagement, Booking Flow, and",
+          "Two-minute onboarding",
+          "Connect email or SMS and the AI goes live across the agent's cha",
+          "Architecture"
+        ]
+      },
+      {
+        "item": "Event-driven microservices.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Event-driven microservices.",
+          "Independent services communicate over events and webhooks, so th",
+          "Web & dashboard",
+          "Next.js",
+          "Marketing site, auth, and operator dashboard",
+          "Live conversation view with full message history",
+          "API gateway",
+          "NestJS",
+          "Typed gateway for web, webhooks, and integrations",
+          "Auth, rate limiting, and event publishing",
+          "AI orchestration",
+          "Django + LLMs",
+          "Claude lead scoring + GPT-4.1 reply generation",
+          "Prompt templates, retries, and safety guardrails",
+          "Messaging & scheduling",
+          "Telephony and calendar",
+          "Inbound/outbound across SMS and chat channels",
+          "Availability lookup and automated booking writes",
+          "Engineering patterns",
+          "Event-driven",
+          "Microservices",
+          "Async workers",
+          "Idempotent webhooks",
+          "Audit log",
+          "Horizontal scale",
+          "Technology"
+        ]
+      },
+      {
+        "item": "The full stack.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "The full stack.",
+          "Frontend",
+          "React",
+          "TypeScript",
+          "Tailwind CSS",
+          "Services",
+          "Django",
+          "REST + Webhooks",
+          "Queue workers",
+          "Data",
+          "PostgreSQL",
+          "Redis",
+          "Event log",
+          "ORM / migrations",
+          "AI",
+          "Claude (Opus)",
+          "GPT-4.1",
+          "Prompt orchestration",
+          "Guardrails",
+          "Messaging & infra",
+          "Telephony / SMS",
+          "Webhooks",
+          "Docker",
+          "CI/CD",
+          "Outcome"
+        ]
+      },
+      {
+        "item": "What the business gets.",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "What the business gets.",
+          "Every new lead — Zillow, open house, or Facebook — answered in s",
+          "Agents freed from repetitive first-touch follow-up to focus on listings and closings.",
+          "A complete, searchable record of every conversation, qualification, and booking.",
+          "An architecture that scales from a solo agent to a brokerage run"
+        ]
+      },
+      {
+        "item": "Want an AI that books appointments while you sleep?",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Want an AI that books appointments while you sleep?",
+          "We design and ship product-grade AI systems — from lead capture",
+          "Book a strategy call",
+          "See more work"
+        ]
+      },
+      {
+        "item": "footer",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Custom software & product engineering in the UK, Malaysia and Bangladesh"
+        ]
+      }
+    ],
+    "/work/restaurant-search": [
+      {
+        "item": "Page header",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Case study: systems architecture"
+        ]
+      },
+      {
+        "item": "Intelligent restaurant search",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Intelligent restaurant search",
+          "Conversational discovery with explicit routing, predictable AI u",
+          "Multi-tenant microservice, tiered search, observable by design",
+          "Executive summary",
+          "We delivered a multi-tenant restaurant discovery microservice th",
+          "Case study visual for AI-assisted restaurant search and discovery prod",
+          "Case study visual for AI-assisted restaurant search and discovery product",
+          "System overview",
+          "Production posture",
+          "Service commitments"
+        ]
+      },
+      {
+        "item": "Latency, cost, isolation, and operations",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Latency, cost, isolation, and operations",
+          "<100ms",
+          "Search SLA",
+          "~80% of queries hit the fast lane",
+          "~$0.001",
+          "Avg. cost / AI search",
+          "Budgeted hybrid retrieval",
+          "Multi-tenant",
+          "Postgres RLS",
+          "Isolated rows per tenant",
+          "Observable",
+          "Production-ready",
+          "Metrics, logs, safe limits"
+        ]
+      },
+      {
+        "item": "Three-lane search architecture",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Three-lane search architecture",
+          "Each query is classified before any paid inference: deterministi",
+          "~80% of traffic, <80ms target",
+          "Keyword search",
+          "Simple intents, zero AI spend.",
+          "Queries like “Italian”, “sushi”, “pizza”.",
+          "PostgreSQL ILIKE plus PostGIS geo filters.",
+          "Predictable path—no model calls.",
+          "$0 marginal cost per query",
+          "~20% of traffic, <1200ms target",
+          "Natural language AI search",
+          "Complex intent → structured retrieval.",
+          "Examples: “romantic spot with live music near me”.",
+          "Claude Haiku parses intent to structured JSON.",
+          "OpenAI embeddings + pgvector cosine similarity in Postgres.",
+          "~$0.001 per search (budgeted)",
+          "Hot paths, <15ms target",
+          "Result cache",
+          "Repeat demand disappears at the edge.",
+          "Redis with 30s TTL on hashed keys.",
+          "Key = tenant + query + geo + filters + classification.",
+          "Hit-rate goal 30–40% to protect DB and models.",
+          "Technical stack"
+        ]
+      },
+      {
+        "item": "Implementation stack",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Implementation stack",
+          "Backend",
+          "NestJS 10",
+          "TypeScript (strict)",
+          "DDD + Hexagonal + CQRS",
+          "Data",
+          "PostgreSQL 17",
+          "PostGIS",
+          "pgvector",
+          "Row-level security (tenancy)",
+          "Cache & realtime",
+          "Redis 7 — result cache (30s)",
+          "Semantic intent cache (60s)",
+          "LLM rate limits (100/min/tenant)",
+          "Pulse: WebSocket + Redis pub/sub",
+          "AI services",
+          "Claude Haiku 4.5 — intent parsing (~90% of AI calls)",
+          "Claude Sonnet 4.6 — menu Q&A only",
+          "OpenAI text-embedding-3-small (1536-d)",
+          "Bounded contexts"
+        ]
+      },
+      {
+        "item": "Partitioning for maintainable evolution",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Partitioning for maintainable evolution",
+          "Five bounded contexts share a small kernel so search behavior ca",
+          "Primary bounded context",
+          "Discovery",
+          "The search core",
+          "Query classifier picks the lane.",
+          "Intent parser (Claude) for NL queries.",
+          "Search index in Postgres + hybrid ranker.",
+          "Engineering patterns",
+          "Domain-Driven Design",
+          "Hexagonal architecture",
+          "CQRS",
+          "Event-driven architecture",
+          "Tenancy",
+          "Configuration per brand",
+          "Valid vibes, cuisines, ranker weights, embedding templates.",
+          "In-memory registry with Redis warmup.",
+          "Indexing",
+          "Fresh vectors & listings",
+          "Venue CRUD on the search index.",
+          "Embedding saga on EntityIndexedEvent.",
+          "GoldenKeys",
+          "Smart filter chips",
+          "Auto-generated chips like “Rooftop”, “Live music”.",
+          "Cron every 6h from search analytics.",
+          "Pulse",
+          "Live venue status",
+          "Open/busy/wait signals.",
+          "Gateway on /pulse with WebSocket fan-out.",
+          "Shared kernel",
+          "TenantId & Geo value objects",
+          "Result<T, E> for explicit failures",
+          "Prisma + Redis services",
+          "TenantContext via AsyncLocalStorage",
+          "Pino logging",
+          "Claude & OpenAI adapters"
+        ]
+      },
+      {
+        "item": "footer",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "If you are evaluating search, ranking, or multi-tenant isolation",
+          "Discuss a similar engagement",
+          "Book a technical call"
+        ]
+      }
+    ],
+    "/privacy-policy": [
+      {
+        "item": "Privacy Policy — Bolt Fusion Tech",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "Privacy Policy — Bolt Fusion Tech",
+          "Last updated: 3 June 2026",
+          "Bolt Fusion Tech (“we”, “us”, or “our”) operates boltfusiontech.",
+          "boltfusiontech.com"
+        ]
+      },
+      {
+        "item": "1. Who we are",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "1. Who we are",
+          "Bolt Fusion Tech, with offices in the United Kingdom, Malaysia a",
+          "hello@boltfusiontech.com"
+        ]
+      },
+      {
+        "item": "2. Information we collect",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "2. Information we collect",
+          "We collect only what we need: information you give us (name, ema"
+        ]
+      },
+      {
+        "item": "3. How we use your information",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "3. How we use your information",
+          "To respond to enquiries and provide our services; to send inform"
+        ]
+      },
+      {
+        "item": "4. Social media and publishing tools",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "4. Social media and publishing tools",
+          "We operate official Bolt Fusion Tech pages on platforms includin"
+        ]
+      },
+      {
+        "item": "5. How we share information",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "5. How we share information",
+          "Only with service providers who help us operate (hosting, email,"
+        ]
+      },
+      {
+        "item": "6. Data retention",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "6. Data retention",
+          "We keep personal information only as long as necessary for the p"
+        ]
+      },
+      {
+        "item": "7. Your rights",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "7. Your rights",
+          "Depending on your location (including under the UK GDPR and simi"
+        ]
+      },
+      {
+        "item": "8. Data security",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "8. Data security",
+          "We apply reasonable technical and organisational measures to pro"
+        ]
+      },
+      {
+        "item": "9. International transfers",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "9. International transfers",
+          "As we operate across the UK, Malaysia, and Bangladesh, your info"
+        ]
+      },
+      {
+        "item": "10. Children's privacy",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "10. Children's privacy",
+          "Our website and services are not directed to children under 16,"
+        ]
+      },
+      {
+        "item": "11. Changes to this policy",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "11. Changes to this policy",
+          "We may update this policy from time to time. The “Last updated”"
+        ]
+      },
+      {
+        "item": "12. Contact us",
+        "proves": "",
+        "status": "required",
+        "needles": [
+          "12. Contact us",
+          "Questions? Email hello@boltfusiontech.com or write to one of our",
+          "← Back to boltfusiontech.com"
+        ]
+      }
+    ]
+  }
+}
