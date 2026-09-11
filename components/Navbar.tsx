@@ -32,19 +32,19 @@ export default function Navbar() {
           </a>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors duration-300"
+                className="whitespace-nowrap px-4 py-2 text-sm text-white/70 hover:text-white transition-colors duration-300"
               >
                 {link.label}
               </a>
             ))}
             <a
               href="#schedule"
-              className="beam-button corner-glow ml-4 px-5 py-2.5 text-sm rounded-full border border-white/10 bg-gradient-to-b from-[#0d0d0d] to-white/5 backdrop-blur-sm hover:border-white/25 transition-all duration-500 flex items-center gap-2 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
+              className="beam-button corner-glow ml-4 whitespace-nowrap px-5 py-2.5 text-sm rounded-full border border-white/10 bg-gradient-to-b from-[#0d0d0d] to-white/5 backdrop-blur-sm hover:border-white/25 transition-all duration-500 flex items-center gap-2 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +63,7 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden w-8 h-8 flex flex-col items-center justify-center gap-1.5"
+            className="xl:hidden w-8 h-8 flex flex-col items-center justify-center gap-1.5"
             aria-label="Toggle menu"
           >
             <motion.span
@@ -84,7 +84,7 @@ export default function Navbar() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden border-t border-white/5"
+              className="xl:hidden overflow-hidden border-t border-white/5"
             >
               <div className="flex max-h-[min(70dvh,calc(100dvh-4rem))] flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6">
                 <a
