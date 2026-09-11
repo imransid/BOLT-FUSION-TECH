@@ -130,7 +130,8 @@ verify-site checks 1 and 2 catch both.
   particles (9k on coarse pointers), dynamically imported with `ssr: false`,
   skipped for `prefers-reduced-motion` and without WebGL, render loop stopped
   off-screen and when the tab is hidden, dpr capped at 1.75. It is the only
-  WebGL on the site.
+  WebGL on the site. Being replaced by a raw WebGL2 renderer in the homepage
+  rebuild — see *The hero field* under Hard rules.
 - **Reduced motion:** nothing loops. The particle field is skipped, every CSS
   loop has a reduced-motion guard (`.beam-button` included), the hero arrow uses
   `useReducedMotion`, the CTA's status dot is `motion-safe:`. verify-site
@@ -184,10 +185,41 @@ at the end, which means nobody has decided yet.
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
   element the server sends at `opacity:0` is not. *Holds* with
   `fix/reveal-visible-html` (checks 4 and 5).
+- **The hero field — the one place WebGL is allowed, and never in the way.**
+  Decided 2026-09-11 for the homepage rebuild; *holds* once
+  `redesign/techwix-home` lands.
+  - The LCP element is a static poster `<img>` made from a real frame of the
+    field, never the canvas. The canvas fades in over it and cannot shift layout.
+  - Everything the hero says is server HTML. The field carries no information
+    and is `aria-hidden`.
+  - The fallback ships first; WebGL is progressive enhancement, imported only
+    after the first LCP entry and `load`, inside `requestIdleCallback`.
+  - **One draw call, no per-particle objects, no per-frame allocation.** This
+    rule used to read "`InstancedMesh` only". Its intent was one draw call and
+    no per-particle objects. A single `POINTS` draw in raw WebGL2 meets that
+    better than instanced quads — one vertex per particle instead of four, for
+    the same curl-noise shader — and weighs about 5KB gzipped against the 218KB
+    three.js / @react-three/fiber chunk it replaces. Do not bring three.js back
+    for the field.
+  - DPR capped at 1.75; down to 1,000 particles after two seconds of frames over
+    20ms; paused offscreen and when the tab is hidden.
+  - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
+    with Save-Data off. Phones get the poster and a CSS drift; under reduced
+    motion, the poster alone.
+  - **It sits beside the headline, never behind it.** On the old black hero it
+    sat behind the headline, and keeping the white type legible took five
+    overlay layers — two colour glows, a radial wash, a vignette and a fade to
+    black — which wiped the particles out. On the rebuild's navy panel the field
+    takes the right half and the headline sits on flat navy, so contrast holds
+    by construction and nothing covers the field. Putting it behind the
+    headline again means rebuilding those five layers.
 - **No tracked-out ALL-CAPS labels, no single headline word coloured for
   emphasis, no meta strings joined with middle dots, mono for machine output
   only.** *Holds* with `design/rules-decided`.
-- **Every metric carries a shipped or target label.** No unlabelled numbers.
+- **Every metric carries a shipped or target label.** No unlabelled numbers. A
+  figure counts wherever it sits, inside a sentence too (decided 2026-09-11):
+  four unlabelled figures in the architecture lanes survived because check 8
+  only saw standalone figures, and it is being extended to see them.
   Enforced at build time in `/content/metrics.ts`, by the site-content schema
   for the case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
   the WarmChats KPIs are labelled (verify-site check 8).
@@ -296,6 +328,17 @@ text, gradients in CTA and Team), and one card shadow repeated across sections.
 | COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
 | The CMS | **Removed**: content, schema and validation moved to `/content`; admin, store, API and seven dependencies deleted (see Content) | `chore/remove-cms` |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
+
+## Decided 2026-09-11, the homepage rebuild
+
+| question | decision | where |
+|---|---|---|
+| The design | **The clone's design becomes the homepage**, with every piece of real proof kept (reverses decision (a)); none of the Techwix theme's photos, logos, icon font or copy | `redesign/techwix-home` |
+| Sections | **Six that argue:** hero with a proof strip, the two write-ups, architecture, how we work, team, questions and contact | `redesign/techwix-home` |
+| About and Services | **Cut.** Generic reassurance and a "we do everything" card grid; recorded in COPY.md so a copy pass does not restore them | `redesign/techwix-home` |
+| The particle renderer | **Raw WebGL2, one points draw** — see *The hero field* under Hard rules | `redesign/techwix-home` |
+| Figures inside sentences | **Labelled, like every figure**; check 8 extended to see them | `redesign/techwix-home` |
+| Order of work | **CMS removal first**, then check 30 (content parity), then the homepage without WebGL, then the renderer | `chore/remove-cms`, `test/content-parity` |
 
 ## Reference documents
 
