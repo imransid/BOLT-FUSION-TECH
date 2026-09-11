@@ -88,6 +88,10 @@ const serviceCardSchema = z.object({
   desc: z.string(),
 });
 
+const LINKEDIN_PROFILE = /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?$/;
+
+/** role, experience and stack are deliberately blank for every member until
+ *  real data exists — see the note on `team.roster` in default-site-content.ts. */
 const teamMemberSchema = z.object({
   /** Stable list key. Names and handles can collide; an id cannot, so React
    *  reconciliation never mixes two people's cards up. */
@@ -97,15 +101,17 @@ const teamMemberSchema = z.object({
   /** null until a real photo exists — template avatars were deleted in triage. */
   image: z.string().nullable(),
   /** Required key — a card must always carry the field, so nobody can be added
-   *  without one. The value ships blank and is filled in via /admin; the card
+   *  without one. The value ships blank until real data exists; the card
    *  omits the line entirely while it is empty rather than reserving a gap. */
   role: z.string(),
   experience: z.string().optional(),
   stack: z.array(z.string()).optional(),
-  /** Omitted entirely unless we hold a VERIFIED profile for this person. There
-   *  is no fallback URL construction anywhere — a missing value renders a card
-   *  with no link, never a dead anchor and never "#". */
-  profileUrl: safeHref.optional(),
+  /** A VERIFIED LinkedIn profile. Required: COPY.md §5 (amended 2026-09-11)
+   *  lists only people with one, so nobody can be added without it. Must be a
+   *  linkedin.com/in/ URL, so a link is never constructed from a handle again. */
+  profileUrl: safeUrl.refine((v) => LINKEDIN_PROFILE.test(v), {
+    message: "profileUrl must be a verified linkedin.com/in/ profile URL",
+  }),
 });
 
 /** One defensible figure from a system we shipped. `sourceLabel` is the

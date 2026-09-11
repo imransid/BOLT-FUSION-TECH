@@ -44,27 +44,6 @@ export const metricSchema = z.object({
 });
 export type Metric = z.infer<typeof metricSchema>;
 
-/* ── team ───────────────────────────────────────────────────────────────────
- * COPY.md §5 requires photo, name, role, stack, years, LinkedIn on every card.
- * Four of those are nullable here because they are genuinely not supplied yet
- * (PLAN.md §9 lists "10 real team photos" as an open prerequisite). Nullable is
- * the honest type: the card renders without them rather than with a fabricated
- * role or a stock face.
- */
-export const teamMemberSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  role: pending(z.string().min(1)),
-  years: pending(z.string().min(1)),
-  stack: z.array(z.string().min(1)),
-  /** Path to a REAL photograph. null until one exists — never a template avatar. */
-  photo: pending(z.string().min(1)),
-  photoAlt: pending(z.string().min(1)),
-  /** Public profile used for verification. null when unverified — never guessed. */
-  linkedin: pending(z.string().url()),
-});
-export type TeamMember = z.infer<typeof teamMemberSchema>;
-
 /* ── projects ───────────────────────────────────────────────────────────────
  * `state` gates rendering. "published" needs a real screenshot and a write-up;
  * "awaiting-asset" renders as a declared empty slot instead of a claim we

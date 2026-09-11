@@ -72,6 +72,20 @@ function migrateStored(merged: Record<string, unknown>): void {
       }),
     };
   }
+
+  // team.roster[].profileUrl — required since COPY.md §5 was amended: only
+  // people with a verified LinkedIn are listed. A stored member without one is
+  // dropped, as the defaults dropped four — never given a link.
+  const tm = merged.team as { roster?: unknown } | undefined;
+  if (tm && Array.isArray(tm.roster)) {
+    merged.team = {
+      ...tm,
+      roster: tm.roster.filter((m) => {
+        const url = m && typeof m === "object" ? (m as { profileUrl?: unknown }).profileUrl : undefined;
+        return typeof url === "string" && url.trim() !== "";
+      }),
+    };
+  }
 }
 
 function buildContent(overrides: unknown): SiteContent {

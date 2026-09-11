@@ -156,7 +156,7 @@ const raw: SiteContent = {
     headlineLine1: "Senior engineers.",
     headlineLine2: "One delivery standard.",
     subtext:
-      "Cards with a verified LinkedIn profile open it in a new tab—so you can see who you would work with before you commit scope or budget.",
+      "Each card opens the engineer's LinkedIn profile in a new tab—so you can see who you would work with before you commit scope or budget.",
     statLabel: "specialists",
     // NO PHOTOGRAPHS YET, SO NO IMAGES. `image` stays null until a real
     // photograph of that engineer exists; the card then gains its photo slot.
@@ -164,9 +164,18 @@ const raw: SiteContent = {
     // fake faces, ever"; COPY.md §5). The template line-art that stood here was
     // removed, not renamed.
     //
-    // VERIFIED LINKS ONLY. `profileUrl` is present for a member only where the
-    // destination has been confirmed to be that person. Four are deliberately
-    // absent — see the note in each. Nothing here constructs a URL from a handle.
+    // THE SIX WITH A VERIFIED LINKEDIN, AND ONLY THEM (COPY.md §5, amended
+    // 2026-09-11). A member without a verified profile is not listed until one
+    // exists — Nadim, Arifur Rahman, Tareq and Joinal are off the section for
+    // that reason; git history records why each link was removed. The schema
+    // requires `profileUrl`, and nothing constructs a URL from a handle.
+    //
+    // ROLE, EXPERIENCE AND STACK ARE DELIBERATELY EMPTY, waiting on real data
+    // from each engineer. Do not fill them with examples, plausible titles or
+    // round numbers: an invented credential on a page built on verifiable claims
+    // is worse than none. Supply a real value and the card and the Person
+    // structured data take it with no component change; an empty field renders
+    // nothing, on the page or in the markup.
     roster: [
       {
         id: "rafa",
@@ -179,17 +188,6 @@ const raw: SiteContent = {
         profileUrl: "https://www.linkedin.com/in/imran1993/",
       },
       {
-        // NO LINK: the previous value was x.com/nadim, a generic handle
-        // belonging to someone else. Awaiting a verified profile.
-        id: "nadim",
-        name: "Nadim",
-        handle: "@nadim",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-      },
-      {
         id: "shourab",
         name: "Shourab",
         handle: "@shourab",
@@ -199,29 +197,6 @@ const raw: SiteContent = {
         stack: [],
         profileUrl:
           "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/",
-      },
-      {
-        // NO LINK: arifur-rahman-3423b021b and joinal-ahmed-3423b021b shared an
-        // identical numeric suffix, so one pointed at the wrong person. Both
-        // removed rather than guess which. Awaiting verified profiles.
-        id: "arifur",
-        name: "Arifur Rahman",
-        handle: "@arifur",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-      },
-      {
-        // NO LINK: the previous value was x.com/tareq, a generic handle
-        // belonging to someone else. Awaiting a verified profile.
-        id: "tareq",
-        name: "Tareq",
-        handle: "@tareq",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
       },
       {
         id: "nazirul",
@@ -252,16 +227,6 @@ const raw: SiteContent = {
         experience: "",
         stack: [],
         profileUrl: "https://www.linkedin.com/in/asif-nihal",
-      },
-      {
-        // NO LINK: see the Arifur Rahman note — shared LinkedIn suffix.
-        id: "joinal",
-        name: "Joinal",
-        handle: "@joinal",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
       },
       {
         id: "sabbir",

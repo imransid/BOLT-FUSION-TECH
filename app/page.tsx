@@ -102,6 +102,9 @@ export default async function Home() {
   // it renders: one source, so the markup and the page cannot diverge.
   const renderedFaq =
     sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
+  // Person nodes likewise come from the roster the Team section renders.
+  const renderedTeam =
+    sectionOrder.includes("team") && isVisible(sectionVisibility, "team") ? content.team.roster : [];
 
   return (
     <SiteContentProvider value={content}>
@@ -111,7 +114,7 @@ export default async function Home() {
           // Escape `<` so an admin-entered "</script>" in any string field can't
           // break out of the JSON-LD block (stored-XSS guard).
           __html: jsonLdHtml(
-            buildGraph(siteUrl, sameAs, renderedFaq, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
+            buildGraph(siteUrl, sameAs, renderedFaq, renderedTeam, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
           ),
         }}
       />

@@ -22,8 +22,9 @@ type TeamMember = SiteContent["team"]["roster"][number];
  *
  * The old one built `https://x.com/${handle}` for anyone without an explicit
  * mapping, which is how @nadim and @tareq ended up linking to strangers' X
- * accounts. A profile link now comes from ONE place — `member.profileUrl` in the
- * CMS — and a member without one renders a card with no link at all.
+ * accounts. A profile link now comes from ONE place — `member.profileUrl` — and
+ * the schema requires a verified linkedin.com/in/ URL: only people with one are
+ * listed (COPY.md §5, amended 2026-09-11).
  *
  * Entrances are the CSS-only `.ai-rise` (globals.css), declared entirely inside
  * a `prefers-reduced-motion: no-preference` block, so every element's base style
@@ -78,7 +79,10 @@ function TeamMemberCard({
     scrollMuted ? [0, 0] : [12 + depth * 4, -12 - depth * 4]
   );
 
-  const href = member.profileUrl?.trim();
+  const href = member.profileUrl;
+  // role, experience and stack are deliberately empty until each engineer
+  // supplies real values (default-site-content.ts). Each renders only when
+  // present: never a placeholder, never an example.
   const role = member.role?.trim();
   const experience = member.experience?.trim();
   const stack = (member.stack ?? []).filter((s) => s.trim());
@@ -163,22 +167,16 @@ function TeamMemberCard({
       className="ai-rise min-h-0"
       style={{ animationDelay: `${Math.min(index * 55, 440)}ms` }}
     >
-      {href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer" data-person-card className={CARD_BASE + CARD_INTERACTIVE}>
-          <span
-            className="pointer-events-none absolute right-2.5 top-2.5 z-[2] flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-[transform,border-color] duration-300 group-hover:rotate-12 group-hover:border-cyan-400/25 group-hover:text-white sm:right-3 sm:top-3"
-            aria-hidden
-          >
-            <ArrowUpRight />
-          </span>
-          {chrome}
-          <span className="sr-only"> (opens in a new tab)</span>
-        </a>
-      ) : (
-        /* No verified profile: the card renders in full, minus the link and the
-           affordances that would imply one. Never an empty href, never "#". */
-        <div data-person-card className={CARD_BASE}>{chrome}</div>
-      )}
+      <a href={href} target="_blank" rel="noopener noreferrer" data-person-card className={CARD_BASE + CARD_INTERACTIVE}>
+        <span
+          className="pointer-events-none absolute right-2.5 top-2.5 z-[2] flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] text-white/60 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12)] backdrop-blur-md transition-[transform,border-color] duration-300 group-hover:rotate-12 group-hover:border-cyan-400/25 group-hover:text-white sm:right-3 sm:top-3"
+          aria-hidden
+        >
+          <ArrowUpRight />
+        </span>
+        {chrome}
+        <span className="sr-only">, LinkedIn profile (opens in a new tab)</span>
+      </a>
     </li>
   );
 }
@@ -348,7 +346,7 @@ export default function Team() {
 
           <ul
             role="list"
-            className="relative z-[1] grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5 lg:gap-4 list-none p-0 m-0"
+            className="relative z-[1] grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:gap-4 list-none p-0 m-0"
           >
             {roster.map((member, index) => (
               <TeamMemberCard
