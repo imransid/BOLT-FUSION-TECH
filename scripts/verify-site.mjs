@@ -475,6 +475,7 @@ function collectInPage() {
     fallback: Boolean(peopleFallback),
     images: [...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
     emptySlots: [...document.querySelectorAll("[data-photo-slot]")].filter((s) => !s.querySelector("img")).length,
+    cards: personCards.map((c) => ({ name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(), href: c.getAttribute("href") || null })),
   };
 
   /* 25 ── scripts the page loaded */
@@ -1288,6 +1289,38 @@ await (async () => {
       }
     }
   }
+  /* Person — built from the roster the Team section renders: one node per person
+     card, carrying that card's name and profile link, and no empty field */
+  {
+    const v = visits[`/@${WIDTHS[0]}`];
+    if (v?.people) {
+      const persons = [];
+      for (const raw of v.jsonld) {
+        try {
+          const j = JSON.parse(raw);
+          for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Person")) persons.push(n);
+        } catch {
+          /* reported by the parse above */
+        }
+      }
+      const cards = v.people.cards || [];
+      const key = (name, url) => `${name}|${url}`;
+      const cardKeys = new Set(cards.filter((c) => c.href).map((c) => key(c.name, c.href)));
+      const ldKeys = new Set(persons.map((p) => key(p.name, [].concat(p.sameAs || [])[0])));
+      for (const p of persons) {
+        const url = [].concat(p.sameAs || [])[0];
+        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a person card on the page`);
+        for (const [k, val] of Object.entries(p))
+          if (val === null || (typeof val === "string" && !val.trim()) || (Array.isArray(val) && val.length === 0))
+            F.push(`/: Person "${p.name}" carries an empty ${k} — emit only the fields that exist`);
+      }
+      for (const c of cards) {
+        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link — COPY.md §5 lists only people with a verified LinkedIn`);
+        else if (!ldKeys.has(key(c.name, c.href))) F.push(`/: the person card "${c.name}" has no Person node in the structured data`);
+      }
+      I.push(`/: Person ${persons.length}, person cards ${cards.length}`);
+    }
+  }
   for (const [u, where] of urls) {
     if (!isSameSite(u)) {
       I.push(`not fetched (another site): ${u}`);
@@ -1298,7 +1331,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
