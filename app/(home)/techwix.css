@@ -1387,6 +1387,16 @@ summary {
   padding: 0 0 24px;
 }
 
+/* A closed answer has no box at all. The browser already skips painting it
+   (::details-content is content-visibility: hidden while closed), but its box
+   was still laid out, so verify-site check 2 read it as text on the page that
+   painted in no font. The answer stays in the served HTML either way — check
+   14 reads it there — and <summary> still reports open and closed itself.
+   Opening still eases open (below); closing is immediate. */
+.tw-faq__item:not([open]) .tw-faq__a {
+  display: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .tw-faq__icon { transition: transform 0.2s; }
 

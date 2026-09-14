@@ -135,6 +135,10 @@ the homepage loads; there is no Tailwind on the homepage.
 - Status chips keep the site's meaning: teal-cyan = shipped, amber = target —
   `#0b6f78` on `#e2f3f4` and `#9a4a06` on `#fdf0dc` on light bands, light teal
   and amber outlines on navy. Nothing else borrows those two colours.
+- The architecture lanes use `<FigureText>` exactly as the other pages do. Its
+  chip is styled for the homepage from `techwix.css` (`.tw-root [data-status] >
+  span:last-child`), and `--font-machine` maps to Jost there, because Commit Mono
+  is not loaded on the homepage. Do not add homepage variants to the component.
 - Buttons: Jost 600, 5px radius; the primary is the clone's gradient, darkened so
   its lightest stop clears 4.65:1 against white.
 - The header is white and sticky, with the full nav from 1200px and a drawer below
