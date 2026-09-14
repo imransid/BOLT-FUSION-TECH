@@ -410,6 +410,10 @@ from `content/figure-labels.ts`. Standalone metric cards keep their in-card labe
   other page loads no `techwix.css` and requests no Barlow or Jost file.
 - **18, extended** — prints how many elements carry `data-logotype` on each
   page, and fails a page that renders more than one.
+- **10 and 2, extended** — a visit's settle waits (every image decoded, every
+  font loaded) are bounded at 20s: an image or font still loading after that
+  is a finding naming it. Unbounded, the wait never returned on the merged
+  state at `/` @390 in two full runs, and the suite hung instead of reporting.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

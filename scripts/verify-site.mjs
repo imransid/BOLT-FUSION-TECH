@@ -1468,6 +1468,32 @@ function comparePng(a, b) {
   return { n, pct: (100 * n) / (a.width * a.height), minY, maxY };
 }
 
+/* The settle steps before a visit is read: every image decoded, every font
+   loaded. BOUNDED — a wait that never ends is not a pass. On the merged state
+   (2026-09-15) the image wait never returned at / @390 in two full runs, with
+   the suite at 0% CPU for 38 minutes; unbounded, whatever was still loading
+   hid behind a hang. Each wait gets SETTLE_MS inside the page, and the page
+   twice that to answer at all. What is still loading is returned, and checks
+   10 (images) and 2 (fonts) fail on it, naming it. */
+const SETTLE_MS = 20000;
+async function settle(page, what) {
+  const inPage = page.evaluate(
+    ([kind, ms]) => {
+      const late = (p, name) => Promise.race([p.then(() => null, () => null), new Promise((r) => setTimeout(() => r(name), ms))]);
+      if (kind === "fonts")
+        return late(document.fonts.ready, "late").then((x) => {
+          if (!x) return [];
+          const loading = [...document.fonts].filter((f) => f.status === "loading").map((f) => `${f.family.replace(/["']/g, "")} ${f.weight}`);
+          return loading.length ? loading : ["document.fonts.ready never resolved"];
+        });
+      return Promise.all([...document.images].map((i) => (i.complete ? null : late(i.decode(), (i.currentSrc || i.src).replace(location.origin, ""))))).then((xs) => xs.filter(Boolean));
+    },
+    [what, SETTLE_MS],
+  );
+  const answer = await Promise.race([inPage, new Promise((r) => setTimeout(() => r(null), 2 * SETTLE_MS))]);
+  return answer === null ? [`(the page did not answer for ${(2 * SETTLE_MS) / 1000}s while the suite waited for its ${what})`] : answer;
+}
+
 /* ── one route at one width, JavaScript on ───────────────────────────────── */
 async function visit(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, bypassCSP: true });
@@ -1486,16 +1512,18 @@ async function visit(browser, route, width) {
 
   await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
-  await page.evaluate(() => document.fonts.ready.then(() => true));
+  const stalled = { images: [], fonts: [] };
+  stalled.fonts.push(...(await settle(page, "fonts")));
   await readingSpeedScroll(page);
-  await page.evaluate(() => Promise.all([...document.images].map((i) => (i.complete ? null : i.decode().catch(() => null)))));
-  await page.evaluate(() => document.fonts.ready.then(() => true));
+  stalled.images.push(...(await settle(page, "images")));
+  stalled.fonts.push(...(await settle(page, "fonts")));
   await page.waitForTimeout(800);
 
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const glData = await page.evaluate(glReport); /* before the contrast pass draws its own canvas */
   const data = await page.evaluate(collectInPage);
   data.glData = glData;
+  data.stalled = stalled;
   /* check 5: a candidate is only "stuck" if it is still invisible after three
      more seconds IN PLACE — that rules out a reveal still in progress on a busy
      machine. Do NOT scroll it into view to re-check: that fires the very reveal
@@ -1853,6 +1881,7 @@ check(2, "Every font the layout loads renders somewhere; text uses a loaded font
   for (const f of declared) if (!loaded.has(f)) F.push(`"${f}" is declared by the page and never renders on any route at any width`);
   const lc = (s) => s.toLowerCase();
   for (const [k, v] of Object.entries(visits)) {
+    for (const s of v.stalled?.fonts || []) F.push(`${at(k)}: still loading ${SETTLE_MS / 1000}s after the page settled — ${s}`);
     const sys = v.rendered.filter((r) => !r.custom);
     const fallbackOfOwn = sys.filter((r) => [...declared].some((d) => lc(d) === lc(r.declared)));
     const plainSystem = sys.filter((r) => !fallbackOfOwn.includes(r) && !ALLOW_SYSTEM.includes(r.declared));
@@ -2238,6 +2267,7 @@ check(10, "Every image loads, has alt text, and comes from this site", "a broken
   };
   for (const [k, v] of Object.entries(visits)) {
     const route = k.split("@")[0];
+    for (const s of v.stalled?.images || []) once(`${route}|stalled|${s}`, `${at(k)}: ${short(s)} was still loading ${SETTLE_MS / 1000}s after the reading-speed scroll — it never finished`);
     for (const img of v.allImages) {
       if (!img.loaded) {
         if (img.visible) once(`${route}|load|${img.src}`, `${at(k)}: ${short(img.src)} did not load`);
