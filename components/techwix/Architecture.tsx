@@ -8,10 +8,11 @@ import Button from "./Button";
  * intro and the three lanes. The metric band that used to close this section
  * is the hero's proof strip now, and its closing line sits under the strip.
  *
- * Lane text goes through <FigureText>, so every figure content/figure-labels.ts
- * labels carries its chip where it stands — the target chips on "Roughly 20% of
- * traffic" and "~$0.001 per search", as on the old homepage. No status is
- * decided here.
+ * Lane text goes through <FigureText>, exactly as the component is, so every
+ * figure content/figure-labels.ts labels carries its chip where it stands — the
+ * target chips on "Roughly 20% of traffic" and "~$0.001 per search", as on the
+ * old homepage. The chip's homepage look comes from app/(home)/techwix.css. No
+ * status is decided here, and a figure the labels do not cover stays as it is.
  *
  * The cost line is one colour: teal and amber mean shipped and target on this
  * site, so they are not borrowed to mean "free path" and "paid path".
@@ -38,10 +39,10 @@ export default function Architecture() {
               </h3>
               <p className="tw-lane__premise">— {lane.premise}</p>
               <p className="tw-lane__detail">
-                <FigureText text={lane.detail} variant="clone" />
+                <FigureText text={lane.detail} />
               </p>
               <p className="tw-lane__cost">
-                <FigureText text={lane.cost} variant="clone" />
+                <FigureText text={lane.cost} />
               </p>
             </li>
           ))}

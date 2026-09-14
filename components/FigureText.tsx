@@ -14,14 +14,10 @@ import { figureLabels, type FigureLabel } from "@/content/figure-labels";
  * (budgeted)" is one figure, not "~$0.001 per search" followed by loose text.
  *
  * No hooks and no "use client": it renders inside server and client components
- * alike. `variant` picks the chip's look and nothing else — the wrapper, the
- * words and the label are the same either way:
- *  · "site" (the default): the other pages' encoding, as the KPI cards there —
- *    cyan = shipped, amber = target, machine face;
- *  · "clone": the homepage's chip (`.tw-chip`, app/(home)/techwix.css), in the
- *    homepage's faces, since the machine face is not loaded there.
+ * alike. The chip uses the encoding of the metric band and the KPI cards: cyan =
+ * shipped, amber = target, machine face.
  */
-export default function FigureText({ text, variant = "site" }: { text: string; variant?: "site" | "clone" }) {
+export default function FigureText({ text }: { text: string }) {
   const hits: { at: number; label: FigureLabel }[] = [];
   for (const label of figureLabels) {
     for (let at = text.indexOf(label.text); at >= 0; at = text.indexOf(label.text, at + label.text.length))
@@ -39,18 +35,14 @@ export default function FigureText({ text, variant = "site" }: { text: string; v
     out.push(
       <span key={`f${at}`} data-status={label.status}>
         {label.text}
-        {variant === "clone" ? (
-          <span className={`tw-chip tw-chip--${label.status} tw-chip--inline`}>{label.status}</span>
-        ) : (
-          <span
-            className={`ml-1.5 inline-block rounded-full border px-2 py-px align-[0.08em] text-[10px] leading-[1.5] ${
-              shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
-            }`}
-            style={{ fontFamily: "var(--font-machine)" }}
-          >
-            {label.status}
-          </span>
-        )}
+        <span
+          className={`ml-1.5 inline-block rounded-full border px-2 py-px align-[0.08em] text-[10px] leading-[1.5] ${
+            shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
+          }`}
+          style={{ fontFamily: "var(--font-machine)" }}
+        >
+          {label.status}
+        </span>
       </span>,
     );
     pos = at + label.text.length;

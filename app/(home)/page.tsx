@@ -16,12 +16,20 @@ import { siteContent } from "@/content/site";
 import { getSiteUrl } from "@/lib/site-url";
 import { breadcrumbLd, buildGraph, jsonLdHtml } from "@/lib/structured-data";
 
+import { alt as ogAlt, contentType as ogType, size as ogSize } from "../opengraph-image";
+
 export async function generateMetadata(): Promise<Metadata> {
   const c = siteContent;
   const site = getSiteUrl();
   const canonical = site.toString();
 
-  // Social image comes from app/opengraph-image.tsx (correctly-sized 1200×630).
+  // The social image is app/opengraph-image.tsx (1200×630). It is named here,
+  // not left to the file convention: that file sits at the top of app/, and
+  // since the homepage moved into app/(home) it is one segment below it — the
+  // image comes down only as part of the parent's `openGraph`, which this
+  // page's own `openGraph` replaces. Without these two lines the homepage had
+  // no og:image and no twitter:image.
+  const image = { url: "/opengraph-image", alt: ogAlt, type: ogType, width: ogSize.width, height: ogSize.height };
   return {
     title: { absolute: c.meta.title },
     description: c.meta.description,
@@ -33,11 +41,13 @@ export async function generateMetadata(): Promise<Metadata> {
       url: canonical,
       siteName: "Bolt Fusion Tech",
       locale: "en_US",
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
       title: c.meta.ogTitle,
       description: c.meta.ogDescription,
+      images: [image],
     },
   };
 }

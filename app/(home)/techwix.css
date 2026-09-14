@@ -45,6 +45,9 @@
      where they are declared. */
   --font-heading: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  /* The other pages' machine face is Commit Mono, which the homepage does not
+     load. <FigureText>'s chip names it inline; here it is the body face. */
+  --font-machine: var(--font-body);
 
   --gutter: clamp(15px, 4vw, 50px);
 }
@@ -362,12 +365,36 @@ summary {
   border-color: rgba(255, 201, 120, 0.55);
 }
 
-/* In a sentence (components/FigureText.tsx, variant "clone"): straight after
-   the figure it labels. */
-.tw-chip--inline {
+/* In a sentence. <FigureText> (components/FigureText.tsx, the other pages'
+   component, used here unchanged) wraps each labelled figure in a
+   [data-status] span and puts its chip straight after the figure, as that
+   span's last child. Its own classes are Tailwind's, which the homepage does
+   not load, so the chip's look on the homepage is set here. It also sets the
+   chip's face inline as var(--font-machine), which :root maps to the body face
+   on this page. */
+.tw-root [data-status] > span:last-child {
+  display: inline-block;
   margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 999px;
   font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
   vertical-align: 0.1em;
+  white-space: nowrap;
+}
+
+.tw-root [data-status="shipped"] > span:last-child {
+  color: var(--shipped);
+  background-color: var(--shipped-bg);
+  border-color: rgba(11, 111, 120, 0.35);
+}
+
+.tw-root [data-status="target"] > span:last-child {
+  color: var(--target);
+  background-color: var(--target-bg);
+  border-color: rgba(154, 74, 6, 0.35);
 }
 
 /* ── The logo ───────────────────────────────────────────────────────────── *

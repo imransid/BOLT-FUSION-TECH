@@ -40,7 +40,9 @@ export default function HomeLayout({
          techwix.css declares the tokens that read them. */
       className={`${barlow.variable} ${jost.variable}`}
     >
-      <body>{children}</body>
+      {/* .tw-root: the homepage's scope, for styling shared components such as
+          <FigureText> from techwix.css without changing them. */}
+      <body className="tw-root">{children}</body>
     </html>
   );
 }
