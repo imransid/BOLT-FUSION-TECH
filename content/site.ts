@@ -342,7 +342,9 @@ const raw: SiteContent = {
         title: "Keyword search",
         summary: "Simple intents, zero AI spend.",
         traffic: "~80% of traffic",
-        latency: "<80ms target",
+        // The status is the chip after the figure (content/figure-labels.ts), so
+        // the word "target" is not repeated: the page still reads "<80ms target".
+        latency: "<80ms",
         bullets: [
           "Queries like “Italian”, “sushi”, “pizza”.",
           "PostgreSQL ILIKE plus PostGIS geo filters.",
@@ -355,7 +357,7 @@ const raw: SiteContent = {
         title: "Natural language AI search",
         summary: "Complex intent → structured retrieval.",
         traffic: "~20% of traffic",
-        latency: "<1200ms target",
+        latency: "<1200ms",
         bullets: [
           "Examples: “romantic spot with live music near me”.",
           "Claude Haiku parses intent to structured JSON.",
@@ -368,7 +370,7 @@ const raw: SiteContent = {
         title: "Result cache",
         summary: "Repeat demand disappears at the edge.",
         traffic: "Hot paths",
-        latency: "<15ms target",
+        latency: "<15ms",
         bullets: [
           "Redis with 30s TTL on hashed keys.",
           "Key = tenant + query + geo + filters + classification.",

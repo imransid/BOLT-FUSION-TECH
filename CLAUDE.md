@@ -219,10 +219,14 @@ at the end, which means nobody has decided yet.
 - **Every metric carries a shipped or target label.** No unlabelled numbers. A
   figure counts wherever it sits, inside a sentence too (decided 2026-09-11):
   four unlabelled figures in the architecture lanes survived because check 8
-  only saw standalone figures, and it is being extended to see them.
+  only saw standalone figures. Check 8 now reads every figure in the visible
+  text: each carries its own chip, or is a spec or term exempted per instance
+  with its own reason — never by category.
   Enforced at build time in `/content/metrics.ts`, by the site-content schema
-  for the case-study KPIs, and by the KPI type in the WarmChats component. *Holds* once
-  the WarmChats KPIs are labelled (verify-site check 8).
+  for the case-study KPIs, by the KPI type in the WarmChats component, and by
+  `content/figure-labels.ts` for in-sentence labels and exemptions. *Holds* on
+  the inner pages except the "80% of traffic" figures, which await the owner;
+  the homepage is labelled with its rebuild (verify-site check 8).
   **One scoped exception, decided 2026-09-11:** the restaurant-search meta
   description says "keeping most traffic under 100ms" with no label. The figure
   is `search-response` in `/content/metrics.ts`, labelled shipped everywhere the
@@ -274,13 +278,10 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
-**Check 8 reads sentences.** Every figure in the visible text — mid-sentence, split across
-tags, in a link, in an opened `<details>` — sits in a `data-status="shipped|target"` element
-holding its OWN visible chip reading that status (`components/FigureText.tsx`), or in a
-`data-figure-exempt="<reason>"` element covering exactly one figure, whose reason is real
-(not empty, a placeholder or one word; 12+ characters). Anything else fails — a chip outside
-the wrapper or invisible included — and every exemption and not-a-figure is printed with its
-reason. Standalone metric cards keep the old rule: a visible label in their own card.
+**Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too) sits in a
+`data-status` wrapper holding that one figure and its OWN visible chip, or a `data-figure-exempt`
+holding one figure with a real reason (not empty, a placeholder or one word; 12+ characters), both
+from `content/figure-labels.ts`. Standalone metric cards keep their in-card label rule.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

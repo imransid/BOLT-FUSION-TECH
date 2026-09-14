@@ -497,8 +497,9 @@ function collectInPage() {
      · every other FIGURE TOKEN in the visible text — in a sentence, a list item,
        a link, a lane header, split across inline tags — must sit in an element
        with data-status="shipped|target" that holds its OWN visible chip reading
-       that status (components/FigureText.tsx), or in a data-figure-exempt element
-       that states a real reason and covers exactly one figure.
+       that status and no other figure (components/FigureText.tsx), or in a
+       data-figure-exempt element that states a real reason and covers exactly
+       one figure.
    A chip anywhere else — beside the wrapper, or three levels up in the metric
    band — is not the figure's chip, and a chip nobody can see is not a chip.
 
@@ -766,6 +767,15 @@ function readFigures() {
     return { el, reason, rendered, problem: problems.filter(Boolean).join("; "), figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
   });
 
+  /* ── a data-status wrapper labels exactly one figure: one chip over two would
+     let a second, unmeasured figure borrow the first one's status ────────── */
+  const statusWraps = [...document.querySelectorAll("[data-status]")].map((el) => {
+    const rendered = el.getClientRects().length > 0 && cs(el).visibility === "visible" && opacity(el) >= 0.05;
+    const covers = figures.filter((x) => x.nodes.every((n) => el.contains(n)));
+    const problem = rendered && covers.length > 1 ? `it covers ${covers.length} figures with one chip — a chip labels exactly one` : "";
+    return { el, status: el.getAttribute("data-status"), problem, figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
+  });
+
   /* ── each token's verdict ─────────────────────────────────────────────── */
   const tokens = figures.map((x) => {
     const out = { fig: x.text, sentence: x.sentence, section: x.section };
@@ -778,7 +788,7 @@ function readFigures() {
         /* its OWN chip: inside this wrapper, not inside a nested one, not the figure */
         const chips = [...wrap.querySelectorAll("*")].filter((c) => c.closest("[data-status]") === wrap && c.textContent.trim() === status && !x.nodes.some((n) => c.contains(n)));
         const why = chips.map((c) => hiddenWhy(c, wrap));
-        if (why.includes("")) return { ...out, verdict: "status", status };
+        if (why.includes("")) return statusWraps.find((w) => w.el === wrap)?.problem ? { ...out, verdict: "status-shared" } : { ...out, verdict: "status", status };
         wrapWhy = chips.length
           ? `sits in data-status="${status}", but its chip cannot be seen: ${why[0]}`
           : `sits in data-status="${status}" with no chip reading "${status}" inside that wrapper — a chip elsewhere is not its own`;
@@ -797,6 +807,7 @@ function readFigures() {
 
   return {
     tokens,
+    statusWraps: statusWraps.filter((w) => w.problem).map((w) => ({ status: w.status, problem: w.problem, figures: w.figures, sentence: w.sentence, section: w.section })),
     exemptions: exemptions.map((e) => ({ reason: e.reason, rendered: e.rendered, problem: e.problem, figures: e.figures, sentence: e.sentence, section: e.section })),
     notFigures: notFigures.map((n) => ({ tok: oneLine(n.run.text.slice(n.start, n.end)), reason: n.reason, sentence: sentenceOf(n.run, n.start, n.end) })),
   };
@@ -1523,7 +1534,7 @@ check(4, "With JavaScript off, every heading and paragraph is visible", "content
 check(
   8,
   "Every figure, standalone or inside a sentence, carries its own visible shipped/target label — or an exemption that says why",
-  "an unlabelled number anywhere in the text — the four in-sentence figures in the architecture lanes a standalone-only check could not see; a chip beside the wrapper or up in the section passing for the figure's own; a chip nobody can see; an exemption with no real reason, or one wide enough to swallow a second figure",
+  "an unlabelled number anywhere in the text — the four in-sentence figures in the architecture lanes a standalone-only check could not see; a chip beside the wrapper or up in the section passing for the figure's own; a chip nobody can see, or one chip shared by two figures; an exemption with no real reason, or one wide enough to swallow a second figure",
   (F, I) => {
     /* one line per finding, however many widths show it: a width-only one says
        so, and one that occurs more than once on the page says how often */
@@ -1556,7 +1567,7 @@ check(
           n.failing++;
           if (t.verdict === "standalone-unlabelled") row(F, `std|${route}|${t.fig}|${t.context}`, `${where}: "${t.fig}" has no shipped/target label — context: "${t.context}"`, width);
           else if (t.verdict === "fail") row(F, `fig|${route}|${t.section}|${t.fig}|${t.sentence}`, `${where}: "${t.fig}" ${t.why} — in "${t.sentence}"`, width);
-          /* "exempt-invalid" is reported once, on its exemption */
+          /* "exempt-invalid" and "status-shared" are reported once, on their wrapper */
         }
       }
       /* every exemption is printed, so each one stays reviewable */
@@ -1567,6 +1578,9 @@ check(
         else if (!e.rendered) row(I, key, `${route}: data-figure-exempt="${e.reason}" — not rendered at this width`, width);
         else row(I, key, `${route}: exempt "${e.figures[0]}" — reason: "${e.reason.trim()}" — in "${e.sentence}"`, width);
       }
+      /* a data-status wrapper that covers more than one figure */
+      for (const w of r.statusWraps || [])
+        row(F, `sw|${route}|${w.section}|${w.figures.join("|")}|${w.sentence}`, `${route}${w.section ? ` ${w.section}` : ""}: data-status="${w.status}" around ${w.figures.map((f) => `"${f}"`).join(", ")} — ${w.problem} — in "${w.sentence}"`, width);
       /* and every number judged not a figure, with the reason */
       for (const x of r.notFigures) row(I, `not|${route}|${x.tok}|${x.reason}|${x.sentence}`, `${route}: not a figure: "${x.tok}" — ${x.reason} — in "${x.sentence}"`, width);
       I.push(`${at(k)}: ${r.tokens.length} figure(s) — ${n.standalone} standalone, ${n.status} labelled in place, ${n.exempt} exempt, ${n.failing} failing; ${r.exemptions.length} exemption(s); ${r.notFigures.length} number(s) not figures`);

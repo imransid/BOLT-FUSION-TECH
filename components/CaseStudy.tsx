@@ -248,9 +248,11 @@ export default function CaseStudy() {
                   {lane.lane}
                 </span>
                 <span className="text-right text-[10px] font-medium leading-snug text-white/55">
-                  <FigureText text={lane.traffic} />
+                  {/* each figure stays on one line with its chip: a chip wrapped onto a
+                      line of its own reads as stray */}
+                  <span className="whitespace-nowrap"><FigureText text={lane.traffic} /></span>
                   <span>, </span>
-                  {lane.latency}
+                  <span className="whitespace-nowrap"><FigureText text={lane.latency} /></span>
                 </span>
               </div>
               <h3
@@ -264,7 +266,7 @@ export default function CaseStudy() {
                 {lane.bullets.map((b) => (
                   <li key={b} className="flex gap-2.5">
                     <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/30" aria-hidden />
-                    <span>{b}</span>
+                    <span><FigureText text={b} /></span>
                   </li>
                 ))}
               </ul>
@@ -305,7 +307,7 @@ export default function CaseStudy() {
                         key={item}
                         className="rounded-md border border-white/[0.08] bg-black/35 px-3 py-1.5 text-[12px] leading-snug text-white/78 md:text-[13px]"
                       >
-                        {item}
+                        <FigureText text={item} />
                       </li>
                     ))}
                   </ul>
@@ -383,7 +385,7 @@ export default function CaseStudy() {
                     {ctx.bullets.map((b) => (
                       <li key={b} className="flex gap-2">
                         <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-white/22" aria-hidden />
-                        <span>{b}</span>
+                        <span><FigureText text={b} /></span>
                       </li>
                     ))}
                   </ul>

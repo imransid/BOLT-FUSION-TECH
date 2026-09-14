@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { reveal } from "@/lib/reveal";
 
+import FigureText from "@/components/FigureText";
 import { LogoMark } from "@/components/Logo";
 
 /* -------------------------------------------------------------------------- */
@@ -259,7 +260,7 @@ export default function WarmChatsCaseStudy() {
               {...rise(0.07)}
               className="max-w-[58ch] text-[15px] leading-[1.7] text-white/65 md:text-base"
             >
-              {HERO.subtitle}
+              <FigureText text={HERO.subtitle} />
             </p>
 
             <p
@@ -323,7 +324,7 @@ export default function WarmChatsCaseStudy() {
           <div className="border-l-2 border-amber-300/40 pl-5">
             <Eyebrow>Executive summary</Eyebrow>
             <p className="mt-3 max-w-[78ch] text-pretty text-sm leading-[1.75] text-white/78 md:text-[15px]">
-              {HERO.summary}
+              <FigureText text={HERO.summary} />
             </p>
           </div>
         </div>
@@ -411,12 +412,12 @@ export default function WarmChatsCaseStudy() {
               >
                 {lane.title}
               </h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-white/52">{lane.summary}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-white/52"><FigureText text={lane.summary} /></p>
               <ul className="mt-5 flex flex-1 flex-col gap-2.5 text-[13px] leading-relaxed text-white/66">
                 {lane.bullets.map((b) => (
                   <li key={b} className="flex gap-2.5">
                     <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-300/60" aria-hidden />
-                    <span>{b}</span>
+                    <span><FigureText text={b} /></span>
                   </li>
                 ))}
               </ul>

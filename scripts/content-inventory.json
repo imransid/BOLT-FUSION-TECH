@@ -364,8 +364,10 @@
           "AI lead routing",
           "Engage",
           "Instant replies on email & SMS",
-          "GPT-4.1 answers within 60 seconds in the agent's voice, asks the",
-          "GPT-4.1 replies in under 60s, tuned to the agent's brand voice",
+          "GPT-4.1 answers within 60 seconds",
+          "in the agent's voice, asks the",
+          "GPT-4.1 replies in under 60s",
+          ", tuned to the agent's brand voice",
           "Context carried across the whole thread and both channels",
           "Hands off to the agent the moment a human is genuinely needed",
           "Conversational AI",
@@ -565,7 +567,8 @@
           "Repeat demand disappears at the edge.",
           "Redis with 30s TTL on hashed keys.",
           "Key = tenant + query + geo + filters + classification.",
-          "Hit-rate goal 30–40% to protect DB and models.",
+          "Hit-rate goal 30–40%",
+          "to protect DB and models.",
           "Technical stack"
         ]
       },
@@ -590,7 +593,7 @@
           "LLM rate limits (100/min/tenant)",
           "Pulse: WebSocket + Redis pub/sub",
           "AI services",
-          "Claude Haiku 4.5 — intent parsing (~90% of AI calls)",
+          "Claude Haiku 4.5 — intent parsing (~90% of AI calls",
           "Claude Sonnet 4.6 — menu Q&A only",
           "OpenAI text-embedding-3-small (1536-d)",
           "Bounded contexts"
