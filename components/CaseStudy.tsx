@@ -170,6 +170,23 @@ export default function CaseStudy() {
             /* Same encoding as the homepage metric band: cyan = shipped,
                amber = target, and the label is always shown. */
             const shipped = k.status === "shipped";
+            /* A capability, not a metric: no chip, and no colour that reads as
+               shipped or target (owner, 2026-09-12). */
+            if (!k.status)
+              return (
+                <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 sm:py-6 lg:px-7">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                    <span
+                      className="text-[1.75rem] font-light leading-none text-white/90 md:text-[1.95rem]"
+                      style={{ fontFamily: "var(--font-heading)" }}
+                    >
+                      {k.value}
+                    </span>
+                    <span className="text-[10px] font-medium text-white/55">{k.label}</span>
+                  </div>
+                  {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/55">{k.hint}</p> : null}
+                </article>
+              );
             return (
               <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 sm:py-6 lg:px-7">
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
