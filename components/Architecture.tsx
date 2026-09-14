@@ -3,6 +3,7 @@
 
 import { lanes, metrics } from "@/content";
 import { reveal } from "@/lib/reveal";
+import FigureText from "@/components/FigureText";
 
 /**
  * Section 3 — Architecture. COPY.md §3, verbatim.
@@ -63,13 +64,13 @@ export default function Architecture() {
               </h3>
               <p className="text-sm text-white/80">— {lane.premise}</p>
               <div className="w-full h-px bg-white/10" />
-              <p className="text-sm leading-relaxed text-white/65">{lane.detail}</p>
+              <p className="text-sm leading-relaxed text-white/65"><FigureText text={lane.detail} /></p>
               {/* Mono: a cost figure is machine output. */}
               <p
                 className={`text-sm ${lane.tone === "fast" ? "text-cyan-200" : "text-amber-300"}`}
                 style={{ fontFamily: "var(--font-machine)" }}
               >
-                {lane.cost}
+                <FigureText text={lane.cost} />
               </p>
             </article>
           ))}

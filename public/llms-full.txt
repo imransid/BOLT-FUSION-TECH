@@ -66,8 +66,8 @@ PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
 
 **AI lane** — complex intent becomes structured retrieval.
 Claude Haiku parses intent to JSON, then OpenAI embeddings and pgvector cosine
-similarity in Postgres. Roughly 20% of traffic, under 1200ms.
-`~$0.001 per search`
+similarity in Postgres. Roughly 20% of traffic (`target`), under 1200ms.
+`~$0.001 per search` (`target`: a budget, not a measurement)
 
 **Cache lane** — repeat demand disappears at the edge.
 Redis, 30-second TTL. The key is tenant plus query plus geo plus filters plus
@@ -85,7 +85,7 @@ to answer. That is what makes the unit economics predictable as volume grows.
 | Value | Label | Status |
 |---|---|---|
 | `<100ms` | Search response, 80% of traffic | shipped |
-| `~$0.001` | Average cost per AI query | shipped |
+| `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 
 Source: restaurant discovery platform.

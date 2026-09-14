@@ -286,6 +286,48 @@ Fusion Tech". It is not a small-text exemption and must not become one.
 Lighthouse 95+ in all four categories · LCP under 2.0s · no layout shift from
 any animation. Nothing measures these yet.
 
+## A figure labelled shipped with nothing behind it — found 2026-09-12
+
+**What happened.** The restaurant-search cost figure `~$0.001` entered the repo
+on 2026-05-02 (`3ef2b95`) as a budget: the write-up says "~$0.001 per search
+(budgeted)" and "Budgeted hybrid retrieval", and that the architecture "caps
+model spend at roughly" that figure. On 2026-09-05 (`7c62d28`, the rebuild)
+COPY.md's metric table gave it the label `shipped` with no source recorded, and
+from there it reached `/content/metrics.ts`, the homepage metric band, the
+`/work` card, `llms.txt` ("Both figures are `shipped`") and the `llms-full.txt`
+table — live from the rebuild's deploy until this fix, while the case study on
+the same site still called it budgeted. `fix/kpi-status-labels` then copied the
+`shipped` label onto the case-study KPI card whose own hint reads "Budgeted
+hybrid retrieval". The AI lane's "roughly 20% of traffic" came in the same
+2026-05-02 commit and never carried a label or a source. The figure was four
+months old; the `shipped` label on it, about a week.
+
+**How it was found.** By tracing history — `git log -S` across every branch, the
+docs and the restaurant-system repos — when the owner asked where each figure
+came from. No check caught it, and none could have: check 8 asks whether a
+figure HAS a label, never whether the label is TRUE. A `shipped` label with
+nothing behind it passes every check the suite has.
+
+**Decided by the owner, 2026-09-12.** Both are budgets and read `target`
+everywhere: the metric band, the `/work` card, both llms files, COPY.md, and a
+target chip beside each in-sentence instance (`content/figure-labels.ts`). The
+earliest evidence wins over a later unsourced claim. Where prose says "caps model
+spend at roughly", the words stay — they are already honest — and the chip beside
+them says `target`. A capability is not a metric: the "Multi-tenant" and
+"Observable" KPI cards carry no status chip at all, because chipping a capability
+dilutes what the chip means. (The owner had approved them as `shipped` on an
+earlier report; that approval is withdrawn.)
+
+**What would have caught it:** a rule that a `shipped` label requires a recorded
+source — the measurement, dashboard, log query or document that shows the figure
+on a system that shipped.
+
+**Backlog — a schema requirement, not yet built:** `status: "shipped"` must carry
+a `sourceRef`, and the build fails without one. It covers every place a status
+is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
+in-sentence labels in `content/figure-labels.ts` (which already refuse a label
+without a `source` string — the same idea, not yet a checked reference).
+
 ## Decided 2026-09-11: the rule or the design
 
 Each of these was a rule the live design broke. The owner decided; the code is

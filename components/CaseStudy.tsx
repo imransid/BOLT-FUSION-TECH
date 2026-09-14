@@ -4,6 +4,7 @@ import Image from "next/image";
 import { reveal } from "@/lib/reveal";
 
 import { useSiteContent } from "@/context/SiteContentContext";
+import FigureText from "@/components/FigureText";
 
 const linkFocus =
   "outline-none focus-visible:ring-2 focus-visible:ring-amber-200/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]";
@@ -120,7 +121,7 @@ export default function CaseStudy() {
                   id="case-study-summary"
                   className="mt-3 max-w-[62ch] text-pretty text-sm leading-[1.7] text-white/78 md:text-[15px]"
                 >
-                  {cs.executiveSummary}
+                  <FigureText text={cs.executiveSummary} />
                 </p>
               </div>
             </div>
@@ -230,7 +231,7 @@ export default function CaseStudy() {
                   {lane.lane}
                 </span>
                 <span className="text-right text-[10px] font-medium leading-snug text-white/55">
-                  {lane.traffic}
+                  <FigureText text={lane.traffic} />
                   <span>, </span>
                   {lane.latency}
                 </span>
@@ -252,7 +253,7 @@ export default function CaseStudy() {
               </ul>
               {lane.costLine ? (
                 <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold text-white/55">
-                  {lane.costLine}
+                  <FigureText text={lane.costLine} />
                 </p>
               ) : null}
             </article>
