@@ -1,10 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-import "./globals.css";
+import "../globals.css";
 
 import RevealController from "@/components/RevealController";
-import { getSiteUrl } from "@/lib/site-url";
+import { rootMetadata } from "@/lib/root-metadata";
+
+/* The root layout of every page EXCEPT the homepage — /work, both write-ups and
+   the privacy policy, in the site's own design. The homepage has its own root
+   layout in app/(home), in the clone's design: two root layouts, so neither
+   design's stylesheet or fonts ever load on the other's pages. This file is the
+   old app/layout.tsx, moved; what it renders is unchanged. */
 
 // Variable font (single axis file, all weights) — self-hosted with display:swap
 // and an automatic size-adjusted fallback (eliminates web-font swap CLS).
@@ -19,7 +25,7 @@ const inter = Inter({
 const satoshi = localFont({
   variable: "--font-satoshi",
   display: "swap",
-  src: [{ path: "../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
+  src: [{ path: "../../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
 });
 
 /* Commit Mono — machine values ONLY (query strings, ms, $, model names, stack
@@ -33,7 +39,7 @@ const satoshi = localFont({
 const commitMono = localFont({
   variable: "--font-commit",
   display: "swap",
-  src: [{ path: "../public/fonts/CommitMono-Variable.woff2", weight: "200 700", style: "normal" }],
+  src: [{ path: "../../public/fonts/CommitMono-Variable.woff2", weight: "200 700", style: "normal" }],
 });
 
 export const viewport: Viewport = {
@@ -43,38 +49,7 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-export const metadata: Metadata = {
-  metadataBase: getSiteUrl(),
-  title: {
-    default: "Bolt Fusion Tech",
-    template: "%s | Bolt Fusion Tech",
-  },
-  description:
-    "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
-  icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-  openGraph: {
-    title: "Bolt Fusion Tech — AI systems that are still running in six months",
-    description:
-      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
-    type: "website",
-    locale: "en_US",
-    siteName: "Bolt Fusion Tech",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Bolt Fusion Tech — AI systems that are still running in six months",
-    description:
-      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
-  },
-};
+export const metadata: Metadata = rootMetadata;
 
 export default function RootLayout({
   children,
