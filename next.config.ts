@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   experimental: {
     // Barrel packages imported widely — tree-shake to trim client JS.
     optimizePackageImports: ["framer-motion", "@react-three/drei"],
+    // Two root layouts, app/(home) and app/(site), and none at the top of
+    // app/: the 404 renders app/global-not-found.tsx, Next's mechanism for
+    // exactly that. Without it an unknown URL got Next's bare error shell.
+    globalNotFound: true,
   },
   async headers() {
     return [

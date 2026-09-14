@@ -29,7 +29,7 @@ Vercel. There is no CMS and no database: the content is typed files in `/content
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage, sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, plus the metric band and How we work · static |
+| `/` | homepage, in the Techwix clone's design (`app/(home)`); sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, `metrics.ts` for the hero's proof strip, `architecture.ts`, `process.ts` and `services.ts` for Architecture and How we work · static |
 | `/work` | index of the write-ups | `/content` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
@@ -37,6 +37,21 @@ Vercel. There is no CMS and no database: the content is typed files in `/content
 
 Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 `public/llms.txt`, `public/llms-full.txt`.
+
+**Two root layouts, one per design.** `app/(home)/layout.tsx` is the homepage's
+root: it alone loads `app/(home)/techwix.css` and the Barlow and Jost faces.
+`app/(site)/layout.tsx` is every other page's root, in the site's own design:
+`app/globals.css`, Inter, Satoshi and Commit Mono, and the reveal controller.
+Neither design's stylesheet or fonts load on the other's pages, and the inner
+pages render pixel-identically to how they did under a single `app/layout.tsx`.
+Both share `lib/root-metadata.ts`. With no layout at the top of `app/`, Next's
+404 has no layout to sit in, and an unknown URL got Next's bare error shell —
+unstyled, with no `metadataBase`. `experimental.globalNotFound` (next.config.ts)
+makes it render `app/global-not-found.tsx` instead: the site's own root (the
+same faces, `app/globals.css`, the same body) around Next's built-in 404, as it
+rendered under the single layout. A `not-found.tsx` inside `app/(site)` does
+not work here: in Next 16.1 it does not catch `notFound()` for its own root
+layout.
 
 ## Content — one layer, in `/content`
 
@@ -50,11 +65,14 @@ fails `next build` with the file named:
   server-only and deep-frozen: pages pass it to `<SiteContentProvider>`, and
   client components read their slice with `useSiteContent()`. Never re-export
   `./site` from the `/content` barrel — client components import that barrel.
-  Two blocks in it, `aiExcellence` and `process`, are validated but rendered by
-  nothing: editing them changes nothing. They go with the homepage rebuild.
+  Two blocks in it, `about` and `services`, are validated but rendered by
+  nothing: the homepage rebuild cut both sections (COPY.md, "Removed from the
+  homepage"), and editing them changes nothing. (`aiExcellence` and `process`,
+  the two blocks that were in the same state before, were deleted with it.)
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
-  metric band (`Architecture.tsx`), `HowWeWork.tsx` and `lib/structured-data.ts`.
+  (`components/techwix/*`: the proof strip, Architecture, How we work) and
+  `lib/structured-data.ts`.
 
 There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
 data is generated from the same items the sections render (`fix/faq-one-source`,
@@ -71,6 +89,11 @@ validates it.
 
 ## Design language, as built
 
+**Two designs while the rebuild is half done.** The homepage is in the Techwix
+clone's design (*The homepage*, below). Every other page is in the site's own
+dark design, described first. Restyling the inner pages, and whether their fonts
+follow the homepage's, is open.
+
 Dark, rounded cards, no photography. **Not tokenised:** colours are Tailwind
 utilities and a few inline values, not CSS variables.
 
@@ -79,8 +102,6 @@ utilities and a few inline values, not CSS variables.
   must be read goes below `white/55`** on the dark ground: 22–48% measured
   3.0–4.5:1 and failed AA (verify-site checks 18 and 20). Hairlines `white/10`
   and `white/[0.07]`.
-- The navbar shows the full nav from `xl` (1280px) and the burger below it: the
-  nav needs ~1,100px, and at `md` it cut off "Book a call" on portrait tablets.
 - Two accents that carry meaning: **cyan** (`cyan-200`) = shipped, measured;
   **amber** (`amber-200`, `amber-300`) = target, and the primary call to
   action. Red (`red-300`) is for errors only.
@@ -94,9 +115,39 @@ utilities and a few inline values, not CSS variables.
   animations (`logo-chip-breathe`, `logo-aurora-drift`), `.cv-section`.
   `.grain-overlay` is still defined and no longer used.
 
+### The homepage
+
+The Techwix clone's design, with the site's real content and none of the
+theme's photographs, logos, icon font, SVG art or copy. Every measured value —
+colours, the title ramp, the buttons, the header's headroom contract, the hero
+panel, the case-study row, the contact panel, the footer fill — comes from the
+clone study on the retired `techwix-replica` branch; its pixel-matching rules do
+not apply here. All of it is plain CSS in `app/(home)/techwix.css`, which only
+the homepage loads; there is no Tailwind on the homepage.
+
+- Bands alternate white and `#f7f7f9`; navy panels: the hero `#01013f` (35px
+  radius), the team `#010742`, the contact panel `#091577`, the footer `#010717`.
+  Brand `#086ad8`, ink `#0e0e0e`, body text `#4c4d56`. Content capped at 1300px.
+- Barlow 500 / 600 / 700 for headings, Jost 400 / 500 / 600 for text, loaded with
+  `next/font/google` in `app/(home)/layout.tsx` only; the body's line-height is
+  the clone's unitless 1.73. The title ramp: 70/78 major and 48/54 section at
+  ≥1025px, 48/60 and 36/52 below.
+- Status chips keep the site's meaning: teal-cyan = shipped, amber = target —
+  `#0b6f78` on `#e2f3f4` and `#9a4a06` on `#fdf0dc` on light bands, light teal
+  and amber outlines on navy. Nothing else borrows those two colours.
+- Buttons: Jost 600, 5px radius; the primary is the clone's gradient, darkened so
+  its lightest stop clears 4.65:1 against white.
+- The header is white and sticky, with the full nav from 1200px and a drawer below
+  it (focus trapped, Escape closes, `aria-expanded` on the burger).
+- The logo is our mark in a dark tile beside the wordmark in Barlow and Jost
+  (`components/techwix/Logo.tsx`); the mark's drawing is `components/LogoMarkSvg.tsx`,
+  shared with `<LogoMark>` on the other pages.
+- Visible focus: a 3px outline, brand blue on light bands and light blue on navy.
+
 ## Type
 
-Three faces. The tokens that name them are in `app/globals.css`.
+The homepage uses Barlow and Jost only (*The homepage*, above). Every other page
+uses three faces. The tokens that name them are in `app/globals.css`.
 
 | face | token | used for |
 |---|---|---|
@@ -111,7 +162,7 @@ verify-site checks 1 and 2 catch both.
 
 ## Motion, as built
 
-- **Reveals** (`lib/reveal.ts`, `components/RevealController.tsx`, REVEAL in
+- **Reveals, outside the homepage** (`lib/reveal.ts`, `components/RevealController.tsx`, REVEAL in
   `app/globals.css`). The server HTML is always visible: an element that
   animates in carries `data-reveal` and CSS variables, never `opacity:0`. On
   first paint every reveal plays a CSS entrance — no script needed, and it ends
@@ -120,22 +171,30 @@ verify-site checks 1 and 2 catch both.
   anything a flick or a jump carried past. Under reduced motion nothing hides and
   nothing moves. Use `reveal({ x, y, duration, delay })`; never add a framer
   `initial={{ opacity: 0 }}`.
-- **Hero entrance:** the same CSS entrance, staggered by delay; the H1 is never hidden.
-- **framer-motion remains** for the mobile menu (`AnimatePresence`), Team's
-  scroll parallax, and the hero's scroll arrow. The FAQ uses none of it: each
-  item is a `<details name="faq">` with a CSS open/close (FAQ in `app/globals.css`).
-- **Hero background:** a WebGL curl-noise particle nebula
-  (`components/HeroParticleField.tsx`) — the one place WebGL is allowed. One
-  `THREE.Points` cloud of ~28k
-  particles (9k on coarse pointers), dynamically imported with `ssr: false`,
-  skipped for `prefers-reduced-motion` and without WebGL, render loop stopped
-  off-screen and when the tab is hidden, dpr capped at 1.75. It is the only
-  WebGL on the site. Being replaced by a raw WebGL2 renderer in the homepage
-  rebuild — see *The hero field* under Hard rules.
-- **Reduced motion:** nothing loops. The particle field is skipped, every CSS
-  loop has a reduced-motion guard (`.beam-button` included), the hero arrow uses
-  `useReducedMotion`, the CTA's status dot is `motion-safe:`. verify-site
-  checks 21 and 23.
+- **Homepage reveal:** the clone's own. Elements marked `data-tw-reveal` that
+  are still below the fold after hydration get `.animated` and
+  `techwix--slide-up` (3rem and a fade, 1.25s, `fill-mode: none`) when they enter
+  the viewport (`components/techwix/RevealObserver.tsx`). Nothing is hidden in
+  the server HTML, and nothing moves under reduced motion. The hero has no
+  entrance: it renders in place, and the H1 is never hidden. The header's
+  headroom slide is a 0.25s transform (`HeadroomController.tsx`).
+- **framer-motion remains** only in `<LogoMark>` (`components/Logo.tsx`), on the
+  pages outside the homepage; the homepage ships none. The FAQ uses none of it:
+  each item is a `<details name="faq">` with a CSS open/close (in
+  `app/(home)/techwix.css`).
+- **Hero field (homepage):** step 3 ships the poster only —
+  `public/hero/field-poster-{660,1320}.{avif,webp}`, a real frame of the field,
+  as a plain `<img>` in a `<picture>` (the LCP element; the image optimizer is
+  not on that path). Below 1025px or on a coarse pointer it drifts slowly — a
+  CSS transform, so no layout shift; under reduced motion it is still. There is
+  no canvas and no WebGL on any page. `components/HeroParticleField.tsx` (the
+  old three.js / @react-three nebula) is still in the tree and imported by
+  nothing; the raw WebGL2 renderer replaces it in step 4, which also removes
+  those three dependencies — see *The hero field* under Hard rules.
+- **Reduced motion:** nothing loops. The poster's drift, the homepage reveal,
+  the header's slide, the drawer's slide and the FAQ's open/close each have a
+  reduced-motion guard, as does every CSS loop in `app/globals.css`
+  (`.beam-button` included). verify-site checks 21 and 23.
 
 ## SEO and AI visibility
 
@@ -187,7 +246,11 @@ at the end, which means nobody has decided yet.
   `fix/reveal-visible-html` (checks 4 and 5).
 - **The hero field — the one place WebGL is allowed, and never in the way.**
   Decided 2026-09-11 for the homepage rebuild; *holds* once
-  `redesign/techwix-home` lands.
+  `redesign/techwix-home` lands. Step 3 (the poster, no canvas yet) is built:
+  the poster `<img data-hero-poster>` is the final LCP entry at 390, 768, 1024,
+  1025 and 1440, measured with a buffered `PerformanceObserver` on a fresh,
+  unscrolled load; the field is the right half of the panel at ≥1025px and sits
+  above the text below that.
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
@@ -286,7 +349,8 @@ in the merged state — the real fonts and the pill's bottom padding together mo
 the text into the light half of the card gradient. Neither branch alone showed it.
 
 **The one contrast exemption is the wordmark** — WCAG 2.2 SC 1.4.3, "Logotypes".
-It covers the element marked `data-logotype` in `components/Logo.tsx`, for checks
+It covers the element marked `data-logotype` — the wordmark, now in
+`components/techwix/Logo.tsx`, the only wordmark on the site — for checks
 18 and 20 only, and check 18 fails if that element ever holds anything but "Bolt
 Fusion Tech". It is not a small-text exemption and must not become one.
 
@@ -369,7 +433,7 @@ text, gradients in CTA and Team), and one card shadow repeated across sections.
 | FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
 | COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
 | The CMS | **Removed**: content, schema and validation moved to `/content`; admin, store, API and seven dependencies deleted (see Content) | `chore/remove-cms` |
-| Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*` | Next batch | — |
+| Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*`; since the homepage left `app/globals.css`, also its FAQ block (`.faq-item`), `.cv-section` and `.grain-overlay` | Next batch. Left in place on purpose in step 3: the inner pages had to stay pixel-identical, and `app/globals.css` is theirs | — |
 
 ## Decided 2026-09-11, the homepage rebuild
 
