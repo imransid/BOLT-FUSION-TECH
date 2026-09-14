@@ -53,12 +53,13 @@ export function CaseStudySection() {
                 <TextField name={`caseStudy.kpis.${i}.label`} label="Label" />
                 <TextField name={`caseStudy.kpis.${i}.hint`} label="Hint (optional)" />
               </div>
-              {/* Required. Shipped = measured on a system we shipped; target = not yet. */}
+              {/* A figure (a value with a digit) must be shipped or target; a
+                  capability ("Multi-tenant") must have none. The schema enforces both. */}
               <EnumSelect
                 name={`caseStudy.kpis.${i}.status`}
-                label="Status — every figure is shipped or target"
+                label="Status — figures only: shipped or target"
                 options={["shipped", "target"]}
-                placeholder="Choose shipped or target"
+                emptyOption="Not a figure — no status"
               />
             </div>
           )}
