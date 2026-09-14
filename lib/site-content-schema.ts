@@ -137,12 +137,27 @@ const retrievalLaneSchema = z.object({
    KPI could reach the page through the CMS with no label at all. */
 export const kpiStatusSchema = z.enum(["shipped", "target"]);
 
-const caseStudyKpiSchema = z.object({
-  value: z.string(),
-  label: z.string(),
-  hint: z.string().optional(),
-  status: kpiStatusSchema,
-});
+/* A KPI whose value holds a digit is a figure and needs its status. One whose
+   value is a word ("Multi-tenant", "Observable") is a capability, not a metric,
+   and carries NO status: a chip on a capability dilutes what the chip means
+   (owner, 2026-09-12). Both directions fail validation, so the build fails. */
+const isFigure = (value: string) => /\d/.test(value);
+
+const caseStudyKpiSchema = z
+  .object({
+    value: z.string(),
+    label: z.string(),
+    hint: z.string().optional(),
+    status: kpiStatusSchema.optional(),
+  })
+  .refine((k) => !isFigure(k.value) || k.status !== undefined, {
+    message: "A KPI whose value is a figure needs a status: shipped or target",
+    path: ["status"],
+  })
+  .refine((k) => isFigure(k.value) || k.status === undefined, {
+    message: "A capability is not a metric: a KPI whose value is not a figure carries no status",
+    path: ["status"],
+  });
 
 const caseStudyLaneSchema = z.object({
   lane: z.number(),

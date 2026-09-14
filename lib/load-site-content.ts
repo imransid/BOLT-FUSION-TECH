@@ -57,12 +57,15 @@ function migrateStored(merged: Record<string, unknown>): void {
   }
 
   // caseStudy.kpis[].status — added when the label rule reached the CMS. A
-  // stored KPI takes the status of the default KPI with the SAME value; those
-  // labels are sourced (content/metrics.ts). A stored KPI with no match stays
-  // unlabelled and fails validation — labelling it here would be inventing.
+  // stored FIGURE takes the status of the default KPI with the SAME value; those
+  // labels are sourced. A stored figure with no match stays unlabelled and fails
+  // validation — labelling it here would be inventing. Capabilities have no
+  // status in the defaults, so none is ever carried onto one.
   const cs = merged.caseStudy as { kpis?: unknown } | undefined;
   if (cs && Array.isArray(cs.kpis)) {
-    const known = new Map<string, string>(defaultSiteContent.caseStudy.kpis.map((k) => [k.value, k.status]));
+    const known = new Map<string, string>(
+      defaultSiteContent.caseStudy.kpis.flatMap((k) => (k.status ? [[k.value, k.status] as [string, string]] : [])),
+    );
     merged.caseStudy = {
       ...cs,
       kpis: cs.kpis.map((k) => {

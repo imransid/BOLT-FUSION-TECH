@@ -146,12 +146,15 @@ export function EnumSelect({
   label,
   options,
   placeholder,
+  emptyOption,
 }: {
   name: ContentPath;
   label: string;
   options: readonly string[];
   /** Shown while no option is chosen. It cannot be saved: the choice must be made. */
   placeholder?: string;
+  /** A selectable "none" that stores no value at all (the field becomes undefined). */
+  emptyOption?: string;
 }) {
   const { control } = useFormContext<SiteContent>();
   const { field, fieldState } = useController({ name, control });
@@ -161,9 +164,14 @@ export function EnumSelect({
       <select
         {...field}
         value={(field.value as string) ?? ""}
+        onChange={(e) => field.onChange(emptyOption && e.target.value === "" ? undefined : e.target.value)}
         className={`${inputCls} max-w-[260px]`}
       >
-        {placeholder ? (
+        {emptyOption ? (
+          <option value="" className="bg-[#0d0d10]">
+            {emptyOption}
+          </option>
+        ) : placeholder ? (
           <option value="" disabled className="bg-[#0d0d10]">
             {placeholder}
           </option>
