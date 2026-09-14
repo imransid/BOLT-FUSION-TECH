@@ -65,10 +65,9 @@ fails `next build` with the file named:
   server-only and deep-frozen: pages pass it to `<SiteContentProvider>`, and
   client components read their slice with `useSiteContent()`. Never re-export
   `./site` from the `/content` barrel — client components import that barrel.
-  Two blocks in it, `about` and `services`, are validated but rendered by
-  nothing: the homepage rebuild cut both sections (COPY.md, "Removed from the
-  homepage"), and editing them changes nothing. (`aiExcellence` and `process`,
-  the two blocks that were in the same state before, were deleted with it.)
+  The homepage rebuild cut About and Services (COPY.md, "Removed from the
+  homepage"); their blocks and schema entries were deleted, as `aiExcellence`
+  and `process` were before them, so nothing in it is validated but unrendered.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
   (`components/techwix/*`: the proof strip, Architecture, How we work) and
@@ -292,8 +291,10 @@ at the end, which means nobody has decided yet.
   Enforced at build time in `/content/metrics.ts`, by the site-content schema
   for the case-study KPIs, by the KPI type in the WarmChats component, and by
   `content/figure-labels.ts` for in-sentence labels and exemptions. *Holds* on
-  the inner pages except the "80% of traffic" figures, which await the owner;
-  the homepage is labelled with its rebuild (verify-site check 8).
+  every page, the homepage included, except the "80% of traffic" figures — the
+  proof strip's and /work's "Search response, 80% of traffic", lane 1's
+  "Roughly 80% of traffic", and the restaurant write-up's "~80% of traffic" and
+  "~80% of queries hit the fast lane" — which await the owner (verify-site check 8).
   **One scoped exception, decided 2026-09-11:** the restaurant-search meta
   description says "keeping most traffic under 100ms" with no label. The figure
   is `search-response` in `/content/metrics.ts`, labelled shipped everywhere the

@@ -397,6 +397,21 @@ summary {
   border-color: rgba(154, 74, 6, 0.35);
 }
 
+/* ...and on the navy panels and the case cards' dark scrim, the colours the
+   metric chips take there (.tw-on-dark .tw-chip--*). An exempt figure
+   (data-figure-exempt) is plain text and needs no rule. */
+.tw-root :is(.tw-on-dark, .tw-case) [data-status="shipped"] > span:last-child {
+  color: #8fe6ec;
+  background-color: rgba(143, 230, 236, 0.08);
+  border-color: rgba(143, 230, 236, 0.5);
+}
+
+.tw-root :is(.tw-on-dark, .tw-case) [data-status="target"] > span:last-child {
+  color: #ffc978;
+  background-color: rgba(255, 201, 120, 0.08);
+  border-color: rgba(255, 201, 120, 0.55);
+}
+
 /* ── The logo ───────────────────────────────────────────────────────────── *
    Our mark, in the dark tile it was drawn for, and the wordmark in the
    homepage's faces. The wordmark is the element marked data-logotype. */

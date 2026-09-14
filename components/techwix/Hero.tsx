@@ -1,3 +1,4 @@
+import FigureText from "@/components/FigureText";
 import { metrics } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 
@@ -48,10 +49,12 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
             <h1 id="hero-title" className="tw-title-wrapper">
               <span className="title-major tw-hero__title">{headline}</span>
             </h1>
-            <p className="tw-hero__paragraph">{hero.subtext}</p>
+            <p className="tw-hero__paragraph">
+              <FigureText text={hero.subtext} />
+            </p>
             <div className="tw-actions">
               <Button href={hero.primaryCtaHref} variant="primary">
-                {hero.primaryCtaLabel}
+                <FigureText text={hero.primaryCtaLabel} />
               </Button>
               {hero.secondaryCtaLabel.trim() ? (
                 <Button href={hero.secondaryCtaHref} variant="secondary">
@@ -59,7 +62,9 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
                 </Button>
               ) : null}
             </div>
-            {hero.tagline.trim() ? <p className="tw-hero__tagline">{hero.tagline}</p> : null}
+            {hero.tagline.trim() ? <p className="tw-hero__tagline">
+                <FigureText text={hero.tagline} />
+              </p> : null}
           </div>
 
           <div className="tw-hero__field" aria-hidden="true" data-hero-field>

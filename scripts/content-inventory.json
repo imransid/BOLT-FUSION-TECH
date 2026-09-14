@@ -57,7 +57,7 @@
           "Most AI products die after launch — too slow, too expensive, too",
           "Keyword lane",
           "— simple intents, no model call.",
-          "PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.",
+          "PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms",
           "$0 marginal cost",
           "AI lane",
           "— complex intent becomes structured retrieval.",

@@ -1,3 +1,4 @@
+import FigureText from "@/components/FigureText";
 import { processSteps, services } from "@/content";
 
 import Button from "./Button";
@@ -52,7 +53,9 @@ export default function HowWeWork() {
                 <tr key={s.id}>
                   <th scope="row">{s.name}</th>
                   <td>{s.shape}</td>
-                  <td>{s.timeline}</td>
+                  <td>
+                    <FigureText text={s.timeline} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -70,7 +73,7 @@ export default function HowWeWork() {
           </p>
           <p className="tw-actions">
             <Button href="#contact" variant="primary">
-              Start a 2-week pilot
+              <FigureText text="Start a 2-week pilot" />
             </Button>
             <Button href="#recent-work" variant="outline">
               See recent work

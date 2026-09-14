@@ -41,6 +41,10 @@ const HIT_RATE =
 const ZERO_MARGINAL =
   "Owner-approved, relayed 2026-09-14: the keyword lane makes no model call, so its marginal model cost is zero by construction.";
 const HAIKU_ROUTING = "content/metrics.ts `haiku-routing` (~90%, shipped). Owner-approved, relayed 2026-09-14.";
+const HOME_LATENCY =
+  'The restaurant write-up gives each lane\'s latency as a target ("<80ms target", "<1200ms target", "<15ms target"); the homepage lanes state the same figures in words. Owner-approved, relayed 2026-09-15.';
+const HOME_HIT_RATE =
+  'The lane read "30–40% hit rate target" before the word became this chip; the write-up calls it a "goal". Owner-approved, relayed 2026-09-15.';
 const WARMCHATS =
   'WarmChats KPIs `24/7` and `<60s` are target; content/metrics.ts `first-reply` (<60s) is target; the KPI caption calls these figures "automation targets". Owner-approved, relayed 2026-09-14.';
 
@@ -73,6 +77,31 @@ const labels: FigureLabel[] = [
   { text: "100/min/tenant", exempt: "The per-tenant cap the service puts on LLM calls: a configured limit, not a throughput claim" },
   { text: "(1536-d)", exempt: "The vector size of OpenAI's text-embedding-3-small: a property of that model, not a claim about this system" },
   { text: "every 6h", exempt: "How often the GoldenKeys cron job rebuilds the filter chips: a schedule setting, not a performance claim" },
+
+  /* The homepage (components/techwix): the lanes and the WarmChats card.
+     Lane 1's "Roughly 80% of traffic" and the proof strip's "Search response,
+     80% of traffic" are NOT here: they await the owner. */
+  { text: "under 80ms", status: "target", source: HOME_LATENCY },
+  { text: "under 1200ms", status: "target", source: HOME_LATENCY },
+  { text: "Under 15ms", status: "target", source: HOME_LATENCY },
+  { text: "30–40% hit rate", status: "target", source: HOME_HIT_RATE },
+  { text: "$0 marginal cost", status: "shipped", source: ZERO_MARGINAL },
+  { text: "books showings 24/7", status: "target", source: WARMCHATS },
+
+  /* The homepage's terms, each exempt for its own reason. Where two entries match
+     overlapping words the earlier match wins (FigureText), so "MVP in 8–16 weeks"
+     is the hero's and the bare "8–16 weeks" is the engagement table's cell. The
+     two "Start a 2-week pilot" buttons (hero, how we work) are the same words and
+     share one entry: the same term, for the same reason. A button's exemption
+     covers its whole label: the button lays its children out as flex items, so a
+     span around part of the label would open a gap inside it. */
+  { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
+  { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
+  { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients the hero commits to: a contract term, not a performance claim" },
+  { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
+  { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },
+  { text: "30\u2011minute intro call", exempt: "The length of the intro call offered above the booking calendar: a meeting length, not a performance claim" },
+  { text: "30-second TTL", exempt: "How long the homepage's cache lane keeps a result in Redis: a configured TTL, not a performance claim" },
 
   /* /work/warmchats — hardcoded in its component; the copy lock yields to the label rule. */
   { text: "follows up 24/7", status: "target", source: WARMCHATS },

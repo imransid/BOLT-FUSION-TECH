@@ -87,39 +87,6 @@ const raw: SiteContent = {
     scrollHintLeft: "Scroll down",
     scrollHintRight: "to explore delivery",
   },
-  // CUT FROM THE HOMEPAGE (decided 2026-09-11) — `about` and `services` are
-  // rendered by nothing. COPY.md, "Removed from the homepage", records why, so
-  // a copy pass does not restore them. Editing them changes nothing on the site.
-  about: {
-    title: "Why Bolt Fusion Tech",
-    bio: "Clients come to us when delivery has to be predictable: clear requirements, honest estimates, and engineering judgment applied early—so you spend less time firefighting and more time growing the product. We work as an extension of your team, focused on outcomes users feel and metrics you can read.",
-    skills: [
-      "Web & mobile apps",
-      "APIs & integrations",
-      "Cloud & DevOps",
-      "Product discovery",
-      "UI/UX engineering",
-      "Quality & launch readiness",
-    ],
-    experience: [
-      {
-        role: "MVP & greenfield builds",
-        company: "Scope, architecture, and a shippable first version",
-        period: "Typical 8–16 weeks",
-      },
-      {
-        role: "Embedded product teams",
-        company: "Roadmap delivery with your PMs and stakeholders",
-        period: "Ongoing",
-      },
-      {
-        role: "Stabilize & scale",
-        company:
-          "Performance, reliability, and maintainability for live systems",
-        period: "As needed",
-      },
-    ],
-  },
   team: {
     benchLabel: "Your bench",
     codeComment: "// who builds with you",
@@ -442,40 +409,6 @@ const raw: SiteContent = {
     primaryCtaHref: "/#contact",
     secondaryCtaLabel: "Book a technical call",
     secondaryCtaHref: "/#schedule",
-  },
-  services: {
-    badge: "What we deliver",
-    title: "Services",
-    intro:
-      "Practical engineering aligned to your roadmap: you get transparent communication, measurable milestones, and software ready for real users—not a black box.",
-    skills: [
-      "TypeScript & React",
-      "Next.js & Node",
-      "Mobile (iOS / Android)",
-      "AWS & cloud-native",
-      "API design",
-      "Automated testing",
-    ],
-    discussLabel: "Discuss your project",
-    workLabel: "See recent work",
-    cards: [
-      {
-        title: "Custom product development",
-        desc: "End-to-end web and mobile builds: discovery workshops, technical design, implementation, and handoff documentation—so your team owns the system with confidence after launch.",
-      },
-      {
-        title: "Platforms & integrations",
-        desc: "Connect products to payments, CRMs, data pipelines, and internal tools with APIs and event-driven workflows that are observable, secure, and easy to extend.",
-      },
-      {
-        title: "Reliability & scale",
-        desc: "Hardening for real traffic: performance tuning, monitoring and alerts, CI/CD, and operational runbooks—reducing downtime and making releases boring in the best way.",
-      },
-      {
-        title: "UX & frontend craft",
-        desc: "Interfaces that match your brand and usability goals: accessible components, responsive layouts, and design-system thinking so new features stay consistent.",
-      },
-    ],
   },
   faq: {
     badge: "FAQ",

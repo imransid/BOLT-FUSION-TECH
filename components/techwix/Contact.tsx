@@ -1,3 +1,4 @@
+import FigureText from "@/components/FigureText";
 import type { SiteContent } from "@/content/site-schema";
 
 import Button from "./Button";
@@ -28,7 +29,7 @@ export function Contact({ cta }: { cta: SiteContent["cta"] }) {
         </div>
         <p className="tw-actions tw-contact__actions">
           <Button href={cta.scheduleHref} variant="light">
-            {cta.scheduleLabel}
+            <FigureText text={cta.scheduleLabel} />
           </Button>
           <Button href={cta.emailHref} variant="secondary">
             <MailIcon className="tw-btn__icon" />
@@ -50,7 +51,9 @@ export function Schedule({ blurb }: { blurb: string }) {
   return (
     <section id="schedule" className="tw-band tw-band--white tw-schedule" aria-label="Book a call">
       <div className="tw-band__inner">
-        <p className="tw-schedule__blurb">{blurb}</p>
+        <p className="tw-schedule__blurb">
+          <FigureText text={blurb} />
+        </p>
         <div className="tw-schedule__frame">
           <iframe
             title="Schedule a 30-minute call — Bolt Fusion Tech"

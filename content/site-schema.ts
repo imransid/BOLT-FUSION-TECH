@@ -81,11 +81,6 @@ const featuredWorkSchema = z
     }
   });
 
-const serviceCardSchema = z.object({
-  title: z.string(),
-  desc: z.string(),
-});
-
 const LINKEDIN_PROFILE = /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?$/;
 
 /** role, experience and stack are deliberately blank for every member until
@@ -161,12 +156,6 @@ const caseStudyContextSchema = z.object({
   featured: z.boolean().optional(),
 });
 
-const experienceRowSchema = z.object({
-  role: z.string(),
-  company: z.string(),
-  period: z.string(),
-});
-
 export const siteContentSchema = z.object({
   meta: z.object({
     title: z.string(),
@@ -212,12 +201,6 @@ export const siteContentSchema = z.object({
     secondaryCtaHref: safeHref,
     scrollHintLeft: z.string(),
     scrollHintRight: z.string(),
-  }),
-  about: z.object({
-    title: z.string(),
-    bio: z.string(),
-    skills: z.array(z.string()),
-    experience: z.array(experienceRowSchema),
   }),
   team: z.object({
     benchLabel: z.string(),
@@ -266,15 +249,6 @@ export const siteContentSchema = z.object({
     primaryCtaHref: safeHref,
     secondaryCtaLabel: z.string(),
     secondaryCtaHref: safeHref,
-  }),
-  services: z.object({
-    badge: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    skills: z.array(z.string()),
-    discussLabel: z.string(),
-    workLabel: z.string(),
-    cards: z.array(serviceCardSchema),
   }),
   faq: z.object({
     badge: z.string(),

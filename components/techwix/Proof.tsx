@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import FigureText from "@/components/FigureText";
 import type { SiteContent } from "@/content/site-schema";
 
 import Button from "./Button";
@@ -36,7 +37,9 @@ function Card({ p, large }: { p: Work; large: boolean }) {
         <h3 className="tw-title-wrapper tw-case__title">
           <span className="title-sub">{p.title}</span>
         </h3>
-        <p className="tw-case__outcome">{p.outcome}</p>
+        <p className="tw-case__outcome">
+          <FigureText text={p.outcome} />
+        </p>
         {published ? (
           <span className="tw-case__cta">
             {cta}
