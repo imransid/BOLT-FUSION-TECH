@@ -21,8 +21,9 @@ Every figure published on this site carries a `shipped` or `target` label.
   process, the two-week pilot, and answers to buyer due-diligence questions.
 - [Intelligent restaurant search](/work/restaurant-search): multi-tenant AI
   retrieval. Queries are classified before any paid inference runs; most traffic
-  resolves on a sub-100ms path and average model spend is near $0.001 per
-  AI-assisted query. Both figures are `shipped`.
+  resolves on a sub-100ms path (`shipped`), and the architecture caps average
+  model spend at roughly $0.001 per AI-assisted query (`target`: a budget the
+  design holds to, not a measurement).
 - [WarmChats](/work/warmchats): always-on AI follow-up for real estate agents.
   Claude qualifies and routes each lead, GPT-4.1 replies on email and SMS, and
   bookings write to the calendar. First-reply-under-60s is a `target`.

@@ -55,8 +55,8 @@ verified profile is added to the Team section, not before.
 **Lane 2**
 > **AI lane** — complex intent becomes structured retrieval.
 > Claude Haiku parses intent to JSON, then OpenAI embeddings and pgvector cosine
-> similarity in Postgres. Roughly 20% of traffic, under 1200ms.
-> `~$0.001 per search`
+> similarity in Postgres. Roughly 20% of traffic [target], under 1200ms.
+> `~$0.001 per search` [target]
 
 **Lane 3**
 > **Cache lane** — repeat demand disappears at the edge.
@@ -69,9 +69,18 @@ verified profile is added to the Team section, not before.
 | Value | Label | Status |
 |---|---|---|
 | `<100ms` | Search response, 80% of traffic | shipped |
-| `~$0.001` | Average cost per AI query | shipped |
+| `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 | `<60s` | First reply to every inbound lead | target |
+
+**Relabelled 2026-09-12: both are budgets.** `~$0.001` and the AI lane's "roughly
+20% of traffic" are targets, not measurements. The 2026-05-02 write-up calls the
+cost "budgeted" and "Budgeted hybrid retrieval" and says the architecture "caps
+model spend at roughly" that figure; the `shipped` in this table arrived on
+2026-09-05 with no source, and nothing in any repo, doc or branch holds a
+measurement of either figure. The earliest evidence wins over a later unsourced
+claim. `[target]` above marks where the page puts a target chip beside the
+figure. CLAUDE.md, "A figure labelled shipped with nothing behind it".
 
 **Closing line**
 > Every figure here comes from a system we shipped, and every one is labelled with
