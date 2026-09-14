@@ -5,17 +5,13 @@ import { motion, useReducedMotion } from "framer-motion";
 
 import LogoMarkSvg from "@/components/LogoMarkSvg";
 
-type LogoProps = {
-  className?: string;
-  markOnly?: boolean;
-};
-
 const springLux = { type: "spring" as const, stiffness: 380, damping: 28, mass: 0.82 };
 
 /**
- * Bolt Fusion Tech — signature mark + wordmark.
- * Faceted diamond (jewel / precision), asymmetric bolt, fusion orbit.
- * Jewel chip with optional aurora; couture-style type stack.
+ * The Bolt Fusion Tech mark, for every page except the homepage — /work/warmchats
+ * and /privacy-policy draw it. The drawing itself is components/LogoMarkSvg.tsx;
+ * this adds ids from useId() and, when `framed`, the old design's jewel chip.
+ * The homepage's logo, with the wordmark, is components/techwix/Logo.tsx.
  */
 export function LogoMark({
   className,
@@ -67,59 +63,6 @@ export function LogoMark({
       transition={springLux}
     >
       {chip}
-    </motion.span>
-  );
-}
-
-export default function Logo({ className = "", markOnly = false }: LogoProps) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.span
-      className={`group inline-flex items-center gap-3 sm:gap-4 ${className}`}
-      whileHover={reduceMotion ? undefined : { y: -2 }}
-      transition={springLux}
-    >
-      <LogoMark framed={!markOnly} className={markOnly ? "h-8 w-8 sm:h-9 sm:w-9" : undefined} />
-      {!markOnly && (
-        <span
-          /* The wordmark. WCAG 2.2 SC 1.4.3 exempts logotypes: "Text that is part of a
-             logo or brand name has no contrast requirement." verify-site exempts THIS
-             element from its two contrast checks (18, 20) and nothing else, and fails
-             if it ever holds anything but the brand name, so the attribute cannot
-             quietly become a small-text exemption. */
-          data-logotype
-          className="flex min-w-0 flex-col items-start justify-center gap-0.5"
-        >
-          <span
-            className="text-[0.5625rem] font-normal text-zinc-500 sm:text-[0.625rem]"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Bolt
-          </span>
-          <span
-            className="bg-gradient-to-r from-amber-50 via-amber-300 to-orange-500 bg-clip-text text-[1.0625rem] font-semibold leading-none tracking-[-0.04em] text-transparent sm:text-[1.125rem]"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Fusion
-          </span>
-          <span className="mt-1 flex items-center gap-2.5">
-            <span
-              className="h-1 w-1 shrink-0 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.55)]"
-              aria-hidden
-            />
-            <span
-              className="h-px w-6 bg-gradient-to-r from-amber-500/50 to-transparent sm:w-8"
-              aria-hidden
-            />
-            <span
-              className="text-[0.5rem] font-medium text-zinc-600 sm:text-[0.5625rem]"
-            >
-              Tech
-            </span>
-          </span>
-        </span>
-      )}
     </motion.span>
   );
 }

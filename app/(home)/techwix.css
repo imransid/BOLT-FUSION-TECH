@@ -236,13 +236,16 @@ summary {
   transition: background-color 0.5s, border-color 0.5s, color 0.5s, box-shadow 0.5s;
 }
 
+/* The clone's 70px side padding was for a button standing alone; every button
+   here stands beside a second one, and at 70px the hero's pair wraps inside its
+   column at 1440. 40px keeps each pair on one line. */
 .tw-btn--primary,
 .tw-btn--secondary,
 .tw-btn--outline,
 .tw-btn--light {
   font-size: 18px;
   line-height: 18px;
-  padding: 19px clamp(28px, 4.9vw, 70px);
+  padding: 19px clamp(24px, 3vw, 40px);
 }
 
 .tw-btn--primary,
@@ -254,7 +257,7 @@ summary {
 }
 
 .tw-btn--primary {
-  padding: 20px clamp(28px, 4.9vw, 70px);
+  padding: 20px clamp(24px, 3vw, 40px);
 }
 
 .tw-btn--primary:hover,
