@@ -368,30 +368,6 @@ function collectInPage() {
     section: sectionOf(el),
   }));
 
-  /* 8 ── metrics carry a visible shipped/target label ───────────────────── */
-  const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|hrs?|days?|weeks?|%|x|×|k|K|M|B)?\s*\+?$|^\d+\/\d+$/;
-  const UNIT = /[<>≤≥~≈$£€%×+]|\d\s*(ms|s|sec|min|h|hrs?|days?|weeks?|x|k|K|M|B)$|^\d+\/\d+$/;
-  const isFigure = (el) => {
-    const t = el.textContent.trim();
-    return t.length <= 14 && FIG.test(t) && UNIT.test(t);
-  };
-  const figureEls = [...document.body.querySelectorAll("*")].filter(
-    (el) => !el.closest("script, style, noscript, template, svg, title") && isFigure(el) && ![...el.children].some((c) => c.textContent.trim() === el.textContent.trim()) && visible(el),
-  );
-  const isLabel = (e) => /^(shipped|target)$/i.test(e.textContent.trim()) && visible(e);
-  const metrics = figureEls.map((el) => {
-    /* the metric's own container: the largest ancestor holding no other figure */
-    let box = el;
-    while (box.parentElement && box.parentElement !== document.body && figureEls.filter((f) => box.parentElement.contains(f)).length === 1) box = box.parentElement;
-    const label = isLabel(box) ? box : [...box.querySelectorAll("*")].find(isLabel);
-    return {
-      figure: el.textContent.trim(),
-      label: label ? label.textContent.trim().toLowerCase() : null,
-      context: snip(box, 90),
-      section: sectionOf(el),
-    };
-  });
-
   /* 9 ── published projects: loaded screenshot + write-up link ──────────── */
   const srcOf = (img) => decodeURIComponent(img.currentSrc || img.src || "");
   const projImgs = [...document.images].filter((i) => /\/projects\//.test(srcOf(i)));
@@ -505,7 +481,325 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, metrics, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people };
+}
+
+/* 8 ── every figure in the visible text, standalone or inside a sentence (runs in the browser)
+
+   Runs LAST in visit(), once every <details> is open — their answers are page
+   content — because opening them would change what checks 18 and 20 see.
+
+   Two kinds of figure, two rules:
+     · a STANDALONE metric — an element whose whole text is one short figure, as
+       in the metric band, the /work cards and the KPI grids — keeps the rule this
+       check always had: a visible shipped/target label inside the largest box
+       around it that holds no other standalone figure;
+     · every other FIGURE TOKEN in the visible text — in a sentence, a list item,
+       a link, a lane header, split across inline tags — must sit in an element
+       with data-status="shipped|target" that holds its OWN visible chip reading
+       that status (components/FigureText.tsx), or in a data-figure-exempt element
+       that states a real reason and covers exactly one figure.
+   A chip anywhere else — beside the wrapper, or three levels up in the metric
+   band — is not the figure's chip, and a chip nobody can see is not a chip.
+
+   NOT a figure, by structure, each returned with its reason so the report prints
+   it: the © line's year; a date; a legal section or citation number; a phone
+   number; an ordinal (1st, "Week 2", a heading's "4.", a zero-padded 01); a
+   number that is part of a name (GPT-4.1, S3); and a bare number with no unit,
+   %, currency, ~ < > ≈ prefix, multiplier or range. Nothing is dropped unprinted. */
+function readFigures() {
+  const csMemo = new Map();
+  const cs = (el) => {
+    let s = csMemo.get(el);
+    if (!s) csMemo.set(el, (s = getComputedStyle(el)));
+    return s;
+  };
+  const opMemo = new Map();
+  const opacity = (el) => {
+    if (!el || el.nodeType !== 1) return 1;
+    if (!opMemo.has(el)) opMemo.set(el, parseFloat(cs(el).opacity) * opacity(el.parentElement));
+    return opMemo.get(el);
+  };
+  const visible = (el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return false;
+    for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.display === "none" || s.visibility === "hidden" || parseFloat(s.opacity) < 0.05) return false;
+    }
+    return true;
+  };
+  const snip = (el, n = 50) => (el?.textContent || "").trim().replace(/\s+/g, " ").slice(0, n);
+  const sectionOf = (el) => {
+    const s = el?.closest?.("section[id], [id]");
+    return s ? `#${s.id}` : "";
+  };
+  /* EDGE marks where an atomic box sat inside a run: nothing matches across it, and it prints as nothing */
+  const EDGE = "\u200B";
+  const oneLine = (s) => s.replaceAll(EDGE, "").replace(/\s+/g, " ").trim();
+
+  /* ── standalone metrics: the check's original rule, unchanged ──────────── */
+  const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|hrs?|days?|weeks?|%|x|×|k|K|M|B)?\s*\+?$|^\d+\/\d+$/;
+  const UNIT = /[<>≤≥~≈$£€%×+]|\d\s*(ms|s|sec|min|h|hrs?|days?|weeks?|x|k|K|M|B)$|^\d+\/\d+$/;
+  const isFigure = (el) => {
+    const t = el.textContent.trim();
+    return t.length <= 14 && FIG.test(t) && UNIT.test(t);
+  };
+  const figureEls = [...document.body.querySelectorAll("*")].filter(
+    (el) => !el.closest("script, style, noscript, template, svg, title") && isFigure(el) && ![...el.children].some((c) => c.textContent.trim() === el.textContent.trim()) && visible(el),
+  );
+  const isLabel = (e) => /^(shipped|target)$/i.test(e.textContent.trim()) && visible(e);
+  const standalone = new Map();
+  for (const el of figureEls) {
+    /* the metric's own container: the largest ancestor holding no other figure */
+    let box = el;
+    while (box.parentElement && box.parentElement !== document.body && figureEls.filter((f) => box.parentElement.contains(f)).length === 1) box = box.parentElement;
+    const label = isLabel(box) ? box : [...box.querySelectorAll("*")].find(isLabel);
+    standalone.set(el, { label: label ? label.textContent.trim().toLowerCase() : null, context: snip(box, 90) });
+  }
+
+  /* ── the visible text, as runs: one per block box. An inline element (a link,
+     a <b>, a data-status span) joins the run around it, so a figure split across
+     tags reads as one figure. An atomic inline (a chip, an inline-block badge) or
+     a box out of the flow (absolute, fixed, floated — an sr-only span is one) is
+     a run of its own, and the run around it carries on past it across an EDGE.
+     Text counts when it has a box, its visibility is visible and its opacity is
+     not ~0 — screen-reader-only text included: a screen reader reads it out. ── */
+  const SKIP = "script, style, noscript, template, title, iframe";
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const runs = [];
+  let cur = null;
+  const begin = (el) => runs.push((cur = { el, text: "", segs: [] }));
+  const put = (node, text) => {
+    if (node) cur.segs.push({ node, start: cur.text.length, end: cur.text.length + text.length });
+    cur.text += text;
+  };
+  const shown = (node) => {
+    const el = node.parentElement;
+    if (cs(el).visibility !== "visible" || opacity(el) < 0.05) return false;
+    const r = document.createRange();
+    r.selectNodeContents(node);
+    return [...r.getClientRects()].some((q) => q.width > 0 && q.height > 0);
+  };
+  const walk = (parent) => {
+    for (let c = parent.firstChild; c; c = c.nextSibling) {
+      if (c.nodeType === 3) {
+        if (!/\S/.test(c.textContent)) put(null, " ");
+        else if (shown(c)) put(c, c.textContent);
+        continue;
+      }
+      if (c.nodeType !== 1 || c.matches(SKIP)) continue;
+      if (c.localName === "br") {
+        begin(cur.el);
+        continue;
+      }
+      const d = cs(c).display;
+      if (d === "none") continue;
+      const svgBox = c.namespaceURI === SVG_NS && c.localName !== "tspan" && c.localName !== "a";
+      if (!svgBox && (d === "inline" || d === "contents")) {
+        walk(c);
+        continue;
+      }
+      const outer = cur;
+      const atomic = !svgBox && (d.startsWith("inline") || /^(absolute|fixed)$/.test(cs(c).position) || cs(c).cssFloat !== "none");
+      if (atomic) put(null, EDGE);
+      begin(c);
+      walk(c);
+      if (atomic) {
+        cur = outer;
+        put(null, EDGE);
+      } else begin(outer.el);
+    }
+  };
+  begin(document.body);
+  walk(document.body);
+
+  /* ── figure tokens, and every number that is not one ─────────────────── */
+  const MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
+  const NUM = String.raw`\d+(?:[.,]\d+)*`;
+  /* [pattern, reason, extra test] — in order, each on what the earlier ones left */
+  const NOT_FIGURE = [
+    [/(?:©|\(c\)|copyright)\s*\d{4}(?:\s?[-–]\s?\d{4})?/giu, "a year in the © line"],
+    [new RegExp(String.raw`\b\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\b\.?(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b`, "gu"), "a date"],
+    [/(?:§§?\s*|\b(?:sections?|clauses?|articles?|art\.|paragraphs?|para\.|schedules?|annex(?:es)?|recitals?)\s+)\d+(?:[.(]\w+\)?)*(?:\s?(?:[-–,]|and|to)\s?\d+(?:[.(]\w+\)?)*)*|\b(?:regulation|directive)\s+\((?:eu|ec)\)\s+(?:no\.?\s+)?\d+\/\d+|\bact\s+\d{4}\b/giu, "a legal section or citation number"],
+    [/\+\d{1,3}(?:[\s.‑-]?\(?\d{1,5}\)?){2,5}/gu, "a phone number", (t) => (t.match(/\d/g) || []).length >= 9],
+    [/\b\d+(?:st|nd|rd|th)\b/gu, "an ordinal"],
+    [/(?:\b(?:week|step|phase|stage|lane|part|day|round|sprint|chapter|level|tier|milestone|no\.)|#)\s?\d+(?:\s?[-–]\s?\d+)?\b/giu, "an ordinal — a sequence label"],
+  ];
+  /* a number is a figure when it carries a unit, %, currency, an approximation or
+     bound, a multiplier, a range, a rate or a trailing + */
+  const FIGURE = new RegExp(
+    String.raw`(?<![\p{N}_])(?<!\p{L}(?![$£€]))` +
+      String.raw`(?<pre>[~≈<>≤≥±+−]\s?)?(?<cur>[$£€]\s?)?` +
+      `(?<num>${NUM})` +
+      String.raw`(?<range>\s?[-‐‑–—]\s?[$£€]?${NUM})?` +
+      "(?<unit>" +
+      [
+        String.raw`\s?%`,
+        String.raw`\s?×`,
+        String.raw`x(?![\p{L}\p{N}])`,
+        String.raw`\/(?:s|sec|min|h|hr|hour|d|day|wk|week|mo|month|yr|year)(?!\p{L})`,
+        String.raw`\/\d+(?![\p{N}\/])`,
+        String.raw`(?:\s|[-‐‑])?(?:milliseconds?|ms|seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|wks?|months?|mos?|years?|yrs?|[KMGT]B)(?![\p{L}\p{N}])`,
+        String.raw`[-‐‑]d(?![\p{L}\p{N}])`,
+        String.raw`(?:s|m|h|d|k|K|M|B|bn)(?![\p{L}\p{N}])`,
+      ].join("|") +
+      ")?" +
+      String.raw`(?<plus>\+(?!\p{N}))?`,
+    "gu",
+  );
+  const MASK = "\uFFFF"; /* not a letter, digit or space: nothing matches across it */
+  const found = [];
+  const notFigures = [];
+  for (const run of runs) {
+    if (!/\d/.test(run.text)) continue;
+    let left = run.text;
+    const mask = (s, e) => (left = left.slice(0, s) + MASK.repeat(e - s) + left.slice(e));
+    const not = (s, e, reason) => {
+      notFigures.push({ run, start: s, end: e, reason });
+      mask(s, e);
+    };
+    const tel = new Map();
+    for (const g of run.segs) {
+      const a = g.node.parentElement.closest('a[href^="tel:" i]');
+      if (!a) continue;
+      const t = tel.get(a) || { s: g.start, e: g.end };
+      t.e = g.end;
+      tel.set(a, t);
+    }
+    for (const { s, e } of tel.values()) if (/\d/.test(left.slice(s, e))) not(s, e, "a phone number — a tel: link");
+    const heading = run.el.closest("h1, h2, h3, h4, h5, h6") && /^(\s*)(\d+(?:\.\d+)*)[.)](?=\s)/.exec(left);
+    if (heading) not(heading[1].length, heading[1].length + heading[2].length, "a section number opening a heading");
+    const marker = /^(\s*)(0\d+)\s*$/.exec(left);
+    if (marker) not(marker[1].length, marker[1].length + marker[2].length, "a zero-padded sequence marker (01, 02 …)");
+    for (const [re, reason, keep] of NOT_FIGURE)
+      for (const m of left.matchAll(re)) if (/\d/.test(m[0]) && (!keep || keep(m[0]))) not(m.index, m.index + m[0].length, reason);
+    const here = [];
+    for (const m of left.matchAll(FIGURE)) {
+      const g = m.groups;
+      if (g.pre || g.cur || g.range || g.unit || g.plus) here.push({ run, start: m.index, end: m.index + m[0].length });
+    }
+    for (const f of here) mask(f.start, f.end);
+    found.push(...here);
+    /* what is left: every word still holding a digit */
+    for (const m of left.matchAll(/[^\s\uFFFF\u200B]*\d[^\s\uFFFF\u200B]*/gu)) {
+      const lead = /^[("“‘'[{]*/u.exec(m[0])[0].length;
+      const word = m[0].slice(lead).replace(/[)"”’'\]}.,;:!?]+$/u, "");
+      const d = /\d+(?:[.,]\d+)*/u.exec(word);
+      /* a letter against the digits (S3, 0x1F), or a word hyphened onto them from
+         the left (GPT-4.1), makes it part of a name; "3-step" is still a count */
+      const named = /\p{L}[-‐‑]?$/u.test(word.slice(0, d.index)) || /^\p{L}/u.test(word.slice(d.index + d[0].length));
+      notFigures.push({ run, start: m.index + lead, end: m.index + lead + word.length, reason: named ? "part of a name, version or identifier" : "a bare number — no unit, %, currency, ~ < > ≈ prefix, multiplier or range" });
+    }
+  }
+
+  /* the sentence a token sits in, from its run. A full stop straight after a
+     digit ends nothing ("1. Who we are"). A token alone in its box — a table
+     cell, a count, a step marker — is given the text around it as well. */
+  const sentenceOf = (run, s, e) => {
+    const t = run.text;
+    const END = /(?<!\d)[.!?…](?=[\s\u200B]|$)/g;
+    let a = 0;
+    for (const m of t.slice(0, s).matchAll(END)) a = m.index + 1;
+    END.lastIndex = e;
+    const tail = END.exec(t);
+    const b = tail ? tail.index + 1 : t.length;
+    const out = oneLine(t.slice(a, b));
+    if (out.length > oneLine(t.slice(s, e)).length + 2) return out.length > 220 ? `…${oneLine(t.slice(Math.max(a, s - 100), Math.min(b, e + 100)))}…` : out;
+    for (let el = run.el.parentElement; el && el !== document.body; el = el.parentElement) {
+      const around = oneLine(el.innerText ?? el.textContent);
+      if (around.length > out.length + 3) return `${out} — within “${around.length > 140 ? `${around.slice(0, 140)}…` : around}”`;
+    }
+    return out;
+  };
+  const figures = found.map((f) => {
+    const nodes = f.run.segs.filter((g) => g.end > f.start && g.start < f.end).map((g) => g.node);
+    let common = nodes[0].parentElement;
+    while (common && !nodes.every((n) => common.contains(n))) common = common.parentElement;
+    return { nodes, common, text: oneLine(f.run.text.slice(f.start, f.end)), sentence: sentenceOf(f.run, f.start, f.end), section: sectionOf(common) };
+  });
+
+  /* ── a chip counts only if a sighted reader can see it: not display:none,
+     visibility:hidden, opacity 0, clipped to nothing (sr-only), or zero size ── */
+  const hiddenWhy = (chip, wrap) => {
+    const chain = [];
+    for (let a = chip; a && a !== wrap.parentElement; a = a.parentElement) chain.push(a);
+    const none = chain.find((a) => cs(a).display === "none");
+    if (none) return none === chip ? "display:none" : `display:none on the ${none.localName} around it`;
+    if (cs(chip).visibility !== "visible") return `visibility:${cs(chip).visibility}`;
+    if (opacity(chip) < 0.05) return "opacity 0";
+    if (chain.some((a) => /^inset\(\s*(50|[5-9]\d|100)%/.test(cs(a).clipPath) || /^rect\(\s*0(px)?[\s,]+0(px)?[\s,]+0(px)?[\s,]+0(px)?\s*\)$/.test(cs(a).clip)))
+      return "clipped to nothing — screen-reader-only (sr-only)";
+    const r = chip.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return `zero size — a ${+r.width.toFixed(1)}×${+r.height.toFixed(1)}px box`;
+    for (const a of chain.slice(1)) {
+      if (!/hidden|clip/.test(cs(a).overflowX + cs(a).overflowY)) continue;
+      const q = a.getBoundingClientRect();
+      if (Math.min(r.right, q.right) - Math.max(r.left, q.left) < 2 || Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) < 2) return `clipped away by an overflow:hidden ${a.localName} inside the wrapper`;
+    }
+    const t = document.createRange();
+    t.selectNodeContents(chip);
+    const b = t.getBoundingClientRect();
+    if (b.width < 2 || b.height < 2 || parseFloat(cs(chip).fontSize) < 4) return "its text has no size";
+    return "";
+  };
+
+  /* ── an exemption states a real reason and covers exactly one figure ───── */
+  const PLACEHOLDER = new Set(["reason", "todo", "tbd", "n/a", "na", "-", "x", "ok", "exempt", "none"]);
+  const reasonProblem = (raw) => {
+    if (!raw) return "its reason is empty";
+    const r = raw.trim();
+    if (!r) return "its reason is only whitespace";
+    const low = r.toLowerCase().replace(/[.!…:]+$/, "");
+    if (PLACEHOLDER.has(low) || /^(todo|tbd|fixme|xxx|placeholder)\b/.test(low)) return `its reason "${r}" is a placeholder`;
+    if (!/\s/.test(r)) return `its reason "${r}" is a single word`;
+    if (r.length < 12) return `its reason "${r}" is under 12 characters`;
+    return "";
+  };
+  const exemptions = [...document.querySelectorAll("[data-figure-exempt]")].map((el) => {
+    const reason = el.getAttribute("data-figure-exempt");
+    const rendered = el.getClientRects().length > 0 && cs(el).visibility === "visible" && opacity(el) >= 0.05;
+    const covers = figures.filter((x) => x.nodes.every((n) => el.contains(n)));
+    const problems = [reasonProblem(reason)];
+    if (rendered && covers.length !== 1)
+      problems.push(covers.length ? `it covers ${covers.length} figures — an exemption covers exactly one` : "it covers no figure — an exemption covers exactly one");
+    return { el, reason, rendered, problem: problems.filter(Boolean).join("; "), figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
+  });
+
+  /* ── each token's verdict ─────────────────────────────────────────────── */
+  const tokens = figures.map((x) => {
+    const out = { fig: x.text, sentence: x.sentence, section: x.section };
+    let wrapWhy = "";
+    const wrap = x.common.closest("[data-status]");
+    if (wrap) {
+      const status = wrap.getAttribute("data-status");
+      if (status !== "shipped" && status !== "target") wrapWhy = `sits in data-status="${status}" — a status is shipped or target`;
+      else {
+        /* its OWN chip: inside this wrapper, not inside a nested one, not the figure */
+        const chips = [...wrap.querySelectorAll("*")].filter((c) => c.closest("[data-status]") === wrap && c.textContent.trim() === status && !x.nodes.some((n) => c.contains(n)));
+        const why = chips.map((c) => hiddenWhy(c, wrap));
+        if (why.includes("")) return { ...out, verdict: "status", status };
+        wrapWhy = chips.length
+          ? `sits in data-status="${status}", but its chip cannot be seen: ${why[0]}`
+          : `sits in data-status="${status}" with no chip reading "${status}" inside that wrapper — a chip elsewhere is not its own`;
+      }
+    }
+    let std = null;
+    for (let a = x.common; a && !std; a = a.parentElement) std = standalone.get(a) || null;
+    if (std?.label) return { ...out, verdict: "standalone", label: std.label };
+    const ex = exemptions.find((e) => e.el === x.common.closest("[data-figure-exempt]"));
+    if (ex && !ex.problem) return { ...out, verdict: "exempt", reason: ex.reason.trim() };
+    if (ex) return { ...out, verdict: "exempt-invalid" }; /* reported once, on the exemption */
+    if (wrapWhy) return { ...out, verdict: "fail", why: wrapWhy };
+    if (std) return { ...out, verdict: "standalone-unlabelled", context: std.context };
+    return { ...out, verdict: "fail", why: "has no shipped/target label" };
+  });
+
+  return {
+    tokens,
+    exemptions: exemptions.map((e) => ({ reason: e.reason, rendered: e.rendered, problem: e.problem, figures: e.figures, sentence: e.sentence, section: e.section })),
+    notFigures: notFigures.map((n) => ({ tok: oneLine(n.run.text.slice(n.start, n.end)), reason: n.reason, sentence: sentenceOf(n.run, n.start, n.end) })),
+  };
 }
 
 /* 4 ── with JavaScript off, is the text there? (runs in the browser) ───── */
@@ -955,6 +1249,31 @@ async function visit(browser, route, width) {
   /* 20 ── last, because it repaints the page */
   if (want(20)) data.contrast = await measureContrast(page);
 
+  /* 8 ── last, because it changes the page. Every <details> is opened: its
+     answer is page content. They share a `name`, and opening one closes the
+     others, so the name goes first. Each is brought into view, so anything that
+     reveals on entry inside it has played before the text is read. */
+  if (want(8)) {
+    const opened = await page.evaluate(() => {
+      const all = [...document.querySelectorAll("details")];
+      for (const d of all) {
+        d.removeAttribute("name");
+        d.open = true;
+      }
+      return all.length;
+    });
+    if (opened) {
+      await page.evaluate(async () => {
+        for (const d of document.querySelectorAll("details")) {
+          d.scrollIntoView({ block: "center" });
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      });
+      await page.waitForTimeout(1700);
+    }
+    data.figures = await page.evaluate(readFigures).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+  }
+
   data.console = consoleMsgs;
   data.failed = failed;
   await ctx.close();
@@ -1201,19 +1520,63 @@ check(4, "With JavaScript off, every heading and paragraph is visible", "content
 });
 
 /* 8 */
-check(8, "Every rendered metric shows a visible shipped/target label", "an unlabelled number — CLAUDE.md: every metric carries a shipped or target label", (F, I) => {
-  const seen = new Set();
-  for (const [k, v] of Object.entries(visits)) {
-    const route = k.split("@")[0];
-    for (const m of v.metrics) {
-      const key = `${route}|${m.figure}|${m.context}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      if (m.label) I.push(`${route}: ${m.figure} → ${m.label}`);
-      else F.push(`${route}${m.section ? " " + m.section : ""}: "${m.figure}" has no shipped/target label — context: "${m.context}"`);
+check(
+  8,
+  "Every figure, standalone or inside a sentence, carries its own visible shipped/target label — or an exemption that says why",
+  "an unlabelled number anywhere in the text — the four in-sentence figures in the architecture lanes a standalone-only check could not see; a chip beside the wrapper or up in the section passing for the figure's own; a chip nobody can see; an exemption with no real reason, or one wide enough to swallow a second figure",
+  (F, I) => {
+    /* one line per finding, however many widths show it: a width-only one says
+       so, and one that occurs more than once on the page says how often */
+    const rows = new Map();
+    const row = (out, key, line, width) => {
+      const r = rows.get(key) || { out, line, widths: new Set(), count: {} };
+      r.widths.add(width);
+      r.count[width] = (r.count[width] || 0) + 1;
+      rows.set(key, r);
+    };
+    for (const [k, v] of Object.entries(visits)) {
+      const [route, width] = k.split("@");
+      const r = v.figures;
+      if (!r || r.error) {
+        row(F, `reader|${k}`, `${at(k)}: the figure reader did not run${r?.error ? ` (${r.error})` : ""} — unsure is a failure`, width);
+        continue;
+      }
+      const n = { standalone: 0, status: 0, exempt: 0, failing: 0 };
+      for (const t of r.tokens) {
+        const where = `${route}${t.section ? ` ${t.section}` : ""}`;
+        if (t.verdict === "standalone") {
+          n.standalone++;
+          row(I, `std|${route}|${t.fig}|${t.label}`, `${route}: ${t.fig} → ${t.label}`, width);
+        } else if (t.verdict === "status") {
+          n.status++;
+          row(I, `status|${route}|${t.section}|${t.fig}|${t.sentence}`, `${route}: "${t.fig}" → ${t.status}, its own chip — in "${t.sentence}"`, width);
+        } else if (t.verdict === "exempt") {
+          n.exempt++; /* listed with its reason below */
+        } else {
+          n.failing++;
+          if (t.verdict === "standalone-unlabelled") row(F, `std|${route}|${t.fig}|${t.context}`, `${where}: "${t.fig}" has no shipped/target label — context: "${t.context}"`, width);
+          else if (t.verdict === "fail") row(F, `fig|${route}|${t.section}|${t.fig}|${t.sentence}`, `${where}: "${t.fig}" ${t.why} — in "${t.sentence}"`, width);
+          /* "exempt-invalid" is reported once, on its exemption */
+        }
+      }
+      /* every exemption is printed, so each one stays reviewable */
+      for (const e of r.exemptions) {
+        const key = `ex|${route}|${e.reason}|${e.figures.join("|")}|${e.sentence}`;
+        const around = e.figures.length ? ` around ${e.figures.map((f) => `"${f}"`).join(", ")}` : "";
+        if (e.problem) row(F, key, `${route}${e.section ? ` ${e.section}` : ""}: data-figure-exempt="${e.reason}"${around} — ${e.problem} — in "${e.sentence}"`, width);
+        else if (!e.rendered) row(I, key, `${route}: data-figure-exempt="${e.reason}" — not rendered at this width`, width);
+        else row(I, key, `${route}: exempt "${e.figures[0]}" — reason: "${e.reason.trim()}" — in "${e.sentence}"`, width);
+      }
+      /* and every number judged not a figure, with the reason */
+      for (const x of r.notFigures) row(I, `not|${route}|${x.tok}|${x.reason}|${x.sentence}`, `${route}: not a figure: "${x.tok}" — ${x.reason} — in "${x.sentence}"`, width);
+      I.push(`${at(k)}: ${r.tokens.length} figure(s) — ${n.standalone} standalone, ${n.status} labelled in place, ${n.exempt} exempt, ${n.failing} failing; ${r.exemptions.length} exemption(s); ${r.notFigures.length} number(s) not figures`);
     }
-  }
-});
+    for (const r of rows.values()) {
+      const n = Math.max(...Object.values(r.count));
+      r.out.push(`${r.line}${n > 1 ? ` (×${n})` : ""}${r.widths.size < WIDTHS.length ? ` (at ${[...r.widths].join(", ")} only)` : ""}`);
+    }
+  },
+);
 
 /* 9 */
 await (async () => {

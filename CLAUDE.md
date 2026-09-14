@@ -274,6 +274,14 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
+**Check 8 reads sentences.** Every figure in the visible text — mid-sentence, split across
+tags, in a link, in an opened `<details>` — sits in a `data-status="shipped|target"` element
+holding its OWN visible chip reading that status (`components/FigureText.tsx`), or in a
+`data-figure-exempt="<reason>"` element covering exactly one figure, whose reason is real
+(not empty, a placeholder or one word; 12+ characters). Anything else fails — a chip outside
+the wrapper or invisible included — and every exemption and not-a-figure is printed with its
+reason. Standalone metric cards keep the old rule: a visible label in their own card.
+
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
 speed. Measured on a page that has already been scrolled, or never scrolled, it
