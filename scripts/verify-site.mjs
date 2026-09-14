@@ -1510,7 +1510,11 @@ async function visit(browser, route, width) {
     if (r.status() >= 400) failed.push({ url: r.url(), why: `HTTP ${r.status()}` });
   });
 
-  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  /* as in visitNoJs: a load that never comes is a finding (check 22), not a crash */
+  let loadTimeout = null;
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 }).catch((e) => {
+    loadTimeout = String(e?.message || e).split("\n")[0];
+  });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   const stalled = { images: [], fonts: [] };
   stalled.fonts.push(...(await settle(page, "fonts")));
@@ -1524,6 +1528,7 @@ async function visit(browser, route, width) {
   const data = await page.evaluate(collectInPage);
   data.glData = glData;
   data.stalled = stalled;
+  data.loadTimeout = loadTimeout;
   /* check 5: a candidate is only "stuck" if it is still invisible after three
      more seconds IN PLACE — that rules out a reveal still in progress on a busy
      machine. Do NOT scroll it into view to re-check: that fires the very reveal
@@ -1726,7 +1731,15 @@ async function visitFaq(browser) {
 async function visitNoJs(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, javaScriptEnabled: false });
   const page = await ctx.newPage();
-  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  /* A page that never reaches "load" is a finding (check 4), not a crash.
+     Without script, lazy images and frames load eagerly, so one resource that
+     never finishes holds "load" back; unhandled, it killed the whole run on
+     the merged state (2026-09-15) and nothing was reported. The page is read
+     as far as it got. */
+  let loadTimeout = null;
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 }).catch((e) => {
+    loadTimeout = String(e?.message || e).split("\n")[0];
+  });
   /* A CSS entrance runs without script and ends visible; judge the page once
      every such animation has finished, not in the middle of one. */
   /* ...waiting from outside the page: with scripts off, an in-page timer never
@@ -1744,6 +1757,7 @@ async function visitNoJs(browser, route, width) {
   }
   await page.waitForTimeout(1200);
   const r = await page.evaluate(hiddenWithoutJs);
+  r.loadTimeout = loadTimeout;
   await ctx.close();
   return r;
 }
@@ -1898,6 +1912,7 @@ check(2, "Every font the layout loads renders somewhere; text uses a loaded font
 /* 4 */
 check(4, "With JavaScript off, every heading and paragraph is visible", "content that starts hidden and waits for an animation to reveal it", (F, I) => {
   for (const [k, v] of Object.entries(noJs)) {
+    if (v.loadTimeout) F.push(`${at(k)}: without JavaScript the page never reached "load" (${v.loadTimeout}) — something on it never finishes loading`);
     const shown = new Set(visits[k]?.visibleTexts || []);
     const scriptOnly = v.out.filter((o) => shown.has(o.text));
     const alsoHiddenWithJs = v.out.length - scriptOnly.length;
@@ -2165,6 +2180,7 @@ await (async () => {
 check(22, "No console errors, page errors, hydration warnings or failed requests", "runtime breakage that renders fine in a screenshot", (F, I) => {
   const seen = new Set();
   for (const [k, v] of Object.entries(visits)) {
+    if (v.loadTimeout) F.push(`${at(k)}: the page never reached "load" (${v.loadTimeout})`);
     for (const m of v.console) {
       const key = `${m.type}|${m.text}`;
       if (seen.has(key)) continue;
