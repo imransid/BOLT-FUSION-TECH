@@ -28,7 +28,9 @@ import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 import pngjs from "pngjs";
 
 const { PNG } = pngjs;
@@ -69,6 +71,40 @@ const EXPECT_LD = [
 
 const want = (id) => !ONLY || ONLY.has(String(id));
 
+/* 25 — WebGL. It is never created at these phone and tablet widths, nor under
+   reduced motion at any width. Step 3 ships the poster and no canvas, so there
+   is none on / at all: WEBGL_ON_HOME is false. Step 4 sets it to true, and then
+   check 25 allows exactly one thing — a context on / at >=1025px with a fine
+   pointer and no reduced motion, from a renderer chunk of at most
+   RENDERER_MAX_GZ gzipped that is requested after the load event. */
+const GL_WIDTHS = [390, 768, 1440];
+const WEBGL_ON_HOME = false;
+const RENDERER_MAX_GZ = 15 * 1024;
+
+/* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
+   targets). Measured on / as the Phase 1 baseline was (scratchpad perf.mjs): a
+   fresh context per run, the median of three. */
+const PERF_RUNS = 3;
+const PERF_PROFILES = {
+  mobile: {
+    label: "mobile lab (390 wide, 4x CPU, 150ms RTT, 1.6Mbps down)",
+    viewport: { width: 390, height: 844 },
+    phone: true,
+    cpu: 4,
+    net: { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 },
+  },
+  desktop: { label: "desktop (1440 wide, unthrottled)", viewport: { width: 1440, height: 900 }, phone: false, cpu: 1, net: null },
+};
+const BUDGET = { mobileLcp: 1500, mobileTbt: 150, desktopLcp: 500, cls: 0.005, initialJs: 260 * 1024 };
+
+/* 28 — where the poster must be the LCP element */
+const LCP_PROFILES = [
+  { width: 390, label: "@390" },
+  { width: 390, phone: true, label: "@390 phone (touch, 3x DPR)" },
+  { width: 768, label: "@768" },
+  { width: 1440, label: "@1440" },
+];
+
 /* A page's SERVED text, as a crawler reads it: scripts, styles and templates
    stripped (Next's RSC payload repeats the content and must not count),
    entities decoded, and — for matching — every whitespace character removed,
@@ -95,8 +131,16 @@ const servedSquashed = (html) =>
 /* WCAG 2.2 Success Criterion 1.4.3 Contrast (Minimum), exception "Logotypes":
    "Text that is part of a logo or brand name has no contrast requirement."
    The exemption is scoped, and the scope is enforced:
-     · it covers the one element marked data-logotype — the wordmark in
-       components/Logo.tsx — and the text inside it;
+     · it covers the one element marked data-logotype — the wordmark — and the
+       text inside it. Each side of the split has its own logo file:
+         /             components/techwix/Logo.tsx, the site's only wordmark. It
+                       renders in the header, and again in the mobile drawer,
+                       which carries `hidden` until it is opened: one of the two
+                       is rendered at a time;
+         other pages   components/Logo.tsx, whose <LogoMark> is the mark alone —
+                       no wordmark, and nothing marked data-logotype.
+       Check 18 prints the count on every page and fails a page that renders
+       more than one;
      · it applies to contrast only: axe's color-contrast rule (check 18) and the
        pixel check (check 20). Every other axe rule still runs on the wordmark;
      · check 18 FAILS if a data-logotype element ever holds anything but
@@ -188,6 +232,231 @@ async function readingSpeedScroll(page) {
       await new Promise((r) => setTimeout(r, 150));
     }
   });
+}
+
+/* 25 ── every WebGL context a page asks for. Installed as an init script, so it
+   is in place before any page script runs: it wraps getContext on both canvas
+   kinds and records every webgl / webgl2 / experimental-webgl request, granted
+   or not. Only the main frame is read: a third-party iframe's canvas (Calendly)
+   is not this site's code. */
+function glHook() {
+  const log = [];
+  Object.defineProperty(window, "__vsGl", { value: log });
+  for (const C of [window.HTMLCanvasElement, window.OffscreenCanvas]) {
+    if (!C) continue;
+    const orig = C.prototype.getContext;
+    C.prototype.getContext = function (type, ...rest) {
+      if (/webgl/i.test(String(type)))
+        log.push({ type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160) });
+      return orig.call(this, type, ...rest);
+    };
+  }
+}
+/* what the hook recorded, and every script the page requested with its start
+   time against the load event: a renderer must never be initial JavaScript */
+function glReport() {
+  const nav = performance.getEntriesByType("navigation")[0];
+  return {
+    gl: window.__vsGl || null,
+    canvases: document.querySelectorAll("canvas").length,
+    loadEnd: nav ? nav.loadEventEnd : 0,
+    scripts: performance
+      .getEntriesByType("resource")
+      .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
+      .map((e) => ({ url: e.name, start: e.startTime })),
+  };
+}
+/* One route under one profile. The renderer is imported after load, inside
+   requestIdleCallback, and pauses offscreen: the page gets idle time, one walk
+   down and back up (anything mounted on entering the viewport mounts), then
+   idle time again. */
+async function visitGl(browser, route, prof) {
+  const ctx = await browser.newContext({
+    viewport: { width: prof.width, height: prof.width < 768 ? 844 : 900 },
+    reducedMotion: prof.reduced ? "reduce" : "no-preference",
+    ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}),
+  });
+  await ctx.addInitScript(glHook);
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  await page.evaluate(async () => {
+    for (let y = 0; y <= document.documentElement.scrollHeight; y += 300) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    window.scrollTo(0, 0);
+  });
+  await page.waitForTimeout(2000);
+  const r = await page.evaluate(glReport);
+  await ctx.close();
+  return r;
+}
+
+/* 28 (a, c) ── the hero as a crawler gets it: the SERVED HTML, scripts, styles
+   and templates stripped, parsed in the page and compared with the hero the
+   browser renders. The roles are read from the rendered hero — the h1, the
+   first paragraph after it, the first link after that, and every list item
+   holding a figure — and each must be in the served hero, word for word. */
+async function visitHero(browser) {
+  const raw = await (await fetch(`${BASE}/`)).text();
+  const stripped = raw.replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<!--[\s\S]*?-->/g, "");
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  const r = await page.evaluate((html) => {
+    const n = (x) => String(x || "").replace(/\s+/g, " ").trim();
+    const served = new DOMParser().parseFromString(html, "text/html");
+    const h1 = document.querySelector("h1");
+    const hero = h1?.closest("section");
+    if (!hero) return { error: "no <h1> inside a <section> on / — the hero cannot be found" };
+    const sHero = hero.id ? served.getElementById(hero.id) : served.querySelector("h1")?.closest("section");
+    const follows = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const items = [...hero.querySelectorAll("li")].filter((li) => /\d/.test(li.textContent));
+    const inItem = (el) => items.some((li) => li.contains(el));
+    const subtext = [...hero.querySelectorAll("p")].find((p) => follows(h1, p) && !inItem(p) && n(p.textContent));
+    const cta = [...hero.querySelectorAll("a[href]")].find((a) => follows(subtext || h1, a) && !inItem(a) && n(a.textContent));
+    const roles = [{ role: "headline", text: n(h1.textContent) }];
+    if (subtext) roles.push({ role: "subtext", text: n(subtext.textContent) });
+    if (cta) roles.push({ role: "call to action", text: n(cta.textContent), href: cta.getAttribute("href") });
+    const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|%|x|×|k|K|M|B)?\s*\+?$/;
+    const proof = items.map((li, i) => {
+      const leaves = [...li.querySelectorAll("*")].filter((e) => !e.children.length);
+      const fig = leaves.find((e) => FIG.test(n(e.textContent)));
+      const status = leaves.find((e) => /^(shipped|target)$/i.test(n(e.textContent)));
+      const link = li.querySelector("a[href]");
+      let label = n(li.textContent);
+      for (const part of [fig, status, link]) if (part) label = n(label.replace(n(part.textContent), ""));
+      return {
+        i: i + 1,
+        text: n(li.textContent),
+        figure: fig ? n(fig.textContent) : null,
+        status: status ? n(status.textContent).toLowerCase() : null,
+        link: link ? { href: link.getAttribute("href"), text: n(link.textContent) } : null,
+        label,
+      };
+    });
+    const posters = [...served.querySelectorAll("img[data-hero-poster]")].map((img) => ({
+      width: img.getAttribute("width"),
+      height: img.getAttribute("height"),
+      fetchpriority: img.getAttribute("fetchpriority"),
+      loading: img.getAttribute("loading"),
+    }));
+    return {
+      heroId: hero.id || "",
+      servedHero: Boolean(sHero),
+      roles,
+      sText: n(sHero?.textContent),
+      sLinks: sHero ? [...sHero.querySelectorAll("a[href]")].map((a) => ({ href: a.getAttribute("href"), text: n(a.textContent) })) : [],
+      sItems: sHero ? [...sHero.querySelectorAll("li")].map((li) => n(li.textContent)) : [],
+      proof,
+      posters,
+    };
+  }, stripped);
+  await ctx.close();
+  return r;
+}
+
+/* 28 (b) ── the FINAL largest-contentful-paint entry, from a buffered observer
+   installed before any page script, on a fresh page nobody scrolls or touches
+   (an input ends LCP reporting; a scroll brings other candidates into view):
+   load, then three seconds of settling. */
+async function visitLcp(browser, prof) {
+  const ctx = await browser.newContext({
+    viewport: { width: prof.width, height: prof.width < 768 ? 844 : 900 },
+    ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}),
+  });
+  await ctx.addInitScript(() => {
+    const out = (window.__vsLcp = []);
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) {
+        const el = e.element;
+        const cls = el && typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : "";
+        const txt = el && el.tagName !== "IMG" ? (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40) : "";
+        out.push({
+          t: Math.round(e.startTime),
+          size: e.size,
+          url: e.url || "",
+          tag: el ? el.tagName.toLowerCase() : "(removed from the page)",
+          poster: Boolean(el && el.hasAttribute("data-hero-poster")),
+          desc: el ? `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${cls}${txt ? ` "${txt}"` : ""}` : "(removed from the page)",
+        });
+      }
+    }).observe({ type: "largest-contentful-paint", buffered: true });
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForTimeout(3000);
+  const r = await page.evaluate(() => {
+    const p = document.querySelector("img[data-hero-poster]");
+    const b = p?.getBoundingClientRect();
+    return { entries: window.__vsLcp || [], posterSrc: p ? p.currentSrc : null, posterBox: b ? `${Math.round(b.width)}x${Math.round(b.height)}` : null };
+  });
+  await ctx.close();
+  return { ...prof, ...r };
+}
+
+/* 29 ── one lab run: CPU and network throttled over CDP before the page loads,
+   observers installed before any page script, no input and no scroll — load,
+   then four seconds of settling. Blocking time is perf.mjs's definition: every
+   long task's time over 50ms, from navigation to the end of the settle — stricter
+   than Lighthouse's FCP-to-interactive window. Initial JavaScript is every
+   script requested by the end of the load event, in bytes transferred
+   (compressed on the wire, headers included). */
+async function perfRun(browser, prof) {
+  const ctx = await browser.newContext({ viewport: prof.viewport, ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
+  const page = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: prof.cpu });
+  if (prof.net) {
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", prof.net);
+  }
+  await page.addInitScript(() => {
+    const p = (window.__vsPerf = { lcp: 0, lcpEl: "", lcpPoster: false, cls: 0, longtasks: [] });
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) {
+        p.lcp = e.startTime;
+        const el = e.element;
+        p.lcpPoster = Boolean(el && el.hasAttribute("data-hero-poster"));
+        p.lcpEl = el ? `${el.tagName.toLowerCase()}${typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : ""}` : "(removed)";
+      }
+    }).observe({ type: "largest-contentful-paint", buffered: true });
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) if (!e.hadRecentInput) p.cls += e.value;
+    }).observe({ type: "layout-shift", buffered: true });
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) p.longtasks.push({ start: e.startTime, dur: e.duration });
+    }).observe({ type: "longtask", buffered: true });
+  });
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForTimeout(4000);
+  const r = await page.evaluate(() => {
+    const p = window.__vsPerf;
+    const nav = performance.getEntriesByType("navigation")[0];
+    const loadEnd = nav ? nav.loadEventEnd : 0;
+    const js = performance.getEntriesByType("resource").filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name));
+    const initial = js.filter((e) => e.startTime <= loadEnd);
+    const sent = (list) => list.reduce((a, e) => a + (e.transferSize || e.encodedBodySize), 0);
+    return {
+      lcp: p.lcp,
+      lcpEl: p.lcpEl,
+      lcpPoster: p.lcpPoster,
+      cls: p.cls,
+      fcp: performance.getEntriesByName("first-contentful-paint")[0]?.startTime || 0,
+      tbt: p.longtasks.reduce((a, t) => a + Math.max(0, t.dur - 50), 0),
+      longtasks: p.longtasks.length,
+      load: loadEnd,
+      jsInitial: sent(initial),
+      jsInitialFiles: initial.length,
+      jsAll: sent(js),
+      jsDecoded: js.reduce((a, e) => a + e.decodedBodySize, 0),
+    };
+  });
+  await ctx.close();
+  return r;
 }
 
 /* ── in-page collector (runs in the browser) ─────────────────────────────── */
@@ -432,7 +701,13 @@ function collectInPage() {
   const fontFaceRules = [];
   const walkFaces = (list) => {
     for (const r of list) {
-      if (r instanceof CSSFontFaceRule) fontFaceRules.push({ family: r.style.getPropertyValue("font-family").replace(/["']/g, "").trim(), src: r.style.getPropertyValue("src") });
+      if (r instanceof CSSFontFaceRule)
+        fontFaceRules.push({
+          family: r.style.getPropertyValue("font-family").replace(/["']/g, "").trim(),
+          src: r.style.getPropertyValue("src"),
+          weight: r.style.getPropertyValue("font-weight") || "400",
+          style: r.style.getPropertyValue("font-style") || "normal",
+        });
       else if (r.cssRules) walkFaces(r.cssRules);
     }
   };
@@ -475,13 +750,45 @@ function collectInPage() {
     cards: personCards.map((c) => ({ name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(), href: c.getAttribute("href") || null })),
   };
 
+  /* 31 ── which design the page carries. A stylesheet is known by what it
+     styles, not by its hashed file name: the clone's (app/(home)/techwix.css)
+     by its .tw-root / .tw-hero / .tw-header rules, the site's own
+     (app/globals.css) by .beam-button / .corner-glow / .cv-section. The old
+     homepage's markup is its content-visibility sections, its FAQ items, the
+     site design's buttons and glows, and its cut About section. */
+  const TECHWIX_SEL = /\.tw-(root|hero|header)\b/;
+  const SITE_SEL = /\.(beam-button|corner-glow|cv-section)\b/;
+  const sheets = [];
+  for (const sheet of document.styleSheets) {
+    const sels = [];
+    const grab = (list) => {
+      for (const r of list) {
+        if (r.selectorText) sels.push(r.selectorText);
+        if (r.cssRules) grab(r.cssRules);
+      }
+    };
+    try {
+      grab(sheet.cssRules);
+    } catch {
+      continue; /* cross-origin sheet: not ours */
+    }
+    const text = sels.join("\n");
+    sheets.push({ href: sheet.href ? sheet.href.replace(location.origin, "") : "(inline <style>)", techwix: TECHWIX_SEL.test(text), site: SITE_SEL.test(text) });
+  }
+  const OLD_HOME = ".cv-section, .faq-item, .beam-button, .corner-glow, #about";
+  const design = { sheets, oldHome: [...document.querySelectorAll(OLD_HOME)].map((e) => describe(e)) };
+
+  /* 18 ── the logotype scope: how many elements carry it, and how many render */
+  const logos = [...document.querySelectorAll("[data-logotype]")];
+  const logotypeCount = { dom: logos.length, rendered: logos.filter((e) => e.getClientRects().length > 0).length };
+
   /* 25 ── scripts the page loaded */
   const scripts = performance
     .getEntriesByType("resource")
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
 }
 
 /* 8 ── every figure in the visible text, standalone or inside a sentence (runs in the browser)
@@ -1164,6 +1471,7 @@ function comparePng(a, b) {
 /* ── one route at one width, JavaScript on ───────────────────────────────── */
 async function visit(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, bypassCSP: true });
+  await ctx.addInitScript(glHook); /* check 25 */
   const page = await ctx.newPage();
   const consoleMsgs = [];
   const failed = [];
@@ -1185,7 +1493,9 @@ async function visit(browser, route, width) {
   await page.waitForTimeout(800);
 
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
+  const glData = await page.evaluate(glReport); /* before the contrast pass draws its own canvas */
   const data = await page.evaluate(collectInPage);
+  data.glData = glData;
   /* check 5: a candidate is only "stuck" if it is still invisible after three
      more seconds IN PLACE — that rules out a reveal still in progress on a busy
      machine. Do NOT scroll it into view to re-check: that fires the very reveal
@@ -1421,6 +1731,36 @@ if (!ROUTES.length) {
 }
 
 const browser = await chromium.launch();
+
+/* 29 runs first, before anything else loads the machine or the browser. One
+   unthrottled load warms the server; it is not measured. */
+const perfRuns = {};
+const perfLoad = { before: os.loadavg()[0], after: 0 };
+if (want(29)) {
+  process.stderr.write("  performance: one unmeasured load to warm the server\n");
+  const warm = await browser.newContext();
+  await (await warm.newPage()).goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 }).catch(() => {});
+  await warm.close();
+  for (const [name, prof] of Object.entries(PERF_PROFILES)) {
+    perfRuns[name] = [];
+    for (let i = 0; i < PERF_RUNS; i++) {
+      process.stderr.write(`  performance ${name} ${i + 1}/${PERF_RUNS}\n`);
+      perfRuns[name].push(await perfRun(browser, prof).catch((e) => ({ error: String(e?.message || e).slice(0, 200) })));
+    }
+  }
+  perfLoad.after = os.loadavg()[0];
+}
+let heroRun = null;
+const lcpRuns = [];
+if (want(28)) {
+  process.stderr.write("  hero: the served HTML against the rendered hero\n");
+  heroRun = await visitHero(browser).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+  for (const prof of LCP_PROFILES) {
+    process.stderr.write(`  LCP on / ${prof.label}\n`);
+    lcpRuns.push(await visitLcp(browser, prof).catch((e) => ({ ...prof, error: String(e?.message || e).slice(0, 200) })));
+  }
+}
+
 const visits = {};
 const noJs = {};
 for (const route of ROUTES)
@@ -1436,6 +1776,20 @@ if (want(6) || want(7))
       process.stderr.write(`  sweeping ${route} @${w}\n`);
       widthRuns[`${route}@${w}`] = await visitWidth(browser, route, w);
     }
+/* 25 ── the WebGL runs. The visits above carry the hook at WIDTHS; this adds
+   every route at the GL_WIDTHS they did not cover, / as a phone, and / under
+   reduced motion at every GL width. */
+const glRuns = {};
+if (want(25)) {
+  const plan = [];
+  for (const route of ROUTES) for (const w of GL_WIDTHS) if (!WIDTHS.includes(w)) plan.push([route, { width: w, label: `${route} @${w}` }]);
+  plan.push(["/", { width: 390, phone: true, label: "/ @390 phone (touch, 3x DPR)" }]);
+  for (const w of GL_WIDTHS) plan.push(["/", { width: w, reduced: true, label: `/ @${w} reduced motion` }]);
+  for (const [route, prof] of plan) {
+    process.stderr.write(`  webgl ${prof.label}\n`);
+    glRuns[prof.label] = { route, ...prof, ...(await visitGl(browser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+  }
+}
 const focusRuns = {};
 if (want(19))
   for (const route of ROUTES) {
@@ -2058,6 +2412,15 @@ check(18, "axe finds no serious or critical accessibility violations", "what a s
         F.push(`${at(k)}: an element marked data-logotype holds "${t.slice(0, 60)}", not the brand name "${LOGOTYPE_TEXT}" — the WCAG 1.4.3 logotype exemption covers the wordmark and nothing else`);
       }
   }
+  /* the scope: one rendered wordmark per page at most (see LOGOTYPE) */
+  const scope = new Map();
+  for (const [k, v] of Object.entries(visits)) {
+    const c = v.logotypeCount || { dom: 0, rendered: 0 };
+    if (c.rendered > 1) F.push(`${at(k)}: ${c.rendered} rendered elements are marked data-logotype — the exemption covers the one wordmark`);
+    const route = k.split("@")[0];
+    scope.set(route, [...(scope.get(route) || []), `${k.split("@")[1]}: ${c.dom} marked, ${c.rendered} rendered`]);
+  }
+  for (const [route, counts] of scope) I.push(`${route}: data-logotype — ${counts.join("; ")}`);
   I.push(`contrast not applied to the wordmark (WCAG 2.2 SC 1.4.3, logotypes): ${exempt} node(s) across all visits`);
   for (const [k, v] of Object.entries(visits))
     for (const x of v.axe || []) {
@@ -2175,28 +2538,78 @@ await (async () => {
   if (!want(25)) return;
   const F = [];
   const I = [];
-  for (const [k, v] of Object.entries(visits)) {
-    let three = false;
-    for (const u of v.scripts.filter((s) => isSameSite(s))) {
-      const r = await http(toBase(u));
-      if (r.text && /THREE\.WebGLRenderer|WebGLRenderer|three\.module/.test(r.text)) {
-        three = true;
-        break;
+  /* every run that carried the WebGL hook: the suite's visits and the WebGL runs */
+  const runs = [
+    ...Object.entries(visits).map(([k, v]) => ({ label: `${k.split("@")[0]} @${k.split("@")[1]}`, route: k.split("@")[0], width: Number(k.split("@")[1]), ...(v.glData || { gl: null, scripts: [] }) })),
+    ...Object.values(glRuns),
+  ];
+  const THREE = /WebGLRenderer|three\.module|__THREE__|@react-three/;
+  const RENDERER = /getContext\(\s*["'`](?:webgl2?|experimental-webgl)["'`]|WebGL2RenderingContext/;
+  const kinds = new Map();
+  const kind = async (url) => {
+    if (!kinds.has(url)) {
+      const t = (await http(toBase(url))).text || "";
+      kinds.set(url, { three: THREE.test(t), renderer: RENDERER.test(t), gz: gzipSync(Buffer.from(t)).length });
+    }
+    return kinds.get(url);
+  };
+  const kb = (b) => `${(b / 1024).toFixed(1)}KB`;
+  for (const run of runs) {
+    if (!Array.isArray(run.gl)) {
+      F.push(`${run.label}: the WebGL hook did not report${run.error ? ` (${run.error})` : ""} — unsure is a failure`);
+      continue;
+    }
+    const allowed = WEBGL_ON_HOME && run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone;
+    const why =
+      run.route !== "/" ? "WebGL belongs to the homepage hero and nowhere else"
+      : run.reduced ? "never under reduced motion"
+      : run.phone || run.width < 1025 ? `never at ${run.width}px: phones and tablets get the poster`
+      : "step 3 ships no WebGL on / at all";
+    if (run.gl.length && !allowed)
+      F.push(`${run.label}: ${run.gl.length} WebGL context request(s) (${[...new Set(run.gl.map((g) => g.type))].join(", ")}) — ${why}; the first from ${run.gl[0].stack || "an unknown caller"}`);
+    const found = [];
+    for (const sc of (run.scripts || []).filter((x) => isSameSite(x.url))) {
+      const k = await kind(sc.url);
+      if (k.three) F.push(`${run.label}: requests ${short(sc.url)}, a three.js / @react-three chunk — the field is raw WebGL2, and three.js does not come back`);
+      if (!k.renderer) continue;
+      found.push(`${short(sc.url)} ${kb(k.gz)} gzipped at ${Math.round(sc.start)}ms`);
+      if (!allowed) F.push(`${run.label}: requests ${short(sc.url)}, a WebGL renderer chunk (${kb(k.gz)} gzipped) — ${why}`);
+      else {
+        if (k.gz > RENDERER_MAX_GZ) F.push(`${run.label}: the renderer chunk ${short(sc.url)} is ${kb(k.gz)} gzipped — the budget is ${kb(RENDERER_MAX_GZ)}`);
+        if (!run.loadEnd || sc.start < run.loadEnd) F.push(`${run.label}: the renderer chunk ${short(sc.url)} is requested at ${Math.round(sc.start)}ms, before the load event ended (${Math.round(run.loadEnd)}ms) — it is never initial JavaScript`);
       }
     }
-    if (k.split("@")[0] !== "/" && three) F.push(`${at(k)}: loads three.js — WebGL belongs to the homepage hero only`);
-    if (k.split("@")[0] === "/") I.push(`${at(k)}: three.js ${three ? "loaded" : "not loaded"}`);
+    I.push(`${run.label}: ${run.gl.length} WebGL request(s), ${run.canvases} canvas element(s), ${(run.scripts || []).length} script(s)${found.length ? `; renderer ${found.join(", ")}` : ", no renderer chunk"}`);
   }
-  const loaded = new Set();
-  for (const v of Object.values(visits)) v.fontsLoaded.forEach((f) => loaded.add(f.toLowerCase()));
-  const home = visits[`/@${WIDTHS[0]}`];
-  for (const href of new Set(Object.values(visits).flatMap((v) => v.fontPreloads))) {
-    const file = href.split("/").pop();
-    const face = home.fontFaceRules.find((r) => r.src.includes(file));
-    if (!face) I.push(`preloaded ${file}: no @font-face found for it`);
-    else if (!loaded.has(face.family.toLowerCase())) F.push(`${file} (${face.family}) is preloaded on every page and never used`);
+  /* Every font a page preloads is one THAT page renders — read per route, from
+     the preload links present once the page has settled (a prefetched route's
+     payload can add some), against the page's own @font-face rules and faces. */
+  const w8 = (w) => String(w || "400").split(/\s+/).map((x) => (x === "normal" ? "400" : x === "bold" ? "700" : x)).join(" ");
+  for (const route of ROUTES) {
+    const vs = Object.entries(visits).filter(([k]) => k.split("@")[0] === route).map(([, v]) => v);
+    /* the same rule is read at every width: once each */
+    const rules = [...new Map(vs.flatMap((v) => v.fontFaceRules).map((r) => [`${r.family}|${r.weight}|${r.style}|${r.src}`, r])).values()];
+    const loaded = new Set(vs.flatMap((v) => v.fontFaces.filter((f) => f.status === "loaded").map((f) => `${f.family.toLowerCase()}|${w8(f.weight)}|${f.style}`)));
+    for (const href of new Set(vs.flatMap((v) => v.fontPreloads))) {
+      const file = String(href).split("/").pop();
+      const faces = rules.filter((r) => r.src.includes(file));
+      if (!faces.length) {
+        F.push(`${route}: preloads ${file}, which no @font-face on this page uses — a download for nothing`);
+        continue;
+      }
+      const used = faces.filter((r) => loaded.has(`${r.family.toLowerCase()}|${w8(r.weight)}|${r.style || "normal"}`));
+      if (!used.length) F.push(`${route}: preloads ${file} (${faces[0].family} ${faces.map((r) => w8(r.weight)).join("/")}), which nothing on this page renders`);
+      else I.push(`${route}: preloads ${file} — ${used.map((r) => `${r.family} ${w8(r.weight)}`).join(", ")}, rendered`);
+    }
   }
-  results.push({ id: 25, title: "three.js loads only on the homepage; no font is preloaded that nothing uses", catches: "the 3D bundle leaking onto other routes; Instrument Sans preloaded and unused", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+  results.push({
+    id: 25,
+    title: "No WebGL at 390 or 768 or under reduced motion — and in step 3 none on / at all; no three.js; every preloaded font is one its page renders",
+    catches: "a canvas mounted on a phone, a tablet or under reduced motion; the 3D bundle coming back; a renderer chunk over 15KB or in the initial JavaScript; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
+    status: F.length ? "FAIL" : "PASS",
+    findings: [...new Set(F)],
+    info: I,
+  });
 })();
 
 /* 27 */
@@ -2280,6 +2693,133 @@ await (async () => {
   }
   results.push({ id: 30, title: "Every inventoried piece of content is on its page", catches: "a redesign losing content silently", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
 })();
+
+/* 28 */
+check(
+  28,
+  "The hero is HTML, and the poster — never the canvas — is the LCP element",
+  "a hero that says something only after a script runs; a canvas, a headline or anything else taking LCP from the poster; a poster that is lazy, unsized or not high priority",
+  (F, I) => {
+    /* (a) every hero role, in the served HTML with scripts stripped */
+    const h = heroRun;
+    if (!h || h.error) F.push(`/: the hero could not be read${h?.error ? ` (${h.error})` : ""} — unsure is a failure`);
+    else {
+      if (!h.servedHero) F.push(`/: the served HTML has no hero section${h.heroId ? ` #${h.heroId}` : ""} — it is built by script`);
+      const role = (r) => h.roles.find((x) => x.role === r);
+      if (!role("subtext")) F.push("/: no subtext paragraph follows the headline in the hero");
+      if (!role("call to action")) F.push("/: no call to action follows the subtext in the hero");
+      for (const r of h.roles) {
+        if (!h.sText.includes(r.text)) F.push(`/: the ${r.role} "${r.text.slice(0, 70)}" is not in the served HTML's hero — it arrives by script`);
+        else if (r.href && !h.sLinks.some((l) => l.href === r.href && l.text === r.text)) F.push(`/: the ${r.role} is not a link to ${r.href} in the served HTML`);
+        else I.push(`/: served — ${r.role}: "${r.text.slice(0, 80)}"${r.href ? ` -> ${r.href}` : ""}`);
+      }
+      if (!h.proof.length) F.push("/: the hero has no proof-strip figures");
+      for (const p of h.proof) {
+        const miss = [!p.figure && "figure", !p.label && "label", !p.status && "shipped/target status", !p.link && "source link"].filter(Boolean);
+        if (miss.length) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") has no ${miss.join(", no ")}`);
+        if (!h.sItems.includes(p.text)) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") is not in the served HTML as the page shows it — it arrives or changes by script`);
+        else if (p.link && !h.sLinks.some((l) => l.href === p.link.href && l.text === p.link.text)) F.push(`/: proof figure ${p.i}'s source link (${p.link.href}) is not in the served HTML`);
+        else I.push(`/: served — proof ${p.i}: ${p.figure} · "${p.label}" · ${p.status} · "${p.link?.text}" -> ${p.link?.href}`);
+      }
+      /* (c) the poster's own attributes, as served */
+      if (h.posters.length !== 1) F.push(`/: the served HTML has ${h.posters.length} img[data-hero-poster] — there is exactly one poster`);
+      for (const p of h.posters) {
+        if (!(Number(p.width) > 0 && Number(p.height) > 0)) F.push(`/: the poster has no width and height (width="${p.width}", height="${p.height}") — its box is not reserved before it loads`);
+        if (String(p.fetchpriority).toLowerCase() !== "high") F.push(`/: the poster's fetchpriority is "${p.fetchpriority}" — the LCP image is fetchpriority="high"`);
+        if (String(p.loading).toLowerCase() === "lazy") F.push('/: the poster is loading="lazy" — the LCP image never waits for layout');
+        I.push(`/: served poster — width="${p.width}" height="${p.height}" fetchpriority="${p.fetchpriority}" loading="${p.loading ?? "(eager, unset)"}"`);
+      }
+    }
+    /* (b) the final LCP entry is the poster, by identity */
+    for (const r of lcpRuns) {
+      if (r.error) {
+        F.push(`/ ${r.label}: the LCP run failed (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      const last = r.entries[r.entries.length - 1];
+      if (!last) {
+        F.push(`/ ${r.label}: no largest-contentful-paint entry was reported — unsure is a failure`);
+        continue;
+      }
+      const isPoster = last.poster || (Boolean(last.url) && last.url === r.posterSrc);
+      const file = (last.url || "").split("/").pop();
+      const line = `/ ${r.label}: ${last.desc}${file ? ` (${file})` : ""}, entry size ${last.size}px², at ${last.t}ms${r.posterBox ? `; the poster renders ${r.posterBox}` : ""}; ${r.entries.length} entr${r.entries.length === 1 ? "y" : "ies"}`;
+      if (isPoster) I.push(line);
+      else F.push(`${line} — the final LCP element must be the poster img[data-hero-poster]${last.tag === "canvas" ? ", never the canvas" : ""}`);
+    }
+  },
+);
+
+/* 29 */
+check(
+  29,
+  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005, initial JavaScript at most 260KB gzipped",
+  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift",
+  (F, I) => {
+    const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+    I.push(`machine load average (1 min): ${perfLoad.before.toFixed(2)} before the runs, ${perfLoad.after.toFixed(2)} after — the timings need a quiet machine`);
+    if (!Object.keys(perfRuns).length) F.push("no performance runs were made — unsure is a failure");
+    for (const [name, all] of Object.entries(perfRuns)) {
+      const prof = PERF_PROFILES[name];
+      const bad = all.filter((r) => r.error);
+      if (bad.length) F.push(`${prof.label}: ${bad.length} of ${all.length} run(s) failed (${bad[0].error}) — unsure is a failure`);
+      const runs = all.filter((r) => !r.error);
+      if (!runs.length) continue;
+      const m = (k) => med(runs.map((r) => r[k]));
+      const each = (k, f) => runs.map((r) => f(r[k])).join(", ");
+      const ms = (x) => `${Math.round(x)}`;
+      const k1 = (x) => (x / 1024).toFixed(1);
+      const c3 = (x) => x.toFixed(3);
+      const lcp = m("lcp");
+      const tbt = m("tbt");
+      const cls = m("cls");
+      const js = m("jsInitial");
+      const els = [...new Set(runs.map((r) => `${r.lcpEl}${r.lcpPoster ? " [data-hero-poster]" : ""}`))].join(" / ");
+      I.push(
+        `${prof.label}, median of ${runs.length}: LCP ${ms(lcp)}ms (runs ${each("lcp", ms)}; ${els}) · FCP ${ms(m("fcp"))}ms · blocking ${ms(tbt)}ms (runs ${each("tbt", ms)}; ${m("longtasks")} long task(s)) · CLS ${c3(cls)} (runs ${each("cls", c3)}) · load ${ms(m("load"))}ms · initial JS ${k1(js)}KB gzipped transferred in ${m("jsInitialFiles")} file(s) (runs ${each("jsInitial", k1)}) · all JS by the end ${k1(m("jsAll"))}KB transferred, ${k1(m("jsDecoded"))}KB decoded`,
+      );
+      const lcpMax = name === "mobile" ? BUDGET.mobileLcp : BUDGET.desktopLcp;
+      if (lcp > lcpMax) F.push(`${prof.label}: LCP ${ms(lcp)}ms, over the ${lcpMax}ms budget (runs ${each("lcp", ms)}; ${els})`);
+      if (name === "mobile" && tbt > BUDGET.mobileTbt) F.push(`${prof.label}: blocking time ${ms(tbt)}ms, over the ${BUDGET.mobileTbt}ms budget (runs ${each("tbt", ms)})`);
+      if (cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(cls)} — the budget is 0.00, and ${BUDGET.cls} or more fails (runs ${each("cls", c3)})`);
+      if (js > BUDGET.initialJs) F.push(`${prof.label}: initial JavaScript ${k1(js)}KB gzipped transferred, over the ${BUDGET.initialJs / 1024}KB budget (runs ${each("jsInitial", k1)})`);
+    }
+  },
+);
+
+/* 31 */
+check(
+  31,
+  "The split design: / is entirely the clone's design, and every other page loads no techwix.css and no Barlow or Jost",
+  "techwix.css or the clone's faces reaching an inner page through a shared import or a prefetch of /; the site's faces or stylesheet on /; the old homepage's markup surviving on /",
+  (F, I) => {
+    const CLONE_FACES = /^(barlow|jost)$/i;
+    const SITE_FACES = /^(inter|satoshi|commitmono)$/i;
+    /* font file names are hashed: a file is known by the @font-face rule that points at it, on any page */
+    const familyOf = new Map();
+    for (const v of Object.values(visits)) for (const r of v.fontFaceRules) for (const m of r.src.matchAll(/url\(["']?([^"')]+)/g)) familyOf.set(m[1].split("/").pop(), r.family);
+    for (const [k, v] of Object.entries(visits)) {
+      const route = k.split("@")[0];
+      const clone = v.design.sheets.filter((x) => x.techwix);
+      const site = v.design.sheets.filter((x) => x.site);
+      const files = [...new Set(v.fontFiles.map((f) => f.split("/").pop()))].map((f) => ({ f, fam: familyOf.get(f) || "an unknown face" }));
+      if (route === "/") {
+        if (!clone.length) F.push(`${at(k)}: loads no clone stylesheet (no .tw-root / .tw-hero / .tw-header rules) — the homepage is the clone's design`);
+        if (site.length) F.push(`${at(k)}: loads the site design's stylesheet ${site.map((x) => x.href).join(", ")} — the homepage is entirely the clone's design`);
+        for (const f of ["Barlow", "Jost"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the clone's faces are Barlow and Jost`);
+        const other = files.filter((x) => SITE_FACES.test(x.fam.replace(/\s+/g, "")));
+        if (other.length) F.push(`${at(k)}: requests the site design's font file(s) ${other.map((x) => `${x.f} (${x.fam})`).join(", ")}`);
+        if (v.design.oldHome.length) F.push(`${at(k)}: ${v.design.oldHome.length} element(s) of the old homepage's markup — e.g. ${v.design.oldHome.slice(0, 3).join("; ")}`);
+      } else {
+        if (clone.length) F.push(`${at(k)}: loads the clone stylesheet (${clone.map((x) => x.href).join(", ")}) — techwix.css belongs to / only`);
+        const leak = files.filter((x) => CLONE_FACES.test(x.fam));
+        if (leak.length) F.push(`${at(k)}: requests Barlow/Jost font file(s) ${leak.map((x) => `${x.f} (${x.fam})`).join(", ")} — the clone's faces belong to / only`);
+        for (const fam of new Set(v.fontFaceRules.map((r) => r.family))) if (CLONE_FACES.test(fam)) F.push(`${at(k)}: declares @font-face "${fam}" — the clone's faces belong to / only`);
+      }
+      I.push(`${at(k)}: stylesheets ${v.design.sheets.map((x) => `${x.href}${x.techwix ? " [clone]" : ""}${x.site ? " [site]" : ""}`).join(", ") || "none"}; font files: ${[...new Set(files.map((x) => x.fam))].join(", ") || "none"}`);
+    }
+  },
+);
 
 /* ── report ──────────────────────────────────────────────────────────────── */
 results.sort((a, b) => a.id - b.id);

@@ -44,14 +44,41 @@ root: it alone loads `app/(home)/techwix.css` and the Barlow and Jost faces.
 `app/globals.css`, Inter, Satoshi and Commit Mono, and the reveal controller.
 Neither design's stylesheet or fonts load on the other's pages, and the inner
 pages render pixel-identically to how they did under a single `app/layout.tsx`.
+Verify-site check 31 holds that line. Two leaks broke it until stage B3, and
+neither shows in a screenshot: the 404's root (below) put its faces' preloads
+on every page, and the inner pages' `next/link`s to `/` prefetched the
+homepage's payload, whose font preloads React then inserted into the inner
+page. **A link from an inner page to `/` is `<Link prefetch={false}>`**: across
+two root layouts it is a full page load either way, so the prefetch bought
+nothing, and a plain `<a>` fails eslint's `no-html-link-for-pages` (check 24).
 Both share `lib/root-metadata.ts`. With no layout at the top of `app/`, Next's
 404 has no layout to sit in, and an unknown URL got Next's bare error shell —
 unstyled, with no `metadataBase`. `experimental.globalNotFound` (next.config.ts)
-makes it render `app/global-not-found.tsx` instead: the site's own root (the
-same faces, `app/globals.css`, the same body) around Next's built-in 404, as it
-rendered under the single layout. A `not-found.tsx` inside `app/(site)` does
+makes it render `app/global-not-found.tsx` instead: Next's built-in 404 in a
+document of its own, styled by `app/global-not-found.css` to the same computed
+styles and pixels it had under the single layout. A `not-found.tsx` inside `app/(site)` does
 not work here: in Next 16.1 it does not catch `notFound()` for its own root
 layout.
+
+The built-in 404 is imported from a Next-internal module
+(`next/dist/client/components/builtin/not-found`), on purpose: Next 16.1 has
+no public export of it. `next/navigation` has `notFound()`, a function, not the
+page; `next/error` is the Pages Router's class component — it would need a
+client boundary, sets its title through `next/head` (inert in the App Router)
+and lays the page out differently (line-heights 48/28px against 49/49px), so
+the 404 would stop looking as it does. If an upgrade moves the module, the
+build fails at that import, loudly; the fix is then to copy the built-in's
+markup into the file. **It declares no fonts.** The built-in 404 sets its own
+font inline (system-ui), so no text on it ever painted in the site's faces, and
+declaring them cost every other page: preloaded, Next put the file's three
+preloads in every page's `<head>` — on `/`, 174KB of the other design's faces
+competing with the LCP poster (the 1736ms mobile LCP); not preloaded, its second
+set of `@font-face` rules (the same families, other file URLs) loaded on every
+inner page and won, so each face downloaded twice. Nor does it import
+`app/globals.css`: that put the 404 in the (site) layout's CSS chunk, and Next
+then preloaded that chunk's Inter face on every page, `/` included.
+`app/global-not-found.css` holds the few rules that reached the page — Tailwind's
+preflight for its elements, the html and body rules — and nothing else.
 
 ## Content — one layer, in `/content`
 
@@ -130,7 +157,10 @@ the homepage loads; there is no Tailwind on the homepage.
 - Barlow 500 / 600 / 700 for headings, Jost 400 / 500 / 600 for text, loaded with
   `next/font/google` in `app/(home)/layout.tsx` only; the body's line-height is
   the clone's unitless 1.73. The title ramp: 70/78 major and 48/54 section at
-  ≥1025px, 48/60 and 36/52 below.
+  ≥1025px, 48/60 and 36/52 below. All six faces are preloaded, because each is
+  painted in the first viewport at 390, 768 and 1440 — the logo alone sets
+  Barlow 500 and 700 and Jost 500. A face that stops being painted above the
+  fold gets `preload: false`; check 25 fails a preload its page never renders.
 - Status chips keep the site's meaning: teal-cyan = shipped, amber = target —
   `#0b6f78` on `#e2f3f4` and `#9a4a06` on `#fdf0dc` on light bands, light teal
   and amber outlines on navy. Nothing else borrows those two colours.
@@ -150,7 +180,11 @@ the homepage loads; there is no Tailwind on the homepage.
 ## Type
 
 The homepage uses Barlow and Jost only (*The homepage*, above). Every other page
-uses three faces. The tokens that name them are in `app/globals.css`.
+uses three faces. The tokens that name them are in `app/globals.css`. Only
+Inter is preloaded — the one face every inner page paints above the fold;
+Satoshi and Commit Mono are `preload: false` and load when a page uses them
+(`/privacy-policy` uses neither). A layout's preload lands on every page it
+wraps (verify-site check 25).
 
 | face | token | used for |
 |---|---|---|
@@ -190,7 +224,7 @@ verify-site checks 1 and 2 catch both.
   as a plain `<img>` in a `<picture>` (the LCP element; the image optimizer is
   not on that path). Below 1025px or on a coarse pointer it drifts slowly — a
   CSS transform, so no layout shift; under reduced motion it is still. There is
-  no canvas and no WebGL on any page. `components/HeroParticleField.tsx` (the
+  no canvas and no WebGL on any page (verify-site check 25). `components/HeroParticleField.tsx` (the
   old three.js / @react-three nebula) is still in the tree and imported by
   nothing; the raw WebGL2 renderer replaces it in step 4, which also removes
   those three dependencies — see *The hero field* under Hard rules.
@@ -252,8 +286,9 @@ at the end, which means nobody has decided yet.
   `redesign/techwix-home` lands. Step 3 (the poster, no canvas yet) is built:
   the poster `<img data-hero-poster>` is the final LCP entry at 390, 768, 1024,
   1025 and 1440, measured with a buffered `PerformanceObserver` on a fresh,
-  unscrolled load; the field is the right half of the panel at ≥1025px and sits
-  above the text below that.
+  unscrolled load — verify-site check 28 asserts it by identity at 390 (also as
+  a phone), 768 and 1440 on every run; the field is the right half of the
+  panel at ≥1025px and sits above the text below that.
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
@@ -271,7 +306,9 @@ at the end, which means nobody has decided yet.
     20ms; paused offscreen and when the tab is hidden.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
-    motion, the poster alone.
+    motion, the poster alone. Check 25 hooks `getContext` before any page
+    script and fails any WebGL context at 390 or 768, as a phone, or under
+    reduced motion — and, until step 4, any on `/` at all.
   - **It sits beside the headline, never behind it.** On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
@@ -351,6 +388,29 @@ robots.txt must not name them, and no page may link to them.
 holding one figure with a real reason (not empty, a placeholder or one word; 12+ characters), both
 from `content/figure-labels.ts`. Standalone metric cards keep their in-card label rule.
 
+**Checks added or changed in step 3:**
+- **25, rewritten** — no WebGL at 390 or 768, as a phone, or under reduced
+  motion at any width, and in step 3 none on `/` at all: a `getContext` hook is
+  installed before any page script, on every visit and on dedicated runs. No
+  three.js or @react-three chunk on any page. Ready for step 4 behind
+  `WEBGL_ON_HOME`: a renderer chunk (any script asking for a WebGL context) is
+  at most 15KB gzipped, requested after the load event, and never at 390 or
+  768 or under reduced motion. Its font check reads every route: each font a
+  page preloads must be a face that page renders.
+- **28, new** — the hero is HTML, and the poster is the LCP element. The
+  headline, subtext, call to action and every proof-strip figure with its
+  label, status and source link are in the served HTML with scripts stripped;
+  the final `largest-contentful-paint` entry is `img[data-hero-poster]`, by
+  identity, at 390 (also as a phone), 768 and 1440, and a canvas or anything
+  else fails; the poster has `width`, `height` and `fetchpriority="high"` and is
+  never `loading="lazy"`.
+- **29, new** — the performance budget (*Performance targets*, below).
+- **31, new** — the split design: `/` loads the clone stylesheet, Barlow and
+  Jost, and none of the site's stylesheet, faces or old homepage markup; every
+  other page loads no `techwix.css` and requests no Barlow or Jost file.
+- **18, extended** — prints how many elements carry `data-logotype` on each
+  page, and fails a page that renders more than one.
+
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
 speed. Measured on a page that has already been scrolled, or never scrolled, it
@@ -367,11 +427,30 @@ It covers the element marked `data-logotype` — the wordmark, now in
 `components/techwix/Logo.tsx`, the only wordmark on the site — for checks
 18 and 20 only, and check 18 fails if that element ever holds anything but "Bolt
 Fusion Tech". It is not a small-text exemption and must not become one.
+On `/` the wordmark renders in the header and again in the mobile drawer, which
+is `hidden` until opened, so one is rendered at a time; the inner pages carry
+only `<LogoMark>` (`components/Logo.tsx`), the mark without a wordmark, and
+nothing marked. Check 18 prints the count per page and fails a page that
+renders more than one.
 
 ## Performance targets
 
-Lighthouse 95+ in all four categories · LCP under 2.0s · no layout shift from
-any animation. Nothing measures these yet.
+The budget, from the approved rebuild plan, is measured on `/` by verify-site
+check 29, the way the Phase 1 baseline was: the median of three runs, each in a
+fresh context, with no input and no scroll.
+
+| | budget |
+|---|---|
+| LCP, mobile lab (390 wide, 4× CPU, 150ms RTT, 1.6Mbps down) | at most 1.5s |
+| blocking time, mobile lab (each long task's time over 50ms, navigation to load + 4s) | at most 150ms |
+| LCP, desktop (1440, unthrottled) | at most 0.5s |
+| CLS | 0.00 — printed to three places, failing at 0.005 |
+| initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
+| the renderer chunk (step 4) | at most 15KB gzipped, never on mobile — check 25 |
+
+The timings need a quiet machine; the check prints the load average beside
+them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in
+all four categories.
 
 ## A figure labelled shipped with nothing behind it — found 2026-09-12
 

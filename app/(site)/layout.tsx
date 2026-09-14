@@ -12,12 +12,19 @@ import { rootMetadata } from "@/lib/root-metadata";
    design's stylesheet or fonts ever load on the other's pages. This file is the
    old app/layout.tsx, moved; what it renders is unchanged. */
 
+/* Preloads, measured 2026-09-15 (verify-site check 25 reads every page's own):
+   a layout's preload lands on EVERY page under it, so only a face all of them
+   paint in the first viewport earns one. Inter does, on all four. Satoshi and
+   Commit Mono do not — /privacy-policy renders neither anywhere, and /work
+   shows Commit Mono above the fold only at 1440 — so they are `preload: false`
+   and load when a page uses them, display: swap over a size-adjusted fallback. */
 // Variable font (single axis file, all weights) — self-hosted with display:swap
 // and an automatic size-adjusted fallback (eliminates web-font swap CLS).
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
 });
 
 // Brand display font for headings — was referenced as "Satoshi" in CSS but never
@@ -25,6 +32,7 @@ const inter = Inter({
 const satoshi = localFont({
   variable: "--font-satoshi",
   display: "swap",
+  preload: false,
   src: [{ path: "../../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
 });
 
@@ -39,6 +47,7 @@ const satoshi = localFont({
 const commitMono = localFont({
   variable: "--font-commit",
   display: "swap",
+  preload: false,
   src: [{ path: "../../public/fonts/CommitMono-Variable.woff2", weight: "200 700", style: "normal" }],
 });
 

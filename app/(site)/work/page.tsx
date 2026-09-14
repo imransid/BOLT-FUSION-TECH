@@ -229,6 +229,7 @@ export default function WorkIndexPage() {
           <p>
             <Link
               href="/#contact"
+              prefetch={false}
               className="beam-button corner-glow inline-block rounded-[10px] border border-white/10 bg-black px-6 py-3 text-sm text-white transition-all duration-500 hover:border-white/25 hover:shadow-[0_0_20px_-5px_rgba(255,255,255,0.15)]"
             >
               Start a pilot

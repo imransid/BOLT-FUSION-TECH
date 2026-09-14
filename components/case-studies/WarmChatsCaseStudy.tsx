@@ -214,6 +214,7 @@ export default function WarmChatsCaseStudy() {
         <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 md:px-8">
           <Link
             href="/"
+            prefetch={false}
             className={`flex items-center gap-2 text-white/75 transition-colors hover:text-white ${linkFocus} rounded-lg`}
           >
             <LogoMark className="h-7 w-7 opacity-90" />
@@ -221,6 +222,7 @@ export default function WarmChatsCaseStudy() {
           </Link>
           <Link
             href="/#recent-work"
+            prefetch={false}
             className="text-sm text-white/50 transition-colors hover:text-white"
           >
             ← All work
@@ -284,6 +286,7 @@ export default function WarmChatsCaseStudy() {
               </a>
               <Link
                 href="/#schedule"
+                prefetch={false}
                 className={`inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/14 bg-white/[0.03] px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 hover:border-white/25 hover:bg-white/[0.06] ${linkFocus}`}
               >
                 Book a similar build
@@ -625,12 +628,14 @@ export default function WarmChatsCaseStudy() {
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/#schedule"
+              prefetch={false}
               className={`inline-flex min-h-[44px] items-center justify-center rounded-full border border-amber-200/40 bg-amber-300 px-7 py-3 text-[13px] font-semibold text-[#1a1d22] transition-all duration-300 hover:bg-amber-200/95 ${linkFocus}`}
             >
               Book a strategy call
             </Link>
             <Link
               href="/#recent-work"
+              prefetch={false}
               className={`inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/14 bg-white/[0.03] px-7 py-3 text-[13px] font-medium text-white transition-all duration-300 hover:border-white/25 hover:bg-white/[0.06] ${linkFocus}`}
             >
               See more work
@@ -641,6 +646,7 @@ export default function WarmChatsCaseStudy() {
         <footer className="mt-12 flex flex-col items-center gap-2 border-t border-white/5 pt-8 text-center">
           <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2 text-sm text-white/55 transition-colors hover:text-white"
           >
             <LogoMark className="h-6 w-6 opacity-80" />

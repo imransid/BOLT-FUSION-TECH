@@ -1,0 +1,58 @@
+/* The 404's own stylesheet (app/global-not-found.tsx). It reproduces exactly
+   what app/globals.css did to this page — Tailwind's preflight for the
+   elements on it, and the site's html and body rules — and nothing more.
+   Importing app/globals.css here put the 404 in the (site) layout's CSS chunk,
+   and Next then preloaded that chunk's Inter face on every page, the homepage
+   included (verify-site checks 25 and 31).
+
+   The body stays white, as it always was: Next's built-in 404 writes its own
+   `body{color:#000;background:#fff;margin:0}` after this sheet and wins, so
+   the black body below never showed (nor did Tailwind's layered bg-black).
+   Checked 2026-09-15: every element's computed style, and the page's pixels at
+   1440, 768 and 390, match the build that imported app/globals.css. */
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0 solid;
+}
+
+html {
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  tab-size: 4;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+@media (min-width: 48rem) {
+  html {
+    scroll-padding-top: 6rem;
+  }
+}
+
+h1,
+h2 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+::selection {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}

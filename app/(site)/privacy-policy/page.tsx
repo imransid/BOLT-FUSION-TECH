@@ -173,6 +173,7 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto flex h-16 max-w-[760px] items-center px-5">
           <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2 text-white/70 transition-colors hover:text-white"
           >
             <LogoMark className="h-7 w-7 opacity-90" />
@@ -211,6 +212,7 @@ export default function PrivacyPolicyPage() {
         <div className="mt-14 border-t border-white/5 pt-6">
           <Link
             href="/"
+            prefetch={false}
             className="text-sm text-white/50 transition-colors hover:text-white"
           >
             ← Back to boltfusiontech.com
