@@ -301,11 +301,12 @@ const raw: SiteContent = {
     imageSrc: "/projects/case-fnb-smart-search.png",
     imageAlt:
       "Case study visual for AI-assisted restaurant search and discovery product",
-    // Every KPI carries a status. <100ms and ~$0.001 are content/metrics.ts
-    // `search-response` and `cost-per-query`, both shipped. Multi-tenant and
-    // Observable are properties of the delivered system, as the executive
-    // summary above states ("We delivered a multi-tenant … ships with the
-    // metrics, logging, and guardrails").
+    // Every FIGURE carries a status. <100ms is content/metrics.ts
+    // `search-response`, shipped. ~$0.001 is a budget, not a measurement — the
+    // card's own hint says "Budgeted hybrid retrieval" — so it is a target
+    // (owner, 2026-09-12; CLAUDE.md, "A figure labelled shipped with nothing
+    // behind it"). Multi-tenant and Observable are capabilities, not metrics,
+    // and carry no status: the schema refuses one.
     kpis: [
       {
         value: "<100ms",
@@ -317,19 +318,17 @@ const raw: SiteContent = {
         value: "~$0.001",
         label: "Avg. cost / AI search",
         hint: "Budgeted hybrid retrieval",
-        status: "shipped",
+        status: "target",
       },
       {
         value: "Multi-tenant",
         label: "Postgres RLS",
         hint: "Isolated rows per tenant",
-        status: "shipped",
       },
       {
         value: "Observable",
         label: "Production-ready",
         hint: "Metrics, logs, safe limits",
-        status: "shipped",
       },
     ],
     kpiSectionEyebrow: "Service commitments",
