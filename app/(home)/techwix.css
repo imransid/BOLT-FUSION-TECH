@@ -1,0 +1,1566 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE HOMEPAGE DESIGN — the Techwix clone's, carrying the site's real content.
+
+   Loaded ONLY by app/(home)/layout.tsx, the homepage's own root layout. No
+   other page imports it, so nothing here needs scoping, and no other page
+   loads it or the Barlow and Jost faces it names.
+
+   The measured values come from the clone study (branch techwix-replica):
+   the colour tokens, the title ramp, the button metrics, the header's
+   headroom contract, the hero panel, the case-study row, the contact panel
+   and the footer fill. None of the theme's assets ship: no photographs, no
+   logos, no icon font, no SVG art, no copy. Icons are drawn for this site
+   (components/techwix/icons.tsx).
+
+   There is no Tailwind here. The homepage's components use these classes
+   only; the rest of the site keeps app/globals.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* The clone's colours, measured from rendered paint. */
+  --brand: #086ad8;
+  --ink: #0e0e0e;
+  --body: #4c4d56;
+  --surface-light: #f7f7f9;
+  --hairline: #e1e1e1;
+  --navy-hero: #01013f;   /* the hero panel */
+  --navy-deep: #091577;   /* the contact panel */
+  --navy-band: #010742;   /* the clone's counters band — here, the team */
+  --navy-footer: #010717; /* the footer, a flat fill */
+
+  /* The site's two status meanings, as everywhere on the site: teal-cyan is
+     shipped (measured), amber is target. Colour follows the band. */
+  --shipped: #0b6f78;
+  --shipped-bg: #e2f3f4;
+  --target: #9a4a06;
+  --target-bg: #fdf0dc;
+
+  /* The theme's button gradient ran to #42b9ff, where white text measured
+     2.98:1. Same direction and hue; the lightest stop clears 4.65:1. */
+  --btn-gradient: linear-gradient(195deg, #0a5cc8 0%, #086ad8 55%, #0b74d9 100%);
+
+  --focus: #086ad8;
+
+  /* The next/font variables sit on <html>, which is :root, so these resolve
+     where they are declared. */
+  --font-heading: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+
+  --gutter: clamp(15px, 4vw, 50px);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* The clone's body: Jost 16px, the unitless 1.73 multiplier (never its
+   product), --body on white, antialiased. font-synthesis is off so a missing
+   face renders visibly wrong instead of plausibly wrong. */
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: #ffffff;
+  color: var(--body);
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.73;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+p, ul, ol, figure, blockquote, dl, dd, table, caption {
+  margin: 0;
+}
+
+ul, ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, svg, picture, iframe {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th {
+  font-weight: inherit;
+  text-align: inherit;
+}
+
+summary {
+  cursor: pointer;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible keyboard focus on everything interactive (CLAUDE.md). Light bands
+   take the brand blue; the navy ones a light blue. */
+.tw-on-dark {
+  --focus: #9fd4ff;
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* ── Title ramp ─────────────────────────────────────────────────────────── *
+   Measured on the clone's span.dbl__title, never on the heading around it.
+   The spans are inline; the heading wrapper has line-height 0 so it adds no
+   strut of its own. Size, line-height and weight are the ramp's; colour
+   follows the band. */
+.title-major,
+.title-section,
+.title-sub,
+.title-small {
+  display: inline;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.title-major   { font-size: 48px; line-height: 60px; }
+.title-section { font-size: 36px; line-height: 52px; }
+.title-sub     { font-size: 24px; line-height: 34px; }
+.title-small   { font-size: 20px; line-height: 30px; }
+
+@media (min-width: 1025px) {
+  .title-major   { font-size: 70px; line-height: 78px; }
+  .title-section { font-size: 48px; line-height: 54px; }
+}
+
+.tw-title-wrapper {
+  font-size: 28px;
+  line-height: 0;
+  text-wrap: balance;
+}
+
+/* ── Motion: the clone's reveal ─────────────────────────────────────────── *
+   components/techwix/RevealObserver.tsx adds `.animated` and the animation
+   name when an element below the fold enters the viewport. fill-mode none:
+   there is no hidden resting state anywhere — the page reads fully without
+   script — and nothing moves under reduced motion. */
+@keyframes techwix--slide-up {
+  0%   { transform: translate3d(0, 3rem, 0); opacity: 0; }
+  100% { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
+.animated {
+  animation-duration: 1.25s;
+  animation-timing-function: ease;
+  animation-fill-mode: none;
+  animation-delay: 0s;
+}
+
+.animated.techwix--slide-up {
+  animation-name: techwix--slide-up;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated {
+    animation: none;
+  }
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── *
+   Jost 600, 5px radius, the clone's paddings (18/18 with 20px 70px; the
+   header's 16/16 with 15px 45px), narrowed on small screens so a label
+   never overflows at 360px. */
+.tw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color 0.5s, border-color 0.5s, color 0.5s, box-shadow 0.5s;
+}
+
+.tw-btn--primary,
+.tw-btn--secondary,
+.tw-btn--outline,
+.tw-btn--light {
+  font-size: 18px;
+  line-height: 18px;
+  padding: 19px clamp(28px, 4.9vw, 70px);
+}
+
+.tw-btn--primary,
+.tw-btn--header {
+  color: #ffffff;
+  background-color: var(--brand);
+  background-image: var(--btn-gradient);
+  border: 0;
+}
+
+.tw-btn--primary {
+  padding: 20px clamp(28px, 4.9vw, 70px);
+}
+
+.tw-btn--primary:hover,
+.tw-btn--header:hover {
+  box-shadow: 0 14px 30px -14px rgba(8, 106, 216, 0.9);
+}
+
+.tw-btn--header {
+  font-size: 16px;
+  line-height: 16px;
+  padding: 15px clamp(24px, 3.1vw, 45px);
+}
+
+.tw-btn--secondary {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.tw-btn--secondary:hover {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.tw-btn--outline {
+  color: var(--brand);
+  border-color: var(--brand);
+  background-color: #ffffff;
+}
+
+.tw-btn--outline:hover {
+  color: #ffffff;
+  background-color: var(--brand);
+}
+
+.tw-btn--light {
+  color: var(--ink);
+  background-color: #ffffff;
+  border-color: #ffffff;
+}
+
+.tw-btn--light:hover {
+  background-color: #e8f1fd;
+}
+
+.tw-btn__icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+@media (max-width: 400px) {
+  .tw-btn { white-space: normal; }
+}
+
+.tw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.tw-actions--center {
+  justify-content: center;
+}
+
+/* ── Status chips ───────────────────────────────────────────────────────── *
+   The visible shipped/target label, as text (verify-site check 8 reads it).
+   Lowercase and untracked: no tracked-out capitals. */
+.tw-chip {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.tw-chip--shipped {
+  color: var(--shipped);
+  background-color: var(--shipped-bg);
+  border-color: rgba(11, 111, 120, 0.35);
+}
+
+.tw-chip--target {
+  color: var(--target);
+  background-color: var(--target-bg);
+  border-color: rgba(154, 74, 6, 0.35);
+}
+
+.tw-on-dark .tw-chip--shipped {
+  color: #8fe6ec;
+  background-color: rgba(143, 230, 236, 0.08);
+  border-color: rgba(143, 230, 236, 0.5);
+}
+
+.tw-on-dark .tw-chip--target {
+  color: #ffc978;
+  background-color: rgba(255, 201, 120, 0.08);
+  border-color: rgba(255, 201, 120, 0.55);
+}
+
+/* In a sentence (components/FigureText.tsx, variant "clone"): straight after
+   the figure it labels. */
+.tw-chip--inline {
+  margin-left: 6px;
+  font-size: 11px;
+  vertical-align: 0.1em;
+}
+
+/* ── The logo ───────────────────────────────────────────────────────────── *
+   Our mark, in the dark tile it was drawn for, and the wordmark in the
+   homepage's faces. The wordmark is the element marked data-logotype. */
+.tw-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1;
+}
+
+.tw-logo__tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: #0b0b12;
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.35), 0 8px 20px -10px rgba(1, 1, 63, 0.6);
+}
+
+.tw-logo__tile svg {
+  width: 32px;
+  height: 32px;
+}
+
+.tw-logo__words {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.tw-logo__bolt {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  color: #52525b;
+}
+
+.tw-logo__fusion {
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  background-image: linear-gradient(90deg, #f59e0b, #f97316 55%, #ea580c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tw-logo__techrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.tw-logo__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+}
+
+.tw-logo__line {
+  width: 24px;
+  height: 1px;
+  background-image: linear-gradient(90deg, rgba(245, 158, 11, 0.6), transparent);
+}
+
+.tw-logo__tech {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  color: #3f3f46;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HEADER — white, sticky, headroom: it slides away on the way down and comes
+   back on the way up (HeadroomController). The state classes and the 0.25s
+   slide are the clone's measured contract. It is not an overlay: the hero
+   starts directly beneath it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tw-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  transition: transform 0.25s ease-in-out;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-header { transition: none; }
+}
+
+.tw-header.headroom--pinned   { transform: translateY(0); }
+.tw-header.headroom--unpinned { transform: translateY(-100%); }
+/* A keyboard user never tabs into a header that is off screen. */
+.tw-header:focus-within       { transform: translateY(0); }
+
+.tw-header.headroom--top                      { box-shadow: none; }
+.tw-header.headroom--not-top.headroom--pinned { box-shadow: rgba(128, 128, 128, 0.1) 0 3px 6px; }
+
+.tw-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+  max-width: 1300px;
+  margin-inline: auto;
+  padding-inline: 15px;
+}
+
+.tw-header__logo-link {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 40px;
+  border-radius: 6px;
+}
+
+@media (max-width: 767px) {
+  .tw-header__logo-link { margin-right: 20px; }
+}
+
+/* The desktop nav from 1200px — the header's own breakpoint, as measured. */
+.tw-header__nav {
+  display: none;
+  flex: 1 1 0%;
+}
+
+@media (min-width: 1200px) {
+  .tw-header__nav { display: block; }
+}
+
+.tw-header__menu {
+  display: flex;
+  justify-content: center;
+}
+
+/* 33 + 1.73 x 15 + 33: the clone's bar height at >=1200 falls out of the
+   link. The side padding is the clone's 27px at 1440, narrowed below it so
+   eight links fit from 1200. */
+.tw-header__menu a {
+  display: inline-block;
+  padding: 33px clamp(12px, 1.875vw, 27px);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.73;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+
+.tw-header__menu a:hover {
+  color: var(--brand);
+}
+
+.tw-header__menu a:focus-visible {
+  outline-offset: -10px;
+}
+
+.tw-header__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+}
+
+@media (max-width: 1199px) {
+  .tw-header__right { flex: 1 1 0%; }
+}
+
+@media (max-width: 767px) {
+  .tw-header__cta { display: none; }
+}
+
+.tw-header__burger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  font-size: 26px;
+  color: var(--ink);
+}
+
+@media (min-width: 1200px) {
+  .tw-header__burger { display: none; }
+}
+
+/* ── The mobile drawer ──────────────────────────────────────────────────── *
+   Portalled to <body>. Closed, both parts carry `hidden`: not rendered, not
+   focusable, not in the accessibility tree. It slides in on open; under
+   reduced motion it simply appears. */
+.tw-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.tw-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  width: min(350px, 88vw);
+  overflow-y: auto;
+  background-color: #ffffff;
+  box-shadow: rgba(0, 0, 0, 0.06) 0 10px 30px;
+}
+
+.tw-drawer:focus {
+  outline: none;
+}
+
+@keyframes tw-drawer-in {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes tw-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tw-drawer         { animation: tw-drawer-in 0.5s ease-out; }
+  .tw-drawer-overlay { animation: tw-fade-in 0.5s ease-out; }
+}
+
+.tw-drawer__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 73px;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.tw-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 100%;
+  box-shadow: rgba(0, 0, 0, 0.08) 0 10px 30px;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.tw-drawer__menu {
+  padding: 15px 20px;
+}
+
+.tw-drawer__menu li + li {
+  border-top: 1px solid #ebebeb;
+}
+
+.tw-drawer__link {
+  display: block;
+  padding: 10px 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HERO — the clone's rounded navy panel (35px radius, overflow clipped; the
+   colour lives on the panel, not the section).
+
+   The field takes the RIGHT HALF of the panel at >=1025px and goes above the
+   text below that. It is never behind the headline: on the old black hero,
+   keeping white type legible over the field took five overlay layers, and
+   they wiped it out (CLAUDE.md, "The hero field"). The headline sits on flat
+   navy, so contrast holds by construction and nothing covers the field.
+
+   The poster is the LCP element. Its frame is sized by the layout — the
+   column's full height beside the text, a fixed aspect ratio above it — and
+   the image covers it, so the image never shifts anything and the step-4
+   canvas can fade in over it inside the same frame. The poster's own ground
+   is the panel's navy (rgb 2,1,63 against 1,1,63), so the frame has no edge.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tw-hero {
+  padding: 0 50px;
+}
+
+@media (max-width: 1024px) {
+  .tw-hero { padding: 0 15px; }
+}
+
+@media (max-width: 767px) {
+  .tw-hero { padding: 0; }
+}
+
+.tw-hero__panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 35px;
+  padding-inline: clamp(30px, 4.2vw, 60px);
+  background-color: var(--navy-hero);
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .tw-hero__panel { padding-inline: 30px; }
+}
+
+@media (max-width: 767px) {
+  .tw-hero__panel { padding-inline: 24px; }
+}
+
+.tw-hero__inner {
+  display: flex;
+  gap: 40px;
+  max-width: 1300px;
+  margin-inline: auto;
+  padding: 100px 0 72px;
+}
+
+.tw-hero__text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 32px;
+  width: 50%;
+  min-width: 0;
+}
+
+.tw-hero__subtitle {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 30px;
+  color: #ffffff;
+}
+
+.tw-hero__title {
+  color: #ffffff;
+}
+
+.tw-hero__paragraph {
+  font-size: 24px;
+  color: #ffffff;
+}
+
+.tw-hero__tagline {
+  max-width: 560px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tw-hero__field {
+  position: relative;
+  width: 50%;
+  min-width: 0;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 24px;
+  background-color: #02013f;
+}
+
+.tw-hero__poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+@media (max-width: 1024px) {
+  .tw-hero__inner {
+    flex-direction: column;
+    gap: 40px;
+    padding: 0 0 56px;
+  }
+
+  .tw-hero__text,
+  .tw-hero__field {
+    width: auto;
+  }
+
+  .tw-hero__paragraph { font-size: 20px; }
+
+  /* Above the text, edge to edge in the panel; the panel's radius rounds its
+     top corners. A wide frame on tablets keeps the headline in the first
+     screen. */
+  .tw-hero__field {
+    order: -1;
+    min-height: 0;
+    margin-inline: -30px;
+    border-radius: 0;
+    aspect-ratio: 2 / 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .tw-hero__paragraph { font-size: 18px; }
+
+  /* Taller on phones, where the column is narrow and the headline long. */
+  .tw-hero__field {
+    margin-inline: -24px;
+    aspect-ratio: 1 / 1;
+  }
+}
+
+/* The drift: below 1025px, or on a coarse pointer, where step 4's canvas will
+   never mount. Transform only — the frame's size never changes, so there is
+   no layout shift — and none at all under reduced motion. */
+@keyframes tw-field-drift {
+  from { transform: scale(1.1) translate3d(-2.5%, -1.5%, 0); }
+  to   { transform: scale(1.1) translate3d(2.5%, 1.5%, 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
+  (prefers-reduced-motion: no-preference) and (pointer: coarse) {
+  .tw-hero__poster {
+    animation: tw-field-drift 26s ease-in-out infinite alternate;
+  }
+}
+
+/* ── The proof strip: four figures, each labelled and linked to its source ─ */
+.tw-proof {
+  max-width: 1300px;
+  margin-inline: auto;
+  padding: 0 0 64px;
+}
+
+.tw-proof__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px 24px;
+}
+
+@media (max-width: 1024px) {
+  .tw-proof__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .tw-proof__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+.tw-proof__item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tw-proof__figure {
+  font-family: var(--font-heading);
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.tw-proof__label {
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tw-proof__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: auto;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tw-proof__source {
+  color: #a9d8ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tw-proof__note {
+  max-width: 760px;
+  margin-top: 32px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BANDS — one per section, alternating the clone's white and #f7f7f9, with
+   the team on navy. Content capped at the clone's 1300px.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tw-band {
+  padding: 120px var(--gutter);
+}
+
+.tw-band--white { background-color: #ffffff; }
+.tw-band--light { background-color: var(--surface-light); }
+.tw-band--navy  { background-color: var(--navy-band); color: #ffffff; }
+
+.tw-band__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  max-width: 1300px;
+  margin-inline: auto;
+}
+
+@media (max-width: 1024px) {
+  .tw-band { padding-block: 90px; }
+  .tw-band__inner { gap: 48px; }
+}
+
+@media (max-width: 767px) {
+  .tw-band { padding-block: 72px; }
+  .tw-band__inner { gap: 40px; }
+}
+
+.tw-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 860px;
+}
+
+.tw-heading--center {
+  align-items: center;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.tw-heading__intro {
+  max-width: 700px;
+  font-size: 18px;
+  color: var(--body);
+}
+
+/* ── §2 Proof: the clone's case-study row, a larger card beside a smaller ── *
+   Bare percentages with the gap resolved by shrink, as measured. The
+   screenshot is a real image (it is content); the text sits on its own
+   scrim, which follows the text, not the card. */
+.tw-cases {
+  display: flex;
+  gap: 20px;
+}
+
+.tw-cases > .tw-case:first-child { width: 55%; }
+.tw-cases > .tw-case:last-child  { width: 45%; }
+
+@media (max-width: 767px) {
+  .tw-cases { flex-direction: column; }
+  .tw-cases > .tw-case:first-child,
+  .tw-cases > .tw-case:last-child { width: 100%; }
+}
+
+.tw-case {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 10px;
+  background-color: var(--navy-footer);
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .tw-case { min-height: 500px; }
+}
+
+@media (max-width: 767px) {
+  .tw-case { min-height: 440px; }
+}
+
+.tw-case__img {
+  z-index: -1;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+.tw-case__img--top {
+  object-position: 50% 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tw-case__img { transition: transform 0.7s ease-out; }
+  .tw-case:hover .tw-case__img { transform: scale(1.03); }
+}
+
+.tw-case__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 96px 40px 40px;
+  background-image: linear-gradient(to top, rgba(1, 7, 23, 0.94) calc(100% - 5rem), rgba(1, 7, 23, 0));
+}
+
+@media (max-width: 767px) {
+  .tw-case__body { padding: 80px 24px 28px; }
+}
+
+.tw-case__stack {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #ffd08a;
+}
+
+.tw-case__title .title-sub {
+  color: #ffffff;
+}
+
+.tw-case__outcome {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.tw-case__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.tw-case__cta-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── §3 Architecture: the three lanes ───────────────────────────────────── */
+.tw-lanes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+
+@media (max-width: 960px) {
+  .tw-lanes { grid-template-columns: minmax(0, 1fr); }
+}
+
+.tw-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px;
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .tw-lane { padding: 28px 24px; }
+}
+
+.tw-lane__premise {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.tw-lane__detail {
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+
+.tw-lane__cost {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── §4 How we work: the steps, the engagement models, the pilot ────────── */
+.tw-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+
+@media (max-width: 960px) {
+  .tw-steps { grid-template-columns: minmax(0, 1fr); }
+}
+
+.tw-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 40px;
+  border-radius: 15px;
+  background-color: var(--surface-light);
+}
+
+@media (max-width: 767px) {
+  .tw-step { padding: 28px 24px; }
+}
+
+/* A genuine sequence, so it is numbered (COPY.md §6). */
+.tw-step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--brand);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.tw-table {
+  overflow-x: auto;
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background-color: #ffffff;
+  scroll-margin-top: 24px;
+}
+
+.tw-table table {
+  width: 100%;
+  min-width: 560px;
+}
+
+.tw-table th,
+.tw-table td {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tw-table thead th {
+  background-color: var(--surface-light);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--body);
+}
+
+.tw-table tbody th {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tw-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tw-pilot {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.tw-pilot .tw-actions {
+  margin-top: 8px;
+}
+
+/* ── §5 Team: the six engineers with a verified LinkedIn ────────────────── */
+.tw-team__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+@media (max-width: 900px) {
+  .tw-team__head { flex-direction: column; align-items: flex-start; }
+}
+
+.tw-team__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 760px;
+}
+
+.tw-team__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 30px;
+  color: #9fd4ff;
+}
+
+.tw-team__comment {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tw-team__line {
+  display: block;
+  color: #ffffff;
+}
+
+.tw-team__sub {
+  max-width: 640px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tw-team__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: none;
+}
+
+.tw-team__count {
+  font-family: var(--font-heading);
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.tw-team__count-label {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tw-team__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .tw-team__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 400px) {
+  .tw-team__grid { gap: 12px; }
+}
+
+.tw-person {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  min-height: 150px;
+  padding: 28px 28px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 15px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+@media (max-width: 767px) {
+  .tw-person { min-height: 130px; padding: 22px 18px 18px; }
+}
+
+.tw-person:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.tw-person__name {
+  padding-right: 40px;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.tw-person__role {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tw-person__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tw-person__tag {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tw-person__handle {
+  margin-top: auto;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.tw-person__icon {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+@media (max-width: 767px) {
+  .tw-person__icon { top: 14px; right: 14px; width: 30px; height: 30px; }
+}
+
+/* ── §6 Questions: <details name="faq"> — native open/close ──────────────── */
+.tw-faq__badge {
+  display: inline-block;
+  padding: 2px 14px;
+  border-radius: 999px;
+  background-color: #e4effc;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.8;
+  color: #0a5cc8;
+}
+
+.tw-faq__list {
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  border-top: 1px solid var(--hairline);
+}
+
+.tw-faq__item {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tw-faq__q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 0;
+  list-style: none;
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.tw-faq__q::-webkit-details-marker {
+  display: none;
+}
+
+.tw-faq__icon {
+  flex: none;
+  font-size: 24px;
+  color: var(--brand);
+}
+
+.tw-faq__item[open] .tw-faq__icon {
+  transform: rotate(45deg);
+}
+
+.tw-faq__a {
+  max-width: 740px;
+  padding: 0 0 24px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tw-faq__icon { transition: transform 0.2s; }
+
+  @supports selector(::details-content) {
+    .tw-faq__item {
+      interpolate-size: allow-keywords;
+    }
+
+    .tw-faq__item::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow-y: clip;
+      transition:
+        block-size 0.3s,
+        opacity 0.3s,
+        content-visibility 0.3s allow-discrete;
+    }
+
+    .tw-faq__item[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+}
+
+/* ── §6 Contact: the clone's navy panel with its gradient delimiter ─────── */
+.tw-contact {
+  padding: 120px var(--gutter) 0;
+  background-color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .tw-contact { padding-top: 90px; }
+}
+
+@media (max-width: 767px) {
+  .tw-contact { padding-top: 72px; }
+}
+
+.tw-contact__panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  max-width: 1300px;
+  margin-inline: auto;
+  padding: 100px;
+  border-radius: 10px;
+  background-color: var(--navy-deep);
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .tw-contact__panel { flex-direction: column; align-items: flex-start; padding: 50px; }
+}
+
+@media (max-width: 767px) {
+  .tw-contact__panel { padding: 40px 24px; }
+}
+
+.tw-contact__lead {
+  display: flex;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.tw-contact__bar {
+  flex: none;
+  align-self: stretch;
+  width: 5px;
+  border-radius: 3px;
+  background-image: linear-gradient(#43baff 0%, #7141b1 100%);
+}
+
+@media (max-width: 767px) {
+  .tw-contact__bar { display: none; }
+}
+
+.tw-contact__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.tw-contact__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #4ade80;
+}
+
+.tw-contact__title {
+  margin-top: 12px;
+  font-family: var(--font-heading);
+  font-size: 48px;
+  font-weight: 600;
+  line-height: 52px;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+@media (max-width: 1024px) {
+  .tw-contact__title { font-size: 36px; }
+}
+
+@media (max-width: 767px) {
+  .tw-contact__title { font-size: 32px; line-height: 45px; }
+}
+
+.tw-contact__body {
+  max-width: 540px;
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.tw-contact__actions {
+  flex: none;
+}
+
+/* ── §6 The booking calendar ────────────────────────────────────────────── */
+.tw-schedule {
+  padding-top: 60px;
+}
+
+.tw-schedule__blurb {
+  text-align: center;
+}
+
+.tw-schedule__frame {
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+
+.tw-schedule__frame iframe {
+  width: 100%;
+  height: 700px;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .tw-schedule__frame iframe { height: min(700px, max(560px, 70dvh)); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER — the clone's flat navy fill, with the site's own furniture.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tw-footer {
+  padding: 48px var(--gutter);
+  background-color: var(--navy-footer);
+  color: #ffffff;
+}
+
+.tw-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px 40px;
+  max-width: 1300px;
+  margin-inline: auto;
+}
+
+.tw-footer__brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tw-footer__mark {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.tw-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 15px;
+}
+
+.tw-footer__links a {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tw-footer__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.tw-footer__top-icon {
+  width: 16px;
+  height: 16px;
+}

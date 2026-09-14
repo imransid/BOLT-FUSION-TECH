@@ -1,57 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import localFont from "next/font/local";
-import "../globals.css";
+import { Barlow, Jost } from "next/font/google";
+import "./techwix.css";
 
-import RevealController from "@/components/RevealController";
 import { rootMetadata } from "@/lib/root-metadata";
 
-/* The root layout of every page EXCEPT the homepage — /work, both write-ups and
-   the privacy policy, in the site's own design. The homepage has its own root
-   layout in app/(home), in the clone's design: two root layouts, so neither
-   design's stylesheet or fonts ever load on the other's pages. This file is the
-   old app/layout.tsx, moved; what it renders is unchanged. */
+/* The homepage's own root layout, in the Techwix clone's design. It is the
+   only place that loads app/(home)/techwix.css and the clone's two families,
+   so no other page loads either (verify-site check 25 and the split-design
+   rule). Every other page has app/(site)/layout.tsx.
 
-// Variable font (single axis file, all weights) — self-hosted with display:swap
-// and an automatic size-adjusted fallback (eliminates web-font swap CLS).
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-// Brand display font for headings — was referenced as "Satoshi" in CSS but never
-// actually loaded; now self-hosted via next/font/local.
-const satoshi = localFont({
-  variable: "--font-satoshi",
-  display: "swap",
-  src: [{ path: "../../public/fonts/Satoshi-Variable.woff2", weight: "300 900", style: "normal" }],
-});
-
-/* Commit Mono — machine values ONLY (query strings, ms, $, model names, stack
- * items); never decorative labels. Not on Google Fonts, so it is self-hosted
- * from public/fonts/CommitMono-Variable.woff2. Licence: SIL OFL 1.1, text kept
- * beside the file at public/fonts/CommitMono-LICENSE-OFL.txt as the OFL requires.
- *
- * The tokens that name these faces are defined in app/globals.css.
- */
-
-const commitMono = localFont({
-  variable: "--font-commit",
-  display: "swap",
-  src: [{ path: "../../public/fonts/CommitMono-Variable.woff2", weight: "200 700", style: "normal" }],
-});
+   The weights are the ones the clone paints, counted off its rendered page:
+   Barlow 500 / 600 / 700 for headings, Jost 400 / 500 / 600 for text. All
+   normal — it paints no italic. A weight outside these would be synthesised
+   (verify-site check 3), so the stylesheet uses only these. */
+const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap" });
+const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap" });
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#000000",
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = rootMetadata;
 
-export default function RootLayout({
+export default function HomeLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -59,25 +33,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      /* Browser extensions mutate <html> before React hydrates — a CRX launcher
-         adds crxlauncher / crxlauncher-bridged here, and password managers and
-         theme switchers do the same. React then reports an attribute mismatch it
-         cannot patch. This suppresses the warning for THIS element's own
-         attributes only (one level deep, never its children), which is exactly
-         the surface we do not control. Verified in extension-free Chrome: <html>
-         carries only lang and class, and no hydration error is raised. */
+      /* Extensions mutate <html> before React hydrates; this suppresses the
+         warning for this element's own attributes only (see (site)/layout). */
       suppressHydrationWarning
-      /* Font variables live HERE, not on <body>. A custom property whose value
-         contains var() is substituted on the element where it is DECLARED, and
-         the design tokens are declared at :root. With these classes on <body>
-         the tokens resolved against an undefined variable, became the
-         guaranteed-invalid value, and inherited that invalidity site-wide. */
-      className={`${inter.variable} ${satoshi.variable} ${commitMono.variable} scroll-smooth scroll-pt-20 md:scroll-pt-24`}
+      /* The font variables live on <html>, which is :root, where
+         techwix.css declares the tokens that read them. */
+      className={`${barlow.variable} ${jost.variable}`}
     >
-      <body className="min-h-dvh overflow-x-clip antialiased bg-black text-white">
-        <RevealController />
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

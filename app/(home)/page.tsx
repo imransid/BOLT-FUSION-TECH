@@ -1,24 +1,20 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 
-import { getSiteUrl } from "@/lib/site-url";
-
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
-import Architecture from "@/components/Architecture";
-import AboutMe from "@/components/AboutMe";
-import Team from "@/components/Team";
-import RecentWorks from "@/components/RecentWorks";
-import HowWeWork from "@/components/HowWeWork";
-import Services from "@/components/Services";
-import FAQ from "@/components/FAQ";
-import CTA from "@/components/CTA";
-import CalendlyInlineEmbed from "@/components/CalendlyInlineEmbed";
-import Footer from "@/components/Footer";
-import { SiteContentProvider } from "@/context/SiteContentContext";
+import Architecture from "@/components/techwix/Architecture";
+import { Contact, Schedule } from "@/components/techwix/Contact";
+import Faq from "@/components/techwix/Faq";
+import Footer from "@/components/techwix/Footer";
+import Header from "@/components/techwix/Header";
+import Hero from "@/components/techwix/Hero";
+import HowWeWork from "@/components/techwix/HowWeWork";
+import Proof from "@/components/techwix/Proof";
+import RevealObserver from "@/components/techwix/RevealObserver";
+import Team from "@/components/techwix/Team";
+import type { SectionId, SiteContent } from "@/content/site-schema";
 import { siteContent } from "@/content/site";
+import { getSiteUrl } from "@/lib/site-url";
 import { breadcrumbLd, buildGraph, jsonLdHtml } from "@/lib/structured-data";
-import type { SectionId } from "@/content/site-schema";
 
 export async function generateMetadata(): Promise<Metadata> {
   const c = siteContent;
@@ -46,65 +42,57 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function isVisible(
-  visibility: Record<string, boolean>,
-  id: SectionId,
-): boolean {
+function isVisible(visibility: Record<string, boolean>, id: SectionId): boolean {
   return visibility[id] !== false;
 }
 
-function renderSection(id: SectionId, blurb: string) {
+function renderSection(id: SectionId, c: SiteContent) {
   switch (id) {
     case "hero":
-      return <Hero />;
+      return <Hero hero={c.hero} />;
+    case "recent_works":
+      return <Proof work={c.recentWorks} />;
     case "architecture":
       return <Architecture />;
-    case "about":
-      return <AboutMe />;
-    case "team":
-      return <Team />;
-    case "recent_works":
-      return <RecentWorks />;
     case "how_we_work":
       return <HowWeWork />;
-    case "services":
-      return <Services />;
+    case "team":
+      return <Team team={c.team} />;
     case "faq":
-      return <FAQ />;
+      return <Faq faq={c.faq} />;
     case "cta":
-      return <CTA />;
+      return <Contact cta={c.cta} />;
     case "schedule_embed":
-      return (
-        <div
-          id="schedule"
-          className="cv-section mx-auto w-full min-w-0 max-w-[min(100%,1200px)] scroll-mt-20 px-4 pb-16 pt-2 sm:scroll-mt-24 sm:px-6 sm:pb-20 md:scroll-mt-28 md:px-10 lg:px-12 xl:px-16"
-        >
-          <p className="mb-4 px-1 text-center text-sm leading-snug text-white/55 text-balance sm:text-base sm:leading-normal">
-            {blurb}
-          </p>
-          <CalendlyInlineEmbed />
-        </div>
-      );
+      return <Schedule blurb={c.scheduleEmbed.blurb} />;
     default:
       return null;
   }
 }
 
-export default async function Home() {
+/**
+ * The homepage, in the Techwix clone's design (decided 2026-09-11): the six
+ * sections that argue, in `site.sectionOrder` — the hero with its proof strip,
+ * the two write-ups, the architecture, how we work, the team, and questions
+ * and contact (the FAQ, the contact panel, the booking calendar). About and
+ * Services were cut (COPY.md, "Removed from the homepage").
+ *
+ * Every section is a server component; the only script on the page is the
+ * header's headroom, the mobile drawer and the reveal. No canvas and no WebGL
+ * in this step.
+ */
+export default function Home() {
   const content = siteContent;
   const { sectionOrder, sectionVisibility } = content.site;
   const siteUrl = getSiteUrl().toString();
   const sameAs = content.footer.socialLinks.map((l) => l.url);
   // FAQPage is built from the very items the FAQ section renders, and only when
   // it renders: one source, so the markup and the page cannot diverge.
-  const renderedFaq =
-    sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
+  const renderedFaq = sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
   // Person nodes likewise come from the roster the Team section renders.
-  const renderedTeam =
-    sectionOrder.includes("team") && isVisible(sectionVisibility, "team") ? content.team.roster : [];
+  const renderedTeam = sectionOrder.includes("team") && isVisible(sectionVisibility, "team") ? content.team.roster : [];
 
   return (
-    <SiteContentProvider value={content}>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -115,16 +103,14 @@ export default async function Home() {
           ),
         }}
       />
-      <Navbar />
+      <Header navbar={content.navbar} />
       <main>
-        {sectionOrder.map((id) => {
-          if (!isVisible(sectionVisibility, id)) return null;
-          return (
-            <Fragment key={id}>{renderSection(id, content.scheduleEmbed.blurb)}</Fragment>
-          );
-        })}
+        {sectionOrder.map((id) =>
+          isVisible(sectionVisibility, id) ? <Fragment key={id}>{renderSection(id, content)}</Fragment> : null,
+        )}
       </main>
-      <Footer />
-    </SiteContentProvider>
+      <Footer footer={content.footer} />
+      <RevealObserver />
+    </>
   );
 }

@@ -26,12 +26,10 @@ const raw: SiteContent = {
   site: {
     sectionOrder: [
       "hero",
-      "architecture",
-      "about",
-      "team",
       "recent_works",
-          "how_we_work",
-      "services",
+      "architecture",
+      "how_we_work",
+      "team",
       "faq",
       "cta",
       "schedule_embed",
@@ -39,12 +37,17 @@ const raw: SiteContent = {
     sectionVisibility: {},
   },
   navbar: {
+    // Relinked to the rebuilt homepage (2026-09-14). The About and Services
+    // sections were cut; the labels stay. "Services" lands on the engagement
+    // models table (id="services") — what someone buys, and what the Service
+    // structured data describes — and "About" on the team: the people you
+    // would work with.
     links: [
       { label: "Services", href: "#services" },
       { label: "How we work", href: "#how-we-work" },
       { label: "Work", href: "#recent-work" },
       { label: "Case studies", href: "/work" },
-      { label: "About", href: "#about" },
+      { label: "About", href: "#team" },
       { label: "Team", href: "#team" },
       { label: "Contact", href: "#contact" },
     ],
@@ -84,56 +87,9 @@ const raw: SiteContent = {
     scrollHintLeft: "Scroll down",
     scrollHintRight: "to explore delivery",
   },
-  aiExcellence: {
-    heading: "AI that survives production",
-    subline:
-      "Most AI projects die after launch — too slow, too expensive, too unstable. We build the routing, caching, and cost control that keeps them running.",
-    ctaLabel: "Book a technical call",
-    ctaHref: "#schedule",
-    diagramTitle: "Three-lane retrieval",
-    diagramInLabel: "Inbound query",
-    diagramOutLabel: "Response",
-    lanes: [
-      { name: "Keyword lane", detail: "Deterministic match, Postgres + PostGIS" },
-      { name: "AI lane", detail: "Embeddings + Claude Haiku" },
-      { name: "Cache lane", detail: "Redis, 30-second TTL" },
-    ],
-    // Never add a figure here that is not observed on a shipped system.
-    proofPoints: [
-      {
-        stat: "<100ms",
-        label: "Search response, 80% of traffic",
-        body: "Queries are classified before any paid inference runs, so most traffic never reaches a model.",
-        sourceLabel: "Source: Restaurant discovery platform",
-      },
-      {
-        stat: "~$0.001",
-        label: "Average cost per AI query",
-        body: "Tiered retrieval plus a 30-second Redis cache keeps model spend predictable as volume grows.",
-        sourceLabel: "Source: Restaurant discovery platform",
-      },
-      {
-        stat: "<60s",
-        label: "First reply to every inbound lead",
-        body: "Claude classifies intent, GPT-4.1 responds across email and SMS, and bookings write straight to the calendar.",
-        sourceLabel: "Source: WarmChats — live at warmchats.com",
-        sourceHref: "https://warmchats.com",
-      },
-      {
-        stat: "~90%",
-        label: "Of AI calls routed to Haiku, not a frontier model",
-        body: "Right-sizing the model per task is where AI unit economics are actually won.",
-        sourceLabel: "Source: Restaurant discovery platform",
-      },
-    ],
-    proofNote:
-      "Every figure here comes from a system we shipped. Ask on the call and we'll walk you through the architecture.",
-    assurances: [
-      "8–16 weeks to a production MVP",
-      "You own the IP — assigned on payment, NDA before scoping",
-      "UK, Malaysia and Bangladesh — 4–8h overlap with US and EU",
-    ],
-  },
+  // CUT FROM THE HOMEPAGE (decided 2026-09-11) — `about` and `services` are
+  // rendered by nothing. COPY.md, "Removed from the homepage", records why, so
+  // a copy pass does not restore them. Editing them changes nothing on the site.
   about: {
     title: "Why Bolt Fusion Tech",
     bio: "Clients come to us when delivery has to be predictable: clear requirements, honest estimates, and engineering judgment applied early—so you spend less time firefighting and more time growing the product. We work as an extension of your team, focused on outcomes users feel and metrics you can read.",
@@ -484,31 +440,6 @@ const raw: SiteContent = {
     primaryCtaHref: "/#contact",
     secondaryCtaLabel: "Book a technical call",
     secondaryCtaHref: "/#schedule",
-  },
-  process: {
-    badge: "How we work",
-    title: "Process",
-    intro:
-      "A straightforward process designed for busy product leaders: fewer surprises, clearer tradeoffs, and decisions you can explain to your board or budget owner.",
-    discussLabel: "Discuss your roadmap",
-    workLabel: "See recent work",
-    steps: [
-      {
-        num: 1,
-        title: "Discovery & plan",
-        desc: "We align on users, success metrics, constraints, and risks—then produce a concise technical approach and milestone plan so stakeholders know what “done” looks like and when to expect it.",
-      },
-      {
-        num: 2,
-        title: "Build in iterations",
-        desc: "Working software every cycle: demos, backlog transparency, and early integration (auth, data, deployments) so issues surface when they are cheap to fix—not the week before launch.",
-      },
-      {
-        num: 3,
-        title: "Launch, measure, improve",
-        desc: "Release with monitoring, runbooks, and a sensible cutover. After go-live we support stabilization, iterate on feedback, and help your team operate the product with confidence.",
-      },
-    ],
   },
   services: {
     badge: "What we deliver",

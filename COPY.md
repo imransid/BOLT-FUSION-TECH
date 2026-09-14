@@ -116,6 +116,10 @@ grid at `md` and up, letting each card run larger — the screenshots benefit.~~
 carousel, not a grid, so the note describes a layout that does not exist. Two cards
 on a two-column grid is a different decision, and it has not been made.
 
+**As built on the rebuilt homepage (2026-09-14):** the carousel went with the old
+homepage. The section is now the clone design's case-study row — a larger card
+beside a smaller one, stacked on phones. The copy above is unchanged.
+
 ---
 
 ## 5. The engineers
@@ -276,6 +280,44 @@ Name · Work email · Company · Project type · Budget band · Target timeline 
 **Empty/error voice**
 > Error: `That email address doesn't look right. Check it and send again.`
 > Success: `Sent. You'll hear from an engineer within one working day.`
+
+---
+
+## Removed from the homepage — decided 2026-09-11
+
+The homepage rebuild (`redesign/techwix-home`) keeps six sections that argue:
+the hero with its proof strip, the two write-ups, the architecture, how we work,
+the team, and questions and contact. The blocks below were on the old homepage
+and were **cut deliberately**. They are recorded here so a later copy pass does
+not restore them.
+
+**About** — "Why Bolt Fusion Tech", its bio ("Clients come to us when delivery
+has to be predictable…"), six capability chips and three engagement types. Cut:
+generic reassurance any firm could write. The engagement types repeated the
+engagement models table in How we work, which stays.
+
+**Services** — "What we deliver", "Services", its intro ("Practical engineering
+aligned to your roadmap…"), six tech-stack chips, four cards and their buttons.
+Cut: a "we do everything" card grid.
+
+**Both chip lists** — the six capabilities under About (Web & mobile apps, APIs &
+integrations, Cloud & DevOps, Product discovery, UI/UX engineering, Quality &
+launch readiness) and the six technologies under Services (TypeScript & React,
+Next.js & Node, Mobile (iOS / Android), AWS & cloud-native, API design, Automated
+testing). Cut, in the owner's words:
+
+> Six capabilities and six technologies is "we do everything" in a different
+> shape. The engagement table says what someone buys, and the architecture
+> section shows the real stack in context, which is stronger than a badge row.
+
+Also gone from the homepage: the standalone metric band, whose four figures now
+sit in the hero's proof strip, each still labelled and linked to its source; and
+the clone theme's testimonials, logo wall, video buttons, dropdown menu and
+back-to-top widget.
+
+`scripts/content-inventory.json` marks About and Services `cut`, so verify-site
+check 30 fails if any of their text comes back. The `about` and `services`
+blocks in `content/site.ts` are rendered by nothing.
 
 ---
 

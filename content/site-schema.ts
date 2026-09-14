@@ -1,13 +1,17 @@
 import { z } from "zod";
 
+/* The homepage's sections (decided 2026-09-11): the hero, the proof straight
+   after it, how the numbers are produced, how an engagement runs, who builds
+   it, then questions and the routes to a conversation — the FAQ, the contact
+   panel and the booking calendar. About and Services were cut (COPY.md,
+   "Removed from the homepage"), so they are not sections any more; their
+   content blocks are rendered by nothing. */
 export const sectionIds = [
   "hero",
-  "architecture",
-  "about",
-  "team",
   "recent_works",
+  "architecture",
   "how_we_work",
-  "services",
+  "team",
   "faq",
   "cta",
   "schedule_embed",
@@ -77,12 +81,6 @@ const featuredWorkSchema = z
     }
   });
 
-const processStepSchema = z.object({
-  num: z.number(),
-  title: z.string(),
-  desc: z.string(),
-});
-
 const serviceCardSchema = z.object({
   title: z.string(),
   desc: z.string(),
@@ -112,23 +110,6 @@ const teamMemberSchema = z.object({
   profileUrl: safeUrl.refine((v) => LINKEDIN_PROFILE.test(v), {
     message: "profileUrl must be a verified linkedin.com/in/ profile URL",
   }),
-});
-
-/** One defensible figure from a system we shipped. `sourceLabel` is the
- *  credibility signal and is required — a stat with no named source must not
- *  be renderable. */
-const proofPointSchema = z.object({
-  stat: z.string(),
-  label: z.string(),
-  body: z.string(),
-  sourceLabel: z.string(),
-  sourceHref: safeHref.optional(),
-});
-
-/** One row of the three-lane retrieval diagram that replaced the stock photo. */
-const retrievalLaneSchema = z.object({
-  name: z.string(),
-  detail: z.string(),
 });
 
 /* Every figure carries a shipped or target label (CLAUDE.md hard rule).
@@ -232,22 +213,6 @@ export const siteContentSchema = z.object({
     scrollHintLeft: z.string(),
     scrollHintRight: z.string(),
   }),
-  /* Every key here is NEW. The old shape (headlineLine1-3, intro, metrics,
-     footerTitle, trustPoints, imageSrc...) carried invented figures — "10X
-     Faster Delivery", "99.9% Defect-Free" — and was replaced, not renamed. */
-  aiExcellence: z.object({
-    heading: z.string(),
-    subline: z.string(),
-    ctaLabel: z.string(),
-    ctaHref: safeHref,
-    diagramTitle: z.string(),
-    diagramInLabel: z.string(),
-    diagramOutLabel: z.string(),
-    lanes: z.array(retrievalLaneSchema),
-    proofPoints: z.array(proofPointSchema),
-    proofNote: z.string(),
-    assurances: z.array(z.string()),
-  }),
   about: z.object({
     title: z.string(),
     bio: z.string(),
@@ -301,14 +266,6 @@ export const siteContentSchema = z.object({
     primaryCtaHref: safeHref,
     secondaryCtaLabel: z.string(),
     secondaryCtaHref: safeHref,
-  }),
-  process: z.object({
-    badge: z.string(),
-    title: z.string(),
-    intro: z.string(),
-    discussLabel: z.string(),
-    workLabel: z.string(),
-    steps: z.array(processStepSchema),
   }),
   services: z.object({
     badge: z.string(),

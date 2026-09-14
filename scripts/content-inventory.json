@@ -84,7 +84,7 @@
       {
         "item": "About: bio, capability list, engagement types",
         "proves": "A delivery claim; cut in the rebuild once decided",
-        "status": "required",
+        "status": "cut",
         "needles": [
           "Why Bolt Fusion Tech",
           "Clients come to us when delivery has to be predictable: clear re",
@@ -99,11 +99,10 @@
           "Typical 8–16 weeks",
           "Embedded product teams",
           "Roadmap delivery with your PMs and stakeholders",
-          "Ongoing",
           "Stabilize & scale",
-          "Performance, reliability, and maintainability for live systems",
-          "As needed"
-        ]
+          "Performance, reliability, and maintainability for live systems"
+        ],
+        "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
         "item": "Team: six verified engineers",
@@ -172,13 +171,15 @@
           "Performance, reliability, maintainability",
           "Most engagements start with the two-week pilot below. We’ll give",
           "Two-week sprints, a demo at the end of each, a named escalation",
-          "See recent work"
+          "See recent work",
+          "Ongoing",
+          "As needed"
         ]
       },
       {
         "item": "Services: intro, stack list, four cards",
         "proves": "Capabilities; cut in the rebuild once decided",
-        "status": "required",
+        "status": "cut",
         "needles": [
           "Practical engineering aligned to your roadmap: you get transpare",
           "TypeScript & React",
@@ -197,7 +198,8 @@
           "UX & frontend craft",
           "Interfaces that match your brand and usability goals: accessible",
           "What we deliver"
-        ]
+        ],
+        "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
         "item": "FAQ: five questions and answers",
