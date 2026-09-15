@@ -1,5 +1,15 @@
 # Bolt Fusion Tech — case studies
 
+> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.
+
+Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia
+and Bangladesh: software engineering, AI and automation, ERP and enterprise
+systems, point of sale and commerce, and the cloud, data and infrastructure
+under them. Robotics and machine software is a Lab capability: we haven't
+delivered robotics work yet, and nothing there is a shipped system. The site
+labels every capability with its evidence (Proven, Core, Capable, Lab); /llms.txt
+lists them.
+
 Every figure below carries a `shipped` or `target` label. `shipped` means observed
 on a running system; `target` means a number we contract to, not one we have
 measured. Nothing here is unlabelled.
@@ -166,5 +176,7 @@ Senior Software Engineer on its React Native app over GraphQL and NestJS.
 
 ## Contact
 
+Schedule a call: https://boltfusiontech.com/contact#schedule
+Tell us about your project: https://boltfusiontech.com/contact#project
+
 Two-week paid pilot, fixed price, full IP assigned on payment, NDA before scoping.
-https://boltfusiontech.com/#contact

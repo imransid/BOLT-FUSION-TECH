@@ -1,11 +1,15 @@
 import "server-only";
 
+import { CANONICAL_DESCRIPTION, COMPANY_LINE } from "./canonical";
 import { parseContent } from "./schema";
-import { siteContentSchema, type SiteContent } from "./site-schema";
+import { SCHEDULE_HREF, SCHEDULE_LABEL, siteContentSchema, type SiteContent, type SiteContentInput } from "./site-schema";
 
 /**
- * The site's content — navigation, hero, every homepage section, the case
- * study, FAQ, team and footer — as one typed object. It was the CMS's code
+ * The site's content — the navigation and footer every page shares, the
+ * homepage's hero, stories, team, FAQ and final call to action, /contact, and
+ * the restaurant case study — as one typed object. The engineering content
+ * (capabilities, industries, stages, depth, the system map) is
+ * content/engineering.ts. It was the CMS's code
  * defaults; the CMS was removed on 2026-09-11 and this is simply the content.
  * Parsed when the module loads, like every other /content file, so a malformed
  * entry fails `next build` with the file named, instead of reaching a page.
@@ -15,47 +19,59 @@ import { siteContentSchema, type SiteContent } from "./site-schema";
  * components import that barrel.
  */
 
-const raw: SiteContent = {
+const raw: SiteContentInput = {
+  /* The canonical description opens both descriptions, word for word
+     (content/canonical.ts; verify-site check 12). Owner's redesign, 2026-09-16. */
   meta: {
-    title: "AI systems that are still running in six months | Bolt Fusion Tech",
-    description:
-      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
-    ogTitle: "Bolt Fusion Tech — AI systems that are still running in six months",
-    ogDescription:
-      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
+    title: "Bolt Fusion Tech — Software. Intelligence. Automation. Machines.",
+    description: `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`,
+    ogTitle: "Bolt Fusion Tech — Build what's next.",
+    ogDescription: `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`,
   },
   site: {
     sectionOrder: [
       "hero",
-      "recent_works",
-      "architecture",
-      "how_we_work",
+      "what_we_engineer",
+      "capabilities",
+      "system_map",
+      "industries",
+      "how_we_build",
+      "technical_depth",
+      "stories",
       "team",
       "faq",
-      "cta",
-      "schedule_embed",
+      "final_cta",
     ],
     sectionVisibility: {},
   },
-  navbar: {
-    // Relinked to the rebuilt homepage (2026-09-14). The About and Services
-    // sections were cut. "Services" lands on the engagement models table
-    // (id="services") — what someone buys, and what the Service structured data
-    // describes. The "About" link was removed on 2026-09-15: with its section
-    // cut it pointed at #team, beside "Team", promising a section that is gone.
+  /* SPEC §4, in its order. Routes, not homepage anchors, on every page.
+     /capabilities, /industries, /engineering, /about and /insights are built by
+     the next wave from content/engineering.ts. */
+  navigation: {
     links: [
-      { label: "Services", href: "#services" },
-      { label: "How we work", href: "#how-we-work" },
-      { label: "Work", href: "#recent-work" },
-      { label: "Case studies", href: "/work" },
-      { label: "Team", href: "#team" },
-      { label: "Contact", href: "#contact" },
+      { label: "Work", href: "/work" },
+      { label: "Capabilities", href: "/capabilities" },
+      { label: "Industries", href: "/industries" },
+      { label: "Engineering", href: "/engineering" },
+      { label: "About", href: "/about" },
+      { label: "Insights", href: "/insights" },
     ],
-    scheduleCtaLabel: "Book a call",
+    cta: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
   },
+  /* SPEC §5. Registered entity details go here when the owner supplies them;
+     until then there is no slot for them. */
   footer: {
-    copyrightName: "© 2026 Bolt Fusion Tech",
-    rightsLine: "All rights reserved.",
+    tagline: "Engineering intelligent systems for the real world.",
+    navHeading: "Company",
+    nav: [
+      { label: "Capabilities", href: "/capabilities" },
+      { label: "Work", href: "/work" },
+      { label: "Industries", href: "/industries" },
+      { label: "Engineering", href: "/engineering" },
+      { label: "Insights", href: "/insights" },
+      { label: "About", href: "/about" },
+    ],
+    socialHeading: "Follow",
     socialLinks: [
       {
         name: "LinkedIn",
@@ -64,24 +80,22 @@ const raw: SiteContent = {
       { name: "Facebook", url: "https://web.facebook.com/boltfusiontech" },
       { name: "X (Twitter)", url: "https://x.com/boltfusiontech" },
     ],
+    contactHeading: "Contact",
+    email: { label: "hello@boltfusiontech.com", href: "mailto:hello@boltfusiontech.com" },
+    cta: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
+    copyrightName: "© 2026 Bolt Fusion Tech",
+    rightsLine: "All rights reserved.",
+    legal: [{ label: "Privacy Policy", href: "/privacy-policy" }],
     backToTopLabel: "Back to top",
   },
+  /* SPEC §5, the copy deck. One h1, the support line, the body and both calls
+     to action — all server HTML (verify-site check 28). */
   hero: {
-    // COPY.md §1, approved: one-sentence H1, the sub, a plain supporting line
-    // (not chips, not a dotted meta string), and its two buttons. No badge, no
-    // second headline line and no coloured word — the Hero renders none of them
-    // when empty.
-    badge: "",
-    headlineLine1: "We build AI systems that are still running in six months.",
-    headlineLine2: "",
-    subtext:
-      "Senior engineers, published architecture, and a named team before you sign. Production MVP in 8–16 weeks.",
-    tagline:
-      "Senior-only teams, named engineers up front, 4–8 hours of overlap with US and EU, and you own the IP.",
-    primaryCtaLabel: "Start a 2-week pilot",
-    primaryCtaHref: "#contact",
-    secondaryCtaLabel: "Book a technical call",
-    secondaryCtaHref: "#schedule",
+    title: "Build what's next.",
+    support: "Software. Intelligence. Automation. Machines.",
+    body: "We engineer digital systems — from web and mobile platforms to AI automation, ERP, POS, robotics, and the infrastructure that makes them work.",
+    primaryCta: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
+    secondaryCta: { label: "Explore Our Capabilities", href: "/capabilities" },
   },
   team: {
     benchLabel: "Your bench",
@@ -156,9 +170,12 @@ const raw: SiteContent = {
     ],
   },
   recentWorks: {
-    // COPY.md §4, approved. The previous subtitle claimed "seven shipped
-    // experiences" above two cards; there are two write-ups, and the section
-    // says so.
+    // The engineering stories (owner's redesign, 2026-09-16; SPEC §5): the two
+    // write-ups in the problem / system / engineering / result shape, then the
+    // proof strip. The title, subtitle, cards' words and alt texts are COPY.md
+    // §4's, unchanged; the story lines are the write-ups' and llms-full.txt's
+    // own words. No result that is not real, and every figure labelled.
+    eyebrow: "Engineering stories",
     title: "Two products, two write-ups.",
     subtitle: "Each one has a full technical write-up, not a screenshot and a sentence.",
     items: [
@@ -173,6 +190,15 @@ const raw: SiteContent = {
         state: "published",
         href: "/work/warmchats",
         ctaLabel: "Read the case study",
+        story: {
+          problem:
+            "Real estate leads go cold fast. An agent who replies first usually wins the appointment, but leads arrive at all hours across email, SMS, Zillow, open houses and Facebook, and a human cannot be first every time.",
+          system:
+            "An always-on follow-up system that is first to every inbound lead: Claude reads each new lead and routes it by intent, GPT-4.1 replies across email and SMS in the agent's voice, and confirmed showings write straight to the calendar.",
+          engineering:
+            "Event-driven microservices: Next.js front end, NestJS and Django services, PostgreSQL. Each inbound message is an event; qualification, reply generation and calendar writes are separate consumers, so a failure in one does not silently drop a lead.",
+          result: "Live in production at warmchats.com, built by Bolt Fusion for WarmChats, Inc., which owns the product.",
+        },
       },
       {
         // Copy below is lifted verbatim from the approved `caseStudy` block —
@@ -187,8 +213,27 @@ const raw: SiteContent = {
         state: "published",
         href: "/work/restaurant-search",
         ctaLabel: "Read the case study",
+        story: {
+          // The architecture section's intro (COPY.md §3), now this story's
+          // problem and system; its three lanes render under the system line.
+          problem:
+            "Most AI products die after launch — too slow, too expensive, too unstable. Conversational discovery is easy to demo and expensive to run: send every query to a frontier model and cost scales with traffic.",
+          system:
+            "This is the routing we built so one didn't. Every query is classified before any paid inference runs, so most traffic never reaches a model.",
+          lanes: true,
+          engineering:
+            "A multi-tenant NestJS microservice on PostgreSQL with PostGIS and pgvector, Redis for the cache, and row-level security for tenancy. Routing is deterministic and happens before spend, which keeps the unit economics predictable as volume grows.",
+          result:
+            "Most traffic resolves on a sub-100ms path. The measurements below say which figures are shipped and which are targets.",
+        },
       },
     ],
+    // SPEC §8b.1 (binding): "From systems we shipped. Each figure says whether
+    // it was measured (shipped) or is a target." Never "Measured on…": ~$0.001
+    // is a target.
+    proofTitle: "From systems we shipped.",
+    proofNote:
+      "Each figure says whether it was measured (shipped) or is a target. Ask on the call and we’ll walk you through the architecture.",
   },
   caseStudy: {
     badge: "Case study: systems architecture",
@@ -382,11 +427,12 @@ const raw: SiteContent = {
     ctaSupportingText:
       "If you are evaluating search, ranking, or multi-tenant isolation under cost and latency constraints, we can walk through a comparable architecture and delivery approach on a short call.",
     // The case study renders on /work/restaurant-search. Both targets live on
-    // the homepage, so a bare "#contact" or "#schedule" goes nowhere here.
+    // /contact since 2026-09-16: the project panel and the booking calendar.
+    // The labels are the write-up's approved copy (the inner-pages wave owns it).
     primaryCtaLabel: "Discuss a similar engagement",
-    primaryCtaHref: "/#contact",
+    primaryCtaHref: "/contact#project",
     secondaryCtaLabel: "Book a technical call",
-    secondaryCtaHref: "/#schedule",
+    secondaryCtaHref: "/contact#schedule",
   },
   faq: {
     badge: "FAQ",
@@ -394,7 +440,10 @@ const raw: SiteContent = {
     items: [
       {
         q: "What kinds of projects do you take on?",
-        a: "We focus on custom web and mobile products, internal tools, integrations, and hardening existing systems for scale. If you have a clear user or business outcome, we can usually map a sensible technical path.",
+        // Reworded 2026-09-16 (owner's redesign): "we focus on custom web and
+        // mobile products" contradicted the six capabilities. No new claim:
+        // robotics is said to be undelivered, as SPEC §8b.7 says it.
+        a: "Software, AI and automation, ERP and point-of-sale systems, and the cloud infrastructure under them — new builds, integrations, and hardening existing systems for scale. We haven't delivered robotics work yet. If you have a clear user or business outcome, we can usually map a sensible technical path.",
       },
       {
         q: "How do you estimate timeline and cost?",
@@ -410,21 +459,52 @@ const raw: SiteContent = {
       },
       {
         q: "How do we get started?",
-        a: "Use the contact section to book a call or email us with goals, timeline, and any constraints. We respond with fit, suggested next steps, and what we would need from your side to begin.",
+        // Reworded 2026-09-16: the contact section moved to /contact, and
+        // "book a call" is "schedule a call" everywhere.
+        a: "Use the contact page to schedule a call or email us with goals, timeline, and any constraints. We respond with fit, suggested next steps, and what we would need from your side to begin.",
       },
     ],
   },
-  cta: {
+  finalCta: {
+    title: "Have a complex problem?",
+    line: "Let's turn it into an engineered system.",
+    primary: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
+    secondary: { label: "Tell Us About Your Project", href: "/contact#project" },
+  },
+  /* /contact. The panel's words (status, title, body, email) and the
+     calendar's (its heading, blurb and frame title) are the old homepage's,
+     unchanged, moved here on 2026-09-16. The project form is new: three fields
+     that open the visitor's email app, addressed to the team — the site's
+     existing mechanism (mailto), with no backend and nothing stored. */
+  contact: {
+    meta: {
+      title: "Contact",
+      description:
+        "Schedule a call with the engineers who would build your system, or tell us about your project by email.",
+    },
+    eyebrow: "Contact",
     statusLabel: "Taking new engagements",
     title: "Tell us what you need to ship",
     body: "Share goals, timeline, and constraints—we'll reply with honest fit, a suggested approach, and next steps. No pressure, no jargon wall.",
-    scheduleLabel: "Pick a time (30 min)",
-    scheduleHref: "#schedule",
+    primaryCta: { label: SCHEDULE_LABEL, href: "#schedule" },
     emailLabel: "Email the team",
     emailHref: "mailto:hello@boltfusiontech.com",
-  },
-  scheduleEmbed: {
-    blurb: "Or grab an open slot below — same 30‑minute intro call.",
+    emailAddress: "hello@boltfusiontech.com",
+    schedule: {
+      title: "Pick a time (30 min)",
+      blurb: "Or grab an open slot below — same 30‑minute intro call.",
+      frameTitle: "Schedule a 30-minute call — Bolt Fusion Tech",
+    },
+    project: {
+      title: "Tell us about your project",
+      lead: "Three short fields. Sending opens your email app with them filled in, addressed to the team — nothing is stored on this site.",
+      nameLabel: "Your name",
+      subjectLabel: "What are you building?",
+      bodyLabel: "Goals, timeline and constraints",
+      bodyHint: "A few lines is enough to start.",
+      submitLabel: "Open in your email app",
+      fallback: "Or write to us directly:",
+    },
   },
 };
 

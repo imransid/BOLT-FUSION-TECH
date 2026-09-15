@@ -81,11 +81,15 @@ import {
 export type SceneOptions = {
   /** Called once if the WebGL context is lost. The loop has stopped; the caller disposes. */
   onLost?: () => void;
+  /** Start paused: the first frame (t = 0) is still drawn, and the loop waits for setPaused(false). */
+  paused?: boolean;
 };
 
 export type SceneHandle = {
   /** Resolves once the first frame (t = 0, camera at rest) has been drawn. */
   ready: Promise<void>;
+  /** The visitor's pause control (the hero's "Pause motion"): stops the loop, or lets it run again. */
+  setPaused(paused: boolean): void;
   /** Stops the loop and frees every GPU resource, the context included. Idempotent. */
   dispose(): void;
 };
@@ -501,6 +505,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let lost = false;
   let inView = true;
   let visible = !document.hidden;
+  let paused = opts.paused ?? false;
   let sizeDirty = true;
 
   const smooth = (e0: number, e1: number, x: number) => {
@@ -633,7 +638,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     running = false;
     cancelAnimationFrame(raf);
   };
-  const sync = () => (inView && visible ? start() : stop());
+  const sync = () => (inView && visible && !paused ? start() : stop());
 
   const io = new IntersectionObserver((entries) => {
     inView = entries[entries.length - 1].isIntersecting;
@@ -675,6 +680,10 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
 
   return {
     ready,
+    setPaused(p: boolean) {
+      paused = p;
+      sync();
+    },
     dispose() {
       if (disposed) return;
       disposed = true;

@@ -79,7 +79,7 @@ try {
     document.addEventListener("DOMContentLoaded", () => {
       const s = document.createElement("style");
       s.textContent =
-        "[data-hero-field]{width:660px!important;height:560px!important;flex:none!important;border-radius:0!important}" +
+        "[data-hero-field]{box-sizing:content-box!important;width:660px!important;height:560px!important;max-width:none!important;border:0!important;border-radius:0!important;flex:none!important}" +
         "[data-hero-field] canvas{transition:none!important}";
       document.head.append(s);
     });

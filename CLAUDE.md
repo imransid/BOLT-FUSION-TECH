@@ -16,16 +16,25 @@ Do not resolve those by editing either side.
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS, one
-stylesheet (`app/techwix.css`) · Barlow and Jost through `next/font/google` ·
-deployed on Vercel. There is no CMS and no database: the content is typed files
-in `/content`. There is no animation library and no Tailwind: both went with the
-old design on 2026-09-15 (*Design language*, below). **three.js is back for one
-thing only, the homepage hero's scene**, by the owner's brief of 2026-09-16
-(*The hero field*, under Hard rules): imported dynamically after LCP and load,
-desktop only, one chunk of at most 180KB gzipped. It left on 2026-09-15 as the
-@react-three nebula; it returns as plain three.js, with no React Three Fiber.
+Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS · Barlow and
+Jost through `next/font/google` · deployed on Vercel. There is no CMS and no
+database: the content is typed files in `/content`. There is no animation
+library and no Tailwind. **three.js is back for one thing only, the homepage
+hero's scene**, by the owner's brief of 2026-09-16 (*The hero field*, under
+Hard rules): imported dynamically after LCP and load, desktop only, one chunk
+of at most 180KB gzipped. It left on 2026-09-15 as the @react-three nebula; it
+returns as plain three.js, with no React Three Fiber.
 
+- **Two stylesheets, until the inner pages move.** `app/site.css` is the design —
+  the owner's engineering redesign of 2026-09-16 (*Design language*): the shell
+  on every page, the homepage and /contact. `app/techwix.css` is the older design,
+  still under /work, both write-ups, the privacy policy and the 404; the next
+  wave moves each page onto `app/site.css` and then deletes it. Both load from
+  `app/layout.tsx`, techwix first.
+- **three.js returns** (owner, 2026-09-16; *Decided 2026-09-16*): for the hero's
+  3D scene only — three.js core, dynamically imported after load, desktop-only,
+  at most 180KB gzipped. The 3D wave adds the dependency and rewrites *The hero
+  field* under Hard rules; until it lands there is no canvas on any page.
 - Package manager: yarn 4 (`packageManager` in package.json), `nodeLinker:
   node-modules` — Turbopack does not support Plug'n'Play. `yarn.lock` is the
   only lockfile.
@@ -35,28 +44,40 @@ desktop only, one chunk of at most 180KB gzipped. It left on 2026-09-15 as the
   re-measure the scene chunk when you do. Only `components/field/scene.ts`
   imports it. Verify-site check 24 fails a dependency nothing imports.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
+- Scripts beside the suite: `scripts/generate-icons.mjs` (the icons, from the
+  mark), `scripts/contrast-site.mjs` (the contrast table below),
+  `scripts/encode-screenshots.mjs`.
 
 ## Routes
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`); sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, `metrics.ts` for the hero's proof strip, `architecture.ts`, `process.ts` and `services.ts` for Architecture and How we work · static |
+| `/` | homepage (`app/page.tsx`), the redesign's story in `site.sectionOrder`: hero, what we engineer, the six capabilities, the system map, industries, how we build, technical depth, engineering stories (the two write-ups and the proof strip), team, FAQ, final call to action | `content/site.ts` (hero, stories, team, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages, depth, the system map), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the restaurant story's lanes) · static |
+| `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16 | `content/site.ts`, `contact` |
 | `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
 
+**Linked from the navigation, built by the next wave:** `/capabilities`,
+`/industries`, `/engineering`, `/about` and `/insights` (the redesign's IA). They
+404 until then. Each renders from `content/engineering.ts` — the same entries the
+homepage summarises — and joins the sitemap when it lands.
+
 Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 `public/llms.txt`, `public/llms-full.txt`.
 
-**One root layout.** `app/layout.tsx` wraps every page and the 404. It loads
-`app/techwix.css` and the Barlow and Jost faces, and holds the site-wide
-metadata: the title template, the canonical description, icons and robots.
-The homepage renders the site's header and footer itself; every other page
-renders inside `components/techwix/PageShell.tsx` — the same header and footer
-around the page's `<main>`, and the reveal. On an inner page the header's
-anchors point at the homepage (`/#services`), its logo at `/`, and back to top
-at the header; `current` marks the page's own link (`aria-current`).
+**One root layout.** `app/layout.tsx` wraps every page and the 404. It loads both
+stylesheets and the Barlow and Jost faces, and holds the site-wide metadata: the
+title template, the canonical description, icons and robots. Every page renders
+inside `components/site/SiteShell.tsx` — the header, the page's `<main id="main">`
+and the footer. The homepage and /contact pass `ground="graphite"` (the main gets
+`.bf-main`, and `<html>` and `<body>` take its ground); the inner pages still in
+the older design render through `components/techwix/PageShell.tsx`, which wraps
+SiteShell and adds the older reveal. The header's links are routes on every
+page, and `current` marks the page's own link (`aria-current`). "Back to top"
+goes to `#masthead`, the header. The old homepage anchors still land somewhere:
+`/#recent-work` is the engineering stories, `/#contact` the final call to action.
 
 **The 404 is the standard `app/not-found.tsx`,** inside the root layout: an
 unknown URL answers 404 with the site's header, a banner and the footer, and
@@ -73,7 +94,7 @@ no experimental flags.
 
 Links are plain `<a>`, except a literal link to `/`, which eslint's
 `no-html-link-for-pages` wants as `<Link>` (check 24): those are
-`<Link prefetch={false}>`.
+`<Link prefetch={false}>` — the header's logo among them.
 
 ## Content — one layer, in `/content`
 
@@ -81,21 +102,40 @@ Every word on the site that is not hardcoded in a component lives in a typed
 file in `/content`, parsed with Zod when the module loads, so a malformed entry
 fails `next build` with the file named:
 
-- `site.ts` (schema `site-schema.ts`) — navigation, the hero, the homepage
-  sections except Architecture and How we work, the restaurant case study
-  (`caseStudy`), FAQ, team and footer. It is server-only and deep-frozen:
-  server components read it and pass each client component only its slice as
-  props. Never re-export `./site` from the `/content` barrel — client
-  components import that barrel.
-  The homepage rebuild cut About and Services (COPY.md, "Removed from the
-  homepage"); their blocks and schema entries were deleted, as `aiExcellence`
-  and `process` were before them; the old hero's scroll hints, trust points and
-  accent word and the carousel's swipe hint went on 2026-09-15. Nothing in it is
-  validated but unrendered.
+- `site.ts` (schema `site-schema.ts`) — the navigation and footer every page
+  shares; the homepage's hero, engineering stories (`recentWorks`: the two
+  write-ups in the problem / system / engineering / result shape, and the proof
+  strip's heading and note), team, FAQ and final call to action; `/contact`
+  (`contact`); and the restaurant case study (`caseStudy`). It is server-only and
+  deep-frozen: server components read it and pass each client component only its
+  slice as props. Never re-export `./site` from the `/content` barrel — client
+  components import that barrel. The schema refuses a primary call to action
+  that does not say exactly "Schedule a Call", the words "Book a call" anywhere
+  in the file, and a homepage description that does not open with the canonical
+  line.
+- `engineering.ts` (schema `engineering-schema.ts`) — the engineering company
+  (2026-09-16): the six capabilities with every depth field (body, what we build,
+  an optional build note, approach, evidence tiers with their scope, the evidence
+  note, linked work slugs, metric ids, the diagram id, title, description and
+  caption, the honesty line where Lab), the industries (problems, what we'd build,
+  evidence links only where work exists, a note), the six How We Build stages,
+  the technical-depth layers, the system map (parts, links, worked flows) and each
+  section's heading. ONE SOURCE: the homepage shows summaries; /capabilities,
+  /industries and /engineering render the same entries in depth. Not server-only
+  (the system map's client component takes its slice). The schema refuses an
+  unlabelled figure anywhere in it (the same idea as check 8, at build time),
+  linked work that is not published Bolt Fusion work (never a track-record
+  project), a Lab capability without its honesty line or a Lab diagram not
+  captioned "Concept", Kubernetes, Kafka or RabbitMQ, and a robotics link or flow
+  not marked concept.
+- `canonical.ts` — the canonical company description, one string, imported by
+  the metadata, the share image, the structured data and the content.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
-  `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
-  (`components/techwix/*`: the proof strip, Architecture, How we work) and
-  `lib/structured-data.ts`.
+  `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage (the
+  proof strip, the restaurant story's lanes) and `lib/structured-data.ts`.
+  `services.ts` (the engagement models) and `pilot.ts` left the homepage on
+  2026-09-16 and are kept for /about (the next wave); `process.ts`'s three steps
+  were replaced by the six stages.
 - `figure-labels.ts` — the in-sentence labels and exemptions (*Hard rules*).
 
 There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
@@ -204,84 +244,200 @@ feature work, above.
 
 ## Design language, as built
 
-**One design — decided by the owner on 2026-09-15.** The whole site is in the
-Techwix clone's design, with the site's real content: the homepage, /work, both
-write-ups, the privacy policy and the 404. The old dark design is gone, code and
+**The engineering redesign — decided by the owner on 2026-09-16.** A dark,
+precise, restrained engineering foundation (the redesign spec, §3): full-bleed
+graphite sections divided by hairlines, not boxes; one brand blue for actions;
+one cyan for data flow only; a distinct diagram per capability; quiet motion.
+`app/site.css` styles it, every class `bf-`: the shell (header, drawer, footer)
+on every page, and the pages whose `<main>` carries `.bf-main` — the homepage and
+/contact. The inner pages keep the older design's bodies inside the new shell
+until the next wave moves them (*The older design*, below). Nothing in
+`app/site.css` restyles an older page's body, and its base block repeats
+`app/techwix.css`'s resets word for word, so it carries the site alone once that
+file is deleted.
+
+- **Tokens** (`:root` in `app/site.css`): ground `#07090d`, surface `#0d1016`,
+  raised `#141922`; hairline `#232a36`, a stronger rule `#2e3747`, steel `#6b7385`
+  (a boundary that must read: inputs, ghost buttons, diagram strokes); text
+  `#eceff4`, body `#c3c9d4`, muted `#9aa3b4`; brand `#4c86ff` (links on dark),
+  `#7aa7ff` (hover), the button fill `#2a62e0` (hover `#2256c9`); flow cyan
+  `#2ee6d6`; shipped `#34d399`, target `#fbbf24`; focus `#8ab4ff`. Content capped
+  at 1240px; the side gutter `clamp(16px, 4vw, 48px)`; the header 72px.
+- **The cyan is never text and never a chip:** flow lines in the diagrams, the
+  system map and, from the 3D wave, the hero scene. **Green and amber mean a
+  figure's shipped and target status, and nothing else.**
+- **No neon, no glow on text.** One subtle radial light behind the hero field;
+  gradients only inside the scene and the diagrams. The faint engineering grid
+  (1px lines at 4%) sits behind the hero field and the system map only.
+- **Breakpoints:** `≤767`, `768–1024`, `≥1025`, plus the header's own: `1200`
+  (the full navigation ↔ the drawer) and `520` (below it the header's Schedule a
+  Call moves into the drawer). No horizontal scroll at any width.
+- **Sections** (`.bf-section`): full bleed, a hairline on top, 72px of padding on
+  phones, 96 from 768, 128 from 1025. Cards only where the content is a set (the
+  team; /work's projects); everything else is a ruled grid, a ledger, a rail, a
+  strata table or a diagram — never a row of identical cards.
+- **Buttons** (`components/site/Cta.tsx`): Barlow 600, square-cut (2px).
+  `primary` is white on the button fill, one per view; `ghost` a steel outline;
+  `quiet` a brand-blue text link with an arrow. `data-cta` marks the calls to
+  action the suite follows: `schedule` on every Schedule a Call, `explore` on
+  Explore Our Capabilities, `project` on Tell Us About Your Project.
+- **Three chip families, never confusable** (a figure's status is check 8's):
+  - *status* (`components/site/StatusChip.tsx`, and `<FigureText>`'s `.tw-figchip`
+    recoloured for graphite): a pill in green (shipped) or amber (target), the only
+    use of those colours, with `data-status` on the figure's wrapper;
+  - *evidence tier* (`components/site/TierChip.tsx`): square, neutral, a four-step
+    brand-blue meter (Proven 4, Core 3, Capable 2, Lab 1), `data-tier`, never
+    `data-status`; Lab's edge is dashed. The legend (`TierLegend`) sits under the
+    "What we engineer" index;
+  - *concept* (`.bf-concept`): a dashed tag, the same family as Lab and every
+    concept drawing.
+- **The diagrams** (`components/site/diagrams.tsx`): each capability's own
+  server-rendered inline SVG — a layered stack, a router in front of the model, a
+  module ring, a till hub with its offline queue, a machine loop (dashed, and
+  captioned "Concept — not a shipped system"), a release pipeline. `role="img"`,
+  named by its `<title>` and described by its `<desc>`; colours by class; the cyan
+  on `.dg-flow` only. Labels are 15–17 units on a 480-unit drawing, legible at a
+  phone's width.
+- **The system map** (`components/site/SystemMap.tsx`, a client component): the
+  SVG is the picture for a pointer and is `aria-hidden`; the lists beside it
+  (`data-system-map`: parts, connections, worked flows) are the same content as
+  text — the no-JS and crawler view. With script each part and flow is a button:
+  focus or hover lights its links, a polite live region says what they do, a
+  click pins it. Without script they are plain text, never a dead button.
+- **The logo** is the Forward Monogram (*Decided 2026-09-16*): `lib/mark.ts`
+  holds the geometry, `components/LogoMarkSvg.tsx` draws it (the stem and upper
+  bowl in `currentColor`, the lower bowl in `var(--brand)`, which the redesign's
+  pieces set to the brand blue), and `components/site/Logo.tsx` builds the
+  lockups — horizontal (gap 0.3 x the mark), stacked, the mark alone — with the
+  wordmark "Bolt Fusion" in Barlow 700 at −0.01em and "Tech" in Barlow 500,
+  muted, and a stem width of clear space. `scripts/generate-icons.mjs` writes the
+  favicon, the ICO and the apple-touch icon from it: white on the button fill,
+  the small cut (3-unit seams) below 24px.
+- **The header** (`components/site/Header.tsx`) is graphite and sticky with a
+  hairline, headroom as before, the six routes from 1200px and the drawer below
+  it (`components/site/MobileDrawer.tsx`: focus trapped, Escape closes,
+  `aria-expanded` on the burger, rendered hidden in the server HTML and portalled
+  to `<body>` after mount; its list is the `<nav aria-label="Primary">` below
+  1200px). The page scrolls with `scroll-padding-top` of the header plus 16px
+  (A1, check 19).
+- **Skip link:** "Skip to content", the first stop on every page, off screen until
+  focused, white on the button fill, to `main#main`.
+- **Visible focus:** a 2px `#8ab4ff` ring (9.5:1 on the ground) on every link,
+  button, summary and field in the redesign's pieces; the older pages keep their
+  3px ring.
+
+### Contrast — every pair measured
+
+`node scripts/contrast-site.mjs` measures every text/background pair
+`app/site.css` uses and every boundary that must read, and exits 1 on a failure.
+Text needs 4.5:1; a boundary or indicator 3:1 (SC 1.4.11). A translucent chip
+fill is composited over its ground first. Every pair is AA:
+
+| foreground | background | ratio | needs | used for |
+|---|---|---|---|---|
+| text #eceff4 | ground #07090d | 17.29:1 | 4.5:1 | headings, primary text, labels on the page |
+| text #eceff4 | surface #0d1016 | 16.52:1 | 4.5:1 | text on the footer, drawer, diagram plates, lanes |
+| text #eceff4 | raised #141922 | 15.29:1 | 4.5:1 | tier-chip labels, diagram node labels, the honesty note |
+| soft #c3c9d4 | ground #07090d | 11.98:1 | 4.5:1 | body copy |
+| soft #c3c9d4 | surface #0d1016 | 11.45:1 | 4.5:1 | body copy in the footer and drawer |
+| soft #c3c9d4 | raised #141922 | 10.59:1 | 4.5:1 | a tier chip's scope |
+| muted #9aa3b4 | ground #07090d | 7.85:1 | 4.5:1 | eyebrows, meta, labels, the pause control |
+| muted #9aa3b4 | surface #0d1016 | 7.50:1 | 4.5:1 | footer labels and base row, diagram notes |
+| muted #9aa3b4 | raised #141922 | 6.94:1 | 4.5:1 | muted text on a raised surface |
+| brand #4c86ff | ground #07090d | 5.85:1 | 4.5:1 | links, the quiet call to action, stage numbers |
+| brand #4c86ff | surface #0d1016 | 5.59:1 | 4.5:1 | links on the footer and drawer |
+| brandHi #7aa7ff | ground #07090d | 8.35:1 | 4.5:1 | link hover, a pressed map part |
+| brandHi #7aa7ff | surface #0d1016 | 7.98:1 | 4.5:1 | the drawer's current link |
+| white #ffffff | brandFill #2a62e0 | 5.35:1 | 4.5:1 | the primary button, the skip link |
+| white #ffffff | brandFillHover #2256c9 | 6.48:1 | 4.5:1 | the primary button, hovered |
+| shipped #34d399 | rgb(12,29,27) | 9.05:1 | 4.5:1 | a shipped chip on the ground |
+| shipped #34d399 | rgb(17,36,35) | 8.40:1 | 4.5:1 | a shipped chip on a surface |
+| target #fbbf24 | rgb(31,27,15) | 10.29:1 | 4.5:1 | a target chip on the ground |
+| target #fbbf24 | rgb(37,34,23) | 9.53:1 | 4.5:1 | a target chip on a surface |
+| text #eceff4 | #0b0b12 | 17.01:1 | 4.5:1 | the older design's logo tile (the WarmChats sign-off): the mark |
+| steel #6b7385 | ground #07090d | 4.19:1 | 3:1 | input borders, ghost-button borders, diagram strokes (non-text) |
+| steel #6b7385 | surface #0d1016 | 4.00:1 | 3:1 | diagram strokes on the plate (non-text) |
+| steel #6b7385 | raised #141922 | 3.71:1 | 3:1 | the Lab chip's dashed edge (non-text) |
+| flow #2ee6d6 | surface #0d1016 | 12.16:1 | 3:1 | the cyan flow lines on a diagram plate (non-text) |
+| flow #2ee6d6 | ground #07090d | 12.72:1 | 3:1 | the cyan on the system map (non-text) |
+| brand #4c86ff | surface #0d1016 | 5.59:1 | 3:1 | an accented node's outline, a tier meter step (non-text) |
+| brand #4c86ff | raised #141922 | 5.17:1 | 3:1 | a tier meter step on the chip (non-text) |
+| focus #8ab4ff | ground #07090d | 9.54:1 | 3:1 | the focus ring on the ground (non-text) |
+| focus #8ab4ff | surface #0d1016 | 9.12:1 | 3:1 | the focus ring in the footer and drawer (non-text) |
+
+The wordmark keeps its logotype exemption (checks 18 and 20), and no longer
+needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
+
+### What the next wave reuses
+
+- **Content:** `content/engineering.ts` (the capabilities with every depth field,
+  the industries with problems, what we'd build, evidence and notes, the stages,
+  the depth layers, the system map, the section headings), `content/site.ts`
+  (navigation, footer, contact), `content/canonical.ts`.
+- **Components** (`components/site`): `SiteShell` (pass `ground="graphite"` and
+  `current`), `SectionHead`, `Cta` and `ctaKind`, `TierChip` and `TierLegend`,
+  `StatusChip`, `ProofStrip`, `CapabilityDiagram` (`diagrams.tsx`), `DomainGlyph`,
+  `SystemMap`, `ContactForm`, `Logo`, and the homepage's sections in
+  `components/site/home`.
+- **CSS primitives** (`app/site.css`): `.bf-wrap`, `.bf-section`, `.bf-head` /
+  `.bf-eyebrow` / `.bf-h2` / `.bf-h4` / `.bf-lead`, `.bf-actions`, `.bf-btn--*`,
+  `.bf-index` (a ruled grid), `.bf-ledger`, `.bf-stages` (a rail), `.bf-strata`,
+  `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
+  `.bf-pagehead` (a page's h1 block), `.bf-form` / `.bf-field`, and the
+  `data-bf-reveal` / `data-bf-flow` hooks of `components/site/SiteMotion`.
+
+### The older design (the inner pages, until the next wave moves them)
+
+**One design — decided by the owner on 2026-09-15**, superseded on 2026-09-16:
+/work, both write-ups, the privacy policy and the 404 keep the Techwix clone's
+design inside the new shell — `app/techwix.css`, `.tw-` classes, the pieces in
+`components/techwix`. The old dark design that preceded it is gone, code and
 all: `app/globals.css` (the beam button, corner glow, grain, logo animations,
 `.cv-section`, the `[data-reveal]` system, the old FAQ block), its three faces
 (Inter, Satoshi, Commit Mono — the files and the licence), `lib/reveal.ts` and
-`components/RevealController.tsx`, framer-motion, `<LogoMark>`'s animated chip
-(`components/Logo.tsx`), the `SiteContentProvider` context, Tailwind and
-`postcss.config.mjs`. Verify-site check 31 fails if any of it comes back, on a
-page or in the source.
+`components/RevealController.tsx`, framer-motion, `<LogoMark>`'s animated chip,
+the `SiteContentProvider` context, Tailwind and `postcss.config.mjs`. Verify-site
+check 31 fails if any of it comes back, on a page or in the source.
 
-None of the theme's photographs, logos, icon font, SVG art or copy ship. Every
-measured value — colours, the title ramp, the buttons, the header's headroom
-contract, the hero panel, the case-study row, the contact panel, the footer
-fill — comes from the clone study on the retired `techwix-replica` branch; its
-pixel-matching rules do not apply here. All of it is plain CSS in
-`app/techwix.css`: the homepage's sections first, the inner pages' pieces at the
-end ("INNER PAGES").
+None of the theme's photographs, logos, icon font, SVG art or copy ship. Its
+measured values came from the clone study on the retired `techwix-replica`
+branch; its pixel-matching rules do not apply here.
 
 - **Tokens** (`:root` in `app/techwix.css`): brand `#086ad8`, ink `#0e0e0e`, body
-  text `#4c4d56`, light surface `#f7f7f9`, hairline `#e1e1e1`; navy panels — the
-  hero and every page banner `#01013f` (35px radius), the team `#010742`, the
-  contact and call-to-action panels `#091577`, the footer `#010717`. Content
-  capped at 1300px; the side gutter `clamp(15px, 4vw, 50px)`.
-- **Breakpoints** are the clone's: `≤767`, `768–1024`, `≥1025`, plus the
-  header's own `1200` (desktop nav ↔ drawer).
+  text `#4c4d56`, light surface `#f7f7f9`, hairline `#e1e1e1`; navy panels — every
+  page banner `#01013f` (35px radius), the contact and call-to-action panels
+  `#091577`. Content capped at 1300px; the side gutter `clamp(15px, 4vw, 50px)`.
 - **Bands** alternate white and `#f7f7f9`, 120px of padding at ≥1025, 90 below,
   72 on phones.
 - **Status chips** keep the site's meaning: teal = shipped, amber = target —
   `#0b6f78` on `#e2f3f4` and `#9a4a06` on `#fdf0dc` on light bands, light teal
-  and amber outlines on navy (`.tw-on-dark`). Nothing else uses those two
-  colours: tags, taglines, pills and icons are the brand blue.
+  and amber outlines on navy (`.tw-on-dark`).
 - **In-sentence chips.** `<FigureText>` (`components/FigureText.tsx`) puts
   `.tw-figchip` straight after the figure inside its `data-status` wrapper;
-  `app/techwix.css` styles it, following the band. Do not add page variants to
-  the component.
+  `app/techwix.css` styles it, following the band, and `app/site.css` recolours
+  it on graphite. Do not add page variants to the component.
 - **Buttons:** Jost 600, 5px radius; the primary is the clone's gradient,
   darkened so its lightest stop clears 4.65:1 against white; `light` and
   `secondary` on navy, `outline` on light bands.
-- **The header** is white and sticky, with the full nav from 1200px and a drawer
-  below it (focus trapped, Escape closes, `aria-expanded` on the burger). The
-  drawer is in the server HTML, hidden, so the burger's `aria-controls` names an
-  element before any script runs, and moves to `<body>` after mount; its list is
-  a `<nav aria-label="Primary">`, the navigation landmark below 1200px (A4, A5).
-  Without JavaScript the burger cannot open it: below 1200px a reader without
-  script navigates by the footer and the page's own links. The page scrolls
-  with `scroll-padding-top` of the header's height plus 12px, so a focused
-  element or an anchor's target is never under it (A1).
-- **Skip link:** "Skip to content", the first stop on every page, off screen
-  until focused, to `main#main` (`app/layout.tsx`). Every page's `<main>` —
-  the homepage's and `PageShell`'s — carries `id="main"`.
-- **The proof strip:** each figure's chip sits beside it, in the figure's own
-  row, which names its metric (`data-metric`, the id in `content/metrics.ts`);
-  a label with a figure of its own ("Search response, 80% of traffic") keeps
-  that figure's chip. /work's figures are built the same way (K1).
-- **The logo** is our mark in a dark tile beside the wordmark in Barlow and Jost
-  (`components/techwix/Logo.tsx`); the mark's drawing is
-  `components/LogoMarkSvg.tsx`, which the footer, the WarmChats sign-off and the
-  share image also draw. It was drawn for a dark tile.
 - **Visible focus:** a 3px outline, brand blue on light bands and light blue on
   navy.
 
-### The inner pages
+#### The inner pages
 
 Each is assembled from pieces built once in `components/techwix`, so no page is
 styled by hand:
 
 | piece | what it is |
 |---|---|
-| `PageShell` | the site's header and footer around the page's `<main>`, and the reveal |
-| `PageBanner` | the hero's rounded navy panel holding the page's one h1 on the title ramp; an optional back link, eyebrow, lead, buttons, and a screenshot beside the text at ≥1025px (below it under that), never behind it |
+| `PageShell` | the site's shell (`components/site/SiteShell`) around the page's `<main>`, and the older reveal |
+| `PageBanner` | the rounded navy panel holding the page's one h1 on the title ramp; an optional back link, eyebrow, lead, buttons, and a screenshot beside the text at ≥1025px (below it under that), never behind it |
 | `SectionHeading` | an eyebrow (the clone's Barlow 500 subtitle), the h2 on the ramp's section size, an intro |
 | `Summary` | an executive summary beside the clone's gradient delimiter |
 | `KpiGrid`, `KpiCard` | a figure with its own chip beside it — ahead of any chip in the hint, so the card's first status is the figure's — its label and hint; a capability ("Multi-tenant") is a word in ink with no chip |
-| `LaneCard` | the homepage's lane card with a marker row (a number, then traffic and latency or a tag) and a footer line |
+| `LaneCard` | the lane card with a marker row (a number, then traffic and latency or a tag) and a footer line |
 | `Tags`, `Bullets` | lists whose every item goes through `<FigureText>` |
 | `Shot` | a screenshot in a fixed frame, covering it from the top, its caption below and never over it |
-| `CtaPanel` | the homepage's navy contact panel, as a page's closing call to action on a light band |
+| `CtaPanel` | the navy call-to-action panel, as a page's closing call to action on a light band |
 
 A page is a navy banner, then sections on alternating bands, then the navy
 call-to-action panel, then the footer. The privacy policy is legal prose
@@ -290,22 +446,38 @@ call-to-action panel, then the footer. The privacy policy is legal prose
 
 ## Type
 
-Barlow and Jost only, from `next/font/google` in `app/layout.tsx`: Barlow
-500 / 600 / 700 for headings, the logo and figures, Jost 400 / 500 / 600 for
-text and buttons. All normal — no italic anywhere. `<b>` and `<strong>` are 600:
-the browser's `bold` would ask Jost for a 700 it does not load (check 3). The
-tokens `--font-heading` (Barlow) and `--font-body` (Jost) are declared at `:root`
-in `app/techwix.css`; the body is Jost 16px on the clone's unitless 1.73.
+Barlow and Jost only, from `next/font/google` in `app/layout.tsx`: Barlow 500 /
+600 / 700 and Jost 400 / 500 / 600. All normal — no italic anywhere. No new
+family (checks 2 and 31), and the site loads no mono face. `<b>` and `<strong>`
+are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3).
 
-The title ramp: 70/78 major and 48/54 section at ≥1025px, 48/60 and 36/52 below;
-24/34 sub and 20/30 small at every width. The type is on the span inside the
-heading (`.title-*`), the heading wrapper has line-height 0.
+**The redesign's ramp** (`app/site.css`): 72 / 48 / 32 / 22 / 18 / 16 / 14.
+- Barlow 700 for the H1 and every H2, tracking −0.02em (−0.015em at 32px). The
+  hero's H1 is upper case by `text-transform` over its sentence-case source
+  ("Build what's next."), set as two lines that never break inside ("Build" /
+  "what's next.") so check 7 never sees an orphaned last word:
+  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(56px, 5vw, 72px)` from it,
+  sized so the longer line fits its column at every width. Negative tracking is
+  not tracked-out capitals.
+- H2s are 48px from 768 and 32 below; Barlow 600 for H3 and H4 (22 and 18);
+  buttons in Barlow 600.
+- Jost for text: 16px on 1.65, leads 18 on 1.6, lines at most 62–68ch.
+- Machine values — figures, stack names, stage numbers — in Barlow 500 with
+  `tabular-nums`.
+- The tokens `--bf-font-heading` (Barlow) and `--bf-font-body` (Jost) are
+  declared at `:root` in `app/site.css`.
 
-**All six faces are preloaded,** because every page paints each in its first
-viewport at 390, 768 and 1440 — the header's logo alone sets Barlow 500 and 700
-and Jost 500, every h1 is Barlow 600. A preload lands on every page the one
-layout wraps, so a face that stops being painted above the fold on any page
-gets `preload: false`; check 25 fails a preload its page never renders.
+The older design's title ramp stays on the inner pages until they move: 70/78
+major and 48/54 section at ≥1025px, 48/60 and 36/52 below; 24/34 sub and 20/30
+small at every width; the type on the span inside the heading (`.title-*`), the
+heading wrapper at line-height 0; its tokens `--font-heading` and `--font-body`
+in `app/techwix.css`.
+
+**All six faces are preloaded,** because every page paints each: the header's
+wordmark sets Barlow 700 and 500, every button — the footer's Schedule a Call on
+every page, at every width — is Barlow 600, and the text is Jost. A preload
+lands on every page the one layout wraps, so a face that stops being painted on
+any page gets `preload: false`; check 25 fails a preload its page never renders.
 **The tradeoff, measured by the hero-perf review (2026-09-15):** the four font
 preloads cost about 140ms of first contentful paint in the mobile lab profile,
 and gain about 20ms of LCP. They are kept because LCP is the budgeted metric
@@ -313,36 +485,35 @@ and gain about 20ms of LCP. They are kept because LCP is the budgeted metric
 change that makes FCP matter — a budget on it, or a first paint that has to be
 the text — reopens this. (Recorded, not re-measured, in the fix pass.)
 
-The `next/font` variables live on `<html>`, which is `:root`, where the tokens
-are declared. Move them to `<body>` and every token stops resolving; delete the
-tokens and the whole site renders in the system font. Both have happened.
-Verify-site checks 1 and 2 catch both.
+The `next/font` variables live on `<html>`, which is `:root`, where both
+stylesheets declare the tokens that read them. Move them to `<body>` and every
+token stops resolving; delete the tokens and the whole site renders in the
+system font. Both have happened. Verify-site checks 1 and 2 catch both.
 
 The share image (`app/opengraph-image.tsx`) renders outside CSS, in satori,
 which reads TTF, OTF or WOFF and not the WOFF2 files next/font serves. It uses
-Barlow 500 and 600 as TrueType files in `assets/fonts`, with their SIL OFL
-licence beside them, read at build time.
+Barlow 500, 600 and 700 as TrueType files in `assets/fonts` (700 added on
+2026-09-16, for the wordmark and the headline), with their SIL OFL licence
+beside them, read at build time.
 
 ## Motion, as built
 
-- **The reveal** — one system, on every page: `components/techwix/RevealObserver.tsx`,
-  rendered by the homepage and by `PageShell`. Elements marked `data-tw-reveal`
-  that are still below the fold after hydration get `.animated` and
-  `techwix--slide-up` (3rem and a fade, 1.25s, `fill-mode: none`) when they
-  enter the viewport. Nothing is hidden in the server HTML, and nothing moves
-  under reduced motion. Page banners and the hero have no entrance: they render
-  in place, and no h1 is ever hidden. **Until 2026-09-15 it animated nothing:**
-  the attribute's value names the animation, React renders a bare
-  `data-tw-reveal` as `"true"`, and every element got the class `animated true`.
-  The observer now reads `"true"` and `""` as the default. No check caught it —
-  every check reads a page at rest, where a reveal that never runs and one that
-  has finished look the same. **Focus ends a reveal** (A2): a keyboard user
-  tabbing into a card below the fold would otherwise see it fade in from
-  opacity 0 around the focused control; on `focusin` the observer stops
-  watching that element and finishes any animation already running on it.
-- **The header's headroom** slide is a 0.25s transform (`HeadroomController.tsx`).
-- **No animation library.** framer-motion was removed on 2026-09-15. The FAQ
-  uses none: each item is a `<details name="faq">` with a CSS open/close.
+The redesign's motion is quiet (SPEC §3): the hero's 3D scene is to be the one
+orchestrated moment; everywhere else, reveals from a visible resting state,
+hover and focus states, and a slow flow along diagram paths. Transform and
+opacity only. Everything is off under reduced motion, and anything that moves
+for more than five seconds has a pause control.
+
+- **The reveal** (`components/site/SiteMotion.tsx`): an element marked
+  `data-bf-reveal` that is still below the fold after hydration gets
+  `.bf-revealed` when it enters the viewport — a 20px rise and fade over 0.8s,
+  `fill-mode: none`. Nothing is hidden in the server HTML, and focus ends a
+  reveal (A2).
+- **The diagram flow:** a diagram marked `data-bf-flow` gets `.bf-flowing` once a
+  third of it is in view, and its cyan `.dg-flow` paths run three 1.6s passes —
+  under five seconds, so it needs no pause control (WCAG 2.2.2) — then rest.
+- **The system map:** a lit link's cyan pulse runs four 1.2s passes and rests;
+  the other parts dim with a 0.2s opacity change.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
   the owner's brief; engineering SPEC §7, "Many technologies. One engineering
   system."). An engineering core of stacked, chamfered octagonal plates in
@@ -370,26 +541,56 @@ licence beside them, read at build time.
     slowly — a CSS transform, so no layout shift; under reduced motion it is
     still. The step-3 files, `field-poster-{660,1320}.*`, stay in
     `public/hero/` until the integration decides; nothing references them.
-- **Reduced motion:** nothing loops. The poster's drift, the reveal, the
-  header's slide, the drawer's slide, the FAQ's open/close and the screenshot
-  hover zooms (the homepage's case cards, /work's rows) each have a
-  reduced-motion guard. verify-site checks 21 and 23.
+  - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
+    where the hero moves — the drift, or a hero marked `data-scene="live"` —
+    and is `hidden` in the server HTML. `HeroScene` sets `data-scene="live"` on
+    `#hero` once the scene has drawn and removes it on teardown, so the button
+    stays while the scene is paused and can resume it. Pausing sets
+    `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
+    `{ paused }`: the drift reads the attribute; the scene stops its loop on
+    the event and resumes on the next, and starts paused (its t = 0 frame
+    drawn, no loop) if the attribute is already set when it mounts.
+- **The header's headroom** slide is a 0.25s transform; the drawer slides in
+  over 0.28s.
+- **The older reveal**, on the inner pages: `components/techwix/RevealObserver.tsx`,
+  rendered by `PageShell`. Elements marked `data-tw-reveal` still below the fold
+  after hydration get `.animated` and `techwix--slide-up` (3rem and a fade,
+  1.25s, `fill-mode: none`) when they enter the viewport. **Until 2026-09-15 it
+  animated nothing:** the attribute's value names the animation, React renders a
+  bare `data-tw-reveal` as `"true"`, and every element got the class
+  `animated true`. The observer now reads `"true"` and `""` as the default. No
+  check caught it — every check reads a page at rest, where a reveal that never
+  runs and one that has finished look the same.
+- **No animation library.** The FAQ is a `<details name="faq">` with no
+  animation but its icon's quarter turn.
+- **Reduced motion:** nothing moves. The reveal, the diagram flow, the map's
+  pulse and fade, the poster's drift, the header's slide, the drawer's slide,
+  the FAQ icon, the quiet link's arrow, and the older pages' reveal and
+  screenshot hover zooms each have a guard (verify-site checks 21 and 23).
 
 ## SEO and AI visibility
 
 - Metadata: the root layout plus per-page metadata; title template
   `%s | Bolt Fusion Tech`.
 - **Canonical description**, word for word wherever the company is described —
-  meta description, OG image, Organization JSON-LD, `llms.txt`: *"We build AI
-  systems that are still running in six months."* (COPY.md, "Company
-  description — canonical"). verify-site check 12 enforces it.
-- JSON-LD from `lib/structured-data.ts`. The homepage graph: Organization,
-  WebSite, Service, FAQPage, Person (only engineers with a verified LinkedIn),
-  BreadcrumbList. `/work` and both case studies emit their own; each case study
-  is BreadcrumbList + Article. Breadcrumbs point at pages, never at anchors.
-  `/work` is named "Case studies" in every breadcrumb — its own and the
-  write-ups' — as the navigation names it, and each Article's headline is its
-  page's h1, from the same source the page renders (A7, 2026-09-15).
+  the meta and og descriptions, the share image and its alt text, Organization
+  JSON-LD, `llms.txt` and `llms-full.txt`: *"We engineer intelligent software,
+  business systems, automation, and connected technologies — from idea to
+  production."* It is `CANONICAL_DESCRIPTION` in `content/canonical.ts` (COPY.md,
+  "Company description — canonical"). The owner changed it on 2026-09-16; it was
+  "We build AI systems that are still running in six months." verify-site check
+  12 enforces it, and the site-content schema refuses a homepage description that
+  does not open with it.
+- JSON-LD from `lib/structured-data.ts`. The homepage graph: Organization (the
+  new description, the apple-touch icon as its logo), WebSite, **one Service per
+  capability** from `content/engineering.ts` (robotics' description carries its
+  honesty line), FAQPage, Person (only engineers with a verified LinkedIn),
+  BreadcrumbList. `/contact` emits a BreadcrumbList. `/work` and both case
+  studies emit their own; each case study is BreadcrumbList + Article.
+  Breadcrumbs point at pages, never at anchors. `/work` is named "Case studies"
+  in every breadcrumb — its own and the write-ups' — as the navigation named it,
+  and each Article's headline is its page's h1, from the same source the page
+  renders (A7, 2026-09-15).
 - **FAQPage is generated from the FAQ the page renders** — the same `faq.items`
   the section is given, and only when the section renders. There is no second
   copy to keep in sync. verify-site check 14 compares them question for
@@ -400,12 +601,19 @@ licence beside them, read at build time.
   HTML — not from the DOM after a click — and the open state from the
   accessibility tree.
 - `robots.txt` disallows only `/tokens` and `/rebuild`, routes that no longer
-  exist. The sitemap lists the five public routes.
-- The OG image is `app/opengraph-image.tsx`, in the site's design — the hero's
-  navy, a brand-blue rule, Barlow and our mark — with its words unchanged. The
-  two write-ups use their own screenshots. The apple-touch-icon is
-  `public/apple-touch-icon.png`, declared in the layout: an explicit `icons`
-  object suppresses Next's `app/apple-icon` convention.
+  exist. The sitemap lists the six public routes — `/`, `/work`, both write-ups,
+  `/contact` and `/privacy-policy`; the next wave adds its pages as they land.
+- The share image (`app/opengraph-image.tsx`) is in the redesign: the graphite
+  ground, the Forward Monogram, the wordmark in Barlow 700 and 500, the support
+  line in the brand blue, and the canonical description as its headline. The two
+  write-ups use their own screenshots. The icons come from the mark
+  (`scripts/generate-icons.mjs`): `public/favicon.svg` and
+  `public/apple-touch-icon.png`, declared in the layout (an explicit `icons`
+  object suppresses Next's `app/apple-icon` convention), and `app/favicon.ico`,
+  served by Next's convention.
+- `llms.txt` and `llms-full.txt` describe the broad engineering company — the six
+  capabilities with their evidence tiers — and credit every project exactly as
+  /work does.
 
 ## Hard rules
 
@@ -440,20 +648,23 @@ at the end, which means nobody has decided yet.
   element the server sends at `opacity:0` is not. *Holds*: the reveal's
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
 - **The hero field — the one place WebGL is allowed, and never in the way.**
-  Decided 2026-09-11 for the homepage rebuild; since 2026-09-16 the canvas
-  over the poster is the three.js scene (*Motion, as built*). The poster
-  `<img data-hero-poster>` is the final LCP entry,
+  Decided 2026-09-11 for the homepage rebuild; amended by the owner on
+  2026-09-16 (*Decided 2026-09-16*). The canvas over the poster is now the
+  three.js scene (*Motion, as built*), and the field is the right column of the
+  graphite hero (`components/site/home/Hero.tsx`): a 560px-tall frame, at most
+  660px wide, on the ground colour, with the poster drawn 660px wide. The
+  poster `<img data-hero-poster>` is the final LCP entry,
   measured with a buffered `PerformanceObserver` on a fresh, unscrolled load —
   verify-site check 28 asserts it by identity at 390 (also as a phone), 768,
   1024, 1025, 1280 (also at DPR 2) and 1440 on every run, and then, settled,
   that the poster is still rendered, opaque, the field's box, on top of
   everything in the field but a canvas with the field's box, and clear of the
   h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
-  poster hidden, faded, covered or moved after it painted). The field is the
-  right half of the panel at ≥1025px — 560px tall, centred on the text column,
-  so the poster is drawn exactly 660px wide and `sizes` says so (H4: at the
-  column's full height, 832px at 1025, the browser fetched a file about 1.5x too
-  small at every DPR) — and sits above the text below that.
+  poster hidden, faded, covered or moved after it painted). At ≥1025px the
+  field is 560px tall and at most 660px wide (narrower between about 1025 and
+  1300px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
+  at the column's full height, 832px at 1025, the browser once fetched a file
+  about 1.5x too small at every DPR); below that it sits above the text.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
     `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
     assets): a browser that has the old file never asks again. The scene's
@@ -497,11 +708,13 @@ at the end, which means nobody has decided yet.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
     so the fade shows no jump. The scene keeps a fixed vertical field of view,
-    so a field narrower than 660 (590 at 1440, 399 at 1025) shows the centre
-    crop of the 660x560 frame, exactly as `object-fit: cover` crops the poster.
-    `scripts/render-scene-poster.mjs` renders it from the built site. It
-    freezes requestAnimationFrame when `data-scene-ready` appears, so the
-    canvas holds t = 0, and captures the field forced to 660x560 at DPR 2.
+    so a field narrower than 660 (between about 1025 and 1300px) shows the
+    centre crop of the 660x560 frame, exactly as `object-fit: cover` crops the
+    poster; it is composed to read from about 480 to 660 wide.
+    `scripts/render-scene-poster.mjs` renders it from the built site at 1440.
+    It freezes requestAnimationFrame when `data-scene-ready` appears, so the
+    canvas holds t = 0, and captures the field at 660x560 (its 1px border
+    removed for the capture) at DPR 2.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
@@ -519,9 +732,9 @@ at the end, which means nobody has decided yet.
   - **It sits beside the headline, never behind it.** On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
-    black — which wiped the particles out. On the rebuild's navy panel the field
-    takes the right half and the headline sits on flat navy, so contrast holds
-    by construction and nothing covers the field. Putting it behind the
+    black — which wiped the particles out. In the graphite hero the field is
+    the right column and the headline sits on the flat ground, so contrast
+    holds by construction and nothing covers the field. Putting it behind the
     headline again means rebuilding those five layers.
   - **What the 2026-09-16 reversal did NOT change.** The poster is the LCP
     element, never the canvas. There is no WebGL on phones, tablets, touch,
@@ -534,7 +747,8 @@ at the end, which means nobody has decided yet.
 - **No tracked-out ALL-CAPS labels, no single headline word coloured for
   emphasis, no meta strings joined with middle dots, mono for machine output
   only.** *Holds* with `design/rules-decided`; the site now loads no mono face
-  at all.
+  at all. The redesign's hero H1 is upper case by `text-transform` with negative
+  tracking, which the spec allows: it is a headline, not a tracked-out label.
 - **Every metric carries a shipped or target label.** No unlabelled numbers. A
   figure counts wherever it sits, inside a sentence too (decided 2026-09-11):
   four unlabelled figures in the architecture lanes survived because check 8
@@ -571,7 +785,9 @@ at the end, which means nobody has decided yet.
   *Holds* with `fix/case-study-headings` (checks 11 and 26). Every page's h1 is
   in its banner (the homepage's in the hero); the header and footer carry none.
 - **Visible keyboard focus everywhere.** *Holds*: the 3px outline in
-  `app/techwix.css` (`:where(a, button, summary, [tabindex]):focus-visible`).
+  `app/techwix.css` (`:where(a, button, summary, [tabindex]):focus-visible`),
+  and in the redesign's pieces a 2px `#8ab4ff` ring that also covers form fields
+  (`app/site.css`).
   A component that sets `outline: none` needs a replacement that shows (check 19).
 - Body text at most 68ch wide. *Not audited.*
 
@@ -610,6 +826,12 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
+**The redesign and the suite (2026-09-16).** The suite wave updates checks 7,
+12, 25, 28, 29, 30 and 31 and adds the "Schedule a Call" check (the redesign
+spec, §8), with the inventory changes taken from the homepage agent's MOVES.md.
+Until it lands, check 28 fails on purpose (the proof strip left the hero for the
+engineering stories) and check 30 fails on the old homepage's inventory.
+
 **Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too), read at
 1440, 390, 768 and 1024, sits in a `data-status` wrapper holding that one figure and its OWN
 visible chip, or a `data-figure-exempt` holding one figure with a real reason (not empty, a
@@ -629,7 +851,7 @@ against a figure from spans ("Latency" + "45ms"), reads `::before` / `::after` t
 "×2", scale words ("2 million") and thousands-separated counts ("10,000") (K9). The same grammar
 reads what is not visible text — attributes, meta tags, JSON-LD and the llms files (K10; *Hard
 rules*, the scoped exception). **Known limit: spelled-out numbers are not figures** ("six months",
-"two-week"). "Still running in six months" is the canonical line; a spelled-out metric is caught by
+"two-week"). "Still running in six months" was the canonical line until 2026-09-16; a spelled-out metric is caught by
 review, not by this check.
 
 **Check 30 is the content contract.** `scripts/content-inventory.json` lists every
@@ -768,7 +990,7 @@ the text into the light half of the card gradient. Neither branch alone showed i
 
 **The one contrast exemption is the wordmark** — WCAG 2.2 SC 1.4.3, "Logotypes".
 It covers the element marked `data-logotype` — the wordmark in
-`components/techwix/Logo.tsx`, the only wordmark on the site — for checks
+`components/site/Logo.tsx`, the only wordmark on the site — for checks
 18 and 20 only, and check 18 fails if that element ever holds anything but "Bolt
 Fusion Tech". It is not a small-text exemption and must not become one.
 Every page renders the wordmark in the header, and again in the mobile drawer,
@@ -848,6 +1070,49 @@ a `sourceRef`, and the build fails without one. It covers every place a status
 is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
+
+## Decided 2026-09-16: the engineering redesign (owner)
+
+The owner's brief of 2026-09-16 ("Premium brand & website redesign") repositions
+the company from "AI studio" to a broad engineering company: "Software.
+Intelligence. Automation. Machines." Its spec (v1, with the binding evidence
+corrections of its §8b) wins where it and this file disagree. The rules it
+reversed:
+
+| was | now (owner, 2026-09-16) |
+|---|---|
+| AI-native positioning as the front page | A broad engineering company. AI is one capability of six |
+| Raw WebGL2 only, "do not bring three.js back", 15KB renderer | three.js, lazy and desktop-only, ≤180KB gzipped (PLAN.md §5.2's original 3D budget) — the 3D wave |
+| "Book a call" | **"Schedule a Call"**, everywhere, title case |
+| Canonical description "We build AI systems that are still running in six months." | **"We engineer intelligent software, business systems, automation, and connected technologies — from idea to production."** (check 12 enforces it everywhere) |
+| Clone design, light bands on navy | A dark, premium engineering foundation (*Design language*) |
+| The old diamond logo | The Forward Monogram |
+
+**Evidence tiers** — the rule is old, the page is new: Proven — shipped, with a
+case study or project; Core — repeated work; Capable — we can engineer it, no
+delivery yet; Lab — research or prototype only. Every capability shows its tier
+(`data-tier`). Robotics is Lab and says so, verbatim; no robotics, drone or
+computer-vision delivery is claimed anywhere.
+
+**The evidence corrections are binding** (§8b, from 91 claims checked against the
+repos and the portfolio). The stack is only React, Next.js, React Native;
+Node.js, NestJS, Django, GraphQL, REST, gRPC, Socket.IO; PostgreSQL, Redis,
+pgvector, WatermelonDB, SQLite; Claude, GPT-4.1, embeddings and retrieval,
+agents; Docker, Docker Swarm, GitHub Actions, Vercel. No Expo, Expo EAS, Supabase
+or Whisper (the owner's Jumatechs work and SaraAI, not Bolt Fusion evidence); no
+FastAPI, AWS, Render or Sentry (weak evidence); no Kubernetes, Kafka or RabbitMQ.
+POS: restaurants built; retail and pharmacy in development; no payments or
+commerce integrations claimed, no internal repository named, no live merchant.
+The proof strip never says "Measured on…". /about says where "our engineers
+work", never "offices", until the owner gives addresses.
+
+| question | decision | where |
+|---|---|---|
+| The foundation | `app/site.css`; the shell on every page; the homepage and /contact | `redesign/eng-site` |
+| The inner pages | Restyled by the next wave, which then deletes `app/techwix.css` | next wave |
+| The 3D hero | A three.js scene over the poster, poster first | 3D wave |
+| The contact form | Three fields that open the visitor's email app — mailto, the existing mechanism, no backend | `redesign/eng-site` |
+| Cloud's evidence tier | **Core** (repeated work under every project). The spec gives none; this is the conservative reading, for the owner to confirm | `redesign/eng-site` |
 
 ## Decided 2026-09-15: one design
 
@@ -941,4 +1206,4 @@ off the path removes the failure for good, and serves the images faster.
 The script writes 640w plus the full width, capped at 1280. `ScreenImage`
 throws on a screenshot that has no encodes, so a missing entry fails the build
 rather than falling back to the optimizer. `next/image` remains only in
-`Team.tsx`, for the engineers' photos when they are uploaded.
+`components/site/home/Team.tsx`, for the engineers' photos when they are uploaded.
