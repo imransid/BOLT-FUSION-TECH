@@ -1318,7 +1318,14 @@ async function measureContrast(page) {
 async function visitWidth(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 } });
   const page = await ctx.newPage();
-  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  /* as in visit and visitNoJs: a load that never comes is a finding (check 6),
+     not a crash. Unhandled, one slow load in the sweep (on a machine at load
+     average 21, 2026-09-15) killed the run and every result with it. The page
+     is read as far as it got. */
+  let loadTimeout = null;
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 }).catch((e) => {
+    loadTimeout = String(e?.message || e).split("\n")[0];
+  });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await page.evaluate(async () => {
     for (let y = 0; y <= document.documentElement.scrollHeight; y += 300) {
@@ -1352,6 +1359,7 @@ async function visitWidth(browser, route, width) {
     return { overflowX: document.documentElement.scrollWidth - vw, offenders, sig };
   });
   r.headline = route === "/" ? await page.evaluate(headlineLines) : null;
+  r.loadTimeout = loadTimeout;
   await ctx.close();
   return r;
 }
@@ -2295,6 +2303,7 @@ check(5, "After one reading-speed scroll, nothing meant to be read is still invi
 /* 6 */
 check(6, "No sideways scrolling or cut-off content at any width", "content wider than the screen at a width nobody tested", (F, I) => {
   for (const [k, v] of Object.entries(widthRuns)) {
+    if (v.loadTimeout) F.push(`${at(k)}: the page never reached "load" (${v.loadTimeout}) — read as far as it got`);
     if (v.overflowX > 0) F.push(`${at(k)}: the page scrolls sideways by ${v.overflowX}px`);
     if (v.offenders.length) F.push(`${at(k)}: content runs past the screen edge — ${v.offenders.map((o) => `${o.el} (right edge ${o.right}px)`).join(", ")}`);
   }
