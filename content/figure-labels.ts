@@ -22,9 +22,10 @@ import type { MetricStatus } from "./schema";
  * its instance: a short, generic string would label or exempt every sentence
  * that happens to contain it.
  *
- * Plain TypeScript, not zod: the case studies are client components and this
- * list must not pull a schema library into their bundles. The checks below fail
- * the build all the same — they run when the module loads, during prerendering.
+ * Plain TypeScript, not zod: <FigureText> has no "use client" and can render in
+ * a client component, so this list must not pull a schema library into a
+ * bundle. The checks below fail the build all the same — they run when the
+ * module loads, during prerendering.
  */
 export type FigureLabel = { text: string; status: MetricStatus; source: string } | { text: string; exempt: string };
 

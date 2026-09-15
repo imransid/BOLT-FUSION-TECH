@@ -17,14 +17,8 @@ const nextConfig: NextConfig = {
     // Optimized image variants rarely change — cache them for 31 days.
     minimumCacheTTL: 2678400,
   },
-  experimental: {
-    // Barrel packages imported widely — tree-shake to trim client JS.
-    optimizePackageImports: ["framer-motion", "@react-three/drei"],
-    // Two root layouts, app/(home) and app/(site), and none at the top of
-    // app/: the 404 renders app/global-not-found.tsx, Next's mechanism for
-    // exactly that. Without it an unknown URL got Next's bare error shell.
-    globalNotFound: true,
-  },
+  // No experimental flags. One root layout (app/layout.tsx) holds every page,
+  // so the 404 is the standard app/not-found.tsx inside it.
   async headers() {
     return [
       {

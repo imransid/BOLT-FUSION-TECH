@@ -1,12 +1,12 @@
 /**
  * The Bolt Fusion Tech mark: the faceted diamond, the asymmetric bolt and the
  * fusion orbit. The drawing only — no hooks, no motion, no "use client" — so a
- * server component can render it, and the homepage does without shipping
- * framer-motion. <LogoMark> (components/Logo.tsx) draws it for every other
- * page with its ids from useId(); here the caller passes `uid`, which must be
- * unique on the page, because the gradients are referenced by id.
+ * server component can render it: the header's logo and the drawer's
+ * (components/techwix/Logo.tsx), the footer, and the WarmChats sign-off. The
+ * caller passes `uid`, which must be unique on the page, because the gradients
+ * are referenced by id. It was drawn for a dark tile (.tw-logo__tile).
  */
-export default function LogoMarkSvg({ uid, className }: { uid: string; className?: string }) {
+export default function LogoMarkSvg({ uid, className, size }: { uid: string; className?: string; size?: number }) {
   const gBolt = `${uid}-bolt`;
   const gAccent = `${uid}-accent`;
   const gAccentDeep = `${uid}-accent-deep`;
@@ -27,6 +27,9 @@ export default function LogoMarkSvg({ uid, className }: { uid: string; className
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
       className={className}
+      /* the share image (app/opengraph-image.tsx) renders it outside CSS */
+      width={size}
+      height={size}
     >
       <defs>
         <linearGradient id={gBolt} x1="6" y1="4" x2="32" y2="38" gradientUnits="userSpaceOnUse">

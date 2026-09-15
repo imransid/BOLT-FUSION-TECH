@@ -10,8 +10,9 @@ import { siteContentSchema, type SiteContent } from "./site-schema";
  * Parsed when the module loads, like every other /content file, so a malformed
  * entry fails `next build` with the file named, instead of reaching a page.
  *
- * Server-only: pages hand it to <SiteContentProvider>. Never re-export it from
- * the /content barrel — client components import that barrel.
+ * Server-only: server components read it and pass each client component only
+ * its slice as props. Never re-export it from the /content barrel — client
+ * components import that barrel.
  */
 
 const raw: SiteContent = {

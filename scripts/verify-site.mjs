@@ -25,7 +25,7 @@
  */
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
@@ -132,13 +132,10 @@ const servedSquashed = (html) =>
    "Text that is part of a logo or brand name has no contrast requirement."
    The exemption is scoped, and the scope is enforced:
      · it covers the one element marked data-logotype — the wordmark — and the
-       text inside it. Each side of the split has its own logo file:
-         /             components/techwix/Logo.tsx, the site's only wordmark. It
-                       renders in the header, and again in the mobile drawer,
-                       which carries `hidden` until it is opened: one of the two
-                       is rendered at a time;
-         other pages   components/Logo.tsx, whose <LogoMark> is the mark alone —
-                       no wordmark, and nothing marked data-logotype.
+       text inside it: components/techwix/Logo.tsx, the site's only wordmark.
+       Every page renders it in the header, and again in the mobile drawer,
+       which carries `hidden` until it is opened: one of the two is rendered at
+       a time. Anywhere else the brand name is plain text and meets contrast.
        Check 18 prints the count on every page and fails a page that renders
        more than one;
      · it applies to contrast only: axe's color-contrast rule (check 18) and the
@@ -751,19 +748,23 @@ function collectInPage() {
   };
 
   /* 31 ── which design the page carries. A stylesheet is known by what it
-     styles, not by its hashed file name: the clone's (app/(home)/techwix.css)
-     by its .tw-root / .tw-hero / .tw-header rules, the site's own
-     (app/globals.css) by .beam-button / .corner-glow / .cv-section. The old
-     homepage's markup is its content-visibility sections, its FAQ items, the
-     site design's buttons and glows, and its cut About section. */
+     styles, not by its hashed file name: the site's one design
+     (app/techwix.css) by its .tw-root / .tw-hero / .tw-header rules; the
+     retired dark design (the old app/globals.css) by its beam button, corner
+     glow, content-visibility sections, grain, logo animations, FAQ items and
+     [data-reveal] rules; Tailwind, which styled it, by the --tw-* properties
+     it emits. The retired design's markup is the same classes and attribute
+     in the DOM, and the old homepage's cut About section. */
   const TECHWIX_SEL = /\.tw-(root|hero|header)\b/;
-  const SITE_SEL = /\.(beam-button|corner-glow|cv-section)\b/;
+  const RETIRED_SEL = /\.(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b|\[data-reveal\b/;
   const sheets = [];
   for (const sheet of document.styleSheets) {
     const sels = [];
+    let tailwind = false;
     const grab = (list) => {
       for (const r of list) {
         if (r.selectorText) sels.push(r.selectorText);
+        if (!tailwind && /--tw-/.test(r.cssText || "")) tailwind = true;
         if (r.cssRules) grab(r.cssRules);
       }
     };
@@ -773,10 +774,10 @@ function collectInPage() {
       continue; /* cross-origin sheet: not ours */
     }
     const text = sels.join("\n");
-    sheets.push({ href: sheet.href ? sheet.href.replace(location.origin, "") : "(inline <style>)", techwix: TECHWIX_SEL.test(text), site: SITE_SEL.test(text) });
+    sheets.push({ href: sheet.href ? sheet.href.replace(location.origin, "") : "(inline <style>)", techwix: TECHWIX_SEL.test(text), retired: RETIRED_SEL.test(text), tailwind });
   }
-  const OLD_HOME = ".cv-section, .faq-item, .beam-button, .corner-glow, #about";
-  const design = { sheets, oldHome: [...document.querySelectorAll(OLD_HOME)].map((e) => describe(e)) };
+  const RETIRED_MARKUP = ".cv-section, .faq-item, .beam-button, .corner-glow, .grain-overlay, .logo-chip-breathe, .logo-jewel-aurora, [data-reveal], #about";
+  const design = { sheets, retired: [...document.querySelectorAll(RETIRED_MARKUP)].map((e) => describe(e)) };
 
   /* 18 ── the logotype scope: how many elements carry it, and how many render */
   const logos = [...document.querySelectorAll("[data-logotype]")];
@@ -1762,6 +1763,32 @@ async function visitNoJs(browser, route, width) {
   return r;
 }
 
+/* 31 (the 404) ── an unknown URL must answer 404 with the site's own page: its
+   header, one h1 and a stylesheet of the one design. Fetched, not rendered:
+   the status and the served markup are what a visitor and a crawler get. */
+async function probeNotFound() {
+  const path = `/verify-site-no-such-page-${Date.now().toString(36)}`;
+  const r = await fetch(BASE + path, { redirect: "manual" });
+  const html = await r.text();
+  const hrefs = [];
+  for (const tag of html.match(/<link\b[^>]*>/gi) || []) {
+    if (!/\brel=["']?stylesheet\b/i.test(tag)) continue;
+    const m = /\bhref=["']([^"']+)["']/i.exec(tag);
+    if (m) hrefs.push(m[1]);
+  }
+  const sheets = [];
+  for (const h of hrefs) {
+    const css = (await http(toBase(new URL(h, BASE).toString()))).text || "";
+    sheets.push({
+      href: h,
+      design: /\.tw-(root|hero|header)\b/.test(css),
+      retired: /\.(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b|\[data-reveal\b/.test(css),
+      tailwind: /--tw-/.test(css),
+    });
+  }
+  return { path, status: r.status, masthead: /<header\b[^>]*\bid="masthead"/i.test(html), h1: (html.match(/<h1\b/gi) || []).length, sheets };
+}
+
 /* ── run ─────────────────────────────────────────────────────────────────── */
 const started = new Date();
 const sm = await http(`${BASE}/sitemap.xml`);
@@ -1856,6 +1883,11 @@ if (want(14)) {
   faqRun = await visitFaq(browser);
 }
 await browser.close();
+let notFoundRun = null;
+if (want(31)) {
+  process.stderr.write("  an unknown URL, for the 404\n");
+  notFoundRun = await probeNotFound().catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+}
 
 const results = [];
 const check = (id, title, catches, fn) => {
@@ -2833,36 +2865,90 @@ check(
   },
 );
 
-/* 31 */
+/* 31 — one design. It guarded the split while two designs coexisted; the owner
+   retired the site's old dark design on 2026-09-15, and it now guards the one:
+   every page, the 404 included, is app/techwix.css in Barlow and Jost, and
+   nothing of the retired design comes back — not its stylesheet, its faces,
+   its classes, its reveal attribute, Tailwind or its packages. */
 check(
   31,
-  "The split design: / is entirely the clone's design, and every other page loads no techwix.css and no Barlow or Jost",
-  "techwix.css or the clone's faces reaching an inner page through a shared import or a prefetch of /; the site's faces or stylesheet on /; the old homepage's markup surviving on /",
+  "One design: every page and the 404 load the site's stylesheet and only Barlow and Jost; no Inter, Satoshi or Commit Mono, and no stylesheet, class, attribute or package of the retired design anywhere",
+  "the retired dark design coming back on any page or in the source — its stylesheet, its faces, its classes, [data-reveal], Tailwind, framer-motion or three.js — or a second design growing beside the one; a 404 that falls out of the site's layout or answers 200",
   (F, I) => {
-    const CLONE_FACES = /^(barlow|jost)$/i;
-    const SITE_FACES = /^(inter|satoshi|commitmono)$/i;
+    const OURS = /^(barlow|jost)$/i;
+    const RETIRED_FACES = /^(inter|satoshi|commit\s*mono)$/i;
+    const face = (fam) => String(fam || "").replace(/["']/g, "").replace(/\s+Fallback$/i, "").trim();
+    const why = (fam) => (RETIRED_FACES.test(fam) ? "a face of the retired design" : "not one of the site's two faces");
     /* font file names are hashed: a file is known by the @font-face rule that points at it, on any page */
     const familyOf = new Map();
-    for (const v of Object.values(visits)) for (const r of v.fontFaceRules) for (const m of r.src.matchAll(/url\(["']?([^"')]+)/g)) familyOf.set(m[1].split("/").pop(), r.family);
+    for (const v of Object.values(visits)) for (const r of v.fontFaceRules) for (const m of r.src.matchAll(/url\(["']?([^"')]+)/g)) familyOf.set(m[1].split("/").pop(), face(r.family));
     for (const [k, v] of Object.entries(visits)) {
-      const route = k.split("@")[0];
-      const clone = v.design.sheets.filter((x) => x.techwix);
-      const site = v.design.sheets.filter((x) => x.site);
-      const files = [...new Set(v.fontFiles.map((f) => f.split("/").pop()))].map((f) => ({ f, fam: familyOf.get(f) || "an unknown face" }));
-      if (route === "/") {
-        if (!clone.length) F.push(`${at(k)}: loads no clone stylesheet (no .tw-root / .tw-hero / .tw-header rules) — the homepage is the clone's design`);
-        if (site.length) F.push(`${at(k)}: loads the site design's stylesheet ${site.map((x) => x.href).join(", ")} — the homepage is entirely the clone's design`);
-        for (const f of ["Barlow", "Jost"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the clone's faces are Barlow and Jost`);
-        const other = files.filter((x) => SITE_FACES.test(x.fam.replace(/\s+/g, "")));
-        if (other.length) F.push(`${at(k)}: requests the site design's font file(s) ${other.map((x) => `${x.f} (${x.fam})`).join(", ")}`);
-        if (v.design.oldHome.length) F.push(`${at(k)}: ${v.design.oldHome.length} element(s) of the old homepage's markup — e.g. ${v.design.oldHome.slice(0, 3).join("; ")}`);
-      } else {
-        if (clone.length) F.push(`${at(k)}: loads the clone stylesheet (${clone.map((x) => x.href).join(", ")}) — techwix.css belongs to / only`);
-        const leak = files.filter((x) => CLONE_FACES.test(x.fam));
-        if (leak.length) F.push(`${at(k)}: requests Barlow/Jost font file(s) ${leak.map((x) => `${x.f} (${x.fam})`).join(", ")} — the clone's faces belong to / only`);
-        for (const fam of new Set(v.fontFaceRules.map((r) => r.family))) if (CLONE_FACES.test(fam)) F.push(`${at(k)}: declares @font-face "${fam}" — the clone's faces belong to / only`);
+      const ours = v.design.sheets.filter((x) => x.techwix);
+      const retired = v.design.sheets.filter((x) => x.retired);
+      const tw = v.design.sheets.filter((x) => x.tailwind);
+      if (!ours.length) F.push(`${at(k)}: loads no stylesheet of the site's design (no .tw-root / .tw-hero / .tw-header rules) — every page is in the one design`);
+      if (retired.length) F.push(`${at(k)}: loads a stylesheet of the retired design — ${retired.map((x) => x.href).join(", ")}`);
+      if (tw.length) F.push(`${at(k)}: loads Tailwind's output — ${tw.map((x) => x.href).join(", ")}; the design is plain CSS in app/techwix.css`);
+      for (const f of ["Barlow", "Jost"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the site's faces are Barlow and Jost`);
+      for (const fam of new Set([...v.fontsDeclared, ...v.fontFaceRules.map((r) => r.family)].map(face)))
+        if (!OURS.test(fam)) F.push(`${at(k)}: declares the face "${fam}" — ${why(fam)}`);
+      const files = [...new Set(v.fontFiles.map((f) => f.split("/").pop()))].map((f) => ({ f, fam: familyOf.get(f) || "" }));
+      for (const x of files)
+        if (!OURS.test(x.fam)) F.push(`${at(k)}: requests the font file ${x.f} (${x.fam || "no @font-face on any page names it"}) — ${x.fam ? why(x.fam) : "unsure is a failure"}`);
+      if (v.design.retired.length) F.push(`${at(k)}: ${v.design.retired.length} element(s) carry the retired design's classes or attribute — e.g. ${v.design.retired.slice(0, 3).join("; ")}`);
+      I.push(`${at(k)}: stylesheets ${v.design.sheets.map((x) => `${x.href}${x.techwix ? " [design]" : ""}${x.retired ? " [retired]" : ""}${x.tailwind ? " [tailwind]" : ""}`).join(", ") || "none"}; font files: ${[...new Set(files.map((x) => x.fam || "?"))].join(", ") || "none"}`);
+    }
+
+    /* the 404: an unknown URL answers 404 with the site's own page */
+    const nf = notFoundRun;
+    if (!nf || nf.error) F.push(`the 404 probe did not run${nf?.error ? ` (${nf.error})` : ""} — unsure is a failure`);
+    else {
+      if (nf.status !== 404) F.push(`${nf.path} answers ${nf.status} — an unknown URL answers 404`);
+      if (!nf.masthead) F.push(`${nf.path}: the 404 has no site header — it fell out of the site's layout`);
+      if (nf.h1 !== 1) F.push(`${nf.path}: the 404 has ${nf.h1} h1`);
+      if (!nf.sheets.some((s) => s.design)) F.push(`${nf.path}: the 404 loads no stylesheet of the site's design`);
+      for (const s of nf.sheets) {
+        if (s.retired) F.push(`${nf.path}: the 404 loads a stylesheet of the retired design — ${s.href}`);
+        if (s.tailwind) F.push(`${nf.path}: the 404 loads Tailwind's output — ${s.href}`);
       }
-      I.push(`${at(k)}: stylesheets ${v.design.sheets.map((x) => `${x.href}${x.techwix ? " [clone]" : ""}${x.site ? " [site]" : ""}`).join(", ") || "none"}; font files: ${[...new Set(files.map((x) => x.fam))].join(", ") || "none"}`);
+      I.push(`${nf.path}: ${nf.status}; site header ${nf.masthead ? "present" : "missing"}; ${nf.h1} h1; stylesheets ${nf.sheets.map((s) => `${s.href}${s.design ? " [design]" : ""}`).join(", ") || "none"}`);
+    }
+
+    /* the repository (with --repo): the retired design's files and source */
+    if (!REPO) I.push("repository: not scanned — pass --repo to check the tracked files for the retired design's faces, classes and packages");
+    else {
+      let files = [];
+      try {
+        files = execFileSync("git", ["ls-files"], { cwd: REPO, encoding: "utf8" }).split("\n").filter(Boolean);
+      } catch (e) {
+        F.push(`repository: git ls-files failed (${String(e?.message || e).split("\n")[0]}) — unsure is a failure`);
+      }
+      const fonts = files.filter((f) => /\.(woff2?|ttf|otf)$/i.test(f));
+      for (const f of fonts) if (!/barlow|jost/i.test(path.basename(f))) F.push(`repository: tracks the font file ${f} — the site's faces are Barlow and Jost`);
+      const RETIRED_SRC = [
+        [/\b(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b/, "a class of the retired design"],
+        [/\bdata-reveal\b/, "the retired reveal attribute"],
+        [/from\s+["'](framer-motion|three|@react-three\/[\w-]+)["']/, "a package of the retired design"],
+        [/next\/font\/local/, "a local font — the site's faces come from next/font/google"],
+        [/@import\s+["']tailwindcss["']/, "Tailwind — the design is plain CSS"],
+      ];
+      const src = files.filter((f) => /^(app|components|lib|content)\//.test(f) && /\.(tsx?|css|mjs|js)$/.test(f));
+      for (const f of src) {
+        let text = "";
+        try {
+          text = readFileSync(path.join(REPO, f), "utf8");
+        } catch {
+          continue; /* deleted in the working tree but still in the index */
+        }
+        for (const [re, what] of RETIRED_SRC) {
+          const m = re.exec(text);
+          if (m) F.push(`repository: ${f} holds ${what} — "${m[0]}"`);
+        }
+        for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']next\/font\/google["']/g))
+          for (const name of m[1].split(",").map((s) => s.trim()).filter(Boolean))
+            if (!/^(Barlow|Jost)$/.test(name)) F.push(`repository: ${f} loads ${name} from next/font/google — the site's faces are Barlow and Jost`);
+      }
+      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned`);
     }
   },
 );
