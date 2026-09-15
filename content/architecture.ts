@@ -41,7 +41,9 @@ export const lanes: Lane[] = parseContent(
       premise: "repeat demand disappears at the edge.",
       detail:
         "Redis, 30-second TTL, key is tenant plus query plus geo plus filters plus classification. Under 15ms.",
-      cost: "30–40% hit rate target",
+      // The status is the chip after the figure (content/figure-labels.ts), so
+      // the word "target" is not repeated: the page still reads "30–40% hit rate target".
+      cost: "30–40% hit rate",
       tone: "fast",
     },
   ],

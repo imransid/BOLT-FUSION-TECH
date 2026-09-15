@@ -1,0 +1,460 @@
+import "server-only";
+
+import { parseContent } from "./schema";
+import { siteContentSchema, type SiteContent } from "./site-schema";
+
+/**
+ * The site's content — navigation, hero, every homepage section, the case
+ * study, FAQ, team and footer — as one typed object. It was the CMS's code
+ * defaults; the CMS was removed on 2026-09-11 and this is simply the content.
+ * Parsed when the module loads, like every other /content file, so a malformed
+ * entry fails `next build` with the file named, instead of reaching a page.
+ *
+ * Server-only: server components read it and pass each client component only
+ * its slice as props. Never re-export it from the /content barrel — client
+ * components import that barrel.
+ */
+
+const raw: SiteContent = {
+  meta: {
+    title: "AI systems that are still running in six months | Bolt Fusion Tech",
+    description:
+      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
+    ogTitle: "Bolt Fusion Tech — AI systems that are still running in six months",
+    ogDescription:
+      "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.",
+  },
+  site: {
+    sectionOrder: [
+      "hero",
+      "recent_works",
+      "architecture",
+      "how_we_work",
+      "team",
+      "faq",
+      "cta",
+      "schedule_embed",
+    ],
+    sectionVisibility: {},
+  },
+  navbar: {
+    // Relinked to the rebuilt homepage (2026-09-14). The About and Services
+    // sections were cut. "Services" lands on the engagement models table
+    // (id="services") — what someone buys, and what the Service structured data
+    // describes. The "About" link was removed on 2026-09-15: with its section
+    // cut it pointed at #team, beside "Team", promising a section that is gone.
+    links: [
+      { label: "Services", href: "#services" },
+      { label: "How we work", href: "#how-we-work" },
+      { label: "Work", href: "#recent-work" },
+      { label: "Case studies", href: "/work" },
+      { label: "Team", href: "#team" },
+      { label: "Contact", href: "#contact" },
+    ],
+    scheduleCtaLabel: "Book a call",
+  },
+  footer: {
+    copyrightName: "© 2026 Bolt Fusion Tech",
+    rightsLine: "All rights reserved.",
+    socialLinks: [
+      {
+        name: "LinkedIn",
+        url: "https://www.linkedin.com/company/bolt-fusion-tech/",
+      },
+      { name: "Facebook", url: "https://web.facebook.com/boltfusiontech" },
+      { name: "X (Twitter)", url: "https://x.com/boltfusiontech" },
+    ],
+    backToTopLabel: "Back to top",
+  },
+  hero: {
+    // COPY.md §1, approved: one-sentence H1, the sub, a plain supporting line
+    // (not chips, not a dotted meta string), and its two buttons. No badge, no
+    // second headline line and no coloured word — the Hero renders none of them
+    // when empty.
+    badge: "",
+    headlineLine1: "We build AI systems that are still running in six months.",
+    headlineLine2: "",
+    subtext:
+      "Senior engineers, published architecture, and a named team before you sign. Production MVP in 8–16 weeks.",
+    tagline:
+      "Senior-only teams, named engineers up front, 4–8 hours of overlap with US and EU, and you own the IP.",
+    primaryCtaLabel: "Start a 2-week pilot",
+    primaryCtaHref: "#contact",
+    secondaryCtaLabel: "Book a technical call",
+    secondaryCtaHref: "#schedule",
+  },
+  team: {
+    benchLabel: "Your bench",
+    codeComment: "// who builds with you",
+    headlineLine1: "Senior engineers.",
+    headlineLine2: "One delivery standard.",
+    subtext:
+      "Each card opens the engineer's LinkedIn profile in a new tab—so you can see who you would work with before you commit scope or budget.",
+    statLabel: "specialists",
+    // NO PHOTOGRAPHS YET, SO NO IMAGES. `image` stays null until a real
+    // photograph of that engineer exists; the card then gains its photo slot.
+    // Never a template avatar, a stock face or a generated one (CLAUDE.md, "No
+    // fake faces, ever"; COPY.md §5). The template line-art that stood here was
+    // removed, not renamed.
+    //
+    // THE SIX WITH A VERIFIED LINKEDIN, AND ONLY THEM (COPY.md §5, amended
+    // 2026-09-11). A member without a verified profile is not listed until one
+    // exists — Nadim, Arifur Rahman, Tareq and Joinal are off the section for
+    // that reason; git history records why each link was removed. The schema
+    // requires `profileUrl`, and nothing constructs a URL from a handle.
+    //
+    // ROLE, EXPERIENCE AND STACK ARE DELIBERATELY EMPTY, waiting on real data
+    // from each engineer. Do not fill them with examples, plausible titles or
+    // round numbers: an invented credential on a page built on verifiable claims
+    // is worse than none. Supply a real value and the card and the Person
+    // structured data take it with no component change; an empty field renders
+    // nothing, on the page or in the markup.
+    roster: [
+      {
+        id: "rafa",
+        name: "Rafa",
+        handle: "@rafa",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/imran1993/",
+      },
+      {
+        id: "shourab",
+        name: "Shourab",
+        handle: "@shourab",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl:
+          "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/",
+      },
+      {
+        id: "nazirul",
+        name: "Nazirul",
+        handle: "@nazirul",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/imnazirul/",
+      },
+      {
+        id: "talha",
+        name: "Talha",
+        handle: "@talha",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/talhajubair100/",
+      },
+      {
+        id: "nihal",
+        name: "Nihal",
+        handle: "@nihal",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/asif-nihal",
+      },
+      {
+        id: "sabbir",
+        name: "Sabbir",
+        handle: "@sabbir",
+        image: null,
+        role: "",
+        experience: "",
+        stack: [],
+        profileUrl: "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/",
+      },
+    ],
+  },
+  recentWorks: {
+    // COPY.md §4, approved. The previous subtitle claimed "seven shipped
+    // experiences" above two cards; there are two write-ups, and the section
+    // says so.
+    title: "Two products, two write-ups.",
+    subtitle: "Each one has a full technical write-up, not a screenshot and a sentence.",
+    items: [
+      {
+        src: "/projects/warmchats-ai-booking.png",
+        title: "WarmChats — AI booking for real estate",
+        outcome:
+          "Always-first AI follow-up for agents: Claude qualifies and routes every new lead—buyer or seller—while GPT-4.1 replies instantly on email and SMS and books showings 24/7, with every message tracked.",
+        stack: "Real estate, AI automation, microservices",
+        alt: "WarmChats landing page: 'Turn new real estate leads into booked appointments automatically', trusted by agents using Zillow, open houses, and Facebook leads",
+        imgClass: "object-[center_top]",
+        state: "published",
+        href: "/work/warmchats",
+        ctaLabel: "Read the case study",
+      },
+      {
+        // Copy below is lifted verbatim from the approved `caseStudy` block —
+        // nothing here is newly written. The write-up is /work/restaurant-search.
+        src: "/projects/case-fnb-smart-search.png",
+        title: "Intelligent restaurant search",
+        outcome:
+          "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
+        stack: "Multi-tenant microservice, tiered search, observable by design",
+        alt: "Case study visual for AI-assisted restaurant search and discovery product",
+        imgClass: "object-left",
+        state: "published",
+        href: "/work/restaurant-search",
+        ctaLabel: "Read the case study",
+      },
+    ],
+  },
+  caseStudy: {
+    badge: "Case study: systems architecture",
+    title: "Intelligent restaurant search",
+    titleAccentLine:
+      "Multi-tenant microservice, tiered search, observable by design",
+    subtitle:
+      "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
+    executiveSummary:
+      "We delivered a multi-tenant restaurant discovery microservice that resolves natural-language queries (for example, “cozy Italian place for date night”) while keeping the majority of requests on a sub-100ms path. The architecture caps model spend at roughly $0.001 per AI-assisted query on average, combines Redis caching with deterministic lane selection, and ships with the metrics, logging, and guardrails operators expect in production.",
+    imageSrc: "/projects/case-fnb-smart-search.png",
+    imageAlt:
+      "Case study visual for AI-assisted restaurant search and discovery product",
+    // Every FIGURE carries a status. <100ms is content/metrics.ts
+    // `search-response`, shipped. ~$0.001 is a budget, not a measurement — the
+    // card's own hint says "Budgeted hybrid retrieval" — so it is a target
+    // (owner, 2026-09-12; CLAUDE.md, "A figure labelled shipped with nothing
+    // behind it"). Multi-tenant and Observable are capabilities, not metrics,
+    // and carry no status: the schema refuses one.
+    kpis: [
+      {
+        value: "<100ms",
+        label: "Search SLA",
+        hint: "~80% of queries hit the fast lane",
+        status: "shipped",
+      },
+      {
+        value: "~$0.001",
+        label: "Avg. cost / AI search",
+        hint: "Budgeted hybrid retrieval",
+        status: "target",
+      },
+      {
+        value: "Multi-tenant",
+        label: "Postgres RLS",
+        hint: "Isolated rows per tenant",
+      },
+      {
+        value: "Observable",
+        label: "Production-ready",
+        hint: "Metrics, logs, safe limits",
+      },
+    ],
+    kpiSectionEyebrow: "Service commitments",
+    kpiBlockTitle: "Latency, cost, isolation, and operations",
+    lanesSectionTitle: "Three-lane search architecture",
+    lanesIntro:
+      "Each query is classified before any paid inference: deterministic paths carry the bulk of volume; models run only when phrasing requires interpretation; a short-TTL cache reduces repeat load on the database and providers.",
+    lanes: [
+      {
+        lane: 1,
+        title: "Keyword search",
+        summary: "Simple intents, zero AI spend.",
+        traffic: "~80% of traffic",
+        // The status is the chip after the figure (content/figure-labels.ts), so
+        // the word "target" is not repeated: the page still reads "<80ms target".
+        latency: "<80ms",
+        bullets: [
+          "Queries like “Italian”, “sushi”, “pizza”.",
+          "PostgreSQL ILIKE plus PostGIS geo filters.",
+          "Predictable path—no model calls.",
+        ],
+        costLine: "$0 marginal cost per query",
+      },
+      {
+        lane: 2,
+        title: "Natural language AI search",
+        summary: "Complex intent → structured retrieval.",
+        traffic: "~20% of traffic",
+        latency: "<1200ms",
+        bullets: [
+          "Examples: “romantic spot with live music near me”.",
+          "Claude Haiku parses intent to structured JSON.",
+          "OpenAI embeddings + pgvector cosine similarity in Postgres.",
+        ],
+        costLine: "~$0.001 per search (budgeted)",
+      },
+      {
+        lane: 3,
+        title: "Result cache",
+        summary: "Repeat demand disappears at the edge.",
+        traffic: "Hot paths",
+        latency: "<15ms",
+        bullets: [
+          "Redis with 30s TTL on hashed keys.",
+          "Key = tenant + query + geo + filters + classification.",
+          "Hit-rate goal 30–40% to protect DB and models.",
+        ],
+      },
+    ],
+    stackSectionTitle: "Technical stack",
+    stackBlockTitle: "Implementation stack",
+    stackGroups: [
+      {
+        title: "Backend",
+        items: ["NestJS 10", "TypeScript (strict)", "DDD + Hexagonal + CQRS"],
+      },
+      {
+        title: "Data",
+        items: [
+          "PostgreSQL 17",
+          "PostGIS",
+          "pgvector",
+          "Row-level security (tenancy)",
+        ],
+      },
+      {
+        title: "Cache & realtime",
+        items: [
+          "Redis 7 — result cache (30s)",
+          "Semantic intent cache (60s)",
+          "LLM rate limits (100/min/tenant)",
+          "Pulse: WebSocket + Redis pub/sub",
+        ],
+      },
+      {
+        title: "AI services",
+        items: [
+          "Claude Haiku 4.5 — intent parsing (~90% of AI calls)",
+          "Claude Sonnet 4.6 — menu Q&A only",
+          "OpenAI text-embedding-3-small (1536-d)",
+        ],
+      },
+    ],
+    patternsSectionTitle: "Engineering patterns",
+    patterns: [
+      "Domain-Driven Design",
+      "Hexagonal architecture",
+      "CQRS",
+      "Event-driven architecture",
+    ],
+    architectureSectionTitle: "Bounded contexts",
+    architectureBlockTitle: "Partitioning for maintainable evolution",
+    architectureLead:
+      "Five bounded contexts share a small kernel so search behavior can evolve without coupling unrelated concerns or destabilizing shared infrastructure.",
+    contexts: [
+      {
+        name: "Tenancy",
+        tagline: "Configuration per brand",
+        bullets: [
+          "Valid vibes, cuisines, ranker weights, embedding templates.",
+          "In-memory registry with Redis warmup.",
+        ],
+      },
+      {
+        name: "Discovery",
+        tagline: "The search core",
+        featured: true,
+        bullets: [
+          "Query classifier picks the lane.",
+          "Intent parser (Claude) for NL queries.",
+          "Search index in Postgres + hybrid ranker.",
+        ],
+      },
+      {
+        name: "Indexing",
+        tagline: "Fresh vectors & listings",
+        bullets: [
+          "Venue CRUD on the search index.",
+          "Embedding saga on EntityIndexedEvent.",
+        ],
+      },
+      {
+        name: "GoldenKeys",
+        tagline: "Smart filter chips",
+        bullets: [
+          "Auto-generated chips like “Rooftop”, “Live music”.",
+          "Cron every 6h from search analytics.",
+        ],
+      },
+      {
+        name: "Pulse",
+        tagline: "Live venue status",
+        bullets: [
+          "Open/busy/wait signals.",
+          "Gateway on /pulse with WebSocket fan-out.",
+        ],
+      },
+    ],
+    sharedKernelTitle: "Shared kernel",
+    sharedKernelItems: [
+      "TenantId & Geo value objects",
+      "Result<T, E> for explicit failures",
+      "Prisma + Redis services",
+      "TenantContext via AsyncLocalStorage",
+      "Pino logging",
+      "Claude & OpenAI adapters",
+    ],
+    diagramBadgeLeft: "System overview",
+    diagramBadgeRight: "Production posture",
+    ctaSupportingText:
+      "If you are evaluating search, ranking, or multi-tenant isolation under cost and latency constraints, we can walk through a comparable architecture and delivery approach on a short call.",
+    // The case study renders on /work/restaurant-search. Both targets live on
+    // the homepage, so a bare "#contact" or "#schedule" goes nowhere here.
+    primaryCtaLabel: "Discuss a similar engagement",
+    primaryCtaHref: "/#contact",
+    secondaryCtaLabel: "Book a technical call",
+    secondaryCtaHref: "/#schedule",
+  },
+  faq: {
+    badge: "FAQ",
+    title: "Questions? Answers.",
+    items: [
+      {
+        q: "What kinds of projects do you take on?",
+        a: "We focus on custom web and mobile products, internal tools, integrations, and hardening existing systems for scale. If you have a clear user or business outcome, we can usually map a sensible technical path.",
+      },
+      {
+        q: "How do you estimate timeline and cost?",
+        a: "After a short discovery, we break work into milestones with acceptance criteria. You get ranges tied to scope—not a single opaque number—plus options to phase features if budget or deadlines are tight.",
+      },
+      {
+        q: "What does your delivery process look like?",
+        a: "Discovery and plan first, then iterative builds with demos and a transparent backlog, then launch with monitoring and handoff materials. You are never guessing what we are doing week to week.",
+      },
+      {
+        q: "Can you work with our existing codebase?",
+        a: "Yes. We routinely join live products: code review, refactors, test coverage, performance work, and incremental feature delivery. We start with a short technical assessment so risks are explicit up front.",
+      },
+      {
+        q: "How do we get started?",
+        a: "Use the contact section to book a call or email us with goals, timeline, and any constraints. We respond with fit, suggested next steps, and what we would need from your side to begin.",
+      },
+    ],
+  },
+  cta: {
+    statusLabel: "Taking new engagements",
+    title: "Tell us what you need to ship",
+    body: "Share goals, timeline, and constraints—we'll reply with honest fit, a suggested approach, and next steps. No pressure, no jargon wall.",
+    scheduleLabel: "Pick a time (30 min)",
+    scheduleHref: "#schedule",
+    emailLabel: "Email the team",
+    emailHref: "mailto:hello@boltfusiontech.com",
+  },
+  scheduleEmbed: {
+    blurb: "Or grab an open slot below — same 30‑minute intro call.",
+  },
+};
+
+/* One object now serves every page and every render, where each request used to
+   get a freshly parsed copy — so it is frozen: a mutation throws instead of
+   silently changing another page. */
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const v of Object.values(value)) deepFreeze(v);
+  }
+  return value;
+}
+
+export const siteContent: SiteContent = deepFreeze(parseContent(siteContentSchema, raw, "site.ts"));

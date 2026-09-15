@@ -2,6 +2,15 @@
 
 Placeholders in `{{ }}` need a decision before build. Do not invent values for them.
 
+**Restyled with no copy change, 2026-09-15.** The owner moved the whole site to
+the new design. /work, both write-ups (/work/warmchats and
+/work/restaurant-search), /privacy-policy and the 404 were restyled; not a word
+of their copy changed, and /work/warmchats keeps its section order.
+`scripts/content-inventory.json` (verify-site check 30) holds every required
+word on every page. The 404's words are the ones it always showed — "404" and
+"This page could not be found." — and its one button reuses the privacy
+policy's "← Back to boltfusiontech.com". The share image kept its words too.
+
 ---
 
 ## 1. Hero
@@ -27,8 +36,13 @@ Placeholders in `{{ }}` need a decision before build. Do not invent values for t
 
 ## 2. Trust rail
 
-> Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
+> Live in production at warmchats.com. Six engineers across the UK, Malaysia and
 > Bangladesh.
+
+**Amended 2026-09-11: ten → six.** The site lists six engineers — the six with a
+verified LinkedIn (§5, amended). A draft saying ten while the site shows six is
+exactly what a later copy pass would restore by accident. Raise the number when a
+verified profile is added to the Team section, not before.
 
 ---
 
@@ -44,14 +58,14 @@ Placeholders in `{{ }}` need a decision before build. Do not invent values for t
 
 **Lane 1**
 > **Keyword lane** — simple intents, no model call.
-> PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
+> PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic [target], under 80ms.
 > `$0 marginal cost`
 
 **Lane 2**
 > **AI lane** — complex intent becomes structured retrieval.
 > Claude Haiku parses intent to JSON, then OpenAI embeddings and pgvector cosine
-> similarity in Postgres. Roughly 20% of traffic, under 1200ms.
-> `~$0.001 per search`
+> similarity in Postgres. Roughly 20% of traffic [target], under 1200ms.
+> `~$0.001 per search` [target]
 
 **Lane 3**
 > **Cache lane** — repeat demand disappears at the edge.
@@ -63,10 +77,23 @@ Placeholders in `{{ }}` need a decision before build. Do not invent values for t
 
 | Value | Label | Status |
 |---|---|---|
-| `<100ms` | Search response, 80% of traffic | shipped |
-| `~$0.001` | Average cost per AI query | shipped |
+| `<100ms` | Search response, 80% of traffic [target] | shipped |
+| `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 | `<60s` | First reply to every inbound lead | target |
+
+**Relabelled 2026-09-15: the 80% share is a target too.** It is the complement of the
+~20%, with the same history and no source. `<100ms` stays shipped; the 80% in its
+label carries its own target chip.
+
+**Relabelled 2026-09-12: both are budgets.** `~$0.001` and the AI lane's "roughly
+20% of traffic" are targets, not measurements. The 2026-05-02 write-up calls the
+cost "budgeted" and "Budgeted hybrid retrieval" and says the architecture "caps
+model spend at roughly" that figure; the `shipped` in this table arrived on
+2026-09-05 with no source, and nothing in any repo, doc or branch holds a
+measurement of either figure. The earliest evidence wins over a later unsourced
+claim. `[target]` above marks where the page puts a target chip beside the
+figure. CLAUDE.md, "A figure labelled shipped with nothing behind it".
 
 **Closing line**
 > Every figure here comes from a system we shipped, and every one is labelled with
@@ -95,8 +122,16 @@ own promise, which is that every card leads somewhere. Add a third when a real
 screenshot and a real write-up both exist; the content layer takes it without any
 component change.
 
-**Layout note:** two cards on a three-column grid leaves a hole. Use a two-column
-grid at `md` and up, letting each card run larger — the screenshots benefit.
+~~**Layout note:** two cards on a three-column grid leaves a hole. Use a two-column
+grid at `md` and up, letting each card run larger — the screenshots benefit.~~
+
+**Superseded 2026-09-11 — leave the layout alone.** The section is a horizontal
+carousel, not a grid, so the note describes a layout that does not exist. Two cards
+on a two-column grid is a different decision, and it has not been made.
+
+**As built on the rebuilt homepage (2026-09-14):** the carousel went with the old
+homepage. The section is now the clone design's case-study row — a larger card
+beside a smaller one, stacked on phones. The copy above is unchanged.
 
 ---
 
@@ -118,8 +153,16 @@ deliberate.
 Add the photo slot when real photographs exist. Never a template avatar, a stock
 face, or a generated one — see CLAUDE.md, "No fake faces, ever."
 
-**If a member has no LinkedIn yet,** render the card without the link rather than
-omitting the person or linking to an unverified profile.
+~~**If a member has no LinkedIn yet,** render the card without the link rather than
+omitting the person or linking to an unverified profile.~~
+
+**Amended 2026-09-11 — only people with a verified LinkedIn are listed.** A member
+without one is not shown until it exists, and an unverified profile is never linked.
+The struck rule was written when there were no photos and no roles and a card was only
+a name. It now conflicts with the stronger rule that every claim on the site is
+verifiable: a named engineer nobody can look up is exactly the claim this section
+exists to disprove. With the amendment, the body's "every profile links to a public
+LinkedIn" is true of every card.
 
 ---
 
@@ -196,6 +239,12 @@ number; full bands move to /how-we-work in Phase 2.
 **H2**
 > The questions you should be asking.
 
+**Superseded for the site, 2026-09-11.** The FAQ the homepage renders — five
+questions, `faq.items` in the site content — is canonical, and the FAQPage structured
+data is generated from it. The six below are not rendered anywhere; they reached the
+site only as structured data, which is how the markup and the page came to disagree.
+Do not copy them back into a second source.
+
 **Who exactly writes my code?**
 > Named engineers, assigned before the contract, with public LinkedIn profiles. Your
 > first technical call is with them. If we ever need to change who is on your project,
@@ -244,6 +293,49 @@ Name · Work email · Company · Project type · Budget band · Target timeline 
 **Empty/error voice**
 > Error: `That email address doesn't look right. Check it and send again.`
 > Success: `Sent. You'll hear from an engineer within one working day.`
+
+---
+
+## Removed from the homepage — decided 2026-09-11
+
+**The nav's "About" link — removed 2026-09-15.** With the About section cut, the link
+pointed at the Team section, next to the "Team" link: two items for one place, one of them
+promising a section that no longer exists. "Services" stays, pointing at the engagement
+table — what someone buys.
+
+The homepage rebuild (`redesign/techwix-home`) keeps six sections that argue:
+the hero with its proof strip, the two write-ups, the architecture, how we work,
+the team, and questions and contact. The blocks below were on the old homepage
+and were **cut deliberately**. They are recorded here so a later copy pass does
+not restore them.
+
+**About** — "Why Bolt Fusion Tech", its bio ("Clients come to us when delivery
+has to be predictable…"), six capability chips and three engagement types. Cut:
+generic reassurance any firm could write. The engagement types repeated the
+engagement models table in How we work, which stays.
+
+**Services** — "What we deliver", "Services", its intro ("Practical engineering
+aligned to your roadmap…"), six tech-stack chips, four cards and their buttons.
+Cut: a "we do everything" card grid.
+
+**Both chip lists** — the six capabilities under About (Web & mobile apps, APIs &
+integrations, Cloud & DevOps, Product discovery, UI/UX engineering, Quality &
+launch readiness) and the six technologies under Services (TypeScript & React,
+Next.js & Node, Mobile (iOS / Android), AWS & cloud-native, API design, Automated
+testing). Cut, in the owner's words:
+
+> Six capabilities and six technologies is "we do everything" in a different
+> shape. The engagement table says what someone buys, and the architecture
+> section shows the real stack in context, which is stronger than a badge row.
+
+Also gone from the homepage: the standalone metric band, whose four figures now
+sit in the hero's proof strip, each still labelled and linked to its source; and
+the clone theme's testimonials, logo wall, video buttons, dropdown menu and
+back-to-top widget.
+
+`scripts/content-inventory.json` marks About and Services `cut`, so verify-site
+check 30 fails if any of their text comes back. The `about` and `services`
+blocks in `content/site.ts` are rendered by nothing.
 
 ---
 

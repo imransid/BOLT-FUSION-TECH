@@ -61,17 +61,17 @@ Three retrieval lanes, with every query classified *before* any paid inference
 runs, so most traffic never reaches a model.
 
 **Keyword lane** — simple intents, no model call.
-PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
-`$0 marginal cost`
+PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic (`target`), under 80ms (`target`).
+`$0 marginal cost` (`shipped`)
 
 **AI lane** — complex intent becomes structured retrieval.
 Claude Haiku parses intent to JSON, then OpenAI embeddings and pgvector cosine
-similarity in Postgres. Roughly 20% of traffic, under 1200ms.
-`~$0.001 per search`
+similarity in Postgres. Roughly 20% of traffic (`target`), under 1200ms (`target`).
+`~$0.001 per search` (`target`: a budget, not a measurement)
 
 **Cache lane** — repeat demand disappears at the edge.
 Redis, 30-second TTL. The key is tenant plus query plus geo plus filters plus
-classification, so two tenants never share a result. Under 15ms.
+classification, so two tenants never share a result. Under 15ms (`target`).
 `30–40% hit rate target`
 
 ## Why classification comes first
@@ -84,8 +84,8 @@ to answer. That is what makes the unit economics predictable as volume grows.
 
 | Value | Label | Status |
 |---|---|---|
-| `<100ms` | Search response, 80% of traffic | shipped |
-| `~$0.001` | Average cost per AI query | shipped |
+| `<100ms` | Search response, 80% of traffic (the 80% share: `target`) | shipped |
+| `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 
 Source: restaurant discovery platform.

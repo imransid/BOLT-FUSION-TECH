@@ -20,7 +20,9 @@ export const metrics: Metric[] = parseContent(
       id: "cost-per-query",
       value: "~$0.001",
       label: "Average cost per AI query",
-      status: "shipped",
+      /* A budget, not a measurement — relabelled 2026-09-12. CLAUDE.md, "A
+         figure labelled shipped with nothing behind it". */
+      status: "target",
       source: "Restaurant discovery platform",
       href: "/work/restaurant-search",
     },

@@ -1,4 +1,4 @@
-import { faqs, services, team } from "@/content";
+import { services } from "@/content";
 
 /**
  * JSON-LD — PLAN.md §7.
@@ -8,16 +8,17 @@ import { faqs, services, team } from "@/content";
  *
  *  · `foundingDate`   — not in /content, and not stated on the LinkedIn page.
  *  · `address`        — not in /content.
- *  · `numberOfEmployees` — OMITTED BECAUSE THE SOURCES CONTRADICT. The site says
- *    "Ten engineers"; LinkedIn's visible band says "11-50 employees"; LinkedIn's
- *    own embedded JSON-LD says `numberOfEmployees: 1`. Three values, two sources.
+ *  · `numberOfEmployees` — OMITTED BECAUSE THE SOURCES CONTRADICT. The site
+ *    lists six engineers (those with a verified profile); LinkedIn's visible
+ *    band says "11-50 employees"; LinkedIn's own embedded JSON-LD says
+ *    `numberOfEmployees: 1`. Three values, two sources.
  *    PLAN.md §7: "Contradictions cause LLMs to drop or dilute the source." Emitting
  *    any one of them would assert a number we cannot stand behind, so the property
  *    is left out until the owner reconciles it.
  *
- * `Person` is emitted only for engineers with a verified LinkedIn URL — six of
- * ten. A Person node with no `sameAs` is an unverifiable name, which is the exact
- * claim section 5 exists to disprove.
+ * `Person` is emitted for the people the Team section lists — each has a
+ * verified LinkedIn URL. A Person node with no `sameAs` is an unverifiable name,
+ * which is the exact claim section 5 exists to disprove.
  */
 
 type Json = Record<string, unknown>;
@@ -50,30 +51,50 @@ export function serviceLd(siteUrl: string): Json[] {
   }));
 }
 
-export function faqPageLd(siteUrl: string): Json {
-  return {
-    "@type": "FAQPage",
-    "@id": `${siteUrl}#faq`,
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
-    })),
-  };
+/** The FAQ the page renders, and nothing else. Pass the SAME items the FAQ
+ *  section is given (`content.faq.items`). There is deliberately no second copy
+ *  of the FAQ anywhere, so the markup and the page cannot disagree. Pass an
+ *  empty array when the section is hidden: no visible FAQ, no FAQPage. */
+export type RenderedFaq = { q: string; a: string }[];
+
+export function faqPageLd(siteUrl: string, renderedFaq: RenderedFaq): Json[] {
+  if (renderedFaq.length === 0) return [];
+  return [
+    {
+      "@type": "FAQPage",
+      "@id": `${siteUrl}#faq`,
+      mainEntity: renderedFaq.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ];
 }
 
-/** Only engineers whose profile has been verified. */
-export function personLd(siteUrl: string): Json[] {
-  return team
-    .filter((m) => m.linkedin)
-    .map((m) => ({
+/** The people the Team section renders, and nothing else. Pass the SAME roster
+ *  the section is given (`content.team.roster`), or [] when it is hidden. Every
+ *  listed member has a verified LinkedIn — the schema requires it. Only fields
+ *  that exist are emitted: role becomes jobTitle and stack becomes knowsAbout
+ *  the moment real values are supplied, and an empty one is left out, never
+ *  sent blank. Years of experience has no schema.org property on Person, so it
+ *  stays on the card only. */
+export type RenderedTeam = { id: string; name: string; profileUrl: string; role?: string; stack?: string[] }[];
+
+export function personLd(siteUrl: string, renderedTeam: RenderedTeam): Json[] {
+  return renderedTeam.map((m) => {
+    const role = m.role?.trim();
+    const stack = (m.stack ?? []).map((t) => t.trim()).filter(Boolean);
+    return {
       "@type": "Person",
       "@id": `${siteUrl}#person-${m.id}`,
       name: m.name,
-      sameAs: [m.linkedin],
+      sameAs: [m.profileUrl],
       worksFor: { "@id": `${siteUrl}#organization` },
-      ...(m.role ? { jobTitle: m.role } : {}),
-    }));
+      ...(role ? { jobTitle: role } : {}),
+      ...(stack.length > 0 ? { knowsAbout: stack } : {}),
+    };
+  });
 }
 
 export function breadcrumbLd(
@@ -91,7 +112,13 @@ export function breadcrumbLd(
   };
 }
 
-export function buildGraph(siteUrl: string, sameAs: string[], extra: Json[] = []) {
+export function buildGraph(
+  siteUrl: string,
+  sameAs: string[],
+  renderedFaq: RenderedFaq,
+  renderedTeam: RenderedTeam,
+  extra: Json[] = [],
+) {
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -104,8 +131,8 @@ export function buildGraph(siteUrl: string, sameAs: string[], extra: Json[] = []
         publisher: { "@id": `${siteUrl}#organization` },
       },
       ...serviceLd(siteUrl),
-      faqPageLd(siteUrl),
-      ...personLd(siteUrl),
+      ...faqPageLd(siteUrl, renderedFaq),
+      ...personLd(siteUrl, renderedTeam),
       ...extra,
     ],
   };

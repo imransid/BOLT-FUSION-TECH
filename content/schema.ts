@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 /**
- * Typed content schemas — PLAN.md §8.
+ * Typed content schemas.
  *
- * "Build every section reading from typed files in /content during the sprint.
- *  Those files become Payload collections in Phase 2."
- *
- * Every schema below is shaped to migrate 1:1 onto a Payload collection:
+ * The site's content lives in these typed files, parsed at load. There is no
+ * CMS: it was removed on 2026-09-11, and PLAN.md §8's Payload plan is
+ * superseded. The shape rules below still hold — they keep the files easy to
+ * read, diff and check:
  *  · a stable `id` is the slug / document key
- *  · media is a path string, which becomes a media-collection relation
+ *  · media is a path string under /public
  *  · relations are id strings, not nested objects
  *  · no nested arrays-of-objects deeper than one level
  *  · nothing derived — anything computable is computed at render, not stored
@@ -43,27 +43,6 @@ export const metricSchema = z.object({
   href: z.string().nullable(),
 });
 export type Metric = z.infer<typeof metricSchema>;
-
-/* ── team ───────────────────────────────────────────────────────────────────
- * COPY.md §5 requires photo, name, role, stack, years, LinkedIn on every card.
- * Four of those are nullable here because they are genuinely not supplied yet
- * (PLAN.md §9 lists "10 real team photos" as an open prerequisite). Nullable is
- * the honest type: the card renders without them rather than with a fabricated
- * role or a stock face.
- */
-export const teamMemberSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  role: pending(z.string().min(1)),
-  years: pending(z.string().min(1)),
-  stack: z.array(z.string().min(1)),
-  /** Path to a REAL photograph. null until one exists — never a template avatar. */
-  photo: pending(z.string().min(1)),
-  photoAlt: pending(z.string().min(1)),
-  /** Public profile used for verification. null when unverified — never guessed. */
-  linkedin: pending(z.string().url()),
-});
-export type TeamMember = z.infer<typeof teamMemberSchema>;
 
 /* ── projects ───────────────────────────────────────────────────────────────
  * `state` gates rendering. "published" needs a real screenshot and a write-up;
@@ -148,16 +127,6 @@ export const serviceSchema = z.object({
   timeline: z.string().min(1),
 });
 export type Service = z.infer<typeof serviceSchema>;
-
-/* ── faqs ───────────────────────────────────────────────────────────────────
- * Rendered server-side and emitted as FAQPage JSON-LD (PLAN.md §7).
- */
-export const faqSchema = z.object({
-  id: z.string().min(1),
-  question: z.string().min(1),
-  answer: z.string().min(1),
-});
-export type Faq = z.infer<typeof faqSchema>;
 
 /**
  * Parse at module load. A malformed content file fails `next build` with the
