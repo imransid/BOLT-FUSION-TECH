@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ScreenImage from "./ScreenImage";
 
 import FigureText from "@/components/FigureText";
 import { projects } from "@/content";
@@ -30,7 +30,7 @@ function Card({ p, large }: { p: Work; large: boolean }) {
   const body = (
     <>
       {p.src ? (
-        <Image
+        <ScreenImage
           src={p.src}
           alt={p.alt}
           fill

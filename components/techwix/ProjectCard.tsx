@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ScreenImage from "./ScreenImage";
 
 import FigureText from "@/components/FigureText";
 import type { Project } from "@/content/schema";
@@ -101,14 +101,7 @@ export default function ProjectCard({ p, sizes }: { p: Project; sizes: string })
     <li className={p.image ? "tw-project tw-project--shot" : "tw-project"} data-project-kind={p.kind} data-project-id={p.id} data-tw-reveal>
       {p.image ? (
         <div className="tw-project__shot">
-          <Image
-            src={p.image.src}
-            alt={p.image.alt}
-            width={p.image.width}
-            height={p.image.height}
-            sizes={sizes}
-            className="tw-project__img"
-          />
+          <ScreenImage src={p.image.src} alt={p.image.alt} sizes={sizes} className="tw-project__img" />
         </div>
       ) : null}
       <div className="tw-project__body">

@@ -825,3 +825,30 @@ wordmark's "Fusion") have not been ruled on.
   description comes from it; the live hero does not (see above).
 - `PLAN.md` — the rebuild plan, including the trace-rail design system that
   `7c62d28` reverted. History, not specification.
+
+## Screenshots are pre-encoded (decided 2026-09-16)
+
+Every project screenshot is served from pre-encoded AVIF and WebP files through
+`<picture>` (`components/techwix/ScreenImage.tsx`), never through the Next image
+optimizer. The hero poster was already served this way.
+
+**Why.** A long-running `next start` got one optimizer job for a screenshot
+stuck: the restaurant-search image at 640px, as AVIF. Every later request for it
+then hung. It happened three times, always after a busy stretch. Pages holding
+that image never reached "load", and the full suite failed checks 4, 6, 9, 10,
+19, 21 and 22 on them. A fresh server from the same build answered every width
+in under 150ms. It is a race in the local optimizer; production uses Vercel's
+image service and was unaffected. Hiding it, for example by restarting the
+server between runs, would break "unsure is a failure". Taking the optimizer
+off the path removes the failure for good, and serves the images faster.
+
+**How to add a screenshot.**
+1. Put the file in `public/projects/`.
+2. Add its path to `SCREENSHOTS` in `scripts/encode-screenshots.mjs`.
+3. Run `node scripts/encode-screenshots.mjs`.
+4. Commit `public/projects/opt/` and `lib/screenshots.json`.
+
+The script writes 640w plus the full width, capped at 1280. `ScreenImage`
+throws on a screenshot that has no encodes, so a missing entry fails the build
+rather than falling back to the optimizer. `next/image` remains only in
+`Team.tsx`, for the engineers' photos when they are uploaded.

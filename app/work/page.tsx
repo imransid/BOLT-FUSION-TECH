@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import ScreenImage from "@/components/techwix/ScreenImage";
 
 import FigureText from "@/components/FigureText";
 import Button from "@/components/techwix/Button";
@@ -93,7 +93,7 @@ function CaseStudyRow({ p }: { p: Project }) {
           The button below is the row's link for keyboards and screen readers;
           this one is for the pointer. */}
       <a href={p.href!} className="tw-work__shot" tabIndex={-1} aria-hidden data-tw-reveal>
-        <Image src={p.image!.src} alt="" fill sizes="(min-width: 1025px) 55vw, 100vw" className="tw-work__img" />
+        <ScreenImage src={p.image!.src} alt="" fill sizes="(min-width: 1025px) 55vw, 100vw" className="tw-work__img" />
       </a>
 
       <div className="tw-work__body" data-tw-reveal>
