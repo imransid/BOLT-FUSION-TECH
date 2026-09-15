@@ -2293,6 +2293,166 @@ summary {
   line-height: 1.6;
 }
 
+/* ── /work: who built it (decided 2026-09-15) ─────────────────────────────── *
+   Every card on /work carries its attribution label directly above the
+   project's name — the same place on every card, the case-study rows
+   included (verify-site check 9). Text in the brand blue, as the eyebrow:
+   never a shipped/target colour. */
+.tw-attr {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 26px;
+  color: var(--brand);
+}
+
+.tw-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tw-facts dt {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.tw-facts dd {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* The other kinds, one card each, on a grid that fills every row: three across
+   a set of three from 1025px, two across a set of two from 768px, one on
+   phones (app/work/page.tsx picks the count). */
+.tw-projects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+}
+
+@media (min-width: 768px) {
+  .tw-projects--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1025px) {
+  .tw-projects--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.tw-project {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+
+/* The screenshot: drawn at its file's size into a 16:10 frame (the captures
+   are 1440x900), covering it from the top. */
+.tw-project__shot {
+  position: relative;
+  flex: none;
+  aspect-ratio: 16 / 10;
+  max-width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--hairline);
+  background-color: var(--surface-light);
+}
+
+.tw-project__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.tw-project__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  padding: 30px;
+}
+
+@media (max-width: 767px) {
+  .tw-project__body { padding: 26px 22px; }
+}
+
+/* A card alone in its set, and the set of three between 768 and 1024px (one
+   column there): the screenshot beside the text, so the row is filled. */
+@media (min-width: 768px) {
+  .tw-projects--1 > .tw-project--shot {
+    display: grid;
+    grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+  }
+
+  .tw-projects--1 > .tw-project--shot > .tw-project__shot {
+    aspect-ratio: auto;
+    min-height: 280px;
+    border-right: 1px solid var(--hairline);
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tw-projects--3 > .tw-project--shot {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tw-projects--3 > .tw-project--shot > .tw-project__shot {
+    aspect-ratio: auto;
+    min-height: 280px;
+    border-right: 1px solid var(--hairline);
+    border-bottom: 0;
+  }
+}
+
+.tw-project__summary {
+  max-width: 60ch;
+}
+
+.tw-project__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.tw-project__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-color: rgba(8, 106, 216, 0.35);
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+.tw-project__link:hover {
+  color: #0a5cc8;
+  text-decoration-color: currentColor;
+}
+
+.tw-project__link-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
 /* ── Outcomes: a check and a sentence ───────────────────────────────────── */
 .tw-outcome {
   flex-direction: row;

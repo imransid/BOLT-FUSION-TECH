@@ -34,7 +34,7 @@ three went with the old design on 2026-09-15 (*Design language*, below).
 | route | what it is | content from |
 |---|---|---|
 | `/` | homepage (`app/page.tsx`); sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, `metrics.ts` for the hero's proof strip, `architecture.ts`, `process.ts` and `services.ts` for Architecture and How we work · static |
-| `/work` | index of the write-ups (`app/work/page.tsx`) | `/content` |
+| `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
@@ -103,6 +103,75 @@ was never configured in production, so nothing was ever saved through it, and
 its first save would have silently shadowed every later code change to those
 fields. A content change is now a code change: edit the file, and the build
 validates it.
+
+## Projects and attribution (decided 2026-09-15)
+
+Every project the site shows says who built it. `content/projects.ts` gives each
+one a `kind`, and the kind decides what its card shows. The owner decided the
+list on 2026-09-15; the words and facts are his portfolio's
+(imran-khan-chi.vercel.app) and nothing else — no metric, client, role or date it
+does not state.
+
+| kind | what it is | the label on its card | links | image |
+|---|---|---|---|---|
+| `case-study` | a Bolt Fusion project with a write-up here: WarmChats, restaurant search | "Case study: built by Bolt Fusion [for ‹client›]" | its write-up (required), and the live product | a real screenshot |
+| `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
+| `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
+| `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23), NIdle Finishing (Intellier) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
+
+- **Never present an employer's product as ours.** A track-record project names
+  its employer (`builtAt`) and the engineer's role (`role`), and the schema
+  (`content/schema.ts`) refuses one without them — or with a client, a
+  screenshot or metrics. It is never called our client and carries no
+  confidential detail.
+- **A product another company owns is "built by Bolt Fusion for …", never
+  ours:** WarmChats belongs to WarmChats, Inc., Balanzify to Balanzify Inc.
+  (`client`).
+- **The label sits directly above the project's name on every card,** the
+  case-study rows included, in the brand blue — never a shipped/target colour.
+  Verify-site check 9 holds its own copy of the four labels and fails a card on
+  /work whose label is missing, hidden, somewhere else or not its kind's; a
+  track-record card without its employer and role, or with a screenshot; a card
+  not in `projects.ts`, or a published project with no card; a card image that
+  does not load; and a card that is not a case study linking to a write-up.
+- **Screenshots are real captures of the live sites,** Playwright at 1440×900,
+  saved as webp in `public/projects/`, of a view with no faces in it: FanLock's
+  "Fight leaks" section (its hero shows a face), Balanzify's migration page (its
+  homepage dashboard shows customer avatars), Go Style Business's sign-in page
+  (its only public page) and OPAL's shop (its hero collage shows faces). Never a
+  mockup: `public/projects/opal-fashion-tech.png` is AI-generated and banned
+  (PLAN.md).
+- **/work is four sections,** one per kind, in `projectSections` order. The
+  track-record section says what it means: "Work our engineers shipped at
+  previous employers — credited to them, not claimed as ours." Every grid fills
+  its rows: three across from 1025px, two across from 768px, one on phones; a
+  set that divides by neither is one column, and a card alone lays its
+  screenshot beside its text.
+- **The homepage keeps its two case studies.** "See all work (N projects)" counts
+  the published projects that are ours, from the data; the track record is not
+  counted.
+- `llms.txt` and `llms-full.txt` credit every project as its card does.
+
+**Excluded, and why — never add them:**
+- the Jumatechs apps (Myrep, IQ Test, Cleva, Bidesh App): Jumatechs is the
+  owner's current employer;
+- Bangladesh RAB: built by Intellier, and RAB has been under US Treasury
+  sanctions since December 2021;
+- Team Pharma and JTI Sheikh.
+
+Check 30 fails if any of them appears on `/` or `/work`.
+
+**Held back, waiting on the owner:**
+- **Playzone** is in `projects.ts` as `awaiting-asset`, not rendered. On
+  2026-09-16 its only link, playzone-update.vercel.app, redirected to a sign-in
+  page for "Playerzone" ("a platform for players to connect with coaches and
+  other players") — not the multiplayer classic-games platform, with no
+  signups, that the portfolio describes.
+- **Bazzile and GodConnect Online** are not listed: neither the portfolio nor
+  the CV names the employer they were built at, and a track-record entry cannot
+  exist without one. If Bazzile is added, its "70,000 downloads in France in
+  twelve months" is Bazzile's figure, not ours: shown only with a per-instance
+  `data-figure-exempt` reason and its source (Journal de l'Agence) beside it.
 
 ## Design language, as built
 
@@ -395,7 +464,9 @@ at the end, which means nobody has decided yet.
   and the Article's description) — or it fails.
 - **A published project links to its write-up.** Enforced by both schemas in
   `/content` (`state: published | awaiting-asset`). There is no fallback link: a project
-  without a write-up is shown with no link at all. *Holds* (check 9).
+  without a write-up is shown with no link at all. *Holds* (check 9). Since 2026-09-15
+  this is the case-study rule: the other kinds link to their live product or show no
+  link, and never to a write-up (*Projects and attribution*).
 - **Content lives in `/content`, not in JSX.** *Holds*, except the
   WarmChats case study and the privacy policy, which are hardcoded.
 - **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
