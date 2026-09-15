@@ -83,6 +83,15 @@ const GL_WIDTHS = [390, 768, 1440];
 /* 8 (K9) — check 8 also reads every page at these widths, beyond WIDTHS: a
    figure shown only by the 768–1024 layout was never read. */
 const FIGURE_WIDTHS = [768, 1024];
+/* K7/H3 (2026-09-15): the tablet is where "width >= 1025 and not a phone"
+   would let a renderer mount — an iPad in landscape is 1180 or 1366 wide with
+   a coarse pointer. None of these profiles is ever allowed a context. */
+const GL_EXTRA = [
+  { width: 1024, label: "/ @1024" },
+  { width: 1180, height: 820, touch: true, label: "/ @1180x820 tablet (touch, coarse pointer)" },
+  { width: 1366, height: 1024, touch: true, label: "/ @1366x1024 tablet (touch, coarse pointer)" },
+  { width: 1440, saveData: true, label: "/ @1440 Save-Data" },
+];
 const WEBGL_ON_HOME = false;
 const RENDERER_MAX_GZ = 15 * 1024;
 
@@ -282,7 +291,8 @@ async function readingSpeedScroll(page) {
    kinds and records every webgl / webgl2 / experimental-webgl request, granted
    or not. Only the main frame is read: a third-party iframe's canvas (Calendly)
    is not this site's code. */
-function glHook() {
+function glHook(workerHookSrc) {
+  if (window.__vsGl) return;
   const log = [];
   Object.defineProperty(window, "__vsGl", { value: log });
   for (const C of [window.HTMLCanvasElement, window.OffscreenCanvas]) {
@@ -294,13 +304,147 @@ function glHook() {
       return orig.call(this, type, ...rest);
     };
   }
+  /* K7 (2026-09-15): a context made in a WORKER never touched this frame's
+     getContext, and passed. Each worker's script is prefixed with
+     workerGlHook — a blob worker's as its Blob is built (here), a fetched
+     one's on the wire (installGlHooks) — which reports every request on this
+     channel. */
+  try {
+    new BroadcastChannel("__vs_gl").onmessage = (e) => {
+      if (e.data && e.data.type) log.push({ ...e.data, where: `a worker (${e.data.worker})` });
+    };
+  } catch {
+    /* no channel: the worker hook's reports are lost, and a worker run reads 0 */
+  }
+  const OrigBlob = window.Blob;
+  if (OrigBlob && workerHookSrc) {
+    const prefix = `(${workerHookSrc})();\n`;
+    const Hooked = function Blob(parts, opts) {
+      if (opts && /javascript|ecmascript/i.test(String(opts.type || "")) && Array.isArray(parts)) parts = [prefix, ...parts];
+      return new OrigBlob(parts, opts);
+    };
+    Hooked.prototype = OrigBlob.prototype;
+    Object.setPrototypeOf(Hooked, OrigBlob);
+    window.Blob = Hooked;
+  }
+}
+/* the same hook inside a dedicated worker: a no-op anywhere else */
+function workerGlHook() {
+  if (typeof WorkerGlobalScope === "undefined" || self.__vsGlHooked) return;
+  self.__vsGlHooked = true;
+  let ch = null;
+  try {
+    ch = new BroadcastChannel("__vs_gl");
+  } catch {
+    return;
+  }
+  const C = self.OffscreenCanvas;
+  if (!C) return;
+  const orig = C.prototype.getContext;
+  C.prototype.getContext = function (type, ...rest) {
+    if (/webgl/i.test(String(type)))
+      ch.postMessage({ type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160), worker: String(self.location.href).slice(0, 100) });
+    return orig.call(this, type, ...rest);
+  };
+}
+/* every hook a WebGL run carries: the frame hook (init scripts run in every
+   frame, iframes included), Save-Data as the page sees it, and the worker hook
+   on every same-site script on the wire — the page's own scripts ignore it */
+async function installGlHooks(ctx, prof = {}) {
+  await ctx.addInitScript(glHook, workerGlHook.toString());
+  if (prof.saveData)
+    await ctx.addInitScript(() => {
+      try {
+        if (navigator.connection) Object.defineProperty(navigator.connection, "saveData", { get: () => true, configurable: true });
+      } catch {
+        /* reported: the run reads saveData back */
+      }
+    });
+  const prefix = `(${workerGlHook.toString()})();\n`;
+  await ctx.route(
+    (u) => isSameSite(u.href) && /\.m?js$/i.test(u.pathname),
+    async (r) => {
+      try {
+        const resp = await r.fetch();
+        const headers = { ...resp.headers() };
+        delete headers["content-encoding"];
+        delete headers["content-length"];
+        await r.fulfill({ status: resp.status(), headers, body: prefix + (await resp.text()) });
+      } catch {
+        await r.continue().catch(() => {});
+      }
+    },
+  );
+}
+/* a page call that cannot hang the suite: Playwright's evaluate has no
+   timeout, and a frame caught mid-navigation never answers */
+const bounded = (p, ms, fallback) => Promise.race([Promise.resolve(p).catch(() => fallback), new Promise((r) => setTimeout(() => r(fallback), ms))]);
+const glTrace = (label, step) => process.env.VS_TRACE_GL && process.stderr.write(`    [gl ${label}] ${step}\n`);
+/* the hook's log in every frame but the main one: a frame the page made
+   (same site, about:blank, srcdoc, blob:, data:) is the site's code. A frame
+   that does not answer in 5s reads as null: unsure, reported by check 25 for
+   the site's own frames */
+async function readFrameGl(page) {
+  const out = [];
+  for (const f of page.frames()) {
+    if (f === page.mainFrame()) continue;
+    let url = f.url();
+    /* a frame that has not navigated yet (a lazy iframe, url "") is judged by
+       its element: a src on another site is that site's; no src, a srcdoc or
+       a same-site src is the page's own */
+    if (!url || url === "about:blank") {
+      const el = await bounded(f.frameElement(), 3000, null);
+      const src = el ? await bounded(el.getAttribute("src"), 3000, null) : null;
+      if (src) url = new URL(src, BASE).href;
+      else if (el && (await bounded(el.getAttribute("srcdoc"), 3000, null)) !== null) url = "about:srcdoc";
+    }
+    const ours = !/^https?:/i.test(url) || isSameSite(url);
+    const gl = await bounded(f.evaluate(() => (window.__vsGl ? [...window.__vsGl] : null)), 5000, null);
+    out.push({ url: (url || "(a frame with no URL)").slice(0, 120), ours, gl, loaded: Boolean(f.url()) });
+  }
+  return out;
+}
+/* K7: a renderer can wait for the first input. Before the reading, a pointer
+   moves over a spot that is no control (the hero's field, else the h1), then a
+   tap (touch profiles) or a click, a wheel turn and two keys. */
+async function firstInput(page, prof) {
+  const pt = await bounded(
+    page.evaluate(() => {
+      const el = document.querySelector("[data-hero-field]") || document.querySelector("h1");
+      const r = el?.getBoundingClientRect();
+      if (!r) return null;
+      const x = r.left + r.width / 2;
+      const y = Math.min(r.top + r.height / 2, innerHeight - 10);
+      const hit = document.elementFromPoint(x, y);
+      return hit && !hit.closest("a, button, summary, input, select, textarea, label, iframe") ? { x, y } : null;
+    }),
+    10000,
+    null,
+  );
+  const send = async () => {
+    if (pt) {
+      await page.mouse.move(pt.x - 30, pt.y - 20);
+      await page.mouse.move(pt.x, pt.y, { steps: 4 });
+      if (prof.phone || prof.touch) await page.touchscreen.tap(pt.x, pt.y);
+      else await page.mouse.click(pt.x, pt.y, { noWaitAfter: true });
+    }
+    await page.mouse.wheel(0, 240);
+    await page.keyboard.press("Shift");
+    await page.keyboard.press("ArrowDown");
+    return true;
+  };
+  const sent = await bounded(send(), 20000, false);
+  await page.waitForTimeout(700);
+  return Boolean(pt) && sent;
 }
 /* what the hook recorded, and every script the page requested with its start
    time against the load event: a renderer must never be initial JavaScript */
 function glReport() {
   const nav = performance.getEntriesByType("navigation")[0];
   return {
-    gl: window.__vsGl || null,
+    gl: window.__vsGl ? [...window.__vsGl] : null,
+    pointer: matchMedia("(pointer: coarse)").matches ? "coarse" : matchMedia("(pointer: fine)").matches ? "fine" : "none",
+    saveDataSeen: Boolean(navigator.connection && navigator.connection.saveData),
     canvases: document.querySelectorAll("canvas").length,
     loadEnd: nav ? nav.loadEventEnd : 0,
     scripts: performance
@@ -315,15 +459,21 @@ function glReport() {
    idle time again. */
 async function visitGl(browser, route, prof) {
   const ctx = await browser.newContext({
-    viewport: { width: prof.width, height: prof.width < 768 ? 844 : 900 },
+    viewport: { width: prof.width, height: prof.height || (prof.width < 768 ? 844 : 900) },
     reducedMotion: prof.reduced ? "reduce" : "no-preference",
     ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}),
+    ...(prof.touch ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}),
+    ...(prof.saveData ? { extraHTTPHeaders: { "Save-Data": "on" } } : {}),
   });
-  await ctx.addInitScript(glHook);
+  await installGlHooks(ctx, prof);
   const page = await ctx.newPage();
+  glTrace(prof.label, "goto");
   await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(2500);
+  glTrace(prof.label, "first input");
+  const input = await firstInput(page, prof);
+  glTrace(prof.label, `input sent: ${input}; walking`);
   await page.evaluate(async () => {
     for (let y = 0; y <= document.documentElement.scrollHeight; y += 300) {
       window.scrollTo(0, y);
@@ -332,8 +482,13 @@ async function visitGl(browser, route, prof) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(2000);
-  const r = await page.evaluate(glReport);
-  await ctx.close();
+  glTrace(prof.label, "report");
+  const r = await bounded(page.evaluate(glReport), 20000, { gl: null, scripts: [], error: "the page did not answer for 20s" });
+  glTrace(prof.label, "frames");
+  r.frames = await readFrameGl(page);
+  r.input = input;
+  await bounded(ctx.close(), 20000, null);
+  glTrace(prof.label, "done");
   return r;
 }
 
@@ -1534,134 +1689,229 @@ const lin = (c) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) **
 const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 const contrastRatio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
-/* Contrast against the pixels actually behind the text. One full-page capture
-   with every glyph made transparent gives the real ground — particle field,
-   gradient or photograph — under each text box; the text colour (converted to
-   sRGB by the browser, alpha and ancestor opacity applied) is composited over
-   each sampled pixel and the WORST sample is the element's ratio. */
+/* 20 — the one fixed or sticky box whose TEXT is measured: the site header,
+   from the capture at the top of the page, where it rests over its own white
+   ground (A3: its call to action, white on the brand gradient, had never been
+   measured). Text in any other fixed or sticky box fails: the ground under it
+   changes as the page scrolls, and no single capture is what a reader sees. */
+const PINNED_ALLOW = "header#masthead";
+/* 20 — how many text elements a page's contrast pass measures. The busiest
+   page has about 150; a page over the cap FAILS (K5: at 700 it stopped
+   silently, and text further down was never measured). */
+const CONTRAST_CAP = 1500;
+
+/* Contrast against the pixels actually behind the text, VIEWPORT BY VIEWPORT
+   (K5, 2026-09-15). With every glyph made transparent, the page is captured one
+   viewport at a time from the top, half a viewport apart, so every point of it
+   is seen at least twice at two heights; a fixed or sticky box is painted where
+   a reader sees it at that scroll. A sample point is taken from the first
+   capture where it is on screen and no fixed or sticky box sits ON TOP of it —
+   a fixed box UNDER the text (a fixed ground) is the ground, and is measured
+   as such. The text colour (converted to sRGB by the browser, alpha and
+   ancestor opacity applied) is composited over each sampled pixel.
+
+   It replaces one full-page capture, which painted a fixed or sticky box
+   wherever the current scroll offset put it: first over the text in the band
+   above the last viewport (the headroom header), then — with those boxes
+   hidden — under nothing at all, so text over a fixed ground was measured
+   against the page behind it, and text in the header was never measured. */
 async function measureContrast(page) {
-  const els = await page.evaluate((logotype) => {
-    const cv = document.createElement("canvas");
-    cv.width = cv.height = 1;
-    const cx = cv.getContext("2d", { willReadFrequently: true });
-    const rgba = (c) => {
-      cx.clearRect(0, 0, 1, 1);
-      cx.fillStyle = "#000";
-      cx.fillStyle = c;
-      cx.fillRect(0, 0, 1, 1);
-      return [...cx.getImageData(0, 0, 1, 1).data];
-    };
-    const out = [];
-    const keep = [];
-    const frames = [...document.querySelectorAll("iframe")].map((f) => f.getBoundingClientRect());
-    for (const el of document.body.querySelectorAll("*")) {
-      if (el.closest("script, style, noscript, template, svg, [aria-hidden='true']")) continue;
-      if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
-      const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) continue;
-      const s = getComputedStyle(el);
-      if (s.visibility === "hidden") continue;
-      let op = 1;
-      let pinned = false;
-      for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
-        const as = getComputedStyle(a);
-        op *= parseFloat(as.opacity);
-        if (as.position === "fixed" || as.position === "sticky") pinned = true;
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  await page.waitForTimeout(500);
+  const { els, total, pinnedBoxes } = await page.evaluate(
+    ([logotype, allow, cap]) => {
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 1;
+      const cx = cv.getContext("2d", { willReadFrequently: true });
+      const rgba = (c) => {
+        cx.clearRect(0, 0, 1, 1);
+        cx.fillStyle = "#000";
+        cx.fillStyle = c;
+        cx.fillRect(0, 0, 1, 1);
+        return [...cx.getImageData(0, 0, 1, 1).data];
+      };
+      const tagOf = (el) => `${el.localName}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/)[0]}` : ""}`;
+      const out = [];
+      const keep = [];
+      let total = 0;
+      const frames = [...document.querySelectorAll("iframe")].map((f) => f.getBoundingClientRect());
+      for (const el of document.body.querySelectorAll("*")) {
+        if (el.closest("script, style, noscript, template, svg, [aria-hidden='true']")) continue;
+        if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        const s = getComputedStyle(el);
+        if (s.visibility === "hidden") continue;
+        let op = 1;
+        let pinnedBox = null;
+        for (let a = el; a && a.nodeType === 1; a = a.parentElement) {
+          const as = getComputedStyle(a);
+          op *= parseFloat(as.opacity);
+          if (as.position === "fixed" || as.position === "sticky") pinnedBox = a;
+        }
+        if (op < 0.05) continue;
+        total++;
+        if (out.length >= cap) continue;
+        /* text scrolled out of view inside a carousel is not on screen at all */
+        let clipped = false;
+        for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (!/(hidden|clip|auto|scroll)/.test(getComputedStyle(a).overflowX + getComputedStyle(a).overflowY)) continue;
+          const c = a.getBoundingClientRect();
+          if (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1) clipped = true;
+        }
+        const clipText = s.backgroundClip === "text" || s.webkitBackgroundClip === "text";
+        const fill = s.webkitTextFillColor;
+        const color = rgba(fill && fill !== "rgba(0, 0, 0, 0)" && fill !== s.color ? fill : s.color);
+        /* an embedded frame (Calendly) paints over whatever sits beneath it */
+        const underFrame = frames.some((f) => f.width && r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top);
+        keep.push(el);
+        /* sample the content box only: a chip's own border is not the ground under its text */
+        const inset = (side) => parseFloat(s[`border${side}Width`]) + parseFloat(s[`padding${side}`]);
+        const x0 = r.left + inset("Left");
+        const y0 = r.top + inset("Top");
+        out.push({
+          logotype: !!el.closest(logotype),
+          dx: inset("Left"),
+          dy: inset("Top"),
+          x: x0 + scrollX,
+          y: y0 + scrollY,
+          w: Math.max(1, r.width - inset("Left") - inset("Right")),
+          h: Math.max(1, r.height - inset("Top") - inset("Bottom")),
+          color,
+          op,
+          pinned: pinnedBox ? tagOf(pinnedBox) : "",
+          allowed: Boolean(pinnedBox && pinnedBox.matches(allow)),
+          clipped,
+          underFrame,
+          clipText,
+          size: parseFloat(s.fontSize),
+          weight: parseInt(s.fontWeight, 10) || 400,
+          text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40),
+        });
       }
-      if (op < 0.05) continue;
-      /* text scrolled out of view inside a carousel is not on screen at all */
-      let clipped = false;
-      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
-        if (!/(hidden|clip|auto|scroll)/.test(getComputedStyle(a).overflowX + getComputedStyle(a).overflowY)) continue;
-        const c = a.getBoundingClientRect();
-        if (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1) clipped = true;
-      }
-      const clipText = s.backgroundClip === "text" || s.webkitBackgroundClip === "text";
-      const fill = s.webkitTextFillColor;
-      const color = rgba(fill && fill !== "rgba(0, 0, 0, 0)" && fill !== s.color ? fill : s.color);
-      /* an embedded frame (Calendly) paints over whatever sits beneath it */
-      const underFrame = frames.some((f) => f.width && r.left < f.right && r.right > f.left && r.top < f.bottom && r.bottom > f.top);
-      keep.push(el);
-      /* sample the content box only: a chip's own border is not the ground under its text */
-      const inset = (side) => parseFloat(s[`border${side}Width`]) + parseFloat(s[`padding${side}`]);
-      const cx = r.left + inset("Left"), cy = r.top + inset("Top");
-      const cw = Math.max(1, r.width - inset("Left") - inset("Right")), ch = Math.max(1, r.height - inset("Top") - inset("Bottom"));
-      out.push({ logotype: !!el.closest(logotype), dx: inset("Left"), dy: inset("Top"), x: cx + scrollX, y: cy + scrollY, w: cw, h: ch, color, op, pinned, clipped, underFrame, clipText, size: parseFloat(s.fontSize), weight: parseInt(s.fontWeight, 10) || 400, text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 40) });
-      if (out.length >= 700) break;
-    }
-    window.__vsKeep = keep;
-    return out;
-  }, LOGOTYPE);
-  /* A full-page capture paints a fixed or sticky box where the CURRENT scroll
-     offset puts it, not where a reader ever sees it over that part of the page.
-     Found 2026-09-15: at the bottom of a page the headroom header is slid up
-     just out of view, and the capture painted it over the text in the band just
-     above the last viewport — its white bar, its logo tile and its blue button
-     became the "ground" under body text on four pages, while no reader can see
-     that header there. Text INSIDE such a box is already unmeasured (pinned,
-     above); the box itself is hidden for the capture, so what is sampled under
-     the page's text is the page's own ground. No text leaves the measurement,
-     and every box hidden is named in the check's info. */
-  const hiddenForCapture = await page.evaluate(() => {
-    const out = [];
-    for (const el of document.body.querySelectorAll("*")) {
-      const p = getComputedStyle(el).position;
-      if ((p === "fixed" || p === "sticky") && !el.parentElement?.closest("[data-vs-pinned]")) {
-        el.setAttribute("data-vs-pinned", "");
-        if (el.getClientRects().length) out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}`);
-      }
-    }
-    return out;
-  });
-  const captureStyle = await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}[data-vs-pinned]{visibility:hidden!important}" });
-  await page.waitForTimeout(250);
-  const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
-  /* where each element is now: anything that moved or was replaced between the
-     measurement and the capture is not under the pixels we sampled */
-  const now = await page.evaluate(() =>
-    (window.__vsKeep || []).map((el) => {
-      if (!el.isConnected) return null;
-      const r = el.getBoundingClientRect();
-      return { x: r.left + scrollX, y: r.top + scrollY };
-    }),
+      window.__vsKeep = keep;
+      const pinnedBoxes = [...document.body.querySelectorAll("*")]
+        .filter((e) => ["fixed", "sticky"].includes(getComputedStyle(e).position) && e.getClientRects().length)
+        .map((e) => `${tagOf(e)}${e.matches(allow) ? " (allowlisted)" : ""}`);
+      return { els: out, total, pinnedBoxes };
+    },
+    [LOGOTYPE, PINNED_ALLOW, CONTRAST_CAP],
   );
+  /* In a cascade layer: a layered !important beats every unlayered !important,
+     whatever its specificity — a page's `.x { color: … !important }` no longer
+     keeps its text painted into the capture, to be read back as its own ground */
+  const style = await page.addStyleTag({
+    content:
+      "@layer vs-capture{*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important;transition:none!important;pointer-events:auto!important}}",
+  });
+  await page.waitForTimeout(250);
+  const { vh, docH } = await page.evaluate(() => ({ vh: innerHeight, docH: document.documentElement.scrollHeight }));
+  const steps = [];
+  for (let y = 0; ; y += Math.max(1, Math.floor(vh / 2))) {
+    const s = Math.min(y, Math.max(0, docH - vh));
+    if (!steps.includes(s)) steps.push(s);
+    if (s >= docH - vh) break;
+  }
+  /* each element's sample points, in document pixels */
+  const grid = els.map((e) => {
+    const pts = [];
+    const nx = Math.min(24, Math.max(2, Math.floor(e.w / 6)));
+    const ny = Math.min(8, Math.max(2, Math.floor(e.h / 6)));
+    for (let ix = 0; ix < nx; ix++) for (let iy = 0; iy < ny; iy++) pts.push([Math.floor(e.x + ((ix + 0.5) * e.w) / nx), Math.floor(e.y + ((iy + 0.5) * e.h) / ny)]);
+    return pts;
+  });
+  const got = grid.map((g) => new Array(g.length).fill(null));
+  const coveredSeen = els.map(() => 0);
+  const movedSeen = els.map(() => 0);
+  for (const y of steps) {
+    await page.evaluate((yy) => window.scrollTo({ top: yy, left: 0, behavior: "instant" }), y);
+    await page.waitForTimeout(300);
+    /* where each element is now, and what part of it a fixed or sticky box
+       covers: one ON TOP of it, by a hit test in the middle of the overlap —
+       a fixed box under the text is its ground, not a cover */
+    const view = await page.evaluate(() => {
+      const pinned = [...document.body.querySelectorAll("*")].filter((p) => {
+        const s = getComputedStyle(p);
+        return (s.position === "fixed" || s.position === "sticky") && s.visibility === "visible" && p.getClientRects().length;
+      });
+      const at = (window.__vsKeep || []).map((el) => {
+        if (!el.isConnected) return null;
+        const r = el.getBoundingClientRect();
+        const covers = [];
+        for (const p of pinned) {
+          if (p.contains(el)) continue;
+          const q = p.getBoundingClientRect();
+          const l = Math.max(r.left, q.left);
+          const t = Math.max(r.top, q.top);
+          const rr = Math.min(r.right, q.right);
+          const b = Math.min(r.bottom, q.bottom);
+          if (rr - l < 1 || b - t < 1) continue;
+          const hit = document.elementFromPoint((l + rr) / 2, (t + b) / 2);
+          if (hit && (hit === p || p.contains(hit)) && !el.contains(hit)) covers.push({ x: l + scrollX, y: t + scrollY, w: rr - l, h: b - t });
+        }
+        return { x: r.left + scrollX, y: r.top + scrollY, covers };
+      });
+      return { sy: scrollY, at };
+    });
+    const png = PNG.sync.read(await page.screenshot());
+    for (const [i, e] of els.entries()) {
+      if (e.logotype || e.clipText || e.clipped || e.underFrame || (e.pinned && !e.allowed)) continue;
+      /* the header's text: from the capture at the top only, where it rests */
+      if (e.pinned && view.sy !== 0) continue;
+      const v = view.at[i];
+      if (!v) continue;
+      /* anything that moved since it was measured is not under these pixels */
+      if (Math.abs(v.x - (e.x - e.dx)) > 1 || Math.abs(v.y - (e.y - e.dy)) > 1) {
+        movedSeen[i]++;
+        continue;
+      }
+      grid[i].forEach(([px, py], k) => {
+        if (got[i][k]) return;
+        const vy = py - view.sy;
+        if (px < 0 || vy < 0 || px >= png.width || vy >= png.height) return;
+        if (v.covers.some((c) => px >= c.x && px < c.x + c.w && py >= c.y && py < c.y + c.h)) {
+          coveredSeen[i]++;
+          return;
+        }
+        const o = (vy * png.width + px) * 4;
+        got[i][k] = [png.data[o], png.data[o + 1], png.data[o + 2]];
+      });
+    }
+  }
   /* the page as it was: check 8 reads it next, and hit-tests its chips */
-  await captureStyle.evaluate((e) => e.remove());
-  await page.evaluate(() => document.querySelectorAll("[data-vs-pinned]").forEach((e) => e.removeAttribute("data-vs-pinned")));
-  const res = { measured: 0, unmeasured: [], fails: [], hiddenForCapture };
-  for (const [idx, e] of els.entries()) {
-    const n = now[idx];
-    const moved = !n || Math.abs(n.x - e.x) > e.dx + 1 || Math.abs(n.y - e.y) > e.dy + 1;
-    if (e.logotype || e.clipText || e.pinned || e.clipped || e.underFrame || moved) {
-      const why = e.logotype ? "the wordmark (WCAG 1.4.3 logotype)" : e.clipText ? "gradient text" : e.pinned ? "fixed or sticky" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "moved while measuring";
+  await style.evaluate((s) => s.remove());
+  await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
+  const res = { measured: 0, unmeasured: [], fails: [], pinnedBoxes, total, cap: CONTRAST_CAP, outside: [], covered: [], captures: steps.length };
+  for (const [i, e] of els.entries()) {
+    if (e.pinned && !e.allowed) {
+      res.outside.push({ text: e.text, box: e.pinned });
+      continue;
+    }
+    const why = e.logotype ? "the wordmark (WCAG 1.4.3 logotype)" : e.clipText ? "gradient text" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "";
+    if (why) {
       res.unmeasured.push({ text: e.text, why });
       continue;
+    }
+    const bgs = got[i].filter(Boolean);
+    if (!bgs.length) {
+      if (coveredSeen[i]) res.covered.push({ text: e.text });
+      else if (movedSeen[i]) res.unmeasured.push({ text: e.text, why: "moved while measuring" });
+      continue; /* off the page: a skip link parked above it until focused */
     }
     const a = (e.color[3] / 255) * e.op;
     /* Judged on the 10th-percentile sample: a text box over a particle field
        touches the odd bright speck, and one speck is not what the reader sees.
        A tenth of the box being too light is. */
-    const samples = [];
-    const nx = Math.min(24, Math.max(2, Math.floor(e.w / 6)));
-    const ny = Math.min(8, Math.max(2, Math.floor(e.h / 6)));
-    for (let ix = 0; ix < nx; ix++)
-      for (let iy = 0; iy < ny; iy++) {
-        const px = Math.floor(e.x + ((ix + 0.5) * e.w) / nx);
-        const py = Math.floor(e.y + ((iy + 0.5) * e.h) / ny);
-        if (px < 0 || py < 0 || px >= png.width || py >= png.height) continue;
-        const o = (py * png.width + px) * 4;
-        const bg = [png.data[o], png.data[o + 1], png.data[o + 2]];
+    const samples = bgs
+      .map((bg) => {
         const fg = [0, 1, 2].map((k) => a * e.color[k] + (1 - a) * bg[k]);
-        samples.push({ c: contrastRatio(lum(...fg), lum(...bg)), bg });
-      }
-    if (!samples.length) continue;
-    samples.sort((x, y) => x.c - y.c);
+        return { c: contrastRatio(lum(...fg), lum(...bg)), bg };
+      })
+      .sort((x, y) => x.c - y.c);
     const p10 = samples[Math.floor(samples.length * 0.1)];
-    const worst = p10.c;
-    const worstBg = p10.bg;
     res.measured++;
     const need = e.size >= 24 || (e.size >= 18.66 && e.weight >= 700) ? 3 : 4.5;
-    if (worst < need) res.fails.push({ text: e.text, ratio: +worst.toFixed(2), need, color: e.color, bg: worstBg });
+    if (p10.c < need) res.fails.push({ text: e.text, ratio: +p10.c.toFixed(2), need, color: e.color, bg: p10.bg, pinned: e.pinned });
   }
   return res;
 }
@@ -1944,7 +2194,7 @@ async function settle(page, what) {
 /* ── one route at one width, JavaScript on ───────────────────────────────── */
 async function visit(browser, route, width) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, bypassCSP: true });
-  await ctx.addInitScript(glHook); /* check 25 */
+  await ctx.addInitScript(glHook, workerGlHook.toString()); /* check 25: this frame, every iframe, blob workers */
   const page = await ctx.newPage();
   const consoleMsgs = [];
   const failed = [];
@@ -1972,6 +2222,7 @@ async function visit(browser, route, width) {
 
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const glData = await page.evaluate(glReport); /* before the contrast pass draws its own canvas */
+  glData.frames = await readFrameGl(page);
   const data = await page.evaluate(collectInPage);
   data.glData = glData;
   data.stalled = stalled;
@@ -2342,9 +2593,16 @@ if (want(6) || want(7))
    reduced motion at every GL width. */
 const glRuns = {};
 if (want(25)) {
+  /* K7/H3: every route at every GL width with the full hooks and a first input
+     (the visits above carry only the frame hook); / as a phone, at 1024, as a
+     touch tablet at 1180x820 and 1366x1024, with Save-Data, and under reduced
+     motion */
   const plan = [];
-  for (const route of ROUTES) for (const w of GL_WIDTHS) if (!WIDTHS.includes(w)) plan.push([route, { width: w, label: `${route} @${w}` }]);
+  /* / at every GL width; every other route at the one width the visits miss
+     (the visits carry the frame and blob-worker hooks, not the input) */
+  for (const route of ROUTES) for (const w of GL_WIDTHS) if (route === "/" || !WIDTHS.includes(w)) plan.push([route, { width: w, label: `${route} @${w} (first input)` }]);
   plan.push(["/", { width: 390, phone: true, label: "/ @390 phone (touch, 3x DPR)" }]);
+  for (const p of GL_EXTRA) plan.push(["/", p]);
   for (const w of GL_WIDTHS) plan.push(["/", { width: w, reduced: true, label: `/ @${w} reduced motion` }]);
   for (const [route, prof] of plan) {
     process.stderr.write(`  webgl ${prof.label}\n`);
@@ -3198,20 +3456,36 @@ check(19, "Every keyboard stop shows a visible focus state", "CLAUDE.md: visible
 });
 
 /* 20 */
-check(20, "Text meets WCAG AA contrast against the pixels behind it", "text over the particle field, gradients and screenshots, where the flat colour proves nothing", (F, I) => {
-  for (const [k, v] of Object.entries(visits)) {
-    if (!v.contrast) continue;
-    const why = {};
-    v.contrast.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
-    I.push(`${at(k)}: ${v.contrast.measured} measured; not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes hidden for the capture: ${(v.contrast.hiddenForCapture || []).join(", ") || "none"}`);
-    const seen = new Set();
-    for (const f of [...v.contrast.fails].sort((a, b) => a.ratio - b.ratio)) {
-      if (seen.has(f.text)) continue;
-      seen.add(f.text);
-      F.push(`${at(k)}: "${f.text}" ${f.ratio}:1, needs ${f.need}:1 — rgb(${f.color.slice(0, 3).join(",")}) at ${Math.round((f.color[3] / 255) * 100)}% over rgb(${f.bg.join(",")})`);
+check(
+  20,
+  "Text meets WCAG AA contrast against the pixels behind it — measured viewport by viewport, over fixed grounds too, the header's text included",
+  "text over the particle field, gradients and screenshots, where the flat colour proves nothing; text over a fixed ground measured against the page behind it; the header's call to action never measured; text past a silent cap",
+  (F, I) => {
+    for (const [k, v] of Object.entries(visits)) {
+      const c = v.contrast;
+      if (!c) continue;
+      const why = {};
+      c.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
+      I.push(
+        `${at(k)}: ${c.measured} measured in ${c.captures} viewport capture(s); not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes: ${c.pinnedBoxes.join(", ") || "none"} — text measured only in ${PINNED_ALLOW}, at the top of the page`,
+      );
+      /* K5: a cap reached is text never measured */
+      if (c.total > c.cap) F.push(`${at(k)}: the contrast pass stopped at its ${c.cap}-element cap — ${c.total - c.cap} text element(s) further down the page were never measured; unsure is a failure`);
+      const seen = new Set();
+      for (const o of c.outside) {
+        if (seen.has(`out|${o.text}`)) continue;
+        seen.add(`out|${o.text}`);
+        F.push(`${at(k)}: "${o.text}" sits in a fixed or sticky box (${o.box}) outside the allowlist (${PINNED_ALLOW}) — the ground under it changes as the page scrolls and no one capture is what a reader sees; unsure is a failure`);
+      }
+      for (const o of c.covered) F.push(`${at(k)}: "${o.text}" is under a fixed or sticky box at every scroll position — no reader can see it`);
+      for (const f of [...c.fails].sort((a, b) => a.ratio - b.ratio)) {
+        if (seen.has(f.text)) continue;
+        seen.add(f.text);
+        F.push(`${at(k)}: "${f.text}" ${f.ratio}:1, needs ${f.need}:1 — rgb(${f.color.slice(0, 3).join(",")}) at ${Math.round((f.color[3] / 255) * 100)}% over rgb(${f.bg.join(",")})${f.pinned ? ` (in ${f.pinned}, at the top of the page)` : ""}`);
+      }
     }
-  }
-});
+  },
+);
 
 /* 21 */
 check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions", (F, I) => {
@@ -3322,14 +3596,32 @@ await (async () => {
       F.push(`${run.label}: the WebGL hook did not report${run.error ? ` (${run.error})` : ""} — unsure is a failure`);
       continue;
     }
-    const allowed = WEBGL_ON_HOME && run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone;
+    /* K7/H3: allowed only with a FINE pointer, no touch, no Save-Data */
+    const allowed = WEBGL_ON_HOME && run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer === "fine";
     const why =
       run.route !== "/" ? "WebGL belongs to the homepage hero and nowhere else"
       : run.reduced ? "never under reduced motion"
-      : run.phone || run.width < 1025 ? `never at ${run.width}px: phones and tablets get the poster`
+      : run.saveData ? "never with Save-Data on"
+      : run.phone || run.touch || (run.pointer && run.pointer !== "fine") ? `never on a touch device — a ${run.pointer || "coarse"} pointer at ${run.width}px gets the poster`
+      : run.width < 1025 ? `never at ${run.width}px: phones and tablets get the poster`
       : "step 3 ships no WebGL on / at all";
-    if (run.gl.length && !allowed)
-      F.push(`${run.label}: ${run.gl.length} WebGL context request(s) (${[...new Set(run.gl.map((g) => g.type))].join(", ")}) — ${why}; the first from ${run.gl[0].stack || "an unknown caller"}`);
+    /* a profile that does not emulate what it claims proves nothing */
+    if (run.touch && run.pointer !== "coarse") F.push(`${run.label}: the tablet profile reports a ${run.pointer} pointer, not a coarse one — unsure is a failure`);
+    if (run.saveData && !run.saveDataSeen) F.push(`${run.label}: the page does not see Save-Data (navigator.connection.saveData is false) — unsure is a failure`);
+    if ("input" in run && !run.input) F.push(`${run.label}: no spot free of controls for the first pointer input — the input-triggered path went untested; unsure is a failure`);
+    /* every context: this frame's, a worker's (reported into it), and each
+       frame's the page made; a third party's frame is listed, not judged */
+    const reqs = [...run.gl.map((g) => ({ ...g, where: g.where || "the page" }))];
+    for (const f of run.frames || []) {
+      if (!f.ours) {
+        if (f.gl?.length) I.push(`${run.label}: ${f.gl.length} WebGL request(s) in a third-party frame ${f.url} — not this site's code`);
+        continue;
+      }
+      if (!Array.isArray(f.gl)) F.push(`${run.label}: the frame ${f.url} could not be read — unsure is a failure`);
+      else reqs.push(...f.gl.map((g) => ({ ...g, where: g.where ? `${g.where} in the frame ${f.url}` : `the frame ${f.url}` })));
+    }
+    if (reqs.length && !allowed)
+      F.push(`${run.label}: ${reqs.length} WebGL context request(s) — ${[...new Set(reqs.map((g) => `${g.type} in ${g.where}${g.stack ? ` from ${g.stack}` : ""}`))].slice(0, 8).join("; ")} — ${why}`);
     const found = [];
     for (const sc of (run.scripts || []).filter((x) => isSameSite(x.url))) {
       const k = await kind(sc.url);
@@ -3342,7 +3634,7 @@ await (async () => {
         if (!run.loadEnd || sc.start < run.loadEnd) F.push(`${run.label}: the renderer chunk ${short(sc.url)} is requested at ${Math.round(sc.start)}ms, before the load event ended (${Math.round(run.loadEnd)}ms) — it is never initial JavaScript`);
       }
     }
-    I.push(`${run.label}: ${run.gl.length} WebGL request(s), ${run.canvases} canvas element(s), ${(run.scripts || []).length} script(s)${found.length ? `; renderer ${found.join(", ")}` : ", no renderer chunk"}`);
+    I.push(`${run.label}: ${reqs.length} WebGL request(s) (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s), ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${found.length ? `; renderer ${found.join(", ")}` : ", no renderer chunk"}`);
   }
   /* Every font a page preloads is one THAT page renders — read per route, from
      the preload links present once the page has settled (a prefetched route's
@@ -3655,14 +3947,33 @@ check(
       }
       const fonts = files.filter((f) => /\.(woff2?|ttf|otf)$/i.test(f));
       for (const f of fonts) if (!/barlow|jost/i.test(path.basename(f))) F.push(`repository: tracks the font file ${f} — the site's faces are Barlow and Jost`);
+      /* K12 (2026-09-15): the package rule saw only `from "pkg"`. It now sees a
+         dynamic import(), require(), a side-effect import and a subpath
+         ("framer-motion/dom", "tailwindcss/preflight"); Tailwind by @tailwind,
+         @config and @plugin too. */
+      const PKG = String.raw`(?:framer-motion|motion|three|@react-three\/[\w.-]+|@types\/three)`;
+      const TW = String.raw`(?:tailwindcss|@tailwindcss\/[\w.-]+)`;
+      const IMPORTED = (pkg) => new RegExp(String.raw`(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+|\bexport\s+\*\s+from\s*)["'\`]${pkg}(?:\/[^"'\`]*)?["'\`]`);
       const RETIRED_SRC = [
         [/\b(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b/, "a class of the retired design"],
         [/\bdata-reveal\b/, "the retired reveal attribute"],
-        [/from\s+["'](framer-motion|three|@react-three\/[\w-]+)["']/, "a package of the retired design"],
+        [IMPORTED(PKG), "a package of the retired design"],
         [/next\/font\/local/, "a local font — the site's faces come from next/font/google"],
-        [/@import\s+["']tailwindcss["']/, "Tailwind — the design is plain CSS"],
+        [new RegExp(String.raw`@import\s+(?:url\(\s*)?["']?${TW}(?:\/[^"')\s;]*)?|@tailwind\s+[\w-]+|@config\s+["'][^"']*tailwind|@plugin\s+["']@tailwindcss|${IMPORTED(TW).source}`), "Tailwind — the design is plain CSS"],
       ];
-      const src = files.filter((f) => /^(app|components|lib|content)\//.test(f) && /\.(tsx?|css|mjs|js)$/.test(f));
+      /* every tracked source file but the suite's own (it names all of these) */
+      const src = files.filter((f) => !/^(scripts|node_modules|public)\//.test(f) && /\.(tsx?|jsx?|css|scss|mjs|cjs)$/.test(f));
+      for (const f of files.filter((x) => /(^|\/)(tailwind|postcss)\.config\.[cm]?[jt]s$/.test(x))) F.push(`repository: tracks ${f} — the retired design's build config (Tailwind went on 2026-09-15)`);
+      /* and the manifest itself: a retired package listed is one coming back */
+      let manifest = null;
+      try {
+        manifest = JSON.parse(readFileSync(path.join(REPO, "package.json"), "utf8"));
+      } catch (e) {
+        F.push(`repository: package.json could not be read (${String(e?.message || e).split("\n")[0]}) — unsure is a failure`);
+      }
+      const RETIRED_PKG = /^(framer-motion|motion|three|@react-three\/.+|@types\/three|tailwindcss|@tailwindcss\/.+)$/;
+      for (const field of ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"])
+        for (const name of Object.keys(manifest?.[field] || {})) if (RETIRED_PKG.test(name)) F.push(`repository: package.json lists "${name}" in ${field} — a package of the retired design`);
       for (const f of src) {
         let text = "";
         try {

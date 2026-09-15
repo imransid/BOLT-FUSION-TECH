@@ -146,7 +146,21 @@ end ("INNER PAGES").
   darkened so its lightest stop clears 4.65:1 against white; `light` and
   `secondary` on navy, `outline` on light bands.
 - **The header** is white and sticky, with the full nav from 1200px and a drawer
-  below it (focus trapped, Escape closes, `aria-expanded` on the burger).
+  below it (focus trapped, Escape closes, `aria-expanded` on the burger). The
+  drawer is in the server HTML, hidden, so the burger's `aria-controls` names an
+  element before any script runs, and moves to `<body>` after mount; its list is
+  a `<nav aria-label="Primary">`, the navigation landmark below 1200px (A4, A5).
+  Without JavaScript the burger cannot open it: below 1200px a reader without
+  script navigates by the footer and the page's own links. The page scrolls
+  with `scroll-padding-top` of the header's height plus 12px, so a focused
+  element or an anchor's target is never under it (A1).
+- **Skip link:** "Skip to content", the first stop on every page, off screen
+  until focused, to `main#main` (`app/layout.tsx`). Every page's `<main>` —
+  the homepage's and `PageShell`'s — carries `id="main"`.
+- **The proof strip:** each figure's chip sits beside it, in the figure's own
+  row, which names its metric (`data-metric`, the id in `content/metrics.ts`);
+  a label with a figure of its own ("Search response, 80% of traffic") keeps
+  that figure's chip. /work's figures are built the same way (K1).
 - **The logo** is our mark in a dark tile beside the wordmark in Barlow and Jost
   (`components/techwix/Logo.tsx`); the mark's drawing is
   `components/LogoMarkSvg.tsx`, which the footer, the WarmChats sign-off and the
@@ -194,6 +208,12 @@ viewport at 390, 768 and 1440 — the header's logo alone sets Barlow 500 and 70
 and Jost 500, every h1 is Barlow 600. A preload lands on every page the one
 layout wraps, so a face that stops being painted above the fold on any page
 gets `preload: false`; check 25 fails a preload its page never renders.
+**The tradeoff, measured by the hero-perf review (2026-09-15):** the four font
+preloads cost about 140ms of first contentful paint in the mobile lab profile,
+and gain about 20ms of LCP. They are kept because LCP is the budgeted metric
+(check 29) and the poster is the LCP element either way; FCP is not budgeted. A
+change that makes FCP matter — a budget on it, or a first paint that has to be
+the text — reopens this. (Recorded, not re-measured, in the fix pass.)
 
 The `next/font` variables live on `<html>`, which is `:root`, where the tokens
 are declared. Move them to `<body>` and every token stops resolving; delete the
@@ -218,7 +238,10 @@ licence beside them, read at build time.
   `data-tw-reveal` as `"true"`, and every element got the class `animated true`.
   The observer now reads `"true"` and `""` as the default. No check caught it —
   every check reads a page at rest, where a reveal that never runs and one that
-  has finished look the same.
+  has finished look the same. **Focus ends a reveal** (A2): a keyboard user
+  tabbing into a card below the fold would otherwise see it fade in from
+  opacity 0 around the focused control; on `focusin` the observer stops
+  watching that element and finishes any animation already running on it.
 - **The header's headroom** slide is a 0.25s transform (`HeadroomController.tsx`).
 - **No animation library.** framer-motion was removed on 2026-09-15. The FAQ
   uses none: each item is a `<details name="faq">` with a CSS open/close.
@@ -290,11 +313,23 @@ at the end, which means nobody has decided yet.
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
 - **The hero field — the one place WebGL is allowed, and never in the way.**
   Decided 2026-09-11 for the homepage rebuild. Step 3 (the poster, no canvas
-  yet) is built: the poster `<img data-hero-poster>` is the final LCP entry at
-  390, 768, 1024, 1025 and 1440, measured with a buffered `PerformanceObserver`
-  on a fresh, unscrolled load — verify-site check 28 asserts it by identity at
-  390 (also as a phone), 768 and 1440 on every run; the field is the right half
-  of the panel at ≥1025px and sits above the text below that.
+  yet) is built: the poster `<img data-hero-poster>` is the final LCP entry,
+  measured with a buffered `PerformanceObserver` on a fresh, unscrolled load —
+  verify-site check 28 asserts it by identity at 390 (also as a phone), 768,
+  1024, 1025, 1280 (also at DPR 2) and 1440 on every run, and then, settled,
+  that the poster is still rendered, opaque, the field's box, on top of
+  everything in the field but a canvas with the field's box, and clear of the
+  h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
+  poster hidden, faded, covered or moved after it painted). The field is the
+  right half of the panel at ≥1025px — 560px tall, centred on the text column,
+  so the poster is drawn exactly 660px wide and `sizes` says so (H4: at the
+  column's full height, 832px at 1025, the browser fetched a file about 1.5x too
+  small at every DPR) — and sits above the text below that.
+  - **A re-rendered poster gets a new file name.** `/hero/*` is served
+    `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
+    assets): a browser that has the old file never asks again. Step 4 re-renders
+    the poster; it ships as `field-poster-v2-*` or similar, never over the old
+    name.
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
@@ -313,8 +348,12 @@ at the end, which means nobody has decided yet.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
-    script and fails any WebGL context at 390 or 768, as a phone, or under
-    reduced motion — and, until the renderer lands, any on `/` at all.
+    script — in the page, in every frame, and inside every dedicated worker —
+    sends a first pointer move, tap or click, wheel turn and key, and fails any
+    WebGL context at 390, 768 or 1024, as a phone, as a touch tablet (1180x820
+    and 1366x1024, a coarse pointer), with Save-Data on, or under reduced
+    motion — and, until the renderer lands, any on `/` at all. Width alone is
+    never the gate: an iPad in landscape is 1180 or 1366 wide.
   - **It sits beside the headline, never behind it.** On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
@@ -343,6 +382,14 @@ at the end, which means nobody has decided yet.
   site shows it, and a meta description is not a page claim. The exception is
   that one string in `app/work/restaurant-search/page.tsx` and nothing else: any
   other figure in metadata, and every figure on a page, carries a label or goes.
+  Check 8 enforces it (since 2026-09-15): it reads every rendered element's
+  `aria-label`, `alt`, `title` and the like, `<svg>` titles, the document
+  title, the text-bearing meta tags, every JSON-LD string, and the llms files,
+  with the same grammar as the visible text. There a figure carries its status
+  in words after it (`` `target` ``), or is a term exempted for that instance in
+  `content/figure-labels.ts`, or is this one string (`META_ALLOW` in the suite,
+  which prints every place it allows it — the meta, og and twitter descriptions
+  and the Article's description) — or it fails.
 - **A published project links to its write-up.** Enforced by both schemas in
   `/content` (`state: published | awaiting-asset`). There is no fallback link: a project
   without a write-up is shown with no link at all. *Holds* (check 9).
@@ -391,10 +438,27 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
-**Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too) sits in a
-`data-status` wrapper holding that one figure and its OWN visible chip, or a `data-figure-exempt`
-holding one figure with a real reason (not empty, a placeholder or one word; 12+ characters), both
-from `content/figure-labels.ts`. Standalone metric cards keep their in-card label rule.
+**Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too), read at
+1440, 390, 768 and 1024, sits in a `data-status` wrapper holding that one figure and its OWN
+visible chip, or a `data-figure-exempt` holding one figure with a real reason (not empty, a
+placeholder or one word; 12+ characters) — and either wrapper is an entry in
+`content/figure-labels.ts` word for word, its reason or status included: a wrapper written by hand,
+or a junk reason long enough to pass the reason test, fails (K11). Standalone metric cards keep
+their in-card label rule, but a chip inside another figure's `data-status` wrapper is never theirs,
+and a `[data-metric]` box — the proof strip's rows, /work's figures — holds its figure's own chip
+and names its metric in `content/metrics.ts`, value and status included (K1: the first proof card's
+label carries a target chip for its 80%, and the `<100ms` read as target, even with its own shipped
+chip deleted). A wrapper is judged by the figures it covers, never by its own box (K2: a
+`display:contents` wrapper has no box and skipped the one-figure rule). A chip counts only if a
+reader can see it: on the page, at least 80% of its text showing through whatever clips it, and
+nothing else on top of its text (K8). The grammar (`tokenizeFigures`) joins a figure split across
+touching boxes ("45" in an inline-block, then "ms"; a flex row with no gap), separates a word run
+against a figure from spans ("Latency" + "45ms"), reads `::before` / `::after` text, and knows "3X",
+"×2", scale words ("2 million") and thousands-separated counts ("10,000") (K9). The same grammar
+reads what is not visible text — attributes, meta tags, JSON-LD and the llms files (K10; *Hard
+rules*, the scoped exception). **Known limit: spelled-out numbers are not figures** ("six months",
+"two-week"). "Still running in six months" is the canonical line; a spelled-out metric is caught by
+review, not by this check.
 
 **Check 30 is the content contract.** `scripts/content-inventory.json` lists every
 page's content; a required needle missing from the served HTML fails, and so does
@@ -460,6 +524,45 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   never comes, a timeout under load) is a finding in its own check, "unsure is a
   failure", instead of an uncaught error that ends the whole suite with no
   results.
+
+**Checks changed in the review fix pass (2026-09-15).** Four reviewers found holes in the suite;
+each was reproduced on a served fixture — a real page with one edit — and closed: the fixture that
+used to pass now fails, and the site still passes. Every rule has a misuse case in the gate's RUN 2.
+- **8** — see *Check 8 reads sentences* above, and *Hard rules* for the figures outside the visible
+  text: K1, K2, K8, K9, K10, K11. It reads every page at 768 and 1024 as well.
+- **19, extended (A1)** — it also tabs BACKWARDS, Shift+Tab from each page's last stop at 1440, 768
+  and 390, and fails a stop entirely under a fixed or sticky box (WCAG 2.2 SC 2.4.11, Focus Not
+  Obscured). The browser scrolls a stop above the viewport only to the viewport's top edge, where the
+  headroom header, pinned again by the upward scroll, sits over it; forward tabbing never shows it.
+  The fix is `scroll-padding-top` on `html` — the header's height (80px below 1200, 92px from it)
+  plus room for the focus ring.
+- **20, rewritten (K5, A3)** — measured viewport by viewport from the top, half a viewport apart; a
+  fixed or sticky box is painted where a reader sees it at that scroll, a sample is taken where
+  nothing fixed or sticky sits ON TOP of it, and a fixed box UNDER the text is its ground. The
+  header's text is measured from the capture at the top of the page (its call to action had never
+  been measured; it is 5.01:1, which passed by chance); text in any other fixed or sticky box fails,
+  since no one capture shows the ground under it; so does a page with more than 1,500 text elements
+  (the old cap was 700, and silent). The one full-page capture it replaces painted fixed and sticky
+  boxes where the current scroll put them, and then — hidden — measured text over a fixed ground
+  against the page behind it.
+- **25, extended (K7, H3)** — the `getContext` hook runs in every frame and inside every dedicated
+  worker (a blob worker's source is prefixed as its Blob is built, a fetched one's on the wire, and
+  each reports on a `BroadcastChannel`); a same-site frame's contexts count, a third party's are
+  listed. Each WebGL run sends a first pointer move, a tap or click, a wheel turn and two keys before
+  it reads. Runs added: / at 1024, as a touch tablet at 1180x820 and 1366x1024 (a coarse pointer,
+  asserted), and with Save-Data (asserted); `allowed`, once the renderer lands, needs a FINE pointer,
+  no touch and no Save-Data as well as >=1025px. Every frame read is bounded: a lazy iframe caught
+  mid-navigation hung the suite for half an hour before it was.
+- **31, extended (K12)** — with `--repo`, the source scan sees a retired package however it is
+  loaded (`from`, a dynamic `import()`, `require()`, a side-effect import, `export * from`) and at
+  any subpath (`framer-motion/dom`, `three/examples/…`); Tailwind by `@import "tailwindcss…"`,
+  `@tailwind`, `@config` and `@plugin` as well as its packages; it scans every tracked source file
+  but `scripts/` and `public/` (the suite names all of these), fails a tracked `tailwind.config.*` or
+  `postcss.config.*`, and fails a retired package listed anywhere in `package.json`.
+- **28, extended (K1, K6, H1, H2)** — the LCP runs add 1024, 1025, 1280 and 1280 at DPR 2, and each
+  then reads the settled poster (see *The hero field*); every proof card's figure, label, status and
+  source must be what `content/metrics.ts` says, its chip in its `[data-metric]` row. It prints how
+  far the chosen file is stretched to cover the frame (H4), without failing on it.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
