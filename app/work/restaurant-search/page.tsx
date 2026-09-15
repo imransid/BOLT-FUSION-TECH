@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import CaseStudy from "@/components/CaseStudy";
-import { SiteContentProvider } from "@/context/SiteContentContext";
+import PageShell from "@/components/techwix/PageShell";
 import { siteContent } from "@/content/site";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -12,8 +12,8 @@ import { getSiteUrl } from "@/lib/site-url";
  * write-up moves to /work/restaurant-search." The homepage told this project
  * twice, which PLAN.md §1 lists as wasting the best asset on the site.
  *
- * The existing CaseStudy component and its approved copy are reused verbatim —
- * this is a move, not a rewrite. Nothing here is newly written.
+ * The CaseStudy component and its approved copy are reused verbatim — this is a
+ * move, not a rewrite. Nothing here is newly written.
  */
 const TITLE = "Intelligent restaurant search — multi-tenant AI retrieval";
 const DESCRIPTION =
@@ -41,7 +41,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RestaurantSearchPage() {
-  const content = siteContent;
   const site = getSiteUrl().toString();
   const url = new URL("/work/restaurant-search", site).toString();
   /* The same BreadcrumbList + Article graph as /work/warmchats — this page had
@@ -71,14 +70,14 @@ export default async function RestaurantSearchPage() {
     ],
   };
   return (
-    <SiteContentProvider value={content}>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <main>
-        <CaseStudy />
-      </main>
-    </SiteContentProvider>
+      <PageShell current="/work">
+        <CaseStudy cs={siteContent.caseStudy} />
+      </PageShell>
+    </>
   );
 }

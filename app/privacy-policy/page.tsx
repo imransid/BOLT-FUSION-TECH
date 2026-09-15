@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import PageBanner from "@/components/techwix/PageBanner";
+import PageShell from "@/components/techwix/PageShell";
 import { getSiteUrl } from "@/lib/site-url";
-import { LogoMark } from "@/components/Logo";
 
 const LAST_UPDATED = "3 June 2026";
 const CONTACT_EMAIL = "hello@boltfusiontech.com";
@@ -58,7 +58,7 @@ const sections: Section[] = [
         company, message details when you contact us or book a call); basic
         anonymised usage data (pages visited, browser type, approximate region);
         and cookies that help the site function and measure traffic. We do{" "}
-        <strong className="text-white">not</strong> sell your personal
+        <strong>not</strong> sell your personal
         information.
       </p>
     ),
@@ -166,59 +166,42 @@ const sections: Section[] = [
   },
 ];
 
+/* The privacy policy, in the site's design: the navy page banner with the
+   title and the date, then the policy as legal prose (app/techwix.css, "Legal
+   prose") on a white band. The words are unchanged. */
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-dvh bg-black text-white">
-      <header className="border-b border-white/5">
-        <div className="mx-auto flex h-16 max-w-[760px] items-center px-5">
-          <Link
-            href="/"
-            prefetch={false}
-            className="flex items-center gap-2 text-white/70 transition-colors hover:text-white"
-          >
-            <LogoMark className="h-7 w-7 opacity-90" />
-            <span className="text-sm">Bolt Fusion Tech</span>
-          </Link>
+    <PageShell>
+      <PageBanner titleId="privacy-title" title="Privacy Policy — Bolt Fusion Tech">
+        <p className="tw-banner__meta">Last updated: {LAST_UPDATED}</p>
+      </PageBanner>
+
+      <div className="tw-band tw-band--white">
+        <div className="tw-band__inner">
+          <article className="tw-prose" aria-labelledby="privacy-title">
+            <p>
+              Bolt Fusion Tech (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
+              &ldquo;our&rdquo;) operates{" "}
+              <a href="https://boltfusiontech.com">boltfusiontech.com</a> and provides
+              custom software and product engineering services. This Privacy Policy
+              explains what information we collect, how we use it, and the choices you
+              have. By using our website or contacting us, you agree to the practices
+              described here.
+            </p>
+
+            {sections.map((s) => (
+              <section key={s.heading}>
+                <h2>{s.heading}</h2>
+                {s.body}
+              </section>
+            ))}
+
+            <p className="tw-prose__foot">
+              <a href="/">← Back to boltfusiontech.com</a>
+            </p>
+          </article>
         </div>
-      </header>
-
-      <article className="mx-auto max-w-[760px] px-5 py-14 [&_a]:text-amber-300/90 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-amber-200">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Privacy Policy — Bolt Fusion Tech
-        </h1>
-        <p className="mt-2 text-sm text-white/55">
-          Last updated: {LAST_UPDATED}
-        </p>
-
-        <p className="mt-8 leading-relaxed text-white/75">
-          Bolt Fusion Tech (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
-          &ldquo;our&rdquo;) operates{" "}
-          <a href="https://boltfusiontech.com">boltfusiontech.com</a> and provides
-          custom software and product engineering services. This Privacy Policy
-          explains what information we collect, how we use it, and the choices you
-          have. By using our website or contacting us, you agree to the practices
-          described here.
-        </p>
-
-        <div className="mt-4 space-y-1 text-white/75 [&_h2]:mb-2 [&_h2]:mt-10 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:text-white [&_p]:leading-relaxed">
-          {sections.map((s) => (
-            <section key={s.heading}>
-              <h2>{s.heading}</h2>
-              {s.body}
-            </section>
-          ))}
-        </div>
-
-        <div className="mt-14 border-t border-white/5 pt-6">
-          <Link
-            href="/"
-            prefetch={false}
-            className="text-sm text-white/50 transition-colors hover:text-white"
-          >
-            ← Back to boltfusiontech.com
-          </Link>
-        </div>
-      </article>
-    </main>
+      </div>
+    </PageShell>
   );
 }

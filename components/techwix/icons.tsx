@@ -63,3 +63,9 @@ export const PlusIcon = ({ className }: IconProps) => (
     <path d="M24 10v28M10 24h28" />
   </Stroke>
 );
+
+export const CheckIcon = ({ className }: IconProps) => (
+  <Stroke className={className}>
+    <path d="M10 25l9 9 19-20" />
+  </Stroke>
+);

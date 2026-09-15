@@ -3,7 +3,8 @@
 import { useEffect } from "react";
 
 /**
- * The clone's reveal, for the homepage. Renders nothing.
+ * The clone's reveal — the site's one reveal system, on every page (the
+ * homepage renders it; so does components/techwix/PageShell). Renders nothing.
  *
  * Every [data-tw-reveal] element is in the server HTML, visible, in its final
  * position — the animation has `fill-mode: none`, so there is no hidden resting
@@ -14,9 +15,6 @@ import { useEffect } from "react";
  * in over 1.25s. Anything already on screen is left alone: re-animating it
  * would flash text the reader is looking at. Under reduced motion nothing is
  * watched and nothing moves.
- *
- * `data-tw-reveal`, not `data-reveal`: the other pages' RevealController drives
- * [data-reveal], and the two systems must not meet.
  */
 export default function RevealObserver() {
   useEffect(() => {

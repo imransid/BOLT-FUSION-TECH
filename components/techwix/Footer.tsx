@@ -7,8 +7,10 @@ import { ArrowUpIcon } from "./icons";
  * The clone's flat navy footer with the site's own furniture (content/site.ts,
  * `footer`): the copyright line, the three social accounts written out as text
  * (the theme's icon font is not ours), the privacy policy and back to top.
+ * Back to top goes to the hero on the homepage and to the header, which every
+ * page has, everywhere else (`topHref`).
  */
-export default function Footer({ footer }: { footer: SiteContent["footer"] }) {
+export default function Footer({ footer, topHref = "#hero" }: { footer: SiteContent["footer"]; topHref?: string }) {
   return (
     <footer className="tw-footer tw-on-dark">
       <div className="tw-footer__inner">
@@ -29,7 +31,7 @@ export default function Footer({ footer }: { footer: SiteContent["footer"] }) {
             <a href="/privacy-policy">Privacy Policy</a>
           </li>
         </ul>
-        <a href="#hero" className="tw-footer__top">
+        <a href={topHref} className="tw-footer__top">
           <ArrowUpIcon className="tw-footer__top-icon" />
           {footer.backToTopLabel}
         </a>

@@ -17,8 +17,8 @@ import { figureLabels, type FigureLabel } from "@/content/figure-labels";
  * per search" followed by loose text.
  *
  * No hooks and no "use client": it renders inside server and client components
- * alike. The chip uses the encoding of the metric band and the KPI cards: cyan =
- * shipped, amber = target, machine face.
+ * alike. The chip, .tw-figchip, is styled in app/techwix.css with the encoding
+ * of the metric chips: teal = shipped, amber = target, following the band.
  */
 export default function FigureText({ text }: { text: string }) {
   const hits: { at: number; label: FigureLabel }[] = [];
@@ -41,18 +41,10 @@ export default function FigureText({ text }: { text: string }) {
         </span>,
       );
     } else {
-      const shipped = label.status === "shipped";
       out.push(
         <span key={`f${at}`} data-status={label.status}>
           {label.text}
-          <span
-            className={`ml-1.5 inline-block rounded-full border px-2 py-px align-[0.08em] text-[10px] leading-[1.5] ${
-              shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
-            }`}
-            style={{ fontFamily: "var(--font-machine)" }}
-          >
-            {label.status}
-          </span>
+          <span className="tw-figchip">{label.status}</span>
         </span>,
       );
     }

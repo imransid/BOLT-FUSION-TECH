@@ -1,14 +1,19 @@
-"use client";
-
-import Image from "next/image";
-import Link from "next/link";
-import { reveal } from "@/lib/reveal";
-
 import FigureText from "@/components/FigureText";
-import { LogoMark } from "@/components/Logo";
+import LogoMarkSvg from "@/components/LogoMarkSvg";
+import Button from "@/components/techwix/Button";
+import CtaPanel from "@/components/techwix/CtaPanel";
+import { ArrowUpRightIcon, CheckIcon } from "@/components/techwix/icons";
+import { KpiCard, KpiGrid } from "@/components/techwix/Kpi";
+import LaneCard from "@/components/techwix/LaneCard";
+import PageBanner from "@/components/techwix/PageBanner";
+import SectionHeading from "@/components/techwix/SectionHeading";
+import Shot from "@/components/techwix/Shot";
+import Summary from "@/components/techwix/Summary";
+import { Bullets, Tags } from "@/components/techwix/Tags";
 
 /* -------------------------------------------------------------------------- */
-/*  Content                                                                    */
+/*  Content — approved; the words and the section order are locked            */
+/*  (CLAUDE.md, "Do not touch"). Restyled on 2026-09-15 with no copy change.   */
 /* -------------------------------------------------------------------------- */
 
 const SITE_URL = "https://www.warmchats.com/";
@@ -165,498 +170,211 @@ const OUTCOMES = [
 ] as const;
 
 /* -------------------------------------------------------------------------- */
-/*  Helpers                                                                     */
-/* -------------------------------------------------------------------------- */
-
-const linkFocus =
-  "outline-none focus-visible:ring-2 focus-visible:ring-amber-200/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a0a]";
-
-/* Visible in the server HTML; motion is CSS (see lib/reveal.ts). */
-function rise(delay: number) {
-  return reveal({ y: 14, duration: 0.48, delay });
-}
-
-function Divider() {
-  return (
-    <div className="my-12 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent md:my-14" />
-  );
-}
-
-function Eyebrow({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold text-white/55">
-      {children}
-    </p>
-  );
-}
-
-function Heading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      className="mt-2.5 text-[clamp(1.35rem,2.8vw,1.9rem)] font-medium leading-snug tracking-[-0.02em] text-white"
-      style={{ fontFamily: "var(--font-heading)" }}
-    >
-      {children}
-    </h2>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Component                                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The WarmChats write-up, /work/warmchats, in the site's design. Its sections,
+ * in the approved order: the page header (back to all work) and hero, the
+ * executive summary, the numbers, how it works, the product, architecture and
+ * stack, the outcome, the call to action and the sign-off. The site's header
+ * and footer come from the page (components/techwix/PageShell).
+ */
 export default function WarmChatsCaseStudy() {
-
   return (
-    <div className="min-h-dvh bg-[#0a0a0a] text-white">
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-black/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 md:px-8">
-          <Link
-            href="/"
-            prefetch={false}
-            className={`flex items-center gap-2 text-white/75 transition-colors hover:text-white ${linkFocus} rounded-lg`}
-          >
-            <LogoMark className="h-7 w-7 opacity-90" />
-            <span className="text-sm">Bolt Fusion Tech</span>
-          </Link>
-          <Link
-            href="/#recent-work"
-            prefetch={false}
-            className="text-sm text-white/50 transition-colors hover:text-white"
-          >
-            ← All work
-          </Link>
-        </div>
-      </header>
-
-      {/* Ambient glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[520px] bg-[radial-gradient(60%_60%_at_50%_0%,rgba(251,191,36,0.10),transparent_70%)]"
-      />
-
-      <main className="relative mx-auto max-w-[1180px] px-5 py-14 md:px-8 md:py-20">
-        {/* ---------------------------------------------------------------- */}
-        {/* HERO                                                             */}
-        {/* ---------------------------------------------------------------- */}
-        <section className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
-          <div className="flex min-w-0 flex-col gap-7">
-            <span
-              {...rise(0)}
-              className="inline-flex w-fit items-center gap-2 rounded-full border border-amber-200/25 bg-amber-300/10 px-3.5 py-1.5 text-[11px] font-medium text-amber-200/90"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-              {HERO.badge}
-            </span>
-
-            <h1
-              {...rise(0.04)}
-              className="text-balance text-[clamp(2.1rem,5vw,3.5rem)] font-normal leading-[1.04] tracking-[-0.032em] text-white"
-              style={{ fontFamily: "var(--font-heading)" }}
-            >
-              {HERO.title}
-            </h1>
-
-            <p
-              {...rise(0.07)}
-              className="max-w-[58ch] text-[15px] leading-[1.7] text-white/65 md:text-base"
-            >
-              <FigureText text={HERO.subtitle} />
-            </p>
-
-            <p
-              {...rise(0.09)}
-              className="text-[11px] leading-relaxed tracking-[0.04em] text-white/55 md:text-[12px]"
-            >
-              {HERO.accentLine}
-            </p>
-
-            <div {...rise(0.12)} className="flex flex-wrap gap-3 pt-1">
-              <a
-                href={SITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-amber-200/40 bg-amber-300 px-6 py-3 text-[13px] font-semibold text-[#1a1d22] transition-all duration-300 hover:bg-amber-200/95 ${linkFocus}`}
-              >
-                Visit warmchats.com
-                <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor" aria-hidden>
-                  <path d="M200,64V168a8,8,0,0,1-16,0V83.31L69.66,197.66a8,8,0,0,1-11.32-11.32L172.69,72H88a8,8,0,0,1,0-16H192A8,8,0,0,1,200,64Z" />
-                </svg>
-              </a>
-              <Link
-                href="/#schedule"
-                prefetch={false}
-                className={`inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/14 bg-white/[0.03] px-6 py-3 text-[13px] font-medium text-white transition-all duration-300 hover:border-white/25 hover:bg-white/[0.06] ${linkFocus}`}
-              >
-                Book a similar build
-              </Link>
-            </div>
-          </div>
-
-          <figure
-            {...rise(0.06)}
-            className="relative overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)]"
-          >
-            <div className="relative aspect-[16/10] w-full">
-              <Image
-                src={HERO.image}
-                alt={HERO.imageAlt}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 560px"
-                className="object-cover object-top"
-              />
-            </div>
-            <figcaption className="flex items-center justify-between gap-3 border-t border-white/10 bg-black/75 px-4 py-3 backdrop-blur-md">
-              <span className="text-[10px] font-medium text-white/55">
-                Live product
-              </span>
-              <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
-                warmchats.com
-              </span>
+    <>
+      {/* HERO — the page header's "All work" link sits at the top of the panel */}
+      <PageBanner
+        titleId="warmchats-title"
+        title={HERO.title}
+        eyebrow={HERO.badge}
+        back={{ href: "/#recent-work", label: "← All work" }}
+        aside={
+          <Shot src={HERO.image} alt={HERO.imageAlt} sizes="(min-width: 1025px) 560px, 100vw" priority>
+            <figcaption className="tw-shot__caption tw-shot__caption--bar">
+              <span>Live product</span>
+              <span>warmchats.com</span>
             </figcaption>
-          </figure>
-        </section>
-
-        {/* Executive summary */}
-        <div
-          {...rise(0.1)}
-          className="mt-12 rounded-2xl border border-white/[0.07] bg-black/25 py-6 pl-6 pr-5 md:mt-14 md:py-7 md:pl-7 md:pr-6"
-        >
-          <div className="border-l-2 border-amber-300/40 pl-5">
-            <Eyebrow>Executive summary</Eyebrow>
-            <p className="mt-3 max-w-[78ch] text-pretty text-sm leading-[1.75] text-white/78 md:text-[15px]">
-              <FigureText text={HERO.summary} />
-            </p>
-          </div>
-        </div>
-
-        <Divider />
-
-        {/* ---------------------------------------------------------------- */}
-        {/* KPIS                                                             */}
-        {/* ---------------------------------------------------------------- */}
-        <Eyebrow>By the numbers</Eyebrow>
-        <Heading>Built for speed-to-lead.</Heading>
-        <div
-          {...rise(0.06)}
-          className="mt-8 grid grid-cols-1 divide-y divide-white/[0.07] rounded-2xl border border-white/[0.07] bg-black/28 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
-        >
-          {KPIS.map((k) => {
-            /* Same encoding as the homepage metric band: cyan = shipped, amber = target. */
-            const shipped = k.status === "shipped";
-            return (
-              <article key={k.label} className="flex flex-col px-5 py-6 sm:px-6 lg:px-7">
-                <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                  <span
-                    className={`text-[1.9rem] font-light leading-none md:text-[2.1rem] ${shipped ? "text-cyan-200/95" : "text-amber-300"}`}
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
-                    {k.value}
-                  </span>
-                  <span
-                    className={`text-[10px] font-medium ${shipped ? "text-cyan-100/60" : "text-amber-100/60"}`}
-                  >
-                    {k.label}
-                  </span>
-                </div>
-                <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p>
-                <p className="mt-auto pt-3">
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-xs ${
-                      shipped ? "border-cyan-200/45 text-cyan-200" : "border-amber-300/50 text-amber-300"
-                    }`}
-                    style={{ fontFamily: "var(--font-machine)" }}
-                  >
-                    {k.status}
-                  </span>
-                </p>
-              </article>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-white/55">
-          Figures reflect the WarmChats product&apos;s automation targets.
+          </Shot>
+        }
+      >
+        <p className="tw-banner__lead">
+          <FigureText text={HERO.subtitle} />
         </p>
-
-        <Divider />
-
-        {/* ---------------------------------------------------------------- */}
-        {/* PIPELINE                                                         */}
-        {/* ---------------------------------------------------------------- */}
-        <Eyebrow>How it works</Eyebrow>
-        <Heading>Qualify → Engage → Book, fully automated.</Heading>
-        <p className="mt-3 max-w-[68ch] text-sm leading-[1.7] text-white/58 md:text-[15px]">
-          Each new lead flows through three AI stages. The model handles the
-          conversation end-to-end and only escalates to the agent when it genuinely
-          matters.
+        <p className="tw-banner__meta">{HERO.accentLine}</p>
+        <p className="tw-actions">
+          <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="tw-btn tw-btn--light">
+            Visit warmchats.com
+            <ArrowUpRightIcon className="tw-btn__icon" />
+          </a>
+          <Button href="/#schedule" variant="secondary">
+            Book a similar build
+          </Button>
         </p>
+      </PageBanner>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3 md:items-stretch">
-          {LANES.map((lane, i) => (
-            <article
-              key={lane.step}
-              {...rise(0.05 + i * 0.05)}
-              className="flex h-full flex-col rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-6 md:p-7"
-              style={{ boxShadow: "12px 20px 28px -16px rgba(0,0,0,0.5)" }}
-            >
-              <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/[0.09] bg-white/[0.03] text-[13px] font-semibold text-white/90">
-                  {lane.step}
-                </span>
-                <span className="rounded-full border border-amber-200/25 bg-amber-300/10 px-3 py-1 text-[10px] font-medium text-amber-200/85">
-                  {lane.tag}
-                </span>
-              </div>
-              <h3
-                className="mt-5 text-lg font-medium leading-snug text-white"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {lane.title}
-              </h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-white/52"><FigureText text={lane.summary} /></p>
-              <ul className="mt-5 flex flex-1 flex-col gap-2.5 text-[13px] leading-relaxed text-white/66">
-                {lane.bullets.map((b) => (
-                  <li key={b} className="flex gap-2.5">
-                    <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-amber-300/60" aria-hidden />
-                    <span><FigureText text={b} /></span>
-                  </li>
+      {/* EXECUTIVE SUMMARY and KPIS */}
+      <div className="tw-band tw-band--white">
+        <div className="tw-band__inner">
+          <Summary label="Executive summary">
+            <FigureText text={HERO.summary} />
+          </Summary>
+
+          <section className="tw-band__inner" aria-labelledby="warmchats-numbers">
+            <SectionHeading id="warmchats-numbers" eyebrow="By the numbers" title="Built for speed-to-lead." />
+            <div className="tw-group">
+              <KpiGrid cols={3} labelledBy="warmchats-numbers">
+                {KPIS.map((k) => (
+                  <KpiCard key={k.label} value={k.value} label={k.label} hint={k.hint} status={k.status} />
                 ))}
-              </ul>
-              <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] font-semibold text-white/55">
-                {lane.foot}
-              </p>
-            </article>
-          ))}
+              </KpiGrid>
+              <p className="tw-note">Figures reflect the WarmChats product&apos;s automation targets.</p>
+            </div>
+          </section>
         </div>
+      </div>
 
-        <Divider />
-
-        {/* ---------------------------------------------------------------- */}
-        {/* PRODUCT GALLERY                                                  */}
-        {/* ---------------------------------------------------------------- */}
-        <Eyebrow>The product</Eyebrow>
-        <Heading>Inside WarmChats.</Heading>
-        <p className="mt-3 max-w-[68ch] text-sm leading-[1.7] text-white/58 md:text-[15px]">
-          The agent-facing product — a live operator dashboard, self-routing AI
-          workflows, and a two-minute setup — all running on the platform we built.
-        </p>
-
-        <div className="mt-8 flex flex-col gap-5">
-          {/* Featured screen */}
-          {GALLERY.filter((g) => g.featured).map((g) => (
-            <figure
-              key={g.src}
-              {...rise(0.05)}
-              className="overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_40px_90px_-40px_rgba(0,0,0,0.9)]"
-            >
-              <div className="relative aspect-[16/9] w-full">
-                <Image
-                  src={g.src}
-                  alt={g.title}
-                  fill
-                  sizes="(max-width: 1180px) 100vw, 1116px"
-                  className="object-cover object-top"
-                />
-              </div>
-              <figcaption className="flex flex-col gap-1 border-t border-white/10 bg-black/75 px-5 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <span className="text-[13px] font-medium text-white/85">{g.title}</span>
-                <span className="max-w-[62ch] text-[12px] leading-relaxed text-white/50">
-                  {g.caption}
-                </span>
-              </figcaption>
-            </figure>
-          ))}
-
-          {/* Secondary screens */}
-          <div className="grid gap-5 md:grid-cols-2">
-            {GALLERY.filter((g) => !g.featured).map((g, i) => (
-              <figure
-                key={g.src}
-                {...rise(0.06 + i * 0.05)}
-                className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-black shadow-[0_30px_72px_-40px_rgba(0,0,0,0.85)]"
-              >
-                <div className="relative aspect-[16/10] w-full">
-                  <Image
-                    src={g.src}
-                    alt={g.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 546px"
-                    className="object-cover object-top"
-                  />
-                </div>
-                <figcaption className="flex flex-1 flex-col gap-1 border-t border-white/10 bg-black/75 px-5 py-4 backdrop-blur-md">
-                  <span className="text-[13px] font-medium text-white/85">{g.title}</span>
-                  <span className="text-[12px] leading-relaxed text-white/50">{g.caption}</span>
-                </figcaption>
-              </figure>
+      {/* PIPELINE */}
+      <section className="tw-band tw-band--light" aria-labelledby="warmchats-how">
+        <div className="tw-band__inner">
+          <SectionHeading
+            id="warmchats-how"
+            eyebrow="How it works"
+            title="Qualify → Engage → Book, fully automated."
+            intro="Each new lead flows through three AI stages. The model handles the conversation end-to-end and only escalates to the agent when it genuinely matters."
+          />
+          <ul className="tw-lanes">
+            {LANES.map((lane) => (
+              <LaneCard
+                key={lane.step}
+                marker={lane.step}
+                tag={lane.tag}
+                title={lane.title}
+                summary={<FigureText text={lane.summary} />}
+                bullets={lane.bullets}
+                foot={lane.foot}
+              />
             ))}
-          </div>
+          </ul>
         </div>
+      </section>
 
-        <Divider />
-
-        {/* ---------------------------------------------------------------- */}
-        {/* ARCHITECTURE + STACK                                             */}
-        {/* ---------------------------------------------------------------- */}
-        <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-14">
-          {/* Architecture */}
-          <div>
-            <Eyebrow>Architecture</Eyebrow>
-            <Heading>Event-driven microservices.</Heading>
-            <p className="mt-3 text-sm leading-[1.7] text-white/58 md:text-[15px]">
-              Independent services communicate over events and webhooks, so the AI
-              workload scales separately from the API and the web app — and a slow
-              third-party never blocks a reply.
-            </p>
-
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              {SERVICES.map((svc, i) => (
-                <div
-                  key={svc.name}
-                  {...rise(0.04 + i * 0.03)}
-                  className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
-                >
-                  <h3
-                    className="text-[15px] font-medium text-white"
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
-                    {svc.name}
-                  </h3>
-                  <p className="mt-1 text-[11px] tracking-[0.04em] text-amber-200/70">
-                    {svc.tagline}
-                  </p>
-                  <ul className="mt-3.5 space-y-2 text-[12px] leading-relaxed text-white/60 md:text-[13px]">
-                    {svc.bullets.map((b) => (
-                      <li key={b} className="flex gap-2">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-white/25" aria-hidden />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+      {/* PRODUCT GALLERY */}
+      <section className="tw-band tw-band--white" aria-labelledby="warmchats-product">
+        <div className="tw-band__inner">
+          <SectionHeading
+            id="warmchats-product"
+            eyebrow="The product"
+            title="Inside WarmChats."
+            intro="The agent-facing product — a live operator dashboard, self-routing AI workflows, and a two-minute setup — all running on the platform we built."
+          />
+          <div className="tw-col">
+            {GALLERY.filter((g) => g.featured).map((g) => (
+              <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 1300px) 1300px, 100vw" wide reveal>
+                <figcaption className="tw-shot__caption tw-shot__caption--row">
+                  <span className="tw-shot__title">{g.title}</span>
+                  <span className="tw-shot__text">{g.caption}</span>
+                </figcaption>
+              </Shot>
+            ))}
+            <div className="tw-grid-2">
+              {GALLERY.filter((g) => !g.featured).map((g) => (
+                <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 768px) 50vw, 100vw" reveal>
+                  <figcaption className="tw-shot__caption">
+                    <span className="tw-shot__title">{g.title}</span>
+                    <span className="tw-shot__text">{g.caption}</span>
+                  </figcaption>
+                </Shot>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
 
-            <div {...rise(0.08)} className="mt-6">
-              <Eyebrow>Engineering patterns</Eyebrow>
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {PATTERNS.map((p) => (
-                  <li
-                    key={p}
-                    className="rounded-md border border-white/[0.1] bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium leading-snug text-white/76"
-                  >
-                    {p}
-                  </li>
+      {/* ARCHITECTURE + STACK */}
+      <div className="tw-band tw-band--light">
+        <div className="tw-band__inner">
+          <div className="tw-split">
+            <section className="tw-col tw-col--loose" aria-labelledby="warmchats-architecture">
+              <SectionHeading
+                id="warmchats-architecture"
+                eyebrow="Architecture"
+                title="Event-driven microservices."
+                intro="Independent services communicate over events and webhooks, so the AI workload scales separately from the API and the web app — and a slow third-party never blocks a reply."
+              />
+              <div className="tw-grid-2">
+                {SERVICES.map((svc) => (
+                  <div key={svc.name} className="tw-card" data-tw-reveal>
+                    <h3 className="tw-title-wrapper">
+                      <span className="title-small">{svc.name}</span>
+                    </h3>
+                    <p className="tw-card__tagline">{svc.tagline}</p>
+                    <Bullets items={svc.bullets} />
+                  </div>
                 ))}
-              </ul>
-            </div>
-          </div>
+              </div>
+              <div className="tw-group" data-tw-reveal>
+                <p className="tw-card__label">Engineering patterns</p>
+                <Tags items={PATTERNS} />
+              </div>
+            </section>
 
-          {/* Stack */}
-          <div>
-            <Eyebrow>Technology</Eyebrow>
-            <Heading>The full stack.</Heading>
-            <div className="mt-7 flex flex-col gap-4">
-              {STACK_GROUPS.map((g, gi) => (
-                <div
-                  key={g.title}
-                  {...rise(0.04 + gi * 0.03)}
-                  className="rounded-2xl border border-white/[0.07] bg-[#0d0d0d]/90 p-5 md:p-6"
-                >
-                  <p className="text-[10px] font-semibold text-white/55">
-                    {g.title}
-                  </p>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {g.items.map((item) => (
-                      <li
-                        key={item}
-                        className="rounded-md border border-white/[0.08] bg-black/35 px-3 py-1.5 text-[12px] leading-snug text-white/78 md:text-[13px]"
-                      >
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            <section className="tw-col tw-col--loose" aria-labelledby="warmchats-stack">
+              <SectionHeading id="warmchats-stack" eyebrow="Technology" title="The full stack." />
+              <div className="tw-col">
+                {STACK_GROUPS.map((g) => (
+                  <div key={g.title} className="tw-card" data-tw-reveal>
+                    <p className="tw-card__label">{g.title}</p>
+                    <Tags items={g.items} />
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         </div>
+      </div>
 
-        <Divider />
+      {/* OUTCOMES */}
+      <section className="tw-band tw-band--white" aria-labelledby="warmchats-outcome">
+        <div className="tw-band__inner">
+          <SectionHeading id="warmchats-outcome" eyebrow="Outcome" title="What the business gets." />
+          <ul className="tw-grid-2">
+            {OUTCOMES.map((o) => (
+              <li key={o} className="tw-card tw-card--soft tw-outcome" data-tw-reveal>
+                <span className="tw-outcome__icon" aria-hidden="true">
+                  <CheckIcon />
+                </span>
+                <p>{o}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* OUTCOMES                                                         */}
-        {/* ---------------------------------------------------------------- */}
-        <Eyebrow>Outcome</Eyebrow>
-        <Heading>What the business gets.</Heading>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {OUTCOMES.map((o, i) => (
-            <div
-              key={o}
-              {...rise(0.04 + i * 0.04)}
-              className="flex gap-4 rounded-2xl border border-white/[0.07] bg-black/28 p-5 md:p-6"
-            >
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-cyan-200/30 bg-cyan-300/10 text-cyan-200/90" aria-hidden>
-                <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor">
-                  <path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z" />
-                </svg>
+      {/* CTA, then the sign-off that closed the page */}
+      <CtaPanel
+        titleId="warmchats-cta"
+        title="Want an AI that books appointments while you sleep?"
+        text="We design and ship product-grade AI systems — from lead capture to booking — on architecture built to scale. Let's talk about yours."
+        after={
+          <div className="tw-signoff">
+            <a href="/" className="tw-signoff__brand">
+              <span className="tw-logo__tile" aria-hidden="true">
+                <LogoMarkSvg uid="wc-signoff-mark" />
               </span>
-              <p className="text-[14px] leading-relaxed text-white/72 md:text-[15px]">{o}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ---------------------------------------------------------------- */}
-        {/* CTA                                                              */}
-        {/* ---------------------------------------------------------------- */}
-        <section
-          {...rise(0.04)}
-          className="mt-14 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.012] px-6 py-10 text-center shadow-[0_28px_72px_-36px_rgba(0,0,0,0.88)] md:px-10 md:py-12"
-        >
-          <h2
-            className="mx-auto max-w-[24ch] text-balance text-[clamp(1.5rem,3.4vw,2.2rem)] font-normal leading-[1.1] tracking-[-0.02em] text-white"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Want an AI that books appointments while you sleep?
-          </h2>
-          <p className="mx-auto mt-4 max-w-[52ch] text-sm leading-relaxed text-white/60 md:text-[15px]">
-            We design and ship product-grade AI systems — from lead capture to
-            booking — on architecture built to scale. Let&apos;s talk about yours.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/#schedule"
-              prefetch={false}
-              className={`inline-flex min-h-[44px] items-center justify-center rounded-full border border-amber-200/40 bg-amber-300 px-7 py-3 text-[13px] font-semibold text-[#1a1d22] transition-all duration-300 hover:bg-amber-200/95 ${linkFocus}`}
-            >
-              Book a strategy call
-            </Link>
-            <Link
-              href="/#recent-work"
-              prefetch={false}
-              className={`inline-flex min-h-[44px] items-center justify-center rounded-lg border border-white/14 bg-white/[0.03] px-7 py-3 text-[13px] font-medium text-white transition-all duration-300 hover:border-white/25 hover:bg-white/[0.06] ${linkFocus}`}
-            >
-              See more work
-            </Link>
+              Bolt Fusion Tech
+            </a>
+            <p className="tw-signoff__line">Custom software &amp; product engineering in the UK, Malaysia and Bangladesh</p>
           </div>
-        </section>
-
-        <footer className="mt-12 flex flex-col items-center gap-2 border-t border-white/5 pt-8 text-center">
-          <Link
-            href="/"
-            prefetch={false}
-            className="flex items-center gap-2 text-sm text-white/55 transition-colors hover:text-white"
-          >
-            <LogoMark className="h-6 w-6 opacity-80" />
-            Bolt Fusion Tech
-          </Link>
-          <p className="text-xs text-white/55">
-            Custom software &amp; product engineering in the UK, Malaysia and Bangladesh
-          </p>
-        </footer>
-      </main>
-    </div>
+        }
+      >
+        <Button href="/#schedule" variant="light">
+          Book a strategy call
+        </Button>
+        <Button href="/#recent-work" variant="secondary">
+          See more work
+        </Button>
+      </CtaPanel>
+    </>
   );
 }

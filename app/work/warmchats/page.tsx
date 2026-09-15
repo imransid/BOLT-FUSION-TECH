@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
-import { getSiteUrl } from "@/lib/site-url";
 import WarmChatsCaseStudy from "@/components/case-studies/WarmChatsCaseStudy";
+import PageShell from "@/components/techwix/PageShell";
+import { getSiteUrl } from "@/lib/site-url";
 
 const TITLE = "WarmChats — AI that books real estate appointments";
 const DESCRIPTION =
@@ -65,7 +66,9 @@ export default function WarmChatsCaseStudyPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <WarmChatsCaseStudy />
+      <PageShell current="/work">
+        <WarmChatsCaseStudy />
+      </PageShell>
     </>
   );
 }
