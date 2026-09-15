@@ -5,12 +5,20 @@ import type { SiteContent } from "@/content/site-schema";
 import Button from "./Button";
 import StatusChip from "./StatusChip";
 
-/* The frame's width: at >=1025px the column beside the text (half the panel's
-   content box, capped by its 1300px); below that the panel's full width, less
-   the hero's 15px gutters. Phones take the 660 frame at every density through
-   the first two sources: the field is a soft cloud of points, and 660 pixels
-   are plenty for it at 390 — 33KB of AVIF on the LCP path instead of 87KB. */
-const SIZES = "(min-width: 1025px) min(630px, calc(50vw - 110px)), calc(100vw - 30px)";
+/* The width the poster is DRAWN at, which is what `sizes` must say. The image
+   covers its frame, so a frame taller than the image's 660:560 is filled by
+   height, and the drawn width is the frame's height x 1.18, not its width.
+   At >=1025px the frame is 560px tall (app/techwix.css) and never wider than
+   630px, so the poster is drawn exactly 660px wide at every desktop width:
+   the 660 file at DPR 1, the 1320 file at DPR 2, neither stretched. (H4,
+   2026-09-15: the frame used to take the text column's full height — 832px at
+   1025 — and `sizes` said its width, so the browser fetched a file about 1.5x
+   too small at every DPR.) From 768 to 1024 the 2:1 frame is filled by width:
+   the panel's full width, less the hero's 15px gutters. Phones take the 660
+   file at every density through the first two sources: the field is a soft
+   cloud of points, and 660 pixels are plenty for it at 390 — 33KB of AVIF on
+   the LCP path instead of 87KB. */
+const SIZES = "(min-width: 1025px) 660px, calc(100vw - 30px)";
 
 /**
  * §1 — the hero: the clone's rounded navy panel with COPY.md §1 and the proof

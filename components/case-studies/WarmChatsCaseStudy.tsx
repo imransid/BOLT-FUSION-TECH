@@ -20,7 +20,7 @@ import { Bullets, Tags } from "@/components/techwix/Tags";
 
 const SITE_URL = "https://www.warmchats.com/";
 
-const HERO = {
+export const HERO = {
   badge: "Case study: real estate AI",
   title: "WarmChats: turn new real estate leads into booked appointments — automatically.",
   subtitle:

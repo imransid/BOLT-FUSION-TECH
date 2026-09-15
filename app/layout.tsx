@@ -91,7 +91,14 @@ export default function RootLayout({
     >
       {/* .tw-root: the design's scope, kept for the rules that style shared
           pieces such as <FigureText>'s chip. */}
-      <body className="tw-root">{children}</body>
+      <body className="tw-root">
+        {/* The first stop on every page (A6): past the header's nine stops to
+            the page's own content. Hidden until focused. Interface text. */}
+        <a className="tw-skip" href="#main">
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

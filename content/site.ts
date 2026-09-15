@@ -201,6 +201,7 @@ const raw: SiteContent = {
           "Conversational discovery with explicit routing, predictable AI unit economics, and latency targets suitable for high-volume production traffic.",
         stack: "Multi-tenant microservice, tiered search, observable by design",
         alt: "Case study visual for AI-assisted restaurant search and discovery product",
+        imgClass: "object-left",
         state: "published",
         href: "/work/restaurant-search",
         ctaLabel: "Read the case study",

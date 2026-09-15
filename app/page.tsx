@@ -111,7 +111,7 @@ export default function Home() {
         }}
       />
       <Header navbar={content.navbar} />
-      <main>
+      <main id="main">
         {sectionOrder.map((id) =>
           isVisible(sectionVisibility, id) ? <Fragment key={id}>{renderSection(id, content)}</Fragment> : null,
         )}

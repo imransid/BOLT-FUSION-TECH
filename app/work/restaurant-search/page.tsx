@@ -54,13 +54,15 @@ export default async function RestaurantSearchPage() {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: site },
-          { "@type": "ListItem", position: 2, name: "Work", item: new URL("/work", site).toString() },
+          /* /work is "Case studies" everywhere: its own breadcrumb, the nav link (A7) */
+          { "@type": "ListItem", position: 2, name: "Case studies", item: new URL("/work", site).toString() },
           { "@type": "ListItem", position: 3, name: "Restaurant search case study", item: url },
         ],
       },
       {
         "@type": "Article",
-        headline: TITLE,
+        /* the page's h1, which is what the page says it is (A7) */
+        headline: siteContent.caseStudy.title,
         description: DESCRIPTION,
         image: new URL("/projects/case-fnb-smart-search.png", site).toString(),
         mainEntityOfPage: url,

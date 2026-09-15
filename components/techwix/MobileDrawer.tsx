@@ -103,20 +103,24 @@ export default function MobileDrawer({ links, ctaLabel, ctaHref }: { links: read
             <CloseIcon />
           </button>
         </div>
-        <ul className="tw-drawer__menu">
-          {links.map((l) => (
-            <li key={l.label}>
-              <a href={l.href} className="tw-drawer__link" onClick={() => close(false)}>
-                {l.label}
+        {/* The navigation landmark below 1200px, where the header's own <nav>
+            is not rendered (A5). */}
+        <nav aria-label="Primary">
+          <ul className="tw-drawer__menu">
+            {links.map((l) => (
+              <li key={l.label}>
+                <a href={l.href} className="tw-drawer__link" onClick={() => close(false)}>
+                  {l.label}
+                </a>
+              </li>
+            ))}
+            <li>
+              <a href={ctaHref} className="tw-drawer__link" onClick={() => close(false)}>
+                {ctaLabel}
               </a>
             </li>
-          ))}
-          <li>
-            <a href={ctaHref} className="tw-drawer__link" onClick={() => close(false)}>
-              {ctaLabel}
-            </a>
-          </li>
-        </ul>
+          </ul>
+        </nav>
       </div>
     </>
   );
@@ -134,7 +138,10 @@ export default function MobileDrawer({ links, ctaLabel, ctaHref }: { links: read
       >
         <MenuIcon />
       </button>
-      {mounted ? createPortal(panel, document.body) : null}
+      {/* In the server HTML the drawer is rendered here, hidden, so the
+          burger's aria-controls names an element before any script runs (A4);
+          after mount it moves to <body>. */}
+      {mounted ? createPortal(panel, document.body) : panel}
     </>
   );
 }

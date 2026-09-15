@@ -17,7 +17,7 @@ export default function PageShell({ children, current }: { children: ReactNode; 
   return (
     <>
       <Header navbar={navbar} base="/" current={current} />
-      <main>{children}</main>
+      <main id="main">{children}</main>
       <Footer footer={footer} topHref="#masthead" />
       <RevealObserver />
     </>

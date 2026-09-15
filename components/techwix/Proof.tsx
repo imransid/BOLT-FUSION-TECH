@@ -8,6 +8,11 @@ import { ArrowUpRightIcon } from "./icons";
 
 type Work = SiteContent["recentWorks"]["items"][number];
 
+/* Which edge of a screenshot the card keeps when it crops (`imgClass` in
+   content/site.ts): the top of a landing page, the left of a search screen
+   whose words start at its left edge (A8 — it was cut mid-word). */
+const IMG_ANCHOR: Record<string, "top" | "left"> = { "object-[center_top]": "top", "object-left": "left" };
+
 /**
  * §2 — the two write-ups, straight after the hero, so the figures above have
  * somewhere to be verified. The clone's case-study row: a larger card beside a
@@ -29,7 +34,7 @@ function Card({ p, large }: { p: Work; large: boolean }) {
           alt={p.alt}
           fill
           sizes={large ? "(max-width: 767px) 100vw, 55vw" : "(max-width: 767px) 100vw, 45vw"}
-          className={`tw-case__img${p.imgClass ? " tw-case__img--top" : ""}`}
+          className={`tw-case__img${p.imgClass ? ` tw-case__img--${IMG_ANCHOR[p.imgClass] ?? "top"}` : ""}`}
         />
       ) : null}
       <div className="tw-case__body">

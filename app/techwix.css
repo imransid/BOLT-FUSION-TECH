@@ -167,6 +167,26 @@ summary {
   display: none !important;
 }
 
+/* The skip link (A6): off screen until it takes focus, then over the header. */
+.tw-skip {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  z-index: 200;
+  padding: 10px 18px;
+  border-radius: 5px;
+  background-color: #ffffff;
+  box-shadow: 0 6px 20px -8px rgba(1, 7, 23, 0.45);
+  font-weight: 600;
+  color: var(--ink);
+  transform: translateY(-200%);
+}
+
+.tw-skip:focus,
+.tw-skip:focus-visible {
+  transform: none;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -822,6 +842,20 @@ summary {
   object-position: 50% 50%;
 }
 
+/* H4 (2026-09-15): beside the text, the frame is 560px tall, centred on the
+   column, instead of the column's full height — 832px at 1025, where covering
+   it stretched the poster about 1.5x at every DPR. At 560 the poster is drawn
+   exactly 660px wide at every desktop width (the frame is never wider than
+   630), which is what `sizes` in Hero.tsx says: the 660 file at DPR 1, the
+   1320 at DPR 2, neither stretched. The frame stays the LCP element — 399x560
+   at 1025 against the h1's 145,000px² (verify-site check 28). */
+@media (min-width: 1025px) {
+  .tw-hero__field {
+    align-self: center;
+    height: 560px;
+  }
+}
+
 @media (max-width: 1024px) {
   .tw-hero__inner {
     flex-direction: column;
@@ -1048,6 +1082,12 @@ summary {
   object-position: 50% 0;
 }
 
+/* A8: a screenshot whose words start at its left edge is cropped from the
+   right, never mid-word on the left */
+.tw-case__img--left {
+  object-position: 0 50%;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .tw-case__img { transition: transform 0.7s ease-out; }
   .tw-case:hover .tw-case__img { transform: scale(1.03); }
@@ -1178,11 +1218,25 @@ summary {
   color: #ffffff;
 }
 
+/* A9 (2026-09-15): on a phone the table is wider than the screen and scrolls,
+   and nothing said so — it was cut mid-word. A shadow now sits on each side
+   that has more to scroll to: two white covers that scroll WITH the content
+   (local) hide the two shadows fixed to the edges (scroll) whenever that end
+   is reached. */
 .tw-table {
   overflow-x: auto;
   border: 1px solid var(--hairline);
   border-radius: 15px;
   background-color: #ffffff;
+  background-image:
+    linear-gradient(to right, #ffffff 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to left, #ffffff 30%, rgba(255, 255, 255, 0)),
+    radial-gradient(farthest-side at 0 50%, rgba(1, 7, 23, 0.16), rgba(1, 7, 23, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(1, 7, 23, 0.16), rgba(1, 7, 23, 0));
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 16px 100%, 16px 100%;
+  background-attachment: local, local, scroll, scroll;
   scroll-margin-top: 24px;
 }
 
