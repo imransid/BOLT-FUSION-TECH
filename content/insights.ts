@@ -34,6 +34,7 @@ const raw: unknown = [
     slug: "routing-ai-so-most-queries-never-reach-a-model",
     title: "Routing AI so most queries never reach a model",
     dek: "How a multi-tenant restaurant search we delivered decides, before any paid inference, whether a query needs a model at all, and what that does to latency and cost.",
+    description: "How a multi-tenant restaurant search decides, before any paid inference, whether a query needs a model at all, and what that does to latency and cost.",
     datePublished: "2026-09-16",
     author: "Bolt Fusion Tech engineering",
     capabilities: ["ai", "software", "cloud"],
@@ -213,6 +214,8 @@ const raw: unknown = [
           "The app returning to the foreground.",
           "A drain shortly after a cold start.",
         ],
+        /* the five triggers follow the paragraph that announces them */
+        place: { bullets: 2 },
         diagram: {
           caption: "One sale, from the till to the server and back.",
           steps: [
@@ -283,6 +286,7 @@ const raw: unknown = [
     slug: "multi-tenant-saas-on-postgres-row-level-security",
     title: "Multi-tenant SaaS on Postgres row-level security",
     dek: "Why we put tenant isolation in the database rather than the application, the details in the policy that make it fail closed, and how we test it against a real Postgres.",
+    description: "Why we put tenant isolation in the database rather than the application, what makes the policy fail closed, and how we test it against a real Postgres.",
     datePublished: "2026-09-16",
     author: "Bolt Fusion Tech engineering",
     capabilities: ["software", "cloud"],
@@ -309,6 +313,8 @@ const raw: unknown = [
           "force row level security. A table’s owner bypasses its policies unless force is set, and migrations run as the owner.",
           "The cast to uuid makes a malformed tenant id an error, never a string comparison, which is why the application validates the id’s shape before Postgres ever sees it.",
         ],
+        /* the policy itself, then the five details in it */
+        place: { code: 1 },
         code: {
           language: "sql",
           caption: "The standard tenant policy, as the platform’s migrations apply it to a business table.",
@@ -390,6 +396,8 @@ const raw: unknown = [
           "The owner does not bypass its own policy, and the force flag is checked in the catalogue, not inferred from behaviour.",
           "The tenant-id validator rejects anything that is not a UUID before set_config sees it.",
         ],
+        /* "The cases it asserts:" is followed by the cases */
+        place: { bullets: 1 },
       },
       {
         heading: "When a shared schema is the right call",

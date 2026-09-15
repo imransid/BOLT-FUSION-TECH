@@ -104,7 +104,9 @@ const labels: FigureLabel[] = [
      span around part of the label would open a gap inside it. */
   { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
   { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
-  { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients the hero commits to: a contract term, not a performance claim" },
+  /* /about's how-we-work tagline and terms, and the Organization description:
+     the same term, for the same reason. */
+  { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients that we commit to: a contract term, not a performance claim" },
   { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
   { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },
   { text: "30\u2011minute intro call", exempt: "The length of the intro call offered above the booking calendar: a meeting length, not a performance claim" },
