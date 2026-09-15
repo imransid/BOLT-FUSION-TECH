@@ -30,7 +30,11 @@ returns as plain three.js, with no React Three Fiber.
   on every page, the homepage and /contact. `app/techwix.css` is the older design,
   still under /work, both write-ups, the privacy policy and the 404; the next
   wave moves each page onto `app/site.css` and then deletes it. Both load from
-  `app/layout.tsx`, techwix first.
+  `app/layout.tsx`, techwix first. It cannot move to the older pages alone: the
+  404 boundary is bundled into every route's layout tree, so a stylesheet
+  `components/techwix/PageShell.tsx` imports reaches every page anyway — as a
+  SECOND render-blocking file, which measured worse on the homepage's LCP than
+  one combined file (check 29, 2026-09-16: 1,352ms against 1,204ms).
 - **three.js returns** (owner, 2026-09-16; *Decided 2026-09-16*): for the hero's
   3D scene only — three.js core, dynamically imported after load, desktop-only,
   at most 180KB gzipped. The 3D wave adds the dependency and rewrites *The hero
@@ -456,7 +460,7 @@ are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3
   hero's H1 is upper case by `text-transform` over its sentence-case source
   ("Build what's next."), set as two lines that never break inside ("Build" /
   "what's next.") so check 7 never sees an orphaned last word:
-  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(56px, 5vw, 72px)` from it,
+  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(52px, 4.6vw, 68px)` from it,
   sized so the longer line fits its column at every width. Negative tracking is
   not tracked-out capitals.
 - H2s are 48px from 768 and 32 below; Barlow 600 for H3 and H4 (22 and 18);
@@ -655,8 +659,13 @@ at the end, which means nobody has decided yet.
   Decided 2026-09-11 for the homepage rebuild; amended by the owner on
   2026-09-16 (*Decided 2026-09-16*). The canvas over the poster is now the
   three.js scene (*Motion, as built*), and the field is the right column of the
-  graphite hero (`components/site/home/Hero.tsx`): a 560px-tall frame, at most
-  660px wide, on the ground colour, with the poster drawn 660px wide. The
+  graphite hero (`components/site/home/Hero.tsx`): 660 x 560 from 1280px up —
+  the width `sizes` declares and the scene is composed for, so the canvas and
+  the poster frame the scene identically — and as wide as the grid allows below
+  that (536px at 1100, 467px at 1025), where `cover` crops it. It has NO border
+  and NO radius, only the ground colour, so the scene reads as part of the page
+  and not a card (the coordinator's review, 2026-09-16); nothing is painted over
+  the poster. The
   poster `<img data-hero-poster>` is the final LCP entry,
   measured with a buffered `PerformanceObserver` on a fresh, unscrolled load —
   verify-site check 28 asserts it by identity at 390 (also as a phone), 768,
@@ -665,8 +674,8 @@ at the end, which means nobody has decided yet.
   everything in the field but a canvas with the field's box, and clear of the
   h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
   poster hidden, faded, covered or moved after it painted). At ≥1025px the
-  field is 560px tall and at most 660px wide (narrower between about 1025 and
-  1300px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
+  field is 560px tall and at most 660px wide (narrower between 1025 and
+  1280px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
   at the column's full height, 832px at 1025, the browser once fetched a file
   about 1.5x too small at every DPR); below that it sits above the text.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
@@ -836,8 +845,9 @@ robots.txt must not name them, and no page may link to them.
 **The redesign and the suite (2026-09-16).** The suite wave updates checks 7,
 12, 25, 28, 29, 30 and 31 and adds the "Schedule a Call" check (the redesign
 spec, §8), with the inventory changes taken from the homepage agent's MOVES.md.
-Until it lands, check 28 fails on purpose (the proof strip left the hero for the
-engineering stories) and check 30 fails on the old homepage's inventory.
+Until it lands, four checks fail on purpose: 28 (the proof strip left the hero
+for the engineering stories), 30 (the old homepage's inventory), and — since the
+scene merged — 25 and 31, which still ban WebGL and three.js anywhere.
 
 **Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too), read at
 1440, 390, 768 and 1024, sits in a `data-status` wrapper holding that one figure and its OWN
@@ -1020,6 +1030,16 @@ fresh context, with no input and no scroll.
 | CLS | 0.00 — printed to three places, failing at 0.005 |
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
 | the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
+
+**The homepage, measured 2026-09-16** (check 29 against `next start`, the median
+of three runs, on a machine also building elsewhere — its load average is printed
+beside each run). Mobile lab: **LCP 892–916ms**, the poster the LCP element in
+every run, FCP equal to it, blocking 31–43ms, **CLS 0.000**. Desktop: LCP
+72–264ms, CLS 0.000. Initial JavaScript 145.4KB gzipped. Two figures worth
+watching: the homepage's HTML is 42KB gzipped (161KB of it the RSC payload, which
+repeats the markup) against production's 22KB, and desktop blocking time is
+0.9–1.9s, which is the scene's chunk parsing and starting after load — outside
+check 29's budget, which measures blocking on the mobile profile only.
 
 **The scene chunk, measured 2026-09-16.** One Turbopack chunk holds three.js
 0.186.0 and the scene: 555KB raw, **137.9KB on the wire**. That is the
