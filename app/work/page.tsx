@@ -138,8 +138,13 @@ export default function WorkIndexPage() {
                         <ul className="tw-metrics">
                           {rowMetrics.map((m) => (
                             <li key={m.id} className="tw-metric">
-                              <span className="tw-metric__value">{m.value}</span>
-                              <StatusChip status={m.status} />
+                              {/* The figure and its own chip, in a box that names
+                                  the metric (content/metrics.ts): a chip in the
+                                  label is the label's figure's, never this one's. */}
+                              <span className="tw-metric__fig" data-metric={m.id}>
+                                <span className="tw-metric__value">{m.value}</span>
+                                <StatusChip status={m.status} />
+                              </span>
                               <span className="tw-metric__label">
                                 <FigureText text={m.label} />
                               </span>

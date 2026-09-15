@@ -30,6 +30,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import pngjs from "pngjs";
 
@@ -215,6 +216,29 @@ function imageSize(buf) {
   return null;
 }
 const pngSize = (buf) => { const s = imageSize(buf); return s && s.type === "png" ? s : null; };
+
+/* The content the site is built from, read from THIS checkout — as check 30
+   reads its inventory: a content/*.ts file transpiled with the checkout's own
+   TypeScript, its schema and zod imports stubbed (the values, not their
+   validation; `next build` validates). Checks 8 and 28 compare what a page
+   shows with what these files say (K1, K11). Throws if the file cannot be read
+   or imports anything else — the caller reports that as a failure. */
+const contentCache = new Map();
+function loadContent(rel) {
+  if (!contentCache.has(rel)) {
+    const ts = require("typescript");
+    const file = fileURLToPath(new URL(`../${rel}`, import.meta.url));
+    const js = ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+    const mod = { exports: {} };
+    const stubs = { "./schema": { parseContent: (_schema, data) => data, metricSchema: null }, zod: { z: new Proxy({}, { get: () => () => null }) } };
+    new Function("module", "exports", "require", js)(mod, mod.exports, (id) => {
+      if (id in stubs) return stubs[id];
+      throw new Error(`it imports "${id}", which the suite does not load`);
+    });
+    contentCache.set(rel, mod.exports);
+  }
+  return contentCache.get(rel);
+}
 const short = (u) => String(u).replace(BASE, "").replace(/^https?:\/\/(www\.)?boltfusiontech\.com/, "").slice(0, 90);
 
 /* ~670 px/s: 100px every 150ms, the pace of a mouse wheel, measured to reveal
@@ -319,20 +343,30 @@ async function visitHero(browser) {
     if (subtext) roles.push({ role: "subtext", text: n(subtext.textContent) });
     if (cta) roles.push({ role: "call to action", text: n(cta.textContent), href: cta.getAttribute("href") });
     const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|%|x|×|k|K|M|B)?\s*\+?$/;
+    /* K1: the figure's status is ITS chip — in its [data-metric] row when the
+       card names one, and never a chip inside another figure's [data-status]
+       wrapper (the label's "80% of traffic" carries a target chip of its own).
+       The label is the card's text less the figure, every chip and the link. */
+    const isChip = (e) => !e.children.length && /^(shipped|target)$/i.test(n(e.textContent));
     const proof = items.map((li, i) => {
       const leaves = [...li.querySelectorAll("*")].filter((e) => !e.children.length);
       const fig = leaves.find((e) => FIG.test(n(e.textContent)));
-      const status = leaves.find((e) => /^(shipped|target)$/i.test(n(e.textContent)));
+      const owner = fig?.closest("[data-metric]");
+      const scope = owner && li.contains(owner) ? [...owner.querySelectorAll("*")] : leaves;
+      const status = scope.find((e) => isChip(e) && (!e.closest("[data-status]") || (fig && e.closest("[data-status]").contains(fig))));
       const link = li.querySelector("a[href]");
-      let label = n(li.textContent);
-      for (const part of [fig, status, link]) if (part) label = n(label.replace(n(part.textContent), ""));
+      const skip = [fig, link, ...leaves.filter(isChip)].filter(Boolean);
+      const parts = [];
+      const w = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+      for (let t = w.nextNode(); t; t = w.nextNode()) if (!skip.some((s) => s.contains(t))) parts.push(t.textContent);
       return {
         i: i + 1,
         text: n(li.textContent),
         figure: fig ? n(fig.textContent) : null,
         status: status ? n(status.textContent).toLowerCase() : null,
+        metric: owner ? owner.getAttribute("data-metric") : null,
         link: link ? { href: link.getAttribute("href"), text: n(link.textContent) } : null,
-        label,
+        label: n(parts.join(" ")).replace(/\s+([,.;:])/g, "$1"),
       };
     });
     const posters = [...served.querySelectorAll("img[data-hero-poster]")].map((img) => ({
@@ -858,13 +892,28 @@ function readFigures() {
     (el) => !el.closest("script, style, noscript, template, svg, title") && isFigure(el) && ![...el.children].some((c) => c.textContent.trim() === el.textContent.trim()) && visible(el),
   );
   const isLabel = (e) => /^(shipped|target)$/i.test(e.textContent.trim()) && visible(e);
+  /* K1 (2026-09-15): a chip inside a [data-status] wrapper is THAT wrapper's
+     figure's chip. The first proof card's label, "Search response, 80% of
+     traffic", carries its own target chip for the 80%; the old rule took the
+     first chip in the card and read the <100ms as target — and still did with
+     the <100ms's own shipped chip deleted. A standalone figure's chip is never
+     inside another figure's wrapper. */
+  const ownedBy = (chip, fig) => {
+    const w = chip.closest("[data-status]");
+    return !w || w.contains(fig);
+  };
   const standalone = new Map();
   for (const el of figureEls) {
     /* the metric's own container: the largest ancestor holding no other figure */
     let box = el;
     while (box.parentElement && box.parentElement !== document.body && figureEls.filter((f) => box.parentElement.contains(f)).length === 1) box = box.parentElement;
-    const label = isLabel(box) ? box : [...box.querySelectorAll("*")].find(isLabel);
-    standalone.set(el, { label: label ? label.textContent.trim().toLowerCase() : null, context: snip(box, 90) });
+    /* an explicit owner wins: the [data-metric] box around the figure (its row
+       in the proof strip, on /work) holds the figure's own chip, and only a
+       chip there counts */
+    const owner = el.closest("[data-metric]");
+    const scope = owner && box.contains(owner) ? owner : box;
+    const label = [scope, ...scope.querySelectorAll("*")].find((e) => isLabel(e) && ownedBy(e, el));
+    standalone.set(el, { label: label ? label.textContent.trim().toLowerCase() : null, context: snip(box, 90), owner: owner ? owner.getAttribute("data-metric") : null });
   }
 
   /* ── the visible text, as runs: one per block box. An inline element (a link,
@@ -2840,7 +2889,39 @@ check(
         if (miss.length) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") has no ${miss.join(", no ")}`);
         if (!h.sItems.includes(p.text)) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") is not in the served HTML as the page shows it — it arrives or changes by script`);
         else if (p.link && !h.sLinks.some((l) => l.href === p.link.href && l.text === p.link.text)) F.push(`/: proof figure ${p.i}'s source link (${p.link.href}) is not in the served HTML`);
-        else I.push(`/: served — proof ${p.i}: ${p.figure} · "${p.label}" · ${p.status} · "${p.link?.text}" -> ${p.link?.href}`);
+        else I.push(`/: served — proof ${p.i}${p.metric ? ` [${p.metric}]` : ""}: ${p.figure} · "${p.label}" · ${p.status} · "${p.link?.text}" -> ${p.link?.href}`);
+      }
+      /* K1: each proof card says what content/metrics.ts says — its figure,
+         label, status and source — and names its metric, so its chip has an
+         explicit owner. A card that reads "target" for a shipped metric fails
+         here even when check 8 is satisfied by some chip. */
+      let metricsTs = null;
+      try {
+        metricsTs = loadContent("content/metrics.ts").metrics;
+        if (!Array.isArray(metricsTs) || !metricsTs.length) throw new Error("it exports no metrics");
+      } catch (e) {
+        F.push(`/: content/metrics.ts could not be read (${e.message}) — the proof strip cannot be compared with it; unsure is a failure`);
+        metricsTs = null;
+      }
+      if (metricsTs) {
+        for (const p of h.proof) {
+          const m = (p.metric && metricsTs.find((x) => x.id === p.metric)) || metricsTs.find((x) => x.value === p.figure);
+          if (!m) {
+            F.push(`/: proof figure ${p.i} (${p.figure}${p.metric ? `, data-metric="${p.metric}"` : ""}) is not an entry in content/metrics.ts`);
+            continue;
+          }
+          if (!p.metric) F.push(`/: proof figure ${p.i} (${p.figure}) sits in no [data-metric] row — its chip has no explicit owner`);
+          else if (p.metric !== m.id) F.push(`/: proof figure ${p.i} names data-metric="${p.metric}", which content/metrics.ts does not have`);
+          if (p.status !== m.status) F.push(`/: proof figure ${p.i} (${m.id}, ${m.value}) reads its status as "${p.status ?? "none"}" — content/metrics.ts says "${m.status}"`);
+          const diffs = [];
+          if (p.figure !== m.value) diffs.push(`the figure reads "${p.figure}", metrics.ts "${m.value}"`);
+          if (p.label !== m.label) diffs.push(`the label reads "${p.label}", metrics.ts "${m.label}"`);
+          if (m.href && p.link?.href !== m.href) diffs.push(`the source links to ${p.link?.href ?? "nothing"}, metrics.ts ${m.href}`);
+          if (m.source && (p.link?.text ?? "") !== m.source) diffs.push(`the source reads "${p.link?.text ?? ""}", metrics.ts "${m.source}"`);
+          if (diffs.length) F.push(`/: proof figure ${p.i} (${m.id}) disagrees with content/metrics.ts — ${diffs.join("; ")}`);
+        }
+        for (const m of metricsTs) if (!h.proof.some((p) => p.metric === m.id || p.figure === m.value)) F.push(`/: content/metrics.ts "${m.id}" (${m.value}) is not in the hero's proof strip`);
+        I.push(`/: the proof strip compared with content/metrics.ts — ${metricsTs.length} metric(s)`);
       }
       /* (c) the poster's own attributes, as served */
       if (h.posters.length !== 1) F.push(`/: the served HTML has ${h.posters.length} img[data-hero-poster] — there is exactly one poster`);

@@ -89,17 +89,28 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
 
         {/* The proof strip: the four figures from content/metrics.ts. Each one
             shows its label, its shipped/target status and a link to the
-            write-up it comes from — nothing here is a bare number. */}
+            write-up it comes from — nothing here is a bare number.
+
+            The figure's chip sits BESIDE the figure, in the figure's own row,
+            and that row names the metric it shows (`data-metric`, the id in
+            content/metrics.ts): the chip's owner is explicit. A label can
+            carry a figure of its own with its own chip ("Search response, 80%
+            of traffic" — the 80% is a target, the <100ms is shipped), and a
+            chip down in the label or beside the source would read as the
+            figure's. verify-site checks 8 and 28 attribute the figure's
+            status from this row only. */}
         <div className="tw-proof">
           <ul className="tw-proof__list">
             {metrics.map((m) => (
               <li key={m.id} className="tw-proof__item">
-                <p className="tw-proof__figure">{m.value}</p>
+                <p className="tw-proof__top" data-metric={m.id}>
+                  <span className="tw-proof__figure">{m.value}</span>
+                  <StatusChip status={m.status} />
+                </p>
                 <p className="tw-proof__label">
                   <FigureText text={m.label} />
                 </p>
                 <p className="tw-proof__meta">
-                  <StatusChip status={m.status} />
                   {m.href ? (
                     <a className="tw-proof__source" href={m.href}>
                       {m.source}

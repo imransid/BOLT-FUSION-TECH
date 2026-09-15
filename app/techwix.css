@@ -887,6 +887,15 @@ summary {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* The figure and its own chip, side by side: the chip reads as the figure's,
+   and a chip inside the label below reads as the label's figure's. */
+.tw-proof__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
 .tw-proof__figure {
   font-family: var(--font-heading);
   font-size: 44px;
@@ -2190,6 +2199,13 @@ summary {
 
 .tw-metric {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.tw-metric__fig {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 12px;
