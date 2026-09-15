@@ -85,7 +85,8 @@ function Story({ w, flip }: { w: Work; flip: boolean }) {
 
 /**
  * Engineering stories (SPEC §5): the two write-ups, the links to all work, and
- * the proof strip — "Measured on systems we shipped, each labelled". The
+ * the proof strip — "From systems we shipped." (SPEC §8b.1; never "Measured
+ * on…": ~$0.001 is a target). The
  * section keeps `id="recent-work"`, the anchor the write-ups' "← All work"
  * link has always pointed at.
  */
