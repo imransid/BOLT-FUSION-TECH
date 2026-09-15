@@ -2,6 +2,15 @@
 
 Placeholders in `{{ }}` need a decision before build. Do not invent values for them.
 
+**Restyled with no copy change, 2026-09-15.** The owner moved the whole site to
+the new design. /work, both write-ups (/work/warmchats and
+/work/restaurant-search), /privacy-policy and the 404 were restyled; not a word
+of their copy changed, and /work/warmchats keeps its section order.
+`scripts/content-inventory.json` (verify-site check 30) holds every required
+word on every page. The 404's words are the ones it always showed — "404" and
+"This page could not be found." — and its one button reuses the privacy
+policy's "← Back to boltfusiontech.com". The share image kept its words too.
+
 ---
 
 ## 1. Hero
