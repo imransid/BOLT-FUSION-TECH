@@ -20,7 +20,13 @@ const subscribeNothing = () => () => {};
  * scene stops its loop on `paused: true` and resumes on `false`; the CSS drift
  * reads the attribute.
  *
- * In the server HTML it is `hidden`: without JavaScript it could do nothing.
+ * Until it mounts it is invisible (`data-ready` is absent): without JavaScript
+ * it could do nothing. It is never `hidden` or display:none-then-shown, because
+ * a control that appears after hydration below the poster pushes the headline
+ * down — a layout shift (verify-site check 29 measured 0.024 on phones). Below
+ * 1025px its row is in the server HTML's layout from the start; at >=1025px it
+ * sits out of flow under the field (app/site.css), so the 3D scene turning it on
+ * moves nothing either.
  */
 export default function MotionToggle() {
   const [paused, setPaused] = useState(false);
@@ -40,7 +46,14 @@ export default function MotionToggle() {
   };
 
   return (
-    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle} hidden={!mounted}>
+    <button
+      type="button"
+      className="bf-motion-toggle"
+      aria-pressed={paused}
+      onClick={toggle}
+      data-ready={mounted ? "" : undefined}
+      tabIndex={mounted ? undefined : -1}
+    >
       <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
         {paused ? <path d="M4 2.5v11L13 8z" fill="currentColor" /> : <path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor" />}
       </svg>

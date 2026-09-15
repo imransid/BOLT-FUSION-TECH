@@ -163,24 +163,26 @@ function AiRouter({ c }: { c: Capability }) {
   );
 }
 
-/* 3 — ERP: nine modules on a ring around one shared data core. */
+/* 3 — ERP: nine modules on a ring around one shared data core. The ring is an
+   ellipse, wider than tall, so the pills at the top and bottom never touch. */
 function ModuleRing({ c }: { c: Capability }) {
   const cx = 240;
   const cy = 176;
-  const r = 128;
+  const rx = 160;
+  const ry = 128;
   const modules = c.whatWeBuild.map((b) => b.label);
   const step = 360 / modules.length;
   return (
     <Svg id="module-ring" capability={c}>
-      <circle cx={cx} cy={cy} r={r} className="dg-ring" />
+      <ellipse cx={cx} cy={cy} rx={rx} ry={ry} className="dg-ring" />
       {modules.map((label, i) => {
         const a = ((-90 + i * step) * Math.PI) / 180;
-        const x = cx + r * Math.cos(a);
-        const y = cy + r * Math.sin(a);
+        const x = cx + rx * Math.cos(a);
+        const y = cy + ry * Math.sin(a);
         const sx = cx + 56 * Math.cos(a);
         const sy = cy + 56 * Math.sin(a);
-        const ex = cx + (r - 17) * Math.cos(a);
-        const ey = cy + (r - 17) * Math.sin(a);
+        const ex = cx + (rx - 20) * Math.cos(a);
+        const ey = cy + (ry - 17) * Math.sin(a);
         const w = Math.round(label.length * 8.4 + 22);
         return (
           <g key={label}>

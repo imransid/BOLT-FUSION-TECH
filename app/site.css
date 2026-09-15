@@ -58,11 +58,63 @@
   --bf-header-h: 72px;
 }
 
-/* ── Base (identical to app/techwix.css's, so nothing moves) ─────────────── */
+/* ── Base (identical to app/techwix.css's, so nothing moves) ─────────────── *
+   app/techwix.css loads before this file until the next wave deletes it; these
+   rules say what its base says, so the redesign carries the site on its own
+   once it goes. */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Jost 16px, no margin, antialiased; font-synthesis off, so a missing face
+   renders visibly wrong instead of plausibly wrong. */
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--bf-font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+}
+
+/* <main> takes the height the header and footer leave, so on a short page
+   the footer sits at the bottom of the window (as app/techwix.css did). */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+summary {
+  cursor: pointer;
+}
+
+b,
+strong {
+  font-weight: 600;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -810,7 +862,26 @@ html[data-motion="paused"] .bf-hero__poster {
 }
 
 /* The pause control (components/site/MotionToggle): shown only where
-   something in the hero moves — the drift, or the live 3D scene. */
+   something in the hero moves — the drift, or the live 3D scene. Below 1025px
+   its row is laid out from the first paint and the button is invisible until
+   it mounts, so it never shifts the headline; at >=1025px it sits out of flow
+   under the field, in the hero's bottom padding. */
+.bf-hero__media {
+  position: relative;
+}
+
+.bf-motion-toggle:not([data-ready]) {
+  visibility: hidden;
+}
+
+@media (min-width: 1025px) {
+  .bf-motion-toggle {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+  }
+}
+
 .bf-motion-toggle {
   display: none;
   align-self: flex-end;
@@ -1083,11 +1154,12 @@ html[data-motion="paused"] .bf-hero__poster {
   .bf-build--modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* The marker, then one label box: a long label wraps inside its box, beside
+   the marker, never under it. */
 .bf-build > li {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 10px;
+  align-items: baseline;
+  gap: 10px;
   padding: 11px 0;
   border-bottom: 1px solid var(--bf-line);
   font-size: 15px;
@@ -1101,6 +1173,15 @@ html[data-motion="paused"] .bf-hero__poster {
   width: 5px;
   height: 5px;
   background-color: var(--bf-steel);
+  transform: translateY(-2px);
+}
+
+.bf-build__label {
+  min-width: 0;
+}
+
+.bf-build__label .bf-tier {
+  margin-left: 8px;
 }
 
 .bf-evidence {
@@ -1344,6 +1425,12 @@ html[data-motion="paused"] .bf-hero__poster {
   font-family: var(--bf-font-heading);
   font-size: 22px;
   font-weight: 600;
+}
+
+/* On a phone the 1000-unit map is drawn about 330px wide: larger labels in
+   map units keep them near 11px. The lists beside the map carry the words. */
+@media (max-width: 767px) {
+  .bf-map__label { font-size: 34px; }
 }
 
 .bf-map__link.is-dim,

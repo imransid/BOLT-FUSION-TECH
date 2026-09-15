@@ -8,15 +8,18 @@ import { getSiteUrl } from "@/lib/site-url";
 
 /* The site's one root layout, for every page and the 404.
 
-   Two stylesheets, in this order, until the inner pages move (owner's
-   redesign, 2026-09-16):
-     app/techwix.css  the older design, still under /work, both write-ups, the
-                      privacy policy and the 404 — the next wave moves each onto
-                      the redesign and then deletes this file;
-     app/site.css     the redesign: the graphite ground, the type ramp, the
-                      shell (header, drawer, footer) on every page, the homepage
-                      and /contact. Every class is `bf-`, so nothing in it
-                      restyles the older pages' bodies.
+   The stylesheet is app/site.css: the redesign (owner, 2026-09-16) — the
+   graphite ground, the type ramp, the shell (header, drawer, footer) on every
+   page, the homepage and /contact. Every class is `bf-`, so nothing in it
+   restyles the older pages' bodies.
+
+   The older design's app/techwix.css is loaded here too, first, until the next
+   wave moves the pages still in it (/work, both write-ups, the privacy policy,
+   the 404) and deletes it. It cannot move to those pages alone: the 404
+   boundary is bundled into every route's layout tree, so a stylesheet the 404
+   imports reaches every page anyway — as a SECOND render-blocking file, which
+   measured worse on the homepage's LCP than one combined file (verify-site
+   check 29, 2026-09-16: 1,352ms against 1,204ms).
 
    The faces: Barlow 500 / 600 / 700 and Jost 400 / 500 / 600 — no new family
    (SPEC §3; verify-site checks 2 and 31). All normal, no italic. A weight
