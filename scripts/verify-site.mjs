@@ -877,6 +877,80 @@ function readFigures() {
     const s = el?.closest?.("section[id], [id]");
     return s ? `#${s.id}` : "";
   };
+  const tagOf = (el) => `${el.localName}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/)[0]}` : ""}`;
+
+  /* ── a chip counts only if a sighted reader can see it: not display:none,
+     visibility:hidden, opacity 0, clipped to nothing (sr-only), or zero size —
+     and (K8, 2026-09-15) on the page, big enough to read through whatever
+     clips it, and not under something else. A chip at left:-9999px, a 3×3px
+     chip with overflow:hidden and a chip under an opaque cover all passed. The
+     same test applies to a standalone metric's chip and an in-sentence one. ── */
+  /* the cover test hit-tests the page: nothing may dodge it with pointer-events:none */
+  const pe = document.createElement("style");
+  pe.textContent = "*,*::before,*::after{pointer-events:auto!important}";
+  document.head.append(pe);
+  const textRect = (chip) => {
+    const t = document.createRange();
+    t.selectNodeContents(chip);
+    return t.getBoundingClientRect();
+  };
+  /* what sits on top of the chip's text, if anything: the chip is brought into
+     view (with any scroll container around it) and hit-tested at three points
+     along its text; its own boxes and its ancestors' do not count */
+  const coveredBy = (chip) => {
+    const x0 = scrollX;
+    const y0 = scrollY;
+    chip.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    const b = textRect(chip);
+    let hit = "";
+    for (const f of [0.5, 0.2, 0.8]) {
+      const top = document.elementFromPoint(b.left + b.width * f, b.top + b.height / 2);
+      if (!top || top === chip || chip.contains(top) || top.contains(chip)) continue;
+      hit = tagOf(top);
+      break;
+    }
+    window.scrollTo({ left: x0, top: y0, behavior: "instant" });
+    return hit;
+  };
+  const hiddenWhy = (chip, wrap) => {
+    const chain = [];
+    for (let a = chip; a && a !== wrap.parentElement; a = a.parentElement) chain.push(a);
+    const none = chain.find((a) => cs(a).display === "none");
+    if (none) return none === chip ? "display:none" : `display:none on the ${none.localName} around it`;
+    if (cs(chip).visibility !== "visible") return `visibility:${cs(chip).visibility}`;
+    if (opacity(chip) < 0.05) return "opacity 0";
+    if (chain.some((a) => /^inset\(\s*(50|[5-9]\d|100)%/.test(cs(a).clipPath) || /^rect\(\s*0(px)?[\s,]+0(px)?[\s,]+0(px)?[\s,]+0(px)?\s*\)$/.test(cs(a).clip)))
+      return "clipped to nothing — screen-reader-only (sr-only)";
+    const r = chip.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return `zero size — a ${+r.width.toFixed(1)}×${+r.height.toFixed(1)}px box`;
+    const b = textRect(chip);
+    if (b.width < 2 || b.height < 2 || parseFloat(cs(chip).fontSize) < 4) return "its text has no size";
+    /* on the page: inside the document's own area, not pushed off an edge */
+    const pw = document.documentElement.scrollWidth;
+    const ph = document.documentElement.scrollHeight;
+    const L = b.left + scrollX;
+    const T = b.top + scrollY;
+    if (L + b.width <= 0 || T + b.height <= 0 || L >= pw || T >= ph) return `off the page — its text sits at x ${Math.round(L)}, y ${Math.round(T)}, outside the ${pw}×${ph}px document`;
+    /* big enough: what shows of its text through every box that clips it (its
+       own included, up to the root — a box that scrolls does not clip) */
+    let v = { l: b.left, t: b.top, r: b.right, b: b.bottom };
+    let clipper = null;
+    for (let a = chip; a && a !== document.documentElement; a = a.parentElement) {
+      if (!/hidden|clip/.test(`${cs(a).overflowX} ${cs(a).overflowY}`)) continue;
+      const q = a.getBoundingClientRect();
+      const n = { l: Math.max(v.l, q.left), t: Math.max(v.t, q.top), r: Math.min(v.r, q.right), b: Math.min(v.b, q.bottom) };
+      if ((n.r - n.l) * (n.b - n.t) < (v.r - v.l) * (v.b - v.t) - 0.5) clipper = clipper || a;
+      v = n;
+    }
+    const vw = Math.max(0, v.r - v.l);
+    const vh = Math.max(0, v.b - v.t);
+    if (vw < 1 || vh < 1) return `clipped away by an overflow:hidden ${clipper ? tagOf(clipper) : "box"}`;
+    if (vw * vh < 0.8 * b.width * b.height || vh < 6)
+      return `too small to read — ${+vw.toFixed(1)}×${+vh.toFixed(1)}px of its ${+b.width.toFixed(1)}×${+b.height.toFixed(1)}px text shows through the ${clipper ? tagOf(clipper) : "box"} that clips it`;
+    const cover = coveredBy(chip);
+    if (cover) return `covered — ${cover} sits on top of it`;
+    return "";
+  };
   /* EDGE marks where an atomic box sat inside a run: nothing matches across it, and it prints as nothing */
   const EDGE = "\u200B";
   const oneLine = (s) => s.replaceAll(EDGE, "").replace(/\s+/g, " ").trim();
@@ -912,8 +986,16 @@ function readFigures() {
        chip there counts */
     const owner = el.closest("[data-metric]");
     const scope = owner && box.contains(owner) ? owner : box;
-    const label = [scope, ...scope.querySelectorAll("*")].find((e) => isLabel(e) && ownedBy(e, el));
-    standalone.set(el, { label: label ? label.textContent.trim().toLowerCase() : null, context: snip(box, 90), owner: owner ? owner.getAttribute("data-metric") : null });
+    /* its chip, seen by the same test as an in-sentence chip (K8) */
+    const cands = [scope, ...scope.querySelectorAll("*")].filter((e) => /^(shipped|target)$/i.test(e.textContent.trim()) && ownedBy(e, el));
+    const why = cands.map((c) => hiddenWhy(c, document.body));
+    const k = why.indexOf("");
+    standalone.set(el, {
+      label: k >= 0 ? cands[k].textContent.trim().toLowerCase() : null,
+      hidden: k < 0 && cands.length ? why[0] : "",
+      context: snip(box, 90),
+      owner: owner ? owner.getAttribute("data-metric") : null,
+    });
   }
 
   /* ── the visible text, as runs: one per block box. An inline element (a link,
@@ -1077,31 +1159,6 @@ function readFigures() {
     return { nodes, common, text: oneLine(f.run.text.slice(f.start, f.end)), sentence: sentenceOf(f.run, f.start, f.end), section: sectionOf(common) };
   });
 
-  /* ── a chip counts only if a sighted reader can see it: not display:none,
-     visibility:hidden, opacity 0, clipped to nothing (sr-only), or zero size ── */
-  const hiddenWhy = (chip, wrap) => {
-    const chain = [];
-    for (let a = chip; a && a !== wrap.parentElement; a = a.parentElement) chain.push(a);
-    const none = chain.find((a) => cs(a).display === "none");
-    if (none) return none === chip ? "display:none" : `display:none on the ${none.localName} around it`;
-    if (cs(chip).visibility !== "visible") return `visibility:${cs(chip).visibility}`;
-    if (opacity(chip) < 0.05) return "opacity 0";
-    if (chain.some((a) => /^inset\(\s*(50|[5-9]\d|100)%/.test(cs(a).clipPath) || /^rect\(\s*0(px)?[\s,]+0(px)?[\s,]+0(px)?[\s,]+0(px)?\s*\)$/.test(cs(a).clip)))
-      return "clipped to nothing — screen-reader-only (sr-only)";
-    const r = chip.getBoundingClientRect();
-    if (r.width < 2 || r.height < 2) return `zero size — a ${+r.width.toFixed(1)}×${+r.height.toFixed(1)}px box`;
-    for (const a of chain.slice(1)) {
-      if (!/hidden|clip/.test(cs(a).overflowX + cs(a).overflowY)) continue;
-      const q = a.getBoundingClientRect();
-      if (Math.min(r.right, q.right) - Math.max(r.left, q.left) < 2 || Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top) < 2) return `clipped away by an overflow:hidden ${a.localName} inside the wrapper`;
-    }
-    const t = document.createRange();
-    t.selectNodeContents(chip);
-    const b = t.getBoundingClientRect();
-    if (b.width < 2 || b.height < 2 || parseFloat(cs(chip).fontSize) < 4) return "its text has no size";
-    return "";
-  };
-
   /* ── an exemption states a real reason and covers exactly one figure ───── */
   const PLACEHOLDER = new Set(["reason", "todo", "tbd", "n/a", "na", "-", "x", "ok", "exempt", "none"]);
   const reasonProblem = (raw) => {
@@ -1114,12 +1171,22 @@ function readFigures() {
     if (r.length < 12) return `its reason "${r}" is under 12 characters`;
     return "";
   };
+  /* K2 (2026-09-15): whether a wrapper is in force is judged by the figures it
+     covers — a figure is found only where its own text shows — never by the
+     wrapper's box. A display:contents wrapper has no box of its own, and the
+     old test (a box, then the count) skipped it: one exemption or one chip over
+     two figures passed, which reopened the category exemption. */
+  const hasShownText = (el) => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) if (/\S/.test(t.textContent) && shown(t)) return true;
+    return false;
+  };
   const exemptions = [...document.querySelectorAll("[data-figure-exempt]")].map((el) => {
     const reason = el.getAttribute("data-figure-exempt");
-    const rendered = el.getClientRects().length > 0 && cs(el).visibility === "visible" && opacity(el) >= 0.05;
     const covers = figures.filter((x) => x.nodes.every((n) => el.contains(n)));
+    const rendered = covers.length > 0 || hasShownText(el);
     const problems = [reasonProblem(reason)];
-    if (rendered && covers.length !== 1)
+    if (covers.length > 1 || (rendered && covers.length === 0))
       problems.push(covers.length ? `it covers ${covers.length} figures — an exemption covers exactly one` : "it covers no figure — an exemption covers exactly one");
     return { el, reason, rendered, problem: problems.filter(Boolean).join("; "), figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
   });
@@ -1127,9 +1194,8 @@ function readFigures() {
   /* ── a data-status wrapper labels exactly one figure: one chip over two would
      let a second, unmeasured figure borrow the first one's status ────────── */
   const statusWraps = [...document.querySelectorAll("[data-status]")].map((el) => {
-    const rendered = el.getClientRects().length > 0 && cs(el).visibility === "visible" && opacity(el) >= 0.05;
     const covers = figures.filter((x) => x.nodes.every((n) => el.contains(n)));
-    const problem = rendered && covers.length > 1 ? `it covers ${covers.length} figures with one chip — a chip labels exactly one` : "";
+    const problem = covers.length > 1 ? `it covers ${covers.length} figures with one chip — a chip labels exactly one` : "";
     return { el, status: el.getAttribute("data-status"), problem, figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
   });
 
@@ -1158,10 +1224,11 @@ function readFigures() {
     if (ex && !ex.problem) return { ...out, verdict: "exempt", reason: ex.reason.trim() };
     if (ex) return { ...out, verdict: "exempt-invalid" }; /* reported once, on the exemption */
     if (wrapWhy) return { ...out, verdict: "fail", why: wrapWhy };
-    if (std) return { ...out, verdict: "standalone-unlabelled", context: std.context };
+    if (std) return { ...out, verdict: "standalone-unlabelled", context: std.context, why: std.hidden };
     return { ...out, verdict: "fail", why: "has no shipped/target label" };
   });
 
+  pe.remove();
   return {
     tokens,
     statusWraps: statusWraps.filter((w) => w.problem).map((w) => ({ status: w.status, problem: w.problem, figures: w.figures, sentence: w.sentence, section: w.section })),
@@ -1313,7 +1380,7 @@ async function measureContrast(page) {
     }
     return out;
   });
-  await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}[data-vs-pinned]{visibility:hidden!important}" });
+  const captureStyle = await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}[data-vs-pinned]{visibility:hidden!important}" });
   await page.waitForTimeout(250);
   const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
   /* where each element is now: anything that moved or was replaced between the
@@ -1325,6 +1392,9 @@ async function measureContrast(page) {
       return { x: r.left + scrollX, y: r.top + scrollY };
     }),
   );
+  /* the page as it was: check 8 reads it next, and hit-tests its chips */
+  await captureStyle.evaluate((e) => e.remove());
+  await page.evaluate(() => document.querySelectorAll("[data-vs-pinned]").forEach((e) => e.removeAttribute("data-vs-pinned")));
   const res = { measured: 0, unmeasured: [], fails: [], hiddenForCapture };
   for (const [idx, e] of els.entries()) {
     const n = now[idx];
@@ -2076,7 +2146,8 @@ check(
           n.exempt++; /* listed with its reason below */
         } else {
           n.failing++;
-          if (t.verdict === "standalone-unlabelled") row(F, `std|${route}|${t.fig}|${t.context}`, `${where}: "${t.fig}" has no shipped/target label — context: "${t.context}"`, width);
+          if (t.verdict === "standalone-unlabelled")
+            row(F, `std|${route}|${t.fig}|${t.context}`, `${where}: "${t.fig}" has no shipped/target label${t.why ? ` a reader can see — its chip is ${t.why}` : ""} — context: "${t.context}"`, width);
           else if (t.verdict === "fail") row(F, `fig|${route}|${t.section}|${t.fig}|${t.sentence}`, `${where}: "${t.fig}" ${t.why} — in "${t.sentence}"`, width);
           /* "exempt-invalid" and "status-shared" are reported once, on their wrapper */
         }
