@@ -30,10 +30,18 @@
           "How we work",
           "Work",
           "Case studies",
-          "About",
           "Team",
           "Contact",
           "Book a call"
+        ]
+      },
+      {
+        "item": "Navigation: the \"About\" link",
+        "proves": "Nothing: the About section it named was cut (COPY.md, \"Removed from the homepage\")",
+        "status": "cut",
+        "cut": "removed 2026-09-15 — it pointed at #team beside \"Team\"",
+        "needles": [
+          "About"
         ]
       },
       {

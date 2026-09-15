@@ -39,16 +39,15 @@ const raw: SiteContent = {
   },
   navbar: {
     // Relinked to the rebuilt homepage (2026-09-14). The About and Services
-    // sections were cut; the labels stay. "Services" lands on the engagement
-    // models table (id="services") — what someone buys, and what the Service
-    // structured data describes — and "About" on the team: the people you
-    // would work with.
+    // sections were cut. "Services" lands on the engagement models table
+    // (id="services") — what someone buys, and what the Service structured data
+    // describes. The "About" link was removed on 2026-09-15: with its section
+    // cut it pointed at #team, beside "Team", promising a section that is gone.
     links: [
       { label: "Services", href: "#services" },
       { label: "How we work", href: "#how-we-work" },
       { label: "Work", href: "#recent-work" },
       { label: "Case studies", href: "/work" },
-      { label: "About", href: "#team" },
       { label: "Team", href: "#team" },
       { label: "Contact", href: "#contact" },
     ],
@@ -75,18 +74,14 @@ const raw: SiteContent = {
     badge: "",
     headlineLine1: "We build AI systems that are still running in six months.",
     headlineLine2: "",
-    headlineLine2Accent: "",
     subtext:
       "Senior engineers, published architecture, and a named team before you sign. Production MVP in 8–16 weeks.",
-    trustPoints: [],
     tagline:
       "Senior-only teams, named engineers up front, 4–8 hours of overlap with US and EU, and you own the IP.",
     primaryCtaLabel: "Start a 2-week pilot",
     primaryCtaHref: "#contact",
     secondaryCtaLabel: "Book a technical call",
     secondaryCtaHref: "#schedule",
-    scrollHintLeft: "Scroll down",
-    scrollHintRight: "to explore delivery",
   },
   team: {
     benchLabel: "Your bench",
@@ -184,7 +179,6 @@ const raw: SiteContent = {
     // says so.
     title: "Two products, two write-ups.",
     subtitle: "Each one has a full technical write-up, not a screenshot and a sentence.",
-    mobileSwipeHint: "Swipe sideways for more — tap dots to jump",
     items: [
       {
         src: "/projects/warmchats-ai-booking.png",

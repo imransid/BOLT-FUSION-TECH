@@ -298,6 +298,11 @@ Name · Work email · Company · Project type · Budget band · Target timeline 
 
 ## Removed from the homepage — decided 2026-09-11
 
+**The nav's "About" link — removed 2026-09-15.** With the About section cut, the link
+pointed at the Team section, next to the "Team" link: two items for one place, one of them
+promising a section that no longer exists. "Services" stays, pointing at the engagement
+table — what someone buys.
+
 The homepage rebuild (`redesign/techwix-home`) keeps six sections that argue:
 the hero with its proof strip, the two write-ups, the architecture, how we work,
 the team, and questions and contact. The blocks below were on the old homepage

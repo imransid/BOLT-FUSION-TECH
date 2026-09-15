@@ -188,19 +188,12 @@ export const siteContentSchema = z.object({
     badge: z.string(),
     headlineLine1: z.string(),
     headlineLine2: z.string(),
-    /** Substring of `headlineLine2` rendered in amber — the hero's one accent.
-     *  Matched on first occurrence; when it is not found in `headlineLine2`,
-     *  line 2 renders plain rather than breaking. Empty string = no accent. */
-    headlineLine2Accent: z.string(),
     subtext: z.string(),
-    trustPoints: z.array(z.string()),
     tagline: z.string(),
     primaryCtaLabel: z.string(),
     primaryCtaHref: safeHref,
     secondaryCtaLabel: z.string(),
     secondaryCtaHref: safeHref,
-    scrollHintLeft: z.string(),
-    scrollHintRight: z.string(),
   }),
   team: z.object({
     benchLabel: z.string(),
@@ -214,7 +207,6 @@ export const siteContentSchema = z.object({
   recentWorks: z.object({
     title: z.string(),
     subtitle: z.string(),
-    mobileSwipeHint: z.string(),
     items: z.array(featuredWorkSchema),
   }),
   caseStudy: z.object({

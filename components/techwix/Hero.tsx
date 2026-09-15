@@ -31,8 +31,7 @@ const SIZES = "(min-width: 1025px) min(630px, calc(50vw - 110px)), calc(100vw - 
  *  · Below 1025px, or on a coarse pointer, the poster drifts slowly (a CSS
  *    transform); under reduced motion it stays still.
  *
- * The headline is one colour: a single coloured headline word is banned, so
- * `headlineLine2Accent` is not rendered as an accent.
+ * The headline is one colour: a single coloured headline word is banned.
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   const headline = [hero.headlineLine1, hero.headlineLine2]

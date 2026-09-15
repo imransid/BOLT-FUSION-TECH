@@ -82,7 +82,9 @@ fails `next build` with the file named:
   components import that barrel.
   The homepage rebuild cut About and Services (COPY.md, "Removed from the
   homepage"); their blocks and schema entries were deleted, as `aiExcellence`
-  and `process` were before them, so nothing in it is validated but unrendered.
+  and `process` were before them; the old hero's scroll hints, trust points and
+  accent word and the carousel's swipe hint went on 2026-09-15. Nothing in it is
+  validated but unrendered.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage
   (`components/techwix/*`: the proof strip, Architecture, How we work) and
