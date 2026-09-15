@@ -1,5 +1,5 @@
 import FigureText from "@/components/FigureText";
-import ScreenImage from "@/components/techwix/ScreenImage";
+import ScreenImage from "@/components/site/ScreenImage";
 import { lanes, projects } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 
