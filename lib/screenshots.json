@@ -1,0 +1,83 @@
+{
+  "/projects/warmchats-ai-booking.png": {
+    "width": 1024,
+    "height": 585,
+    "widths": [
+      640,
+      1024
+    ],
+    "base": "/projects/opt/warmchats-ai-booking"
+  },
+  "/projects/warmchats-dashboard.png": {
+    "width": 1024,
+    "height": 585,
+    "widths": [
+      640,
+      1024
+    ],
+    "base": "/projects/opt/warmchats-dashboard"
+  },
+  "/projects/warmchats-ai-agent.png": {
+    "width": 1024,
+    "height": 585,
+    "widths": [
+      640,
+      1024
+    ],
+    "base": "/projects/opt/warmchats-ai-agent"
+  },
+  "/projects/warmchats-onboarding.png": {
+    "width": 1024,
+    "height": 585,
+    "widths": [
+      640,
+      1024
+    ],
+    "base": "/projects/opt/warmchats-onboarding"
+  },
+  "/projects/case-fnb-smart-search.png": {
+    "width": 1024,
+    "height": 640,
+    "widths": [
+      640,
+      1024
+    ],
+    "base": "/projects/opt/case-fnb-smart-search"
+  },
+  "/projects/fanlock.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/fanlock"
+  },
+  "/projects/balanzify.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/balanzify"
+  },
+  "/projects/go-style-business.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/go-style-business"
+  },
+  "/projects/opal.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/opal"
+  }
+}

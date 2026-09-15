@@ -34,7 +34,7 @@ three went with the old design on 2026-09-15 (*Design language*, below).
 | route | what it is | content from |
 |---|---|---|
 | `/` | homepage (`app/page.tsx`); sections in `site.sectionOrder` | `/content` — `site.ts` for the sections, `metrics.ts` for the hero's proof strip, `architecture.ts`, `process.ts` and `services.ts` for Architecture and How we work · static |
-| `/work` | index of the write-ups (`app/work/page.tsx`) | `/content` |
+| `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
@@ -93,7 +93,9 @@ fails `next build` with the file named:
 
 There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
 data is generated from the same items the sections render (`fix/faq-one-source`,
-`feat/team-verified-six`). `site.sectionOrder` must list every section exactly
+`feat/team-verified-six`, `feat/team-ten`). How to fill a team member in — each
+field, its format, and what turns a pending member into a verified one — is
+written above the roster in `content/site.ts`; the build validates all of it. `site.sectionOrder` must list every section exactly
 once — a bad order fails the build. To hide a section, set
 `site.sectionVisibility[id]` to `false`.
 
@@ -103,6 +105,95 @@ was never configured in production, so nothing was ever saved through it, and
 its first save would have silently shadowed every later code change to those
 fields. A content change is now a code change: edit the file, and the build
 validates it.
+
+## Projects and attribution (decided 2026-09-15)
+
+Every project the site shows says who built it. `content/projects.ts` gives each
+one a `kind`, and the kind decides what its card shows. The owner decided the
+list on 2026-09-15; the words and facts are his portfolio's
+(imran-khan-chi.vercel.app) and nothing else — no metric, client, role or date it
+does not state.
+
+| kind | what it is | the label on its card | links | image |
+|---|---|---|---|---|
+| `case-study` | a Bolt Fusion project with a write-up here: WarmChats, restaurant search | "Case study: built by Bolt Fusion [for ‹client›]" | its write-up (required), and the live product | a real screenshot |
+| `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
+| `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **none** — the app's UI is the client's |
+| `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
+| `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23), NIdle Finishing (Intellier) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
+
+- **Never present an employer's product as ours.** A track-record project names
+  its employer (`builtAt`) and the engineer's role (`role`), and the schema
+  (`content/schema.ts`) refuses one without them — or with a client, a
+  screenshot or metrics. It is never called our client and carries no
+  confidential detail.
+- **A product another company owns is "built by Bolt Fusion for …", never
+  ours:** WarmChats belongs to WarmChats, Inc., Balanzify to Balanzify Inc.
+  (`client`).
+- **Feature work says it is feature work (owner, 2026-09-16).** Bazzile and
+  GodConnect Online were delivered through Bolt Fusion as features inside other
+  companies' apps. We did not build those apps, so their label is "features
+  built by Bolt Fusion for ‹client›", never "built by Bolt Fusion", which would
+  claim the whole app. `scope: "features"` is allowed on kind `project` only
+  (left out, it is `"product"`). The schema requires its `client` and refuses
+  an image: the app's UI belongs to the client, and a screenshot needs their
+  permission, which is a separate decision. It may be published without the
+  screenshot a product project needs, as a text card with its store links. Its
+  role names only features the portfolio says were ours: Bazzile's three, and
+  for GodConnect just "Feature work in the React Native app", because the
+  portfolio does not say which features were ours. Bazzile's "70,000
+  downloads" is the client's growth, not ours. It is never shown, and check 30
+  fails it on /work.
+- **The label sits directly above the project's name on every card,** the
+  case-study rows included, in the brand blue — never a shipped/target colour.
+  Verify-site check 9 holds its own copy of the labels and fails a card on
+  /work whose label is missing, hidden, somewhere else or not its kind's; a
+  track-record card without its employer and role, or with a screenshot; a
+  feature-work card whose label says "built by Bolt Fusion" without "features",
+  or that shows any screenshot; a card not in `projects.ts`, or a published
+  project with no card; a card image that does not load; and a card that is not
+  a case study linking to a write-up. It reads an h3 on /work as a group's
+  heading, not a card's, when the h3's parent holds the cards.
+- **Screenshots are real captures of the live sites,** Playwright at 1440×900,
+  saved as webp in `public/projects/`, of a view with no faces in it: FanLock's
+  "Fight leaks" section (its hero shows a face), Balanzify's migration page (its
+  homepage dashboard shows customer avatars), Go Style Business's sign-in page
+  (its only public page) and OPAL's shop (its hero collage shows faces). Never a
+  mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
+  2026-09-16.
+- **/work is four sections,** one per kind, in `projectSections` order. The
+  track-record section says what it means: "Work our engineers shipped at
+  previous employers — credited to them, not claimed as ours." Inside Bolt
+  Fusion projects the product cards come first. Under them is a sub-group headed
+  by its own h3, "Features we shipped into other companies’ apps", whose cards
+  have h4 names so the outline nests. Every grid, that one included, fills
+  its rows: three across from 1025px, two across from 768px, one on phones; a
+  set that divides by neither is one column, and a card alone lays its
+  screenshot beside its text.
+- **The homepage keeps its two case studies.** "See all work (N projects)" counts
+  the published projects that are ours, from the data, the feature work
+  included. The track record is not counted.
+- `llms.txt` and `llms-full.txt` credit every project as its card does.
+
+**Excluded, and why — never add them:**
+- the Jumatechs apps (Myrep, IQ Test, Cleva, Bidesh App): Jumatechs is the
+  owner's current employer;
+- Bangladesh RAB: built by Intellier, and RAB has been under US Treasury
+  sanctions since December 2021;
+- Team Pharma and JTI Sheikh.
+
+Check 30 fails if any of them appears on `/` or `/work`.
+
+**Held back, waiting on the owner:**
+- **Playzone** is in `projects.ts` as `awaiting-asset`, not rendered. On
+  2026-09-16 its only link, playzone-update.vercel.app, redirected to a sign-in
+  page for "Playerzone" ("a platform for players to connect with coaches and
+  other players") — not the multiplayer classic-games platform, with no
+  signups, that the portfolio describes.
+
+Bazzile and GodConnect Online were held back here until 2026-09-16, as track
+record with no employer on record. The owner placed them that day: Bolt Fusion
+feature work, above.
 
 ## Design language, as built
 
@@ -304,13 +395,24 @@ at the end, which means nobody has decided yet.
 - **No fake faces, ever** — never a template avatar, a stock face or a
   generated one, not even as a placeholder. A section ships without the photo
   slot until real photographs exist. *Holds* with `fix/team-no-template-avatars`
-  (verify-site check 27).
-- **A person is listed only with a verified LinkedIn profile — enforced at
-  load, not by convention.** A team member's `profileUrl` is required and must
-  be a `linkedin.com/in/` URL. The site content is parsed when it loads, so a
-  member without one fails the build, and no link can be built from a handle. Role, experience and stack stay empty until real data exists — never
-  examples. Person structured data comes from the same roster, emitting only
-  the fields that exist. *Holds* with `feat/team-verified-six` (checks 14, 27).
+  (verify-site check 27, which since 2026-09-15 also counts CSS background
+  images as pictures and fails any picture on a pending card).
+- **A person is linked, and marked up as Person, only with a verified LinkedIn
+  profile. A named team member without one is shown as 'profile pending', with
+  initials, never a photo or a borrowed handle. Decided 2026-09-15.** Enforced
+  at load, not by convention: a member is `status: "verified"` — a
+  `linkedin.com/in/` `profileUrl` and a handle, both required — or
+  `status: "pending"`, which refuses a `profileUrl`, a handle and a photo. Both
+  member schemas are strict, so a stray or retired key fails the build too,
+  and no link can be built from a handle. A pending card is the name, an
+  initials monogram (text, in the corner where a verified card carries its
+  arrow) and "Profile coming soon", with no link. Role, years, stack and photo
+  stay out until real data exists — never examples; a photo is a verified
+  member's own photograph under `/team/`, and a years value ("8 years" is a
+  figure) needs its exemption in `content/figure-labels.ts`, which the build
+  names. Person structured data comes from the same roster, verified members
+  only (`personLd` filters, so no caller can emit a pending one), emitting only
+  the fields that exist. *Holds* with `feat/team-ten` (checks 14, 27, 30).
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
   element the server sends at `opacity:0` is not. *Holds*: the reveal's
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
@@ -395,7 +497,9 @@ at the end, which means nobody has decided yet.
   and the Article's description) — or it fails.
 - **A published project links to its write-up.** Enforced by both schemas in
   `/content` (`state: published | awaiting-asset`). There is no fallback link: a project
-  without a write-up is shown with no link at all. *Holds* (check 9).
+  without a write-up is shown with no link at all. *Holds* (check 9). Since 2026-09-15
+  this is the case-study rule: the other kinds link to their live product or show no
+  link, and never to a write-up (*Projects and attribution*).
 - **Content lives in `/content`, not in JSX.** *Holds*, except the
   WarmChats case study and the privacy policy, which are hardcoded.
 - **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
@@ -531,6 +635,17 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   never comes, a timeout under load) is a finding in its own check, "unsure is a
   failure", instead of an uncaught error that ends the whole suite with no
   results.
+- **14, 27 and 30, the team of ten (2026-09-15)** — 14: every verified person
+  card has its Person node and every Person its verified card, as before; a
+  card marked `data-person-status="pending"` must carry no link (on it, in it
+  or around it) and have no Person node, and a card with no link that is not
+  marked pending still fails. 27: a picture in a person card is an `<img>` or a
+  CSS background image (the element's, its `::before` or `::after`), and a
+  pending card holds none at all — no `<img>`, `<svg>`, `<picture>`, `<canvas>`,
+  `<video>` or background — because initials are text. 30: the four pending
+  names are required needles; the stat's needle is "verified profiles" (its
+  numbers are counted, so the needle carries none), and the subtext's reads
+  "Each verified card opens…", every word of the old needle kept.
 
 **Checks changed in the review fix pass (2026-09-15).** Four reviewers found holes in the suite;
 each was reproduced on a served fixture — a real page with one edit — and closed: the fixture that
@@ -673,6 +788,7 @@ without a `source` string — the same idea, not yet a checked reference).
 | The layouts | **One root layout**; the 404 is the standard `app/not-found.tsx`, with no experimental flag and no Next-internal import | `redesign/techwix-home` |
 | The hero field | **Static image first.** The three.js nebula and its four packages are deleted; the raw WebGL2 renderer comes later as its own change | `redesign/techwix-home` |
 | "~80% of traffic" | **`target`**, all five instances (*A figure labelled shipped with nothing behind it*) | `fb5b83e` |
+| The Team section | **Ten engineers** — the owner: "Team should be there 10 people, placeholder now, I'll upload the data later." The six verified are unchanged; Nadim, Joinal, Arifur Rahman and Tareq return by name only, `pending`: initials, "Profile coming soon", no link, handle, photo or Person node. The stat is counted from the roster ("10 engineers", "6 verified profiles") and the subtext says "Each verified card". Role, years, stack and photo come from the owner later, validated by the build. Supersedes the 2026-09-11 "six" rows | `feat/team-ten` |
 | Then | **To `main`** | — |
 
 ## Decided 2026-09-11: the rule or the design
@@ -702,13 +818,13 @@ wordmark's "Fusion") have not been ruled on.
 
 | question | decision | where |
 |---|---|---|
-| The Team section | **The six people with a verified LinkedIn**, shown with name, handle and link. Role, stack and years stay empty until real data exists — thin cards because the data is thin. COPY.md §5 amended: a member without a verified profile is not listed | `feat/team-verified-six` |
+| The Team section | **The six people with a verified LinkedIn**, shown with name, handle and link. Role, stack and years stay empty until real data exists — thin cards because the data is thin. COPY.md §5 amended: a member without a verified profile is not listed. *Superseded 2026-09-15: ten, four with profiles pending (Decided 2026-09-15)* | `feat/team-verified-six` |
 | The logo wordmark's contrast | **The check was wrong, not the mark.** WCAG 1.4.3 exempts logotypes; the exemption is scoped to the wordmark and guarded | `tooling/verify-site` |
 | FAQ vs FAQPage structured data | **The rendered five are canonical**, and the markup is generated from them: one source, not a corrected second copy | `fix/faq-one-source` |
 | COPY.md §4 layout note | **Superseded.** The section is a carousel; two cards on a two-column grid is a separate decision, not made | `docs/copy-md-decisions` |
 | The "under 100ms" meta description | **Stays unlabelled**: a scoped exception to the label rule, recorded under Hard rules | `chore/low-findings` |
 | FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
-| COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
+| COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six. *Superseded 2026-09-15: the site shows ten, and §2 says ten again* | `docs/copy-md-decisions` |
 | The CMS | **Removed**: content, schema and validation moved to `/content`; admin, store, API and seven dependencies deleted (see Content) | `chore/remove-cms` |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*`, the old FAQ block (`.faq-item`), `.cv-section` and `.grain-overlay` | **Deleted on 2026-09-15**, with the rest of `app/globals.css`, when the old design was retired | `redesign/techwix-home` |
 
@@ -729,3 +845,30 @@ wordmark's "Fusion") have not been ruled on.
   description comes from it; the live hero does not (see above).
 - `PLAN.md` — the rebuild plan, including the trace-rail design system that
   `7c62d28` reverted. History, not specification.
+
+## Screenshots are pre-encoded (decided 2026-09-16)
+
+Every project screenshot is served from pre-encoded AVIF and WebP files through
+`<picture>` (`components/techwix/ScreenImage.tsx`), never through the Next image
+optimizer. The hero poster was already served this way.
+
+**Why.** A long-running `next start` got one optimizer job for a screenshot
+stuck: the restaurant-search image at 640px, as AVIF. Every later request for it
+then hung. It happened three times, always after a busy stretch. Pages holding
+that image never reached "load", and the full suite failed checks 4, 6, 9, 10,
+19, 21 and 22 on them. A fresh server from the same build answered every width
+in under 150ms. It is a race in the local optimizer; production uses Vercel's
+image service and was unaffected. Hiding it, for example by restarting the
+server between runs, would break "unsure is a failure". Taking the optimizer
+off the path removes the failure for good, and serves the images faster.
+
+**How to add a screenshot.**
+1. Put the file in `public/projects/`.
+2. Add its path to `SCREENSHOTS` in `scripts/encode-screenshots.mjs`.
+3. Run `node scripts/encode-screenshots.mjs`.
+4. Commit `public/projects/opt/` and `lib/screenshots.json`.
+
+The script writes 640w plus the full width, capped at 1280. `ScreenImage`
+throws on a screenshot that has no encodes, so a missing entry fails the build
+rather than falling back to the optimizer. `next/image` remains only in
+`Team.tsx`, for the engineers' photos when they are uploaded.

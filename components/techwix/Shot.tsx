@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ScreenImage from "./ScreenImage";
 import type { ReactNode } from "react";
 
 /**
@@ -30,7 +30,7 @@ export default function Shot({
   return (
     <figure className="tw-shot" data-tw-reveal={reveal ? "" : undefined}>
       <div className={wide ? "tw-shot__frame tw-shot__frame--wide" : "tw-shot__frame"}>
-        <Image
+        <ScreenImage
           src={src}
           alt={alt}
           fill

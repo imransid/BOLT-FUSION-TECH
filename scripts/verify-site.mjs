@@ -942,16 +942,64 @@ function collectInPage() {
   }));
   const cardEls = new Map();
   for (const img of projImgs) {
-    let c = img.parentElement;
-    while (c && c !== document.body && !c.querySelector("h2, h3")) c = c.parentElement;
+    /* a card marked with its kind is its own root — a feature-work card's name
+       is an h4, and the walk would climb past it to the sub-group's h3 —
+       otherwise the nearest box holding a heading */
+    let c = img.closest("[data-project-kind]");
+    if (!c) {
+      c = img.parentElement;
+      while (c && c !== document.body && !c.querySelector("h2, h3")) c = c.parentElement;
+    }
     if (!c || c === document.body || cardEls.has(c)) continue;
-    const h = c.querySelector("h2, h3");
+    const h = c.querySelector("h2, h3, h4");
     cardEls.set(c, {
       title: snip(h, 60),
+      kind: c.closest("[data-project-kind]")?.getAttribute("data-project-kind") || null,
       screenshotLoaded: [...c.querySelectorAll("img")].filter((i) => /\/projects\//.test(srcOf(i))).every((i) => i.complete && i.naturalWidth > 0),
       writeups: [...new Set([...(c.closest("a[href]") ? [c.closest("a[href]")] : []), ...c.querySelectorAll("a[href]")].map((a) => a.href).filter((h) => new URL(h).pathname.startsWith("/work/")))],
     });
   }
+
+  /* 9 ── who built it (decided 2026-09-15): every project card, found two ways —
+     any element marked data-project-kind, and on /work every h3 and h4 in
+     <main>, whose card is its list item — so a card that loses its marker is
+     still found. A heading whose box holds marked cards and is not one itself
+     heads a GROUP of them (the feature-work sub-group, 2026-09-16), not a card.
+     What each card says about its kind, scope, employer and role, and whether a
+     reader can see it: on the page, at least 24x10px, not clipped away. */
+  const flat = (el) => (el?.textContent || "").trim().replace(/\s+/g, " ");
+  const readable = (el) => {
+    if (!visible(el)) return false;
+    const r = el.getBoundingClientRect();
+    const st = getComputedStyle(el);
+    return r.width >= 24 && r.height >= 10 && st.clip === "auto" && (!st.clipPath || st.clipPath === "none");
+  };
+  const cardRoots = new Set(document.querySelectorAll("[data-project-kind]"));
+  if (location.pathname.replace(/\/$/, "") === "/work")
+    for (const h of document.querySelectorAll("main h3, main h4")) {
+      const root = h.closest("li, article") || h.parentElement;
+      if (!root.matches("[data-project-kind]") && root.querySelector("[data-project-kind]")) continue;
+      cardRoots.add(root);
+    }
+  const projectCards = [...cardRoots].map((c) => {
+    const heading = c.querySelector("h2, h3, h4");
+    const label = c.querySelector("[data-attribution]");
+    const fact = (sel) => {
+      const el = c.querySelector(sel);
+      return el ? { text: flat(el), seen: readable(el) } : null;
+    };
+    return {
+      id: c.getAttribute("data-project-id"),
+      kind: c.getAttribute("data-project-kind"),
+      scope: c.getAttribute("data-project-scope"),
+      title: flat(heading).slice(0, 60) || describe(c),
+      label: label ? { text: flat(label), seen: readable(label), beforeHeading: Boolean(heading) && label.nextElementSibling === heading } : null,
+      builtAt: fact("[data-built-at]"),
+      role: fact("[data-role]"),
+      images: [...c.querySelectorAll("img")].map((i) => ({ src: srcOf(i).replace(location.origin, "").replace(/[&?]w=.*$/, ""), loaded: i.complete && i.naturalWidth > 0 })),
+      links: [...c.querySelectorAll("a[href]")].map((a) => ({ href: a.href, text: flat(a).slice(0, 40) })),
+    };
+  });
 
   /* 4 (JS-on side) ── what is readable once scripts have run, so the JS-off
      pass can tell "waits for a script" from "hidden by design" (hover reveals) */
@@ -1034,15 +1082,34 @@ function collectInPage() {
     stuckHidden.push({ text: snip(el, 60), hider: `${hider.tagName.toLowerCase()}${hider.id ? "#" + hider.id : ""}`, style: (hider.getAttribute("style") || "").slice(0, 70), section: sectionOf(el) });
   }
 
-  /* 27 ── people: every card that presents a person, and every photo slot */
+  /* 27 ── people: every card that presents a person, and every photo slot. A
+     picture is an <img> or a CSS background image (on the element or its
+     ::before / ::after) — a face painted as a background is still a face. A
+     pending card (data-person-status="pending": a named member with no verified
+     profile yet) is shown with initials, which are text: it holds no <img>, no
+     <svg>, no <picture>, <canvas> or <video>, and no background image. */
   const personCards = [...document.querySelectorAll("[data-person-card]")];
   const peopleFallback = !personCards.length && document.getElementById("team");
+  const bgUrls = (root) =>
+    [root, ...root.querySelectorAll("*")]
+      .flatMap((e) => [null, "::before", "::after"].map((p) => getComputedStyle(e, p).backgroundImage))
+      .flatMap((b) => [...String(b).matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)].map((m) => m[1]));
   const people = {
     marked: personCards.length,
     fallback: Boolean(peopleFallback),
-    images: [...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
+    images: [
+      ...[...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
+      ...(peopleFallback ? bgUrls(peopleFallback) : personCards.flatMap((c) => bgUrls(c))),
+    ],
     emptySlots: [...document.querySelectorAll("[data-photo-slot]")].filter((s) => !s.querySelector("img")).length,
-    cards: personCards.map((c) => ({ name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(), href: c.getAttribute("href") || null })),
+    cards: personCards.map((c) => ({
+      name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(),
+      href: c.getAttribute("href") || null,
+      pending: c.getAttribute("data-person-status") === "pending",
+      /* a link anywhere on the card: the card itself, one inside it, or one around it */
+      linked: Boolean(c.closest("a[href]") || c.querySelector("a[href]")),
+      pictures: c.querySelectorAll("img, svg, picture, canvas, video").length + bgUrls(c).length,
+    })),
   };
 
   /* 31 ── which design the page carries. A stylesheet is known by what it
@@ -1110,7 +1177,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -2953,18 +3020,48 @@ check(
 );
 
 /* 9 */
+/* Who built it — CLAUDE.md, "Projects and attribution" (decided 2026-09-15).
+   The words each kind's label must read, written HERE and not read from the
+   site's own label function (components/techwix/ProjectCard.tsx), so a wrong
+   label cannot pass by agreeing with itself. With content/projects.ts read, the
+   whole label is known: the client after "for", the employer after "at".
+   A project with `scope: "features"` (decided 2026-09-16) is feature work inside
+   another company's app: "features built by Bolt Fusion for ‹client›", never
+   "built by Bolt Fusion", and no screenshot. content/projects.ts is read raw,
+   so a product project carries no scope at all. */
+const ATTRIBUTION = {
+  "case-study": { starts: "Case study: built by Bolt Fusion", full: (p) => `Case study: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}` },
+  project: {
+    starts: ["Delivered project: built by Bolt Fusion", "Delivered project: features built by Bolt Fusion for "],
+    full: (p) => (p.scope === "features" ? `Delivered project: features built by Bolt Fusion for ${p.client}` : `Delivered project: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}`),
+  },
+  "in-house": { starts: "In-house product: our own, not built for a client", full: () => "In-house product: our own, not built for a client" },
+  "track-record": { starts: "Track record: built by our engineer at ", full: (p) => `Track record: built by our engineer at ${p.builtAt}, not by Bolt Fusion` },
+};
 await (async () => {
   if (!want(9)) return;
   const F = [];
   const I = [];
   const sitemapWork = ROUTES.filter((r) => /^\/work\/.+/.test(r));
   const linkedFromIndex = new Set();
+  let projectsTs = null;
+  try {
+    projectsTs = loadContent("content/projects.ts").projects;
+    if (!Array.isArray(projectsTs)) throw new Error("it exports no projects array");
+  } catch (e) {
+    projectsTs = null;
+    F.push(`content/projects.ts could not be read (${e.message}) — the cards on /work cannot be checked against it; unsure is a failure`);
+  }
+  const writeupOf = (href) => isSameSite(href) && /^\/work\/.+/.test(new URL(href).pathname);
   for (const [k, v] of Object.entries(visits)) {
     const route = k.split("@")[0];
     for (const img of v.images) if (!img.loaded) F.push(`${at(k)}: screenshot ${img.src} did not load`);
     if (/^\/work\/.+/.test(route)) continue; /* write-up pages: screenshots checked above, no cards */
     for (const c of v.cards) {
       if (!c.screenshotLoaded) F.push(`${at(k)}: project "${c.title}" — screenshot not loaded`);
+      /* a case study — or a card that does not say its kind — links to its
+         write-up; the other kinds link out, or not at all (below) */
+      if (c.kind && c.kind !== "case-study") continue;
       if (!c.writeups.length) F.push(`${at(k)}: project "${c.title}" shows a screenshot but links to no write-up`);
       for (const w of c.writeups) {
         linkedFromIndex.add(new URL(w).pathname);
@@ -2973,10 +3070,80 @@ await (async () => {
       }
       I.push(`${route}: "${c.title}" → ${c.writeups.map((w) => new URL(w).pathname).join(", ") || "no write-up"}`);
     }
+
+    /* who built it: every card on /work, and a card marked with a kind anywhere */
+    const cards = v.projectCards || [];
+    if (route === "/work" && !cards.length) F.push(`${at(k)}: no project cards found — /work lists every published project`);
+    const shown = new Set();
+    for (const c of cards) {
+      const name = `"${c.title}"`;
+      const rule = ATTRIBUTION[c.kind];
+      if (!rule) {
+        F.push(`${at(k)}: ${name} carries no project kind (data-project-kind="${c.kind ?? ""}") — every card on /work says who built it`);
+        continue;
+      }
+      const entry = projectsTs ? projectsTs.find((p) => p.id === c.id) : null;
+      if (projectsTs && !entry) F.push(`${at(k)}: ${name} (data-project-id="${c.id ?? ""}") is not a project in content/projects.ts`);
+      if (entry) {
+        shown.add(entry.id);
+        if (entry.kind !== c.kind) F.push(`${at(k)}: ${name} is shown as ${c.kind}; content/projects.ts says ${entry.kind}`);
+        if (entry.state !== "published") F.push(`${at(k)}: ${name} is ${entry.state} in content/projects.ts, and still has a card`);
+        if (c.kind === "project" && (entry.scope ?? "product") !== (c.scope ?? "product"))
+          F.push(`${at(k)}: ${name} is shown as data-project-scope="${c.scope ?? ""}"; content/projects.ts says ${entry.scope ?? "product"}`);
+      }
+      /* feature work in a client's app — by content/projects.ts or by the card's own marker */
+      const features = c.kind === "project" && (entry?.scope === "features" || c.scope === "features");
+      const client = entry?.client ?? "another company";
+      /* the attribution label: there, visible, directly above the name, its kind's words */
+      if (!c.label) F.push(`${at(k)}: ${name} (${c.kind}) carries no attribution label [data-attribution] — a reader cannot tell who built it`);
+      else {
+        if (!c.label.seen) F.push(`${at(k)}: ${name} — its attribution label "${c.label.text}" is not visible`);
+        if (!c.label.beforeHeading) F.push(`${at(k)}: ${name} — its attribution label is not directly above the project's name, where every card carries it`);
+        const expected = entry && entry.kind === c.kind ? rule.full(entry) : null;
+        const starts = [].concat(rule.starts);
+        if (expected ? c.label.text !== expected : !starts.some((s) => c.label.text.startsWith(s)))
+          F.push(`${at(k)}: ${name} — its label reads "${c.label.text}"; a ${c.kind} card's reads "${expected ?? starts.map((s) => `${s}…`).join('" or "')}"`);
+        if (c.kind === "track-record" && /built by Bolt Fusion/i.test(c.label.text)) F.push(`${at(k)}: ${name} is an engineer's track record, and its label says "built by Bolt Fusion"`);
+        if (features && /built by Bolt Fusion/i.test(c.label.text) && !/\bfeatures\b/i.test(c.label.text))
+          F.push(`${at(k)}: ${name} is feature work inside ${client}'s app, and its label says "built by Bolt Fusion" without "features" — it claims the whole app`);
+      }
+      if (features && c.images.length)
+        F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${c.images[0].src}) — the app's UI belongs to the client, and showing it needs their permission`);
+      /* what we built — on a track record, the engineer's role — and the employer */
+      const fact = (f, what, wanted) => {
+        if (!f || !f.text) return void F.push(`${at(k)}: ${name} (${c.kind}) does not name ${what}`);
+        if (!f.seen) F.push(`${at(k)}: ${name} — ${what}, "${f.text}", is not visible`);
+        if (wanted && f.text !== wanted) F.push(`${at(k)}: ${name} — ${what} reads "${f.text}"; content/projects.ts says "${wanted}"`);
+      };
+      fact(c.role, c.kind === "track-record" ? "the engineer's role" : "what we built", entry?.role);
+      if (c.kind === "track-record") {
+        fact(c.builtAt, "the employer it was built at", entry?.builtAt);
+        if (c.label && c.builtAt?.text && !c.label.text.includes(c.builtAt.text)) F.push(`${at(k)}: ${name} — its label does not name the employer, ${c.builtAt.text}`);
+        if (c.images.length) F.push(`${at(k)}: ${name} is an engineer's track record and shows a screenshot (${c.images[0].src}) — the product belongs to someone else`);
+        if (!c.links.some((l) => !isSameSite(l.href))) F.push(`${at(k)}: ${name} is a text card with no store or proof link`);
+      } else if (c.builtAt) F.push(`${at(k)}: ${name} (${c.kind}) names an employer it was built at — only an engineer's track record does`);
+      /* every image on the card loads */
+      for (const img of c.images) if (!img.loaded) F.push(`${at(k)}: ${name} — image ${img.src} did not load`);
+      /* where it links: a case study to its write-up; nothing else to one */
+      const writeups = c.links.filter((l) => writeupOf(l.href));
+      if (c.kind === "case-study" && !writeups.length) F.push(`${at(k)}: ${name} is a case study and links to no write-up`);
+      if (c.kind !== "case-study" && writeups.length) F.push(`${at(k)}: ${name} (${c.kind}) links to ${new URL(writeups[0].href).pathname} — only a case study has a write-up`);
+      for (const l of c.links) if (!isSameSite(l.href) && !l.href.startsWith("https://")) F.push(`${at(k)}: ${name} links to ${l.href}, which is not https`);
+      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s), ${c.links.length} link(s)`);
+    }
+    if (route === "/work" && projectsTs)
+      for (const p of projectsTs) if (p.state === "published" && !shown.has(p.id)) F.push(`${at(k)}: "${p.name}" is published in content/projects.ts and has no card on /work`);
   }
   for (const r of sitemapWork) if (!linkedFromIndex.has(r)) F.push(`${r} is published in the sitemap but no project card links to it`);
   for (const p of linkedFromIndex) if (!sitemapWork.includes(p)) F.push(`${p} is linked as a write-up but missing from the sitemap`);
-  results.push({ id: 9, title: "Every published project shows a loaded screenshot and a working write-up link", catches: "a project presented as shipped with nothing behind it", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: [...new Set(I)] });
+  results.push({
+    id: 9,
+    title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot",
+    status: F.length ? "FAIL" : "PASS",
+    findings: [...new Set(F)],
+    info: [...new Set(I)],
+  });
 })();
 
 /* 14 */
@@ -3048,8 +3215,12 @@ await (async () => {
       }
     }
   }
-  /* Person — built from the roster the Team section renders: one node per person
-     card, carrying that card's name and profile link, and no empty field */
+  /* Person — built from the roster the Team section renders: one node per
+     VERIFIED person card, carrying that card's name and profile link, and no
+     empty field. A PENDING card (data-person-status="pending", decided
+     2026-09-15) is a named member with no verified profile yet: it links
+     nowhere and has no Person node — a pending link is unverified by
+     definition. A card with no link that is not marked pending still fails. */
   {
     const v = visits[`/@${WIDTHS[0]}`];
     if (v?.people) {
@@ -3063,21 +3234,28 @@ await (async () => {
         }
       }
       const cards = v.people.cards || [];
+      const verifiedCards = cards.filter((c) => !c.pending);
+      const pendingCards = cards.filter((c) => c.pending);
       const key = (name, url) => `${name}|${url}`;
-      const cardKeys = new Set(cards.filter((c) => c.href).map((c) => key(c.name, c.href)));
+      const cardKeys = new Set(verifiedCards.filter((c) => c.href).map((c) => key(c.name, c.href)));
       const ldKeys = new Set(persons.map((p) => key(p.name, [].concat(p.sameAs || [])[0])));
+      const ldNames = new Set(persons.map((p) => p.name));
       for (const p of persons) {
         const url = [].concat(p.sameAs || [])[0];
-        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a person card on the page`);
+        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a verified person card on the page`);
         for (const [k, val] of Object.entries(p))
           if (val === null || (typeof val === "string" && !val.trim()) || (Array.isArray(val) && val.length === 0))
             F.push(`/: Person "${p.name}" carries an empty ${k} — emit only the fields that exist`);
       }
-      for (const c of cards) {
-        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link — COPY.md §5 lists only people with a verified LinkedIn`);
+      for (const c of verifiedCards) {
+        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link and is not marked pending — a verified member links to their LinkedIn; one without a verified profile is data-person-status="pending"`);
         else if (!ldKeys.has(key(c.name, c.href))) F.push(`/: the person card "${c.name}" has no Person node in the structured data`);
       }
-      I.push(`/: Person ${persons.length}, person cards ${cards.length}`);
+      for (const c of pendingCards) {
+        if (c.linked) F.push(`/: the pending card "${c.name}" carries a link — a member whose profile is pending links nowhere until it is verified`);
+        if (ldNames.has(c.name)) F.push(`/: the pending card "${c.name}" has a Person node — Person is only for a verified profile`);
+      }
+      I.push(`/: Person ${persons.length}, person cards ${cards.length} (${verifiedCards.length} verified, ${pendingCards.length} pending)`);
     }
   }
   for (const [u, where] of urls) {
@@ -3090,7 +3268,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page; a Person node or a link for a member whose profile is pending", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
@@ -3707,8 +3885,12 @@ check(27, "No template, placeholder or generated faces — a person's picture is
       if (!PHOTO.test(f)) once(`${route}|photo|${f}`, `${route}: ${short(f)} sits in a person card and is not a photograph`);
     }
     if (v.people.emptySlots) once(`${route}|slots`, `${at(k)}: ${v.people.emptySlots} empty photo frame(s) — the slot should not render without a photograph`);
+    /* a pending member is shown with initials — text — never a photo or a drawing (decided 2026-09-15) */
+    for (const c of v.people.cards || [])
+      if (c.pending && c.pictures) once(`${route}|pending|${c.name}`, `${at(k)}: the pending card "${c.name}" holds ${c.pictures} picture(s) — a member without a verified profile is shown with initials, never a photo or a drawing`);
+    const pending = (v.people.cards || []).filter((c) => c.pending).length;
     if (v.people.fallback) I.push(`${at(k)}: no [data-person-card] markers; checked the images inside #team`);
-    else if (v.people.marked) I.push(`${at(k)}: ${v.people.marked} person card(s), ${v.people.images.length} picture(s)`);
+    else if (v.people.marked) I.push(`${at(k)}: ${v.people.marked} person card(s), ${pending} pending, ${v.people.images.length} picture(s)`);
   }
 });
 

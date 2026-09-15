@@ -36,13 +36,18 @@ policy's "← Back to boltfusiontech.com". The share image kept its words too.
 
 ## 2. Trust rail
 
-> Live in production at warmchats.com. Six engineers across the UK, Malaysia and
+> Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
 > Bangladesh.
 
-**Amended 2026-09-11: ten → six.** The site lists six engineers — the six with a
-verified LinkedIn (§5, amended). A draft saying ten while the site shows six is
-exactly what a later copy pass would restore by accident. Raise the number when a
-verified profile is added to the Team section, not before.
+**Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
+with a verified LinkedIn, four with profiles pending. The trust rail is not
+rendered anywhere on the site today.
+
+*History, superseded 2026-09-15:* **Amended 2026-09-11: ten → six.** The site
+lists six engineers — the six with a verified LinkedIn (§5, amended). A draft
+saying ten while the site shows six is exactly what a later copy pass would
+restore by accident. Raise the number when a verified profile is added to the
+Team section, not before.
 
 ---
 
@@ -133,6 +138,70 @@ on a two-column grid is a different decision, and it has not been made.
 homepage. The section is now the clone design's case-study row — a larger card
 beside a smaller one, stacked on phones. The copy above is unchanged.
 
+## 4a. /work — every approved project, labelled by who built it (decided 2026-09-15)
+
+The homepage section above keeps its two write-ups. /work shows every project the owner
+approved on 2026-09-15, in four sections, each card labelled with who built it (CLAUDE.md,
+"Projects and attribution"). The words and facts are the owner's portfolio's
+(imran-khan-chi.vercel.app); nothing is invented. OPAL is back, as an in-house product with a
+real screenshot of the live store and never the AI mockup, so "Why two, not three" still holds
+for the homepage and no longer for /work.
+
+**Banner** — the approved lead stays, and a second line follows it:
+> Below the write-ups: the other products we built, for clients and for ourselves, and what
+> our engineers shipped at previous employers. Every card says who built it.
+
+**Sections**, in order: Case studies. Bolt Fusion projects. In-house products. Our engineers'
+track record, with one line:
+> Work our engineers shipped at previous employers — credited to them, not claimed as ours.
+
+**Labels** — one per kind, above the project's name on every card:
+- Case study: built by Bolt Fusion (for WarmChats, Inc.)
+- Delivered project: built by Bolt Fusion (for Balanzify Inc.)
+- Delivered project: features built by Bolt Fusion for Bazzile Technology SA / GodConnect LTD —
+  feature work inside another company's app (decided 2026-09-16)
+- In-house product: our own, not built for a client
+- Track record: built by our engineer at Brain Station 23 / Intellier, not by Bolt Fusion
+
+**Projects**:
+- Case studies: WarmChats (built for WarmChats, Inc.; backend lead) and restaurant search.
+- Bolt Fusion projects: FanLock (backend lead), Balanzify (built for Balanzify Inc.; in
+  production, Jul 2025 – ongoing) and Go Style Business (backend lead; in production).
+- Bolt Fusion feature work, under the products in the same section, with its own heading:
+  > Features we shipped into other companies’ apps
+
+  Bazzile (features built for Bazzile Technology SA: swipe-based browsing, Google Maps location
+  matching and Firebase real-time sync in its React Native app; live, Jan 2025 – Jul 2025) and
+  GodConnect Online (features built for GodConnect LTD: "Feature work in the React Native app";
+  live, 2023 – 2024). Text cards with App Store and Google Play links, no screenshots.
+- In-house: OPAL.
+- Our engineers' track record: Go Smart (Modhumoti Bank's digital banking app, built at Brain
+  Station 23, 2020–2022; Software Engineer) and NIdle Finishing (built at Intellier, Nov 2023 –
+  Feb 2024; Senior Software Engineer). No screenshots: the products are someone else's.
+
+**Why "features built by Bolt Fusion for …" (owner, 2026-09-16).** Bazzile and GodConnect Online
+were delivered through Bolt Fusion, but as features inside apps other companies own. "Built by
+Bolt Fusion" would claim the whole app. So the label says "features", names the owner, and the
+role names only features the portfolio says were ours. The portfolio does not say which of
+GodConnect's features were ours, so its card names none. The cards have no screenshots, because
+the apps' screens belong to their owners; showing one needs the owner's permission, which is a
+separate decision. Bazzile's "70,000 downloads" is the client's growth, not ours, and is never
+written.
+
+**Homepage link** — `See all work (N projects)`, beside `See all case studies`. N is counted
+from `content/projects.ts`, never typed: the published projects that are ours, the feature work
+included, without the track record.
+
+**Meta description for /work** — "Architecture-level write-ups of the systems we shipped, the
+other products we built, and our engineers' track record, each labelled with who built it."
+
+**Excluded — never write them:** the Jumatechs apps (Myrep, IQ Test, Cleva, Bidesh App), Bangladesh
+RAB, Team Pharma and JTI Sheikh. The reasons are in CLAUDE.md.
+
+**Held back until the owner answers:** Playzone (its live URL shows a different product). The
+reasons are in CLAUDE.md. Bazzile and GodConnect Online were held back here until 2026-09-16
+(no employer on record); the owner placed them as Bolt Fusion feature work, above.
+
 ---
 
 ## 5. The engineers
@@ -153,16 +222,37 @@ deliberate.
 Add the photo slot when real photographs exist. Never a template avatar, a stock
 face, or a generated one — see CLAUDE.md, "No fake faces, ever."
 
+**Amended 2026-09-15:** a pending card (below) carries an initials monogram —
+text, in the corner where a verified card carries its arrow, never a face. A
+verified card still carries none.
+
 ~~**If a member has no LinkedIn yet,** render the card without the link rather than
 omitting the person or linking to an unverified profile.~~
 
-**Amended 2026-09-11 — only people with a verified LinkedIn are listed.** A member
-without one is not shown until it exists, and an unverified profile is never linked.
-The struck rule was written when there were no photos and no roles and a card was only
-a name. It now conflicts with the stronger rule that every claim on the site is
-verifiable: a named engineer nobody can look up is exactly the claim this section
-exists to disprove. With the amendment, the body's "every profile links to a public
-LinkedIn" is true of every card.
+*History, superseded 2026-09-15:* **Amended 2026-09-11 — only people with a verified
+LinkedIn are listed.** A member without one is not shown until it exists, and an
+unverified profile is never linked. The struck rule was written when there were no
+photos and no roles and a card was only a name. It now conflicts with the stronger rule
+that every claim on the site is verifiable: a named engineer nobody can look up is
+exactly the claim this section exists to disprove. With the amendment, the body's
+"every profile links to a public LinkedIn" is true of every card.
+
+**Amended 2026-09-15 — ten engineers, four with profiles pending.** The owner restored
+the team to ten: "Team should be there 10 people, placeholder now, I'll upload the data
+later." The six with a verified LinkedIn are unchanged. Nadim, Joinal, Arifur Rahman
+and Tareq — on the original roster, off it since 2026-09-11 — are back by name only,
+never with the strangers' GitHub handles or the template faces their old cards
+carried. Each is shown as profile pending: the name, initials and "Profile coming
+soon", with no link and no Person markup. An unverified profile is still never linked;
+what changed is that a real team member without one is named instead of left out.
+
+- **Stat:** counted from the roster, never written — "10 engineers" and "6 verified
+  profiles". It read "6 specialists".
+- **Subtext:** "Each verified card opens the engineer's LinkedIn profile in a new
+  tab—so you can see who you would work with before you commit scope or budget." One
+  word added, so it stays true of the cards it describes.
+- The body above ("every profile links to a public LinkedIn") is still true: a pending
+  member has no profile on the site yet.
 
 ---
 

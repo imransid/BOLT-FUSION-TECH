@@ -1283,7 +1283,7 @@ summary {
   margin-top: 8px;
 }
 
-/* ── §5 Team: the six engineers with a verified LinkedIn ────────────────── */
+/* ── §5 Team: ten engineers — a verified card links out, a pending one does not ── */
 .tw-team__head {
   display: flex;
   align-items: flex-end;
@@ -1326,11 +1326,17 @@ summary {
   color: rgba(255, 255, 255, 0.82);
 }
 
+.tw-team__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
 .tw-team__stat {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  flex: none;
 }
 
 .tw-team__count {
@@ -1341,14 +1347,18 @@ summary {
   color: #ffffff;
 }
 
-.tw-team__count-label {
+.tw-team__count-label,
+.tw-team__verified {
   font-size: 16px;
   color: rgba(255, 255, 255, 0.82);
 }
 
+/* Ten cards fill every row: five columns from 1025px, two below it — at 1440,
+   768 and 390 alike. The counts follow the roster's size: a roster that is not
+   a multiple of five leaves a short last row at desktop widths. */
 .tw-team__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -1375,13 +1385,25 @@ summary {
   transition: background-color 0.3s, border-color 0.3s;
 }
 
-@media (max-width: 767px) {
+/* The compact card: on phones, and in five columns until they are wide enough
+   for the full padding — at 1025px a card is about 173px wide. */
+@media (max-width: 767px), (min-width: 1025px) and (max-width: 1279px) {
   .tw-person { min-height: 130px; padding: 22px 18px 18px; }
 }
 
-.tw-person:hover {
+/* Only a link lights up: a pending card goes nowhere, so it does not invite a click. */
+a.tw-person:hover {
   border-color: rgba(255, 255, 255, 0.34);
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* A verified member's own photograph, only when one exists — never a stand-in. */
+.tw-person__photo {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .tw-person__name {
@@ -1411,13 +1433,19 @@ summary {
   line-height: 1.5;
 }
 
-.tw-person__handle {
+/* A verified card's handle and a pending card's label are the same line, so the
+   bottom lines of a row share a baseline whichever state each card is in. */
+.tw-person__handle,
+.tw-person__status {
   margin-top: auto;
   font-size: 15px;
   color: rgba(255, 255, 255, 0.78);
 }
 
-.tw-person__icon {
+/* The corner tile: a verified card's arrow, or a pending card's initials in the
+   same box — so the name beside it sits in the same place in every card. */
+.tw-person__icon,
+.tw-person__monogram {
   position: absolute;
   top: 20px;
   right: 20px;
@@ -1426,13 +1454,28 @@ summary {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 10px;
+}
+
+.tw-person__icon {
+  border: 1px solid rgba(255, 255, 255, 0.22);
   font-size: 18px;
 }
 
-@media (max-width: 767px) {
-  .tw-person__icon { top: 14px; right: 14px; width: 30px; height: 30px; }
+/* Initials, as text in the site's heading face on the brand blue — a
+   monogram, not a face (CLAUDE.md, "No fake faces"). */
+.tw-person__monogram {
+  background-color: var(--brand);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+@media (max-width: 767px), (min-width: 1025px) and (max-width: 1279px) {
+  .tw-person__icon,
+  .tw-person__monogram { top: 14px; right: 14px; width: 30px; height: 30px; }
 }
 
 /* ── §6 Questions: <details name="faq"> — native open/close ──────────────── */
@@ -2291,6 +2334,183 @@ summary {
 .tw-metric__label {
   font-size: 15px;
   line-height: 1.6;
+}
+
+/* ── /work: who built it (decided 2026-09-15) ─────────────────────────────── *
+   Every card on /work carries its attribution label directly above the
+   project's name — the same place on every card, the case-study rows
+   included (verify-site check 9). Text in the brand blue, as the eyebrow:
+   never a shipped/target colour. */
+.tw-attr {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 26px;
+  color: var(--brand);
+}
+
+.tw-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tw-facts dt {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--body);
+}
+
+.tw-facts dd {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* The other kinds, one card each, on a grid that fills every row: three across
+   a set of three from 1025px, two across a set of two from 768px, one on
+   phones (app/work/page.tsx picks the count). */
+.tw-projects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+}
+
+@media (min-width: 768px) {
+  .tw-projects--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1025px) {
+  .tw-projects--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.tw-project {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: 15px;
+  background-color: #ffffff;
+}
+
+/* The screenshot: drawn at its file's size into a 16:10 frame (the captures
+   are 1440x900), covering it from the top. */
+.tw-project__shot {
+  position: relative;
+  flex: none;
+  aspect-ratio: 16 / 10;
+  max-width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--hairline);
+  background-color: var(--surface-light);
+}
+
+.tw-project__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.tw-project__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  padding: 30px;
+}
+
+@media (max-width: 767px) {
+  .tw-project__body { padding: 26px 22px; }
+}
+
+/* A card alone in its set, and the set of three between 768 and 1024px (one
+   column there): the screenshot beside the text, so the row is filled. */
+@media (min-width: 768px) {
+  .tw-projects--1 > .tw-project--shot {
+    display: grid;
+    grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+  }
+
+  .tw-projects--1 > .tw-project--shot > .tw-project__shot {
+    aspect-ratio: auto;
+    min-height: 280px;
+    border-right: 1px solid var(--hairline);
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tw-projects--3 > .tw-project--shot {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tw-projects--3 > .tw-project--shot > .tw-project__shot {
+    aspect-ratio: auto;
+    min-height: 280px;
+    border-right: 1px solid var(--hairline);
+    border-bottom: 0;
+  }
+}
+
+.tw-project__summary {
+  max-width: 60ch;
+}
+
+.tw-project__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.tw-project__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-color: rgba(8, 106, 216, 0.35);
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+.tw-project__link:hover {
+  color: #0a5cc8;
+  text-decoration-color: currentColor;
+}
+
+.tw-project__link-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+/* Feature work (decided 2026-09-16): inside Bolt Fusion projects, after the
+   products, the features we shipped into other companies' apps — its own h3
+   under a hairline, then text cards on a grid of their own that fills its
+   rows like the one above (no screenshots: the apps' UI is the clients'). The
+   band's gap spaces it from the products. */
+.tw-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding-top: 50px;
+  border-top: 1px solid var(--hairline);
+}
+
+@media (max-width: 767px) {
+  .tw-subgroup { gap: 24px; padding-top: 40px; }
 }
 
 /* ── Outcomes: a check and a sentence ───────────────────────────────────── */

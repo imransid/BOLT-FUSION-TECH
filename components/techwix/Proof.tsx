@@ -1,6 +1,7 @@
-import Image from "next/image";
+import ScreenImage from "./ScreenImage";
 
 import FigureText from "@/components/FigureText";
+import { projects } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 
 import Button from "./Button";
@@ -29,7 +30,7 @@ function Card({ p, large }: { p: Work; large: boolean }) {
   const body = (
     <>
       {p.src ? (
-        <Image
+        <ScreenImage
           src={p.src}
           alt={p.alt}
           fill
@@ -66,6 +67,7 @@ function Card({ p, large }: { p: Work; large: boolean }) {
 }
 
 export default function Proof({ work }: { work: SiteContent["recentWorks"] }) {
+  const ourWork = projects.filter((p) => p.state === "published" && p.kind !== "track-record").length;
   return (
     <section id="recent-work" className="tw-band tw-band--white" aria-labelledby="work-title">
       <div className="tw-band__inner">
@@ -82,10 +84,16 @@ export default function Proof({ work }: { work: SiteContent["recentWorks"] }) {
           ))}
         </div>
 
-        {/* The internal link path: homepage -> /work -> each write-up. */}
+        {/* The internal link path: homepage -> /work -> each write-up. The
+            second link's count is the data's: the published projects on /work
+            that are ours. The engineers' track record is on that page too,
+            credited to them, and is not counted as our work. */}
         <p className="tw-actions tw-actions--center">
-          <Button href="/work" variant="outline">
+          <Button href="/work#case-studies" variant="outline">
             See all case studies
+          </Button>
+          <Button href="/work" variant="outline">
+            See all work ({ourWork} projects)
           </Button>
         </p>
       </div>
