@@ -19,7 +19,11 @@ Do not resolve those by editing either side.
 Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS · Barlow and
 Jost through `next/font/google` · deployed on Vercel. There is no CMS and no
 database: the content is typed files in `/content`. There is no animation
-library and no Tailwind.
+library and no Tailwind. **three.js is back for one thing only, the homepage
+hero's scene**, by the owner's brief of 2026-09-16 (*The hero field*, under
+Hard rules): imported dynamically after LCP and load, desktop only, one chunk
+of at most 180KB gzipped. It left on 2026-09-15 as the @react-three nebula; it
+returns as plain three.js, with no React Three Fiber.
 
 - **Two stylesheets, until the inner pages move.** `app/site.css` is the design —
   the owner's engineering redesign of 2026-09-16 (*Design language*): the shell
@@ -34,8 +38,11 @@ library and no Tailwind.
 - Package manager: yarn 4 (`packageManager` in package.json), `nodeLinker:
   node-modules` — Turbopack does not support Plug'n'Play. `yarn.lock` is the
   only lockfile.
-- Runtime dependencies: `next`, `react`, `react-dom`, `server-only`, `zod`.
-  Verify-site check 24 fails a dependency nothing imports.
+- Runtime dependencies: `next`, `react`, `react-dom`, `server-only`, `three`,
+  `zod`. `three` is pinned exactly (`0.186.0`), and `@types/three` in
+  devDependencies matches it (`0.186.0`): bump the two together, and
+  re-measure the scene chunk when you do. Only `components/field/scene.ts`
+  imports it. Verify-site check 24 fails a dependency nothing imports.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
 - Scripts beside the suite: `scripts/generate-icons.mjs` (the icons, from the
   mark), `scripts/contrast-site.mjs` (the contrast table below),
@@ -515,19 +522,46 @@ for more than five seconds has a pause control.
   under five seconds, so it needs no pause control (WCAG 2.2.2) — then rest.
 - **The system map:** a lit link's cyan pulse runs four 1.2s passes and rests;
   the other parts dim with a 0.2s opacity change.
-- **Hero field (homepage): the poster only, until the 3D wave** —
-  `public/hero/field-poster-{660,1320}.{avif,webp}`, a real frame of the old
-  field, as a plain `<img data-hero-poster>` in a `<picture>` (the LCP element;
-  the image optimizer is not on that path). Below 1025px or on a coarse pointer
-  it drifts slowly — a 26s CSS transform, so no layout shift; under reduced
-  motion it is still. **Its pause control** (`components/site/MotionToggle.tsx`)
-  shows only where the hero moves — the drift, or a hero marked
-  `data-scene="live"` — and is `hidden` in the server HTML. Pausing sets
-  `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
-  `{ paused }`: the drift reads the attribute, and the 3D scene is to listen for
-  the event. **three.js returns for the scene** (owner, 2026-09-16); the 3D wave
-  amends *The hero field* under Hard rules, and its poster replaces this one
-  under a new file name.
+- **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
+  the owner's brief; engineering SPEC §7, "Many technologies. One engineering
+  system."). An engineering core of stacked, chamfered octagonal plates in
+  graphite, each lit by a thin brand-blue seam, turning slowly. Seven modules
+  sit on two orbital tiers, each a distinct form with no text: on the inner
+  tier web (a thin panel), mobile (a slim slab), AI (a wireframe icosahedron)
+  and cloud (a torus ring); on the outer tier ERP (stacked blocks), POS (a
+  terminal block) and robotics (an articulated two-segment arm). Thin curves
+  run from the core to each module, with small cyan pulses travelling along
+  them, over an architectural grid floor that fades into the ground.
+  Hemisphere, key and rim lights, MeshStandardMaterial, no post-processing and
+  no bloom. Graphite, one brand blue on edges, cyan only on the data flow.
+  - `components/field/scene.ts` is the scene; `components/field/HeroScene.tsx`
+    loads it (*The hero field*, under Hard rules, for when and how).
+  - **Motion:** the plates and the two tiers turn slowly, the tiers in opposite
+    directions (one turn in about 90 and 140 seconds). Each module keeps its
+    face toward the viewer with a slow sway, and the robot arm flexes. A pulse
+    takes about four seconds to cross a connection, and grows and shrinks at
+    its ends, so nothing pops. The camera follows the pointer by at most 6
+    degrees of yaw, eased. Nothing is fast and nothing flashes.
+  - **The poster** is `public/hero/scene-poster-v1-{660,1320}.{avif,webp}`, the
+    scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
+    It is a plain `<img>` in a `<picture>`, the LCP element, with the image
+    optimizer off that path. Below 1025px or on a coarse pointer it drifts
+    slowly — a CSS transform, so no layout shift; under reduced motion it is
+    still. The step-3 files, `field-poster-{660,1320}.*`, stay in
+    `public/hero/` until the integration decides; nothing references them.
+  - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
+    where the hero moves — the drift, or a hero marked `data-scene="live"` —
+    and is invisible in the server HTML (`visibility: hidden` until it
+    carries `data-ready`), keeping its space, so appearing never shifts the
+    page. As `hidden` it moved the hero text 42px when it appeared: CLS 0.0085
+    at 1440 when the scene went live, and 0.0245 at 390 at hydration (found by
+    the scene's probe, fixed 2026-09-16). `HeroScene` sets `data-scene="live"` on
+    `#hero` once the scene has drawn and removes it on teardown, so the button
+    stays while the scene is paused and can resume it. Pausing sets
+    `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
+    `{ paused }`: the drift reads the attribute; the scene stops its loop on
+    the event and resumes on the next, and starts paused (its t = 0 frame
+    drawn, no loop) if the attribute is already set when it mounts.
 - **The header's headroom** slide is a 0.25s transform; the drawer slides in
   over 0.28s.
 - **The older reveal**, on the inner pages: `components/techwix/RevealObserver.tsx`,
@@ -626,45 +660,76 @@ at the end, which means nobody has decided yet.
   element the server sends at `opacity:0` is not. *Holds*: the reveal's
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
 - **The hero field — the one place WebGL is allowed, and never in the way.**
-  **Amended by the owner on 2026-09-16 (*Decided 2026-09-16*): three.js returns
-  for the hero, lazy and desktop-only, at most 180KB gzipped, and the field is
-  now the right column of the graphite hero (`components/site/home/Hero.tsx`),
-  a 560px frame with the poster drawn 660px wide. The 3D wave rewrites the rest
-  of this rule; until it does, where it says raw WebGL2, 15KB or "do not bring
-  three.js back", the redesign spec wins.**
-  Decided 2026-09-11 for the homepage rebuild. Step 3 (the poster, no canvas
-  yet) is built: the poster `<img data-hero-poster>` is the final LCP entry,
+  Decided 2026-09-11 for the homepage rebuild; amended by the owner on
+  2026-09-16 (*Decided 2026-09-16*). The canvas over the poster is now the
+  three.js scene (*Motion, as built*), and the field is the right column of the
+  graphite hero (`components/site/home/Hero.tsx`): a 560px-tall frame, at most
+  660px wide, on the ground colour, with the poster drawn 660px wide. The
+  poster `<img data-hero-poster>` is the final LCP entry,
   measured with a buffered `PerformanceObserver` on a fresh, unscrolled load —
   verify-site check 28 asserts it by identity at 390 (also as a phone), 768,
   1024, 1025, 1280 (also at DPR 2) and 1440 on every run, and then, settled,
   that the poster is still rendered, opaque, the field's box, on top of
   everything in the field but a canvas with the field's box, and clear of the
   h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
-  poster hidden, faded, covered or moved after it painted). The field is the
-  right half of the panel at ≥1025px — 560px tall, centred on the text column,
-  so the poster is drawn exactly 660px wide and `sizes` says so (H4: at the
-  column's full height, 832px at 1025, the browser fetched a file about 1.5x too
-  small at every DPR) — and sits above the text below that.
+  poster hidden, faded, covered or moved after it painted). At ≥1025px the
+  field is 560px tall and at most 660px wide (narrower between about 1025 and
+  1300px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
+  at the column's full height, 832px at 1025, the browser once fetched a file
+  about 1.5x too small at every DPR); below that it sits above the text.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
     `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
-    assets): a browser that has the old file never asks again. Step 4 re-renders
-    the poster; it ships as `field-poster-v2-*` or similar, never over the old
-    name.
+    assets): a browser that has the old file never asks again. The scene's
+    poster ships as `scene-poster-v1-*`; the next render is `v2`, never over
+    the old name.
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
     and is `aria-hidden`.
   - The fallback ships first; WebGL is progressive enhancement, imported only
     after the first LCP entry and `load`, inside `requestIdleCallback`.
-  - **One draw call, no per-particle objects, no per-frame allocation.** This
-    rule used to read "`InstancedMesh` only". Its intent was one draw call and
-    no per-particle objects. A single `POINTS` draw in raw WebGL2 meets that
-    better than instanced quads — one vertex per particle instead of four, for
-    the same curl-noise shader — and weighs about 5KB gzipped against the 218KB
-    three.js / @react-three/fiber chunk it replaces. Do not bring three.js back
-    for the field.
-  - DPR capped at 1.75; down to 1,000 particles after two seconds of frames over
-    20ms; paused offscreen and when the tab is hidden.
+  - **Reversed by the owner, 2026-09-16: three.js is allowed for the hero
+    scene.** This rule said "raw WebGL2 only, one draw call, about 5KB; do not
+    bring three.js back". The owner's brief asked for a three.js hero, an
+    abstract engineering ecosystem, and not a brain, a particle cloud or a
+    globe. It stays within PLAN.md §5.2's original 3D budget: one chunk of at
+    most **180KB gzipped as transferred**. It is plain three.js, with no React
+    Three Fiber, and uses named imports so it tree-shakes (measured under
+    *Performance targets*). The raw WebGL2 particle renderer on the local
+    branch `wip/field-renderer` is not used; only its gating, loading and
+    pausing patterns were kept.
+  - **No per-frame allocation** still holds. The pulses are InstancedMeshes,
+    and the loop writes their matrices straight into the instance buffers.
+    Every geometry, material and vector is made once, and the hot loops use no
+    iterators or closures.
+  - DPR capped at 1.75. Once the running average frame (about ten frames) has
+    stayed over 20ms for two seconds the pulses go; after two more, the outer
+    tier. Testing each frame alone reset the count on every fast frame, and a
+    slow device's uneven frames kept resetting it, so it never fired (probe 6e,
+    2026-09-16). Paused offscreen (IntersectionObserver) and
+    when the tab is hidden. On teardown every geometry, material and instance
+    buffer is disposed, then the renderer, and the context is released
+    (`forceContextLoss`); the scene makes no textures. A lost context
+    (`webglcontextlost`) stops the loop and drops the canvas, and the poster,
+    never hidden, is what remains. Nothing throws.
+  - **When it loads.** `HeroScene` renders nothing, on the server or the
+    client. While the conditions below hold, it waits for BOTH the first
+    `largest-contentful-paint` entry (buffered) AND `load`, then an idle
+    callback (a timeout where `requestIdleCallback` is missing), and only then
+    runs `import("./scene")`. The canvas goes inside `[data-hero-field]` with
+    the field's box (`position:absolute; inset:0`), `aria-hidden`, at opacity
+    0. It fades in over 700ms once the first frame is drawn, and the field then
+    carries `data-scene-ready`.
+  - **The poster is a frame of the scene, by construction.** The scene's
+    first frame is t = 0 with the camera at rest, and that frame is the poster,
+    so the fade shows no jump. The scene keeps a fixed vertical field of view,
+    so a field narrower than 660 (between about 1025 and 1300px) shows the
+    centre crop of the 660x560 frame, exactly as `object-fit: cover` crops the
+    poster; it is composed to read from about 480 to 660 wide.
+    `scripts/render-scene-poster.mjs` renders it from the built site at 1440.
+    It freezes requestAnimationFrame when `data-scene-ready` appears, so the
+    canvas holds t = 0, and captures the field at 660x560 (its 1px border
+    removed for the capture) at DPR 2.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
@@ -672,15 +737,28 @@ at the end, which means nobody has decided yet.
     sends a first pointer move, tap or click, wheel turn and key, and fails any
     WebGL context at 390, 768 or 1024, as a phone, as a touch tablet (1180x820
     and 1366x1024, a coarse pointer), with Save-Data on, or under reduced
-    motion — and, until the renderer lands, any on `/` at all. Width alone is
-    never the gate: an iPad in landscape is 1180 or 1366 wide.
+    motion. The conditions are watched live: when they stop holding (a resize
+    below 1025, reduced motion switched on) the scene is torn down and
+    disposed. Until the suite wave rewrites check 25 for the scene
+    (engineering SPEC §8), it also fails any context on `/` at all, any
+    three.js chunk, and a renderer chunk over 15KB. On `redesign/eng-scene`
+    those three findings are expected. Width alone is never the gate: an iPad
+    in landscape is 1180 or 1366 wide.
   - **It sits beside the headline, never behind it.** On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
-    black — which wiped the particles out. On the rebuild's navy panel the field
-    takes the right half and the headline sits on flat navy, so contrast holds
-    by construction and nothing covers the field. Putting it behind the
+    black — which wiped the particles out. In the graphite hero the field is
+    the right column and the headline sits on the flat ground, so contrast
+    holds by construction and nothing covers the field. Putting it behind the
     headline again means rebuilding those five layers.
+  - **What the 2026-09-16 reversal did NOT change.** The poster is the LCP
+    element, never the canvas. There is no WebGL on phones, tablets, touch,
+    below 1025px, with Save-Data or under reduced motion: those visitors get
+    the poster, and the scene's chunk is never requested. The scene loads
+    lazily, after LCP and load, in an idle callback, and is never initial
+    JavaScript. The field sits beside the text, never behind it. The canvas is
+    `aria-hidden`, carries no information and cannot shift layout, and the
+    poster stays rendered under it.
 - **No tracked-out ALL-CAPS labels, no single headline word coloured for
   emphasis, no meta strings joined with middle dots, mono for machine output
   only.** *Holds* with `design/rules-decided`; the site now loads no mono face
@@ -949,7 +1027,23 @@ fresh context, with no input and no scroll.
 | LCP, desktop (1440, unthrottled) | at most 0.5s |
 | CLS | 0.00 — printed to three places, failing at 0.005 |
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
-| the renderer chunk (step 4) | at most 15KB gzipped, never on mobile — check 25 |
+| the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
+
+**The scene chunk, measured 2026-09-16.** One Turbopack chunk holds three.js
+0.186.0 and the scene: 555KB raw, **137.9KB on the wire**. That is the
+response's `encodedBodySize` under `next start`'s gzip, read in the browser at
+1440; the file itself is 140.5KB at `gzip -9`. It is requested at about 2.2s,
+after the load event (164ms locally), and none of the nine scripts before load
+holds three.js. esbuild's estimate before the build was 142.8KB. So named
+imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
+three bump or a new import pushes it past 180KB, import from
+`three/src/...` module paths.
+
+**The posters:** `scene-poster-v1-660.avif` 7.0KB, `-1320.avif` 15.3KB,
+`-660.webp` 13.6KB, `-1320.webp` 31.8KB (AVIF 4:4:4 at quality 56, WebP 82).
+The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF: a dark
+frame of hard-edged shapes compresses far better than a cloud of points, which
+takes weight off the LCP path.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in
