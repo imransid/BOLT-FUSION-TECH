@@ -90,6 +90,14 @@ fails `next build` with the file named:
   (`components/techwix/*`: the proof strip, Architecture, How we work) and
   `lib/structured-data.ts`.
 - `figure-labels.ts` — the in-sentence labels and exemptions (*Hard rules*).
+- `insights.ts` (schema `insights-schema.ts`) — the /insights articles (redesign
+  SPEC §6), written from real work only; server-only and deep-frozen like
+  `site.ts`, so never re-exported from the barrel. No page renders them yet.
+  `node scripts/verify-insights.mjs` reads every article string with check 8’s
+  own grammar (`tokenizeFigures`, read out of the suite) and fails a figure
+  without its entry in `figure-labels.ts`, or any figure outside a paragraph or
+  bullet: titles, deks and headings feed the Article JSON-LD and meta tags,
+  where no chip can render.
 
 There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
 data is generated from the same items the sections render (`fix/faq-one-source`,

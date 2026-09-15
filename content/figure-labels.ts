@@ -125,6 +125,19 @@ const labels: FigureLabel[] = [
   { text: "calendar, 24/7", status: "target", source: WARMCHATS },
   { text: "within 60 seconds", status: "target", source: WARMCHATS },
   { text: "in under 60s", status: "target", source: WARMCHATS },
+
+  /* /insights/routing-ai-so-most-queries-never-reach-a-model (content/insights.ts):
+     the restaurant search's figures, each with the status and the source the
+     site gives the same figure everywhere else. Each entry starts at or before
+     the shorter entry for the same figure above ("~80% of traffic", "~20% of
+     traffic", "~90% of AI calls"), so the article's wording wins (FigureText).
+     scripts/verify-insights.mjs checks every figure in the articles. */
+  { text: "keyword lane for ~80% of traffic", status: "target", source: TRAFFIC_SHARE },
+  { text: "AI lane for ~20% of traffic", status: "target", source: AI_SHARE },
+  { text: "requests stay on a <100ms path", status: "shipped", source: SEARCH_RESPONSE },
+  { text: "$0 marginal model cost", status: "shipped", source: ZERO_MARGINAL },
+  { text: "~$0.001 per AI query", status: "target", source: BUDGET },
+  { text: "~90% of AI calls are routed to Claude Haiku", status: "shipped", source: HAIKU_ROUTING },
 ];
 
 /* The same test verify-site check 8 applies in the browser, so a bad reason
