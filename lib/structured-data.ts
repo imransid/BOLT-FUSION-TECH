@@ -1,7 +1,8 @@
-import { services } from "@/content";
+import { CANONICAL_DESCRIPTION, COMPANY_LINE } from "@/content/canonical";
+import { capabilities } from "@/content/engineering";
 
 /**
- * JSON-LD — PLAN.md §7.
+ * JSON-LD — PLAN.md §7, and the owner's redesign of 2026-09-16 (SPEC §4).
  *
  * EMITS ONLY WHAT THE CONTENT LAYER HOLDS. Three fields a generator would
  * normally add are deliberately absent, because no verified value exists:
@@ -19,17 +20,29 @@ import { services } from "@/content";
  *
  * `Person` is emitted for the VERIFIED people the Team section lists — each has
  * a verified LinkedIn URL — and for no pending member. A Person node with no
- * `sameAs` is an unverifiable name, which is the exact claim section 5 exists
- * to disprove.
+ * `sameAs` is an unverifiable name, which is the exact claim the Team section
+ * exists to disprove.
+ *
+ * `Service` is one node per capability, from content/engineering.ts — the same
+ * entries the capability sections render. Robotics' description carries its
+ * honesty line: it is Lab, and nothing there is a shipped system.
  */
 
 type Json = Record<string, unknown>;
 
-/** Canonical company description — COPY.md §"Company description". The same
- *  text goes on the LinkedIn page and in llms.txt, so all three agree. It asserts
- *  no headcount, which is what lets the schema stay silent on a contradicted number. */
-const ORG_DESCRIPTION =
-  "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh. We build production AI, custom software and platform work for teams who need systems that hold up after launch — not demos. How we work: named engineers assigned before you sign, 4–8 hours of overlap with US and EU working days, IP assigned on payment, and an NDA before scoping. Your first call is with the engineer who writes the code. Most engagements start with a two-week paid pilot: a scoped slice of your real product, fixed price, full IP, no obligation. Live work: warmchats.com";
+/** Canonical company description — COPY.md, "Company description — canonical",
+ *  changed by the owner on 2026-09-16. Its first sentence is the canonical line
+ *  (content/canonical.ts), which verify-site check 12 finds everywhere else. The
+ *  same text goes in llms.txt. It asserts no headcount, which is what lets the
+ *  schema stay silent on a contradicted number. */
+const ORG_DESCRIPTION = [
+  CANONICAL_DESCRIPTION,
+  COMPANY_LINE,
+  "We build web and mobile platforms, AI and automation, HR and point-of-sale systems, and the infrastructure under them; full ERP is designed but not yet delivered, and we haven't delivered robotics work yet.",
+  "How we work: named engineers assigned before you sign, 4–8 hours of overlap with US and EU working days, IP assigned on payment, and an NDA before scoping. Your first call is with the engineer who writes the code.",
+  "Most engagements start with a two-week paid pilot: a scoped slice of your real product, fixed price, full IP, no obligation.",
+  "Live work: warmchats.com",
+].join(" ");
 
 export function organizationLd(siteUrl: string, sameAs: string[]): Json {
   return {
@@ -37,18 +50,21 @@ export function organizationLd(siteUrl: string, sameAs: string[]): Json {
     "@id": `${siteUrl}#organization`,
     name: "Bolt Fusion Tech",
     url: siteUrl,
-    logo: new URL("/favicon.svg", siteUrl).toString(),
+    logo: new URL("/apple-touch-icon.png", siteUrl).toString(),
     description: ORG_DESCRIPTION,
     ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 }
 
+/** One Service per capability — what the capability sections on / render. */
 export function serviceLd(siteUrl: string): Json[] {
-  return services.map((s) => ({
+  return capabilities.map((c) => ({
     "@type": "Service",
-    "@id": `${siteUrl}#service-${s.id}`,
-    name: s.name,
-    description: s.shape,
+    "@id": `${siteUrl}#service-${c.id}`,
+    name: c.name,
+    serviceType: c.name,
+    description: c.honesty ? `${c.body} ${c.honesty}` : c.body,
+    url: new URL(`/#${c.id}`, siteUrl).toString(),
     provider: { "@id": `${siteUrl}#organization` },
   }));
 }
@@ -122,12 +138,15 @@ export function breadcrumbLd(
   };
 }
 
+/** The homepage's graph. `withServices` is false when the capability sections
+ *  are hidden: no rendered capability, no Service node. */
 export function buildGraph(
   siteUrl: string,
   sameAs: string[],
   renderedFaq: RenderedFaq,
   renderedTeam: RenderedTeam,
   extra: Json[] = [],
+  withServices = true,
 ) {
   return {
     "@context": "https://schema.org",
@@ -138,9 +157,10 @@ export function buildGraph(
         "@id": `${siteUrl}#website`,
         url: siteUrl,
         name: "Bolt Fusion Tech",
+        description: CANONICAL_DESCRIPTION,
         publisher: { "@id": `${siteUrl}#organization` },
       },
-      ...serviceLd(siteUrl),
+      ...(withServices ? serviceLd(siteUrl) : []),
       ...faqPageLd(siteUrl, renderedFaq),
       ...personLd(siteUrl, renderedTeam),
       ...extra,
