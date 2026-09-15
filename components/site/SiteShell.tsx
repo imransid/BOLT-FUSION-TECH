@@ -11,16 +11,16 @@ import SiteMotion from "./SiteMotion";
  * <main id="main"> — the skip link's target — and the footer, with the quiet
  * motion. `current` is the header link to mark as this page ("/work").
  *
- * `ground="graphite"` paints the redesign's dark ground behind the page (the
- * homepage, /contact, and each inner page as the next wave moves it); an inner
- * page still in the older design passes nothing and keeps its own light bands
- * (components/techwix/PageShell). app/site.css paints <body> to match whichever
- * ground the page's <main> carries, so overscroll never shows the other one.
+ * `ground="graphite"` paints the redesign's dark ground behind the page: the
+ * main gets `.bf-main`, which carries the body type and the ground, and
+ * app/site.css paints <html> and <body> to match. Since the Techwix design was
+ * retired (2026-09-16) there is no other ground, so it is the default; every
+ * page still says so.
  */
 export default function SiteShell({
   children,
   current,
-  ground,
+  ground = "graphite",
 }: {
   children: ReactNode;
   current?: string;
