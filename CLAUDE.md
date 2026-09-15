@@ -21,12 +21,12 @@ Jost through `next/font/google` · deployed on Vercel. There is no CMS and no
 database: the content is typed files in `/content`. There is no animation
 library and no Tailwind.
 
-- **Two stylesheets, until the inner pages move.** `app/site.css` is the design —
-  the owner's engineering redesign of 2026-09-16 (*Design language*): the shell
-  on every page, the homepage and /contact. `app/techwix.css` is the older design,
-  still under /work, both write-ups, the privacy policy and the 404; the next
-  wave moves each page onto `app/site.css` and then deletes it. Both load from
-  `app/layout.tsx`, techwix first.
+- **One stylesheet.** `app/site.css` is the design — the owner's engineering
+  redesign of 2026-09-16 (*Design language*): the shell and every page, the 404
+  included, loaded from `app/layout.tsx`. The Techwix design it replaced
+  (`app/techwix.css`, the `.tw-` classes, `components/techwix`) was retired the
+  same day, once the inner pages had moved (*Retired 2026-09-16: the Techwix
+  design*).
 - **three.js returns** (owner, 2026-09-16; *Decided 2026-09-16*): for the hero's
   3D scene only — three.js core, dynamically imported after load, desktop-only,
   at most 180KB gzipped. The 3D wave adds the dependency and rewrites *The hero
@@ -47,27 +47,31 @@ library and no Tailwind.
 |---|---|---|
 | `/` | homepage (`app/page.tsx`), the redesign's story in `site.sectionOrder`: hero, what we engineer, the six capabilities, the system map, industries, how we build, technical depth, engineering stories (the two write-ups and the proof strip), team, FAQ, final call to action | `content/site.ts` (hero, stories, team, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages, depth, the system map), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the restaurant story's lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16 | `content/site.ts`, `contact` |
+| `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
+| `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
+| `/engineering` | how we build (the homepage's six stages, and the three phases of `content/process.ts`), the stack by layer (SPEC §8b.2), architecture principles each linked to where it is written up, and the verify-before-release discipline | `content/engineering.ts`, `content/process.ts`, `content/pages.ts` · static |
+| `/about` | who we are; the ten engineers (the homepage's Team section, every rule intact, Person nodes for the verified six); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
+| `/insights` | the index of the articles | `content/insights.ts`, `content/pages.ts` · static |
+| `/insights/[slug]` | an article (`generateStaticParams`, `dynamicParams = false`): the sections in reading order, code in Barlow 500, each "diagram" an ordered flow, related work; Article JSON-LD | `content/insights.ts` · SSG |
 | `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
 
-**Linked from the navigation, built by the next wave:** `/capabilities`,
-`/industries`, `/engineering`, `/about` and `/insights` (the redesign's IA). They
-404 until then. Each renders from `content/engineering.ts` — the same entries the
-homepage summarises — and joins the sitemap when it lands.
+**The navigation's six routes all exist** (SPEC §4; built 2026-09-16,
+`redesign/eng-pages`), each in the sitemap. The engineering pages render the
+same entries in `content/engineering.ts` that the homepage summarises.
 
 Also generated: `/opengraph-image`, `/robots.txt`, `/sitemap.xml`. Static:
 `public/llms.txt`, `public/llms-full.txt`.
 
-**One root layout.** `app/layout.tsx` wraps every page and the 404. It loads both
-stylesheets and the Barlow and Jost faces, and holds the site-wide metadata: the
+**One root layout.** `app/layout.tsx` wraps every page and the 404. It loads the
+stylesheet and the Barlow and Jost faces, and holds the site-wide metadata: the
 title template, the canonical description, icons and robots. Every page renders
 inside `components/site/SiteShell.tsx` — the header, the page's `<main id="main">`
-and the footer. The homepage and /contact pass `ground="graphite"` (the main gets
-`.bf-main`, and `<html>` and `<body>` take its ground); the inner pages still in
-the older design render through `components/techwix/PageShell.tsx`, which wraps
-SiteShell and adds the older reveal. The header's links are routes on every
+and the footer. Every page passes `ground="graphite"` — the default since the
+Techwix design was retired — and the main gets `.bf-main`; `<html>` and `<body>`
+paint the same ground. The header's links are routes on every
 page, and `current` marks the page's own link (`aria-current`). "Back to top"
 goes to `#masthead`, the header. The old homepage anchors still land somewhere:
 `/#recent-work` is the engineering stories, `/#contact` the final call to action.
@@ -126,13 +130,28 @@ fails `next build` with the file named:
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage (the
   proof strip, the restaurant story's lanes) and `lib/structured-data.ts`.
-  `services.ts` (the engagement models) and `pilot.ts` left the homepage on
-  2026-09-16 and are kept for /about (the next wave); `process.ts`'s three steps
-  were replaced by the six stages.
+  `services.ts` (the engagement models) and `pilot.ts` (which carries COPY.md
+  §7's title and body since 2026-09-16) left the homepage on 2026-09-16 and
+  render on /about; `process.ts`'s three steps gave way to the six stages on the
+  homepage and are /engineering's three phases.
 - `figure-labels.ts` — the in-sentence labels and exemptions (*Hard rules*).
+- `pages.ts` — the inner pages' own words (2026-09-16): each page's head and
+  metadata (the schema refuses a description outside check 26's 50–160
+  characters), /engineering's phases, architecture principles and verify list,
+  /about's who we are, where our engineers work, how we work with clients and
+  what we won't do, and the /insights index and the homepage's teaser. Nothing
+  in it is a new claim: each principle links to its write-up or article, the
+  verify list names what the suite checks and no number, and /about's terms and
+  lines are the Organization description's and the old homepage's, word for
+  word. It refuses an unlabelled figure, as `engineering.ts` does.
 - `insights.ts` (schema `insights-schema.ts`) — the /insights articles (redesign
   SPEC §6), written from real work only; server-only and deep-frozen like
-  `site.ts`, so never re-exported from the barrel. No page renders them yet.
+  `site.ts`, so never re-exported from the barrel. They render on /insights,
+  /insights/[slug] and the homepage's teaser (before the FAQ). An article may
+  carry a shorter `description` for its meta tags — check 26 wants 50–160
+  characters and two deks are longer; the schema refuses one outside that — and
+  a `place` that sets where a section's list, code block or diagram sits in its
+  reading order.
   `node scripts/verify-insights.mjs` reads every article string with check 8’s
   own grammar (`tokenizeFigures`, read out of the suite) and fails a figure
   without its entry in `figure-labels.ts`, or any figure outside a paragraph or
@@ -250,12 +269,9 @@ precise, restrained engineering foundation (the redesign spec, §3): full-bleed
 graphite sections divided by hairlines, not boxes; one brand blue for actions;
 one cyan for data flow only; a distinct diagram per capability; quiet motion.
 `app/site.css` styles it, every class `bf-`: the shell (header, drawer, footer)
-on every page, and the pages whose `<main>` carries `.bf-main` — the homepage and
-/contact. The inner pages keep the older design's bodies inside the new shell
-until the next wave moves them (*The older design*, below). Nothing in
-`app/site.css` restyles an older page's body, and its base block repeats
-`app/techwix.css`'s resets word for word, so it carries the site alone once that
-file is deleted.
+and every page, the 404 included (*The inner pages, as built*, below). Its base
+block carries the resets the retired `app/techwix.css` held — the body's Jost
+16px on the unitless 1.73, the button reset, 600 for bold, code in Barlow.
 
 - **Tokens** (`:root` in `app/site.css`): ground `#07090d`, surface `#0d1016`,
   raised `#141922`; hairline `#232a36`, a stronger rule `#2e3747`, steel `#6b7385`
@@ -275,7 +291,7 @@ file is deleted.
   Call moves into the drawer). No horizontal scroll at any width.
 - **Sections** (`.bf-section`): full bleed, a hairline on top, 72px of padding on
   phones, 96 from 768, 128 from 1025. Cards only where the content is a set (the
-  team; /work's projects); everything else is a ruled grid, a ledger, a rail, a
+  team; /work's projects; a write-up's services and stack groups); everything else is a ruled grid, a ledger, a rail, a
   strata table or a diagram — never a row of identical cards.
 - **Buttons** (`components/site/Cta.tsx`): Barlow 600, square-cut (2px).
   `primary` is white on the button fill, one per view; `ghost` a steel outline;
@@ -283,8 +299,8 @@ file is deleted.
   action the suite follows: `schedule` on every Schedule a Call, `explore` on
   Explore Our Capabilities, `project` on Tell Us About Your Project.
 - **Three chip families, never confusable** (a figure's status is check 8's):
-  - *status* (`components/site/StatusChip.tsx`, and `<FigureText>`'s `.tw-figchip`
-    recoloured for graphite): a pill in green (shipped) or amber (target), the only
+  - *status* (`components/site/StatusChip.tsx`, and `<FigureText>`'s `.bf-figchip`,
+    `.tw-figchip` until 2026-09-16): a pill in green (shipped) or amber (target), the only
     use of those colours, with `data-status` on the figure's wrapper;
   - *evidence tier* (`components/site/TierChip.tsx`): square, neutral, a four-step
     brand-blue meter (Proven 4, Core 3, Capable 2, Lab 1), `data-tier`, never
@@ -324,8 +340,7 @@ file is deleted.
 - **Skip link:** "Skip to content", the first stop on every page, off screen until
   focused, white on the button fill, to `main#main`.
 - **Visible focus:** a 2px `#8ab4ff` ring (9.5:1 on the ground) on every link,
-  button, summary and field in the redesign's pieces; the older pages keep their
-  3px ring.
+  button, summary, field and anything with a tabindex, on every page.
 
 ### Contrast — every pair measured
 
@@ -355,7 +370,8 @@ fill is composited over its ground first. Every pair is AA:
 | shipped #34d399 | rgb(17,36,35) | 8.40:1 | 4.5:1 | a shipped chip on a surface |
 | target #fbbf24 | rgb(31,27,15) | 10.29:1 | 4.5:1 | a target chip on the ground |
 | target #fbbf24 | rgb(37,34,23) | 9.53:1 | 4.5:1 | a target chip on a surface |
-| text #eceff4 | #0b0b12 | 17.01:1 | 4.5:1 | the older design's logo tile (the WarmChats sign-off): the mark |
+| shipped #34d399 | rgb(23,44,46) | 7.61:1 | 4.5:1 | a shipped chip inside a tag on a card |
+| target #fbbf24 | rgb(43,42,34) | 8.63:1 | 4.5:1 | a target chip inside a tag on a card |
 | steel #6b7385 | ground #07090d | 4.19:1 | 3:1 | input borders, ghost-button borders, diagram strokes (non-text) |
 | steel #6b7385 | surface #0d1016 | 4.00:1 | 3:1 | diagram strokes on the plate (non-text) |
 | steel #6b7385 | raised #141922 | 3.71:1 | 3:1 | the Lab chip's dashed edge (non-text) |
@@ -369,81 +385,97 @@ fill is composited over its ground first. Every pair is AA:
 The wordmark keeps its logotype exemption (checks 18 and 20), and no longer
 needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
 
-### What the next wave reuses
+### The pieces every page is built from
 
 - **Content:** `content/engineering.ts` (the capabilities with every depth field,
   the industries with problems, what we'd build, evidence and notes, the stages,
-  the depth layers, the system map, the section headings), `content/site.ts`
-  (navigation, footer, contact), `content/canonical.ts`.
-- **Components** (`components/site`): `SiteShell` (pass `ground="graphite"` and
-  `current`), `SectionHead`, `Cta` and `ctaKind`, `TierChip` and `TierLegend`,
-  `StatusChip`, `ProofStrip`, `CapabilityDiagram` (`diagrams.tsx`), `DomainGlyph`,
-  `SystemMap`, `ContactForm`, `Logo`, and the homepage's sections in
-  `components/site/home`.
+  the depth layers, the system map, the section headings), `content/pages.ts`
+  (the inner pages' heads and their own words), `content/site.ts` (navigation,
+  footer, team, contact, the restaurant case study), `content/insights.ts`,
+  `content/canonical.ts`.
+- **Components** (`components/site`): `SiteShell` (`ground="graphite"` and
+  `current`), `PageHead` (a page's one h1: a back link, the eyebrow, the lead
+  and meta line, an aside beside it), `SectionHead`, `Cta` and `ctaKind`,
+  `CtaBand` (a closing call to action), `TierChip` and `TierLegend`,
+  `StatusChip`, `ProofStrip`, `CapabilityDiagram` (`diagrams.tsx`),
+  `DomainGlyph`, `SystemMap`, `ContactForm`, `Logo`, `JsonLd`, `ScreenImage` and
+  `Shot` (screenshots), `Kpi` (`KpiGrid`, `KpiCard`), `LaneCard`, `Lists`
+  (`Tags`, `Bullets`), `Summary`, `ProjectCard` (with `attribution`,
+  `AttributionLabel`, `ProjectFacts`, `ProjectLinks`), `CodeBlock`, `FlowSteps`,
+  `icons`, and the homepage's sections in `components/site/home` — `HowWeBuild`,
+  `TechnicalDepth`, `Team` and `FinalCta` render on the inner pages too.
 - **CSS primitives** (`app/site.css`): `.bf-wrap`, `.bf-section`, `.bf-head` /
   `.bf-eyebrow` / `.bf-h2` / `.bf-h4` / `.bf-lead`, `.bf-actions`, `.bf-btn--*`,
   `.bf-index` (a ruled grid), `.bf-ledger`, `.bf-stages` (a rail), `.bf-strata`,
   `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
-  `.bf-pagehead` (a page's h1 block), `.bf-form` / `.bf-field`, and the
-  `data-bf-reveal` / `data-bf-flow` hooks of `components/site/SiteMotion`.
+  `.bf-pagehead` (a page's h1 block), `.bf-prose` (an article, the privacy
+  policy), `.bf-form` / `.bf-field`, and the `data-bf-reveal` / `data-bf-flow`
+  hooks of `components/site/SiteMotion`.
+- **Lib:** `lib/page-meta.ts` (`pageMetadata`: the title, description,
+  canonical and share card an inner page needs), `lib/work-links.ts`
+  (`workLink`: where a linked project is shown), `lib/dates.ts` (`longDate`),
+  and `articleLd` beside the rest in `lib/structured-data.ts`.
 
-### The older design (the inner pages, until the next wave moves them)
+### The inner pages, as built (2026-09-16)
 
-**One design — decided by the owner on 2026-09-15**, superseded on 2026-09-16:
-/work, both write-ups, the privacy policy and the 404 keep the Techwix clone's
-design inside the new shell — `app/techwix.css`, `.tw-` classes, the pieces in
-`components/techwix`. The old dark design that preceded it is gone, code and
-all: `app/globals.css` (the beam button, corner glow, grain, logo animations,
-`.cv-section`, the `[data-reveal]` system, the old FAQ block), its three faces
-(Inter, Satoshi, Commit Mono — the files and the licence), `lib/reveal.ts` and
-`components/RevealController.tsx`, framer-motion, `<LogoMark>`'s animated chip,
-the `SiteContentProvider` context, Tailwind and `postcss.config.mjs`. Verify-site
-check 31 fails if any of it comes back, on a page or in the source.
+Every inner page is a page head (`PageHead`, the one h1), full-bleed sections
+divided by hairlines, and a closing call to action — the homepage's `FinalCta`
+on the new pages, `CtaBand` carrying the page's own approved words on /work and
+the write-ups — then the footer. No light bands, no navy panels.
 
-None of the theme's photographs, logos, icon font, SVG art or copy ship. Its
-measured values came from the clone study on the retired `techwix-replica`
-branch; its pixel-matching rules do not apply here.
-
-- **Tokens** (`:root` in `app/techwix.css`): brand `#086ad8`, ink `#0e0e0e`, body
-  text `#4c4d56`, light surface `#f7f7f9`, hairline `#e1e1e1`; navy panels — every
-  page banner `#01013f` (35px radius), the contact and call-to-action panels
-  `#091577`. Content capped at 1300px; the side gutter `clamp(15px, 4vw, 50px)`.
-- **Bands** alternate white and `#f7f7f9`, 120px of padding at ≥1025, 90 below,
-  72 on phones.
-- **Status chips** keep the site's meaning: teal = shipped, amber = target —
-  `#0b6f78` on `#e2f3f4` and `#9a4a06` on `#fdf0dc` on light bands, light teal
-  and amber outlines on navy (`.tw-on-dark`).
-- **In-sentence chips.** `<FigureText>` (`components/FigureText.tsx`) puts
-  `.tw-figchip` straight after the figure inside its `data-status` wrapper;
-  `app/techwix.css` styles it, following the band, and `app/site.css` recolours
-  it on graphite. Do not add page variants to the component.
-- **Buttons:** Jost 600, 5px radius; the primary is the clone's gradient,
-  darkened so its lightest stop clears 4.65:1 against white; `light` and
-  `secondary` on navy, `outline` on light bands.
-- **Visible focus:** a 3px outline, brand blue on light bands and light blue on
-  navy.
-
-#### The inner pages
-
-Each is assembled from pieces built once in `components/techwix`, so no page is
-styled by hand:
-
-| piece | what it is |
+| page | sections, in order |
 |---|---|
-| `PageShell` | the site's shell (`components/site/SiteShell`) around the page's `<main>`, and the older reveal |
-| `PageBanner` | the rounded navy panel holding the page's one h1 on the title ramp; an optional back link, eyebrow, lead, buttons, and a screenshot beside the text at ≥1025px (below it under that), never behind it |
-| `SectionHeading` | an eyebrow (the clone's Barlow 500 subtitle), the h2 on the ramp's section size, an intro |
-| `Summary` | an executive summary beside the clone's gradient delimiter |
-| `KpiGrid`, `KpiCard` | a figure with its own chip beside it — ahead of any chip in the hint, so the card's first status is the figure's — its label and hint; a capability ("Multi-tenant") is a word in ink with no chip |
-| `LaneCard` | the lane card with a marker row (a number, then traffic and latency or a tag) and a footer line |
-| `Tags`, `Bullets` | lists whose every item goes through `<FigureText>` |
-| `Shot` | a screenshot in a fixed frame, covering it from the top, its caption below and never over it |
-| `CtaPanel` | the navy call-to-action panel, as a page's closing call to action on a light band |
+| `/capabilities` | page head with the tier legend · a contents row (each capability with its glyph and tier) · six capability sections (`#software` … `#cloud`): eyebrow, h2, body, robotics' honesty line (`data-honesty`), what we build (a tier chip where an item's evidence differs), how we approach it ("How we'd approach it" for Lab), evidence (the tiers, the note, the AI capability's three figures in `[data-metric]` rows, linked work, the articles written from it), and its own diagram beside the text, captioned (robotics: "Concept — not a shipped system") and described · final call to action |
+| `/industries` | page head · "Industries with delivered work." (restaurants, retail, real estate, HR, salons: the problems, what we'd build, what it draws on, where we've built it) · "No delivered work here yet." (healthcare, education, logistics, enterprise operations, startups: no evidence cell) · final call to action |
+| `/engineering` | page head · how we build (the homepage's stages rail) · in practice (the three phases of `content/process.ts`, each naming its stages) · the stack by layer (the homepage's strata) · architecture principles (eight, each linked to its write-up or article) · verify before release (what the suite fails on, with no number; what the build refuses) · final call to action |
+| `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
+| `/insights` | page head · the articles as a ledger (date, author, title, dek, capabilities) · final call to action |
+| `/insights/[slug]` | page head (back link, h1, dek, author, date) · the sections in reading order, beside related work, capabilities and more insights · final call to action |
+| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (two text cards) · the closing call to action |
+| `/work/warmchats` | page head with the screenshot · executive summary and the numbers · how it works · the product · architecture beside the full stack · outcome · call to action and the sign-off |
+| `/work/restaurant-search` | page head with the system image · executive summary and the KPIs · the three lanes · the stack beside the bounded contexts · call to action |
+| `/privacy-policy` | page head with the date · the policy as legal prose |
+| 404 | page head: the eyebrow "404", the h1, the way home |
 
-A page is a navy banner, then sections on alternating bands, then the navy
-call-to-action panel, then the footer. The privacy policy is legal prose
-(`.tw-prose`) on a white band. The copy of every inner page is unchanged
-(COPY.md), and `/work/warmchats` keeps its words and its section order.
+- **Words.** Every word and the section order of /work, both write-ups, the
+  privacy policy and the 404 are unchanged (check 30's inventories). The locked
+  WarmChats constants are byte-identical; only the markup around them changed.
+- **Buttons.** The primary fill and `data-cta="schedule"` are Schedule a Call's.
+  Approved labels that are not it — "Book a similar build", "Book a strategy
+  call", "Discuss a similar engagement", "Book a technical call", "Start a
+  pilot", "Start a 2-week pilot", "Read the write-up" — are the ghost variant
+  with no `data-cta`.
+- **/work's contract with check 9 is unchanged:** every card is an `<li>` marked
+  `data-project-kind` (`-scope`, `-id`); its `[data-attribution]` label, in the
+  brand blue, is directly followed by its name (an h3, or an h4 under the
+  feature-work sub-group's h3); `data-role`, `data-built-at` and
+  `data-project-status` sit on the facts; each figure is a `[data-metric]` row
+  with its own chip; and no other h3 or h4 is on the page. Grids fill their rows:
+  three across from 1025px; a set of two, two across from 768px; a set of three,
+  and a lone card, one to a row from 768px (a lone card at every width above
+  that) with the screenshot beside the text; one column on phones.
+- **Articles.** Figures only in paragraphs and bullets, through `<FigureText>`
+  (`node scripts/verify-insights.mjs`); code in Barlow 500 with tabular figures,
+  `white-space: pre`, in a focusable region that scrolls sideways, captioned;
+  each "diagram" an ordered flow (`FlowSteps`) on a cyan rail — the cyan of every
+  data-flow line, never on text.
+
+### Retired 2026-09-16: the Techwix design
+
+The Techwix clone's design — decided for the whole site on 2026-09-15 and
+superseded by the engineering redesign on 2026-09-16 — was retired on
+2026-09-16 (`redesign/eng-pages`), once the inner pages had moved:
+`app/techwix.css`, every `.tw-` class, `.tw-root` on `<body>`, and
+`components/techwix` (PageShell, PageBanner, SectionHeading, Summary, Kpi,
+LaneCard, Tags, Shot, ScreenImage, ProjectCard, CtaPanel, Button, StatusChip,
+icons and the older reveal, RevealObserver with `data-tw-reveal`).
+`<FigureText>`'s chip is `.bf-figchip`, and screenshots go through
+`components/site/ScreenImage.tsx`. What replaced each class, and the one suite
+contract that changed — check 31's stylesheet signature — are in the redesign's
+RENAMES.md. None of the theme's photographs, logos, icon font, SVG art or copy
+ever shipped. The old dark design that preceded it went on 2026-09-15, code and
+all (`app/globals.css`, Inter, Satoshi, Commit Mono, framer-motion, Tailwind);
+verify-site check 31 fails if any of it comes back.
 
 ## Type
 
@@ -468,11 +500,9 @@ are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3
 - The tokens `--bf-font-heading` (Barlow) and `--bf-font-body` (Jost) are
   declared at `:root` in `app/site.css`.
 
-The older design's title ramp stays on the inner pages until they move: 70/78
-major and 48/54 section at ≥1025px, 48/60 and 36/52 below; 24/34 sub and 20/30
-small at every width; the type on the span inside the heading (`.title-*`), the
-heading wrapper at line-height 0; its tokens `--font-heading` and `--font-body`
-in `app/techwix.css`.
+Code in an article is Barlow 500 with tabular figures and `white-space: pre`,
+in a box that scrolls sideways: the site loads no mono face, and `pre`, `code`,
+`kbd` and `samp` are set in Barlow so the browser never reaches for one.
 
 **All six faces are preloaded,** because every page paints each: the header's
 wordmark sets Barlow 700 and 500, every button — the footer's Schedule a Call on
@@ -486,8 +516,8 @@ and gain about 20ms of LCP. They are kept because LCP is the budgeted metric
 change that makes FCP matter — a budget on it, or a first paint that has to be
 the text — reopens this. (Recorded, not re-measured, in the fix pass.)
 
-The `next/font` variables live on `<html>`, which is `:root`, where both
-stylesheets declare the tokens that read them. Move them to `<body>` and every
+The `next/font` variables live on `<html>`, which is `:root`, where the
+stylesheet declares the tokens that read them. Move them to `<body>` and every
 token stops resolving; delete the tokens and the whole site renders in the
 system font. Both have happened. Verify-site checks 1 and 2 catch both.
 
@@ -530,21 +560,17 @@ for more than five seconds has a pause control.
   under a new file name.
 - **The header's headroom** slide is a 0.25s transform; the drawer slides in
   over 0.28s.
-- **The older reveal**, on the inner pages: `components/techwix/RevealObserver.tsx`,
-  rendered by `PageShell`. Elements marked `data-tw-reveal` still below the fold
-  after hydration get `.animated` and `techwix--slide-up` (3rem and a fade,
-  1.25s, `fill-mode: none`) when they enter the viewport. **Until 2026-09-15 it
-  animated nothing:** the attribute's value names the animation, React renders a
-  bare `data-tw-reveal` as `"true"`, and every element got the class
-  `animated true`. The observer now reads `"true"` and `""` as the default. No
-  check caught it — every check reads a page at rest, where a reveal that never
-  runs and one that has finished look the same.
+- **One reveal on every page** since 2026-09-16. The older one
+  (`components/techwix/RevealObserver.tsx`, `data-tw-reveal`) went with the
+  Techwix design. Its lesson stays: until 2026-09-15 it animated nothing — React
+  renders a bare boolean data attribute as `"true"`, which it read as an
+  animation's name — and no check caught it, because every check reads a page at
+  rest, where a reveal that never runs and one that has finished look the same.
 - **No animation library.** The FAQ is a `<details name="faq">` with no
   animation but its icon's quarter turn.
 - **Reduced motion:** nothing moves. The reveal, the diagram flow, the map's
   pulse and fade, the poster's drift, the header's slide, the drawer's slide,
-  the FAQ icon, the quiet link's arrow, and the older pages' reveal and
-  screenshot hover zooms each have a guard (verify-site checks 21 and 23).
+  the FAQ icon and the quiet link's arrow each have a guard (verify-site checks 21 and 23).
 
 ## SEO and AI visibility
 
@@ -565,6 +591,13 @@ for more than five seconds has a pause control.
   honesty line), FAQPage, Person (only engineers with a verified LinkedIn),
   BreadcrumbList. `/contact` emits a BreadcrumbList. `/work` and both case
   studies emit their own; each case study is BreadcrumbList + Article.
+  `/capabilities` emits Organization, one Service per capability and a
+  BreadcrumbList; `/industries` and `/engineering` a BreadcrumbList; `/about`
+  Organization, AboutPage, BreadcrumbList and a Person per verified engineer,
+  from the roster the page renders; `/insights` CollectionPage and
+  BreadcrumbList; each article an Article (its headline the page's h1, its
+  author "Bolt Fusion Tech engineering", `datePublished`) and a BreadcrumbList.
+  Every Service points at its section on `/capabilities`.
   Breadcrumbs point at pages, never at anchors. `/work` is named "Case studies"
   in every breadcrumb — its own and the write-ups' — as the navigation named it,
   and each Article's headline is its page's h1, from the same source the page
@@ -579,8 +612,9 @@ for more than five seconds has a pause control.
   HTML — not from the DOM after a click — and the open state from the
   accessibility tree.
 - `robots.txt` disallows only `/tokens` and `/rebuild`, routes that no longer
-  exist. The sitemap lists the six public routes — `/`, `/work`, both write-ups,
-  `/contact` and `/privacy-policy`; the next wave adds its pages as they land.
+  exist. The sitemap lists every public route: `/`, `/work`, both write-ups,
+  `/capabilities`, `/industries`, `/engineering`, `/about`, `/insights`, the
+  three articles (from `content/insights.ts`), `/contact` and `/privacy-policy`.
 - The share image (`app/opengraph-image.tsx`) is in the redesign: the graphite
   ground, the Forward Monogram, the wordmark in Barlow 700 and 500, the support
   line in the brand blue, and the canonical description as its headline. The two
@@ -590,8 +624,8 @@ for more than five seconds has a pause control.
   object suppresses Next's `app/apple-icon` convention), and `app/favicon.ico`,
   served by Next's convention.
 - `llms.txt` and `llms-full.txt` describe the broad engineering company — the six
-  capabilities with their evidence tiers — and credit every project exactly as
-  /work does.
+  capabilities with their evidence tiers, the inner pages and the three
+  articles — and credit every project exactly as /work does.
 
 ## Hard rules
 
@@ -720,11 +754,12 @@ at the end, which means nobody has decided yet.
   WarmChats case study and the privacy policy, which are hardcoded.
 - **Semantic HTML: exactly one `h1` per page, no skipped heading levels.**
   *Holds* with `fix/case-study-headings` (checks 11 and 26). Every page's h1 is
-  in its banner (the homepage's in the hero); the header and footer carry none.
-- **Visible keyboard focus everywhere.** *Holds*: the 3px outline in
-  `app/techwix.css` (`:where(a, button, summary, [tabindex]):focus-visible`),
-  and in the redesign's pieces a 2px `#8ab4ff` ring that also covers form fields
-  (`app/site.css`).
+  in its page head (`components/site/PageHead`; the homepage's in the hero); the
+  header and footer carry none.
+- **Visible keyboard focus everywhere.** *Holds*: a 2px `#8ab4ff` ring, 9.5:1 on
+  the ground, on every link, button, summary, form field and anything with a
+  tabindex (`app/site.css`) — the article code blocks and the engagement-models
+  table, which scroll sideways, take focus too.
   A component that sets `outline: none` needs a replacement that shows (check 19).
 - Body text at most 68ch wide. *Not audited.*
 
@@ -768,6 +803,13 @@ robots.txt must not name them, and no page may link to them.
 spec, §8), with the inventory changes taken from the homepage agent's MOVES.md.
 Until it lands, check 28 fails on purpose (the proof strip left the hero for the
 engineering stories) and check 30 fails on the old homepage's inventory.
+
+**The inner pages (2026-09-16).** With `app/techwix.css` deleted, check 31 as
+written — it knows the site's stylesheet by `.tw-root` / `.tw-hero` /
+`.tw-header` rules — fails every page until the suite wave points it at
+`app/site.css`'s rules; and check 30 fails the new routes until they have
+inventories. Both are the suite wave's, from the redesign's RENAMES.md and the
+inner-pages report.
 
 **Check 8 reads sentences.** Every figure in the visible text (opened `<details>` too), read at
 1440, 390, 768 and 1024, sits in a `data-status` wrapper holding that one figure and its OWN
@@ -1041,7 +1083,10 @@ work", never "offices", until the owner gives addresses.
 | question | decision | where |
 |---|---|---|
 | The foundation | `app/site.css`; the shell on every page; the homepage and /contact | `redesign/eng-site` |
-| The inner pages | Restyled by the next wave, which then deletes `app/techwix.css` | next wave |
+| The inner pages | **Moved onto `app/site.css`** with every word and the section order kept — /work, both write-ups, the privacy policy and the 404; `app/techwix.css` and `components/techwix` deleted (*Retired 2026-09-16: the Techwix design*) | `redesign/eng-pages` |
+| The new routes | /capabilities, /industries, /engineering, /about, /insights and three articles, from `content/engineering.ts`, `content/pages.ts` and `content/insights.ts`; the homepage gains an Insights teaser before the FAQ | `redesign/eng-pages` |
+| /about's locations | "Our engineers work across the UK, Malaysia and Bangladesh" (the company line) — never "offices", and no address (SPEC §8b.12) | `redesign/eng-pages` |
+| Approved labels that are not "Schedule a Call" | The ghost variant with no `data-cta` (*The inner pages, as built*): the primary fill and `data-cta="schedule"` are Schedule a Call's | `redesign/eng-pages` |
 | The 3D hero | A three.js scene over the poster, poster first | 3D wave |
 | The contact form | Three fields that open the visitor's email app — mailto, the existing mechanism, no backend | `redesign/eng-site` |
 | Cloud's evidence tier | **Core** (repeated work under every project). The spec gives none; this is the conservative reading, for the owner to confirm | `redesign/eng-site` |
@@ -1116,7 +1161,7 @@ wordmark's "Fusion") have not been ruled on.
 ## Screenshots are pre-encoded (decided 2026-09-16)
 
 Every project screenshot is served from pre-encoded AVIF and WebP files through
-`<picture>` (`components/techwix/ScreenImage.tsx`), never through the Next image
+`<picture>` (`components/site/ScreenImage.tsx`), never through the Next image
 optimizer. The hero poster was already served this way.
 
 **Why.** A long-running `next start` got one optimizer job for a screenshot
