@@ -1,6 +1,6 @@
 import "server-only";
 
-import { CANONICAL_DESCRIPTION, COMPANY_LINE } from "./canonical";
+import { CANONICAL_DESCRIPTION } from "./canonical";
 import { parseContent } from "./schema";
 import { SCHEDULE_HREF, SCHEDULE_LABEL, siteContentSchema, type SiteContent, type SiteContentInput } from "./site-schema";
 
@@ -20,13 +20,16 @@ import { SCHEDULE_HREF, SCHEDULE_LABEL, siteContentSchema, type SiteContent, typ
  */
 
 const raw: SiteContentInput = {
-  /* The canonical description opens both descriptions, word for word
-     (content/canonical.ts; verify-site check 12). Owner's redesign, 2026-09-16. */
+  /* The canonical description IS both descriptions, word for word
+     (content/canonical.ts; verify-site check 12) — and nothing more: a meta
+     description is 50–160 characters (check 26) and the line is 117 of them.
+     The company line went with it; it is still in the Organization node.
+     Owner's redesign, 2026-09-16. */
   meta: {
     title: "Bolt Fusion Tech — Software. Intelligence. Automation. Machines.",
-    description: `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`,
+    description: CANONICAL_DESCRIPTION,
     ogTitle: "Bolt Fusion Tech — Build what's next.",
-    ogDescription: `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`,
+    ogDescription: CANONICAL_DESCRIPTION,
   },
   site: {
     sectionOrder: [
@@ -494,6 +497,15 @@ const raw: SiteContentInput = {
       title: "Pick a time (30 min)",
       blurb: "Or grab an open slot below — same 30‑minute intro call.",
       frameTitle: "Schedule a 30-minute call — Bolt Fusion Tech",
+      // Calendly paints its own white interface and ignores the colour
+      // parameters, so the panel is placed as a light card and says whose
+      // calendar it is. The note below it survives a browser that blocks the
+      // third party altogether.
+      caption: "Bolt Fusion Tech’s booking calendar, hosted by Calendly.",
+      placeholder: "The booking calendar loads here.",
+      stalled: "The booking calendar didn’t load.",
+      fallbackNote:
+        "Calendar not loading? Your browser may be blocking Calendly — email us at hello@boltfusiontech.com, or use the project form below.",
     },
     project: {
       title: "Tell us about your project",

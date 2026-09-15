@@ -3,7 +3,7 @@ import { Barlow, Jost } from "next/font/google";
 import "./techwix.css";
 import "./site.css";
 
-import { CANONICAL_DESCRIPTION, COMPANY_LINE } from "@/content/canonical";
+import { CANONICAL_DESCRIPTION } from "@/content/canonical";
 import { getSiteUrl } from "@/lib/site-url";
 
 /* The site's one root layout, for every page and the 404.
@@ -35,9 +35,13 @@ import { getSiteUrl } from "@/lib/site-url";
 const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap", preload: true });
 const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap", preload: true });
 
-/* The canonical description, then the company line (COPY.md, "Company
-   description — canonical"; changed by the owner on 2026-09-16). */
-const DESCRIPTION = `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`;
+/* The canonical description, alone: a meta description is 50–160 characters
+   (verify-site check 26) and the canonical line is 117 of them, so nothing
+   follows it here. COPY.md, "Company description — canonical"; the owner
+   changed the line on 2026-09-16. The fuller description — the company line,
+   what we build, how we work — is the Organization node's
+   (lib/structured-data.ts), which has no length limit. */
+const DESCRIPTION = CANONICAL_DESCRIPTION;
 const OG_TITLE = "Bolt Fusion Tech — Build what's next.";
 
 export const viewport: Viewport = {

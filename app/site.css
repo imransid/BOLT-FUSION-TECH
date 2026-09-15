@@ -49,6 +49,13 @@
 
   --bf-focus: #8ab4ff;
 
+  /* The one light surface on the site: the third-party booking calendar's
+     panel (/contact). Its text and its focus ring are measured against white
+     by scripts/contrast-site.mjs. */
+  --bf-paper: #ffffff;
+  --bf-paper-line: #d9dee8;
+  --bf-paper-muted: #4a5266;
+
   --bf-font-heading: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
   --bf-font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 
@@ -426,6 +433,7 @@ body:has(main.bf-main) {
 .bf-evidence__work a,
 .bf-ledger a,
 .bf-project__fallback a,
+.bf-calendar__note a,
 .bf-proof__source {
   color: var(--bf-brand);
   text-decoration: underline;
@@ -436,6 +444,7 @@ body:has(main.bf-main) {
 .bf-evidence__work a:hover,
 .bf-ledger a:hover,
 .bf-project__fallback a:hover,
+.bf-calendar__note a:hover,
 .bf-proof__source:hover {
   color: var(--bf-brand-hi);
 }
@@ -2438,15 +2447,79 @@ a.bf-person:hover .bf-person__icon {
   background-color: var(--bf-brand);
 }
 
+/* The booking calendar is a third party: Calendly paints its own white
+   interface and ignores the colour parameters. So the embed is a light card we
+   place deliberately — padding, the design's radius, a hairline — with our
+   caption on it, instead of a white rectangle dropped on the graphite. Its
+   own focus ring and links switch to the deeper brand fill, which reads on
+   white (5.35:1). */
 .bf-calendar {
-  border: 1px solid var(--bf-line);
-  background-color: var(--bf-surface);
+  --bf-focus: var(--bf-brand-fill);
+  margin: 0;
+  padding: clamp(14px, 2.2vw, 26px);
+  border: 1px solid var(--bf-paper-line);
+  border-radius: 2px;
+  background-color: var(--bf-paper);
+}
+
+.bf-calendar__caption {
+  margin-bottom: 14px;
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bf-paper-muted);
+}
+
+/* The height is reserved before the iframe loads, so nothing shifts (CLS). */
+.bf-calendar__frame {
+  position: relative;
+  height: 760px;
+}
+
+@media (max-width: 767px) {
+  .bf-calendar__frame { height: 820px; }
+}
+
+/* Behind the frame while the calendar loads — an iframe paints its own opaque
+   white, so this is invisible then — and RAISED above it when the calendar
+   never arrives (components/site/BookingCalendar.tsx), so a blocked third
+   party leaves a panel that says what it is, not a blank white rectangle. */
+.bf-calendar__placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--bf-paper-muted);
+}
+
+.bf-calendar__placeholder.is-stalled {
+  z-index: 1;
+  background-color: var(--bf-paper);
 }
 
 .bf-calendar iframe {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 760px;
+  height: 100%;
   border: 0;
+}
+
+.bf-calendar iframe:focus-visible {
+  outline: 2px solid var(--bf-focus);
+  outline-offset: -2px;
+}
+
+.bf-calendar__note {
+  margin-top: 14px;
+  max-width: 70ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-muted);
 }
 
 .bf-project {

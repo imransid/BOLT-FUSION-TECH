@@ -308,6 +308,14 @@ file is deleted.
   text — the no-JS and crawler view. With script each part and flow is a button:
   focus or hover lights its links, a polite live region says what they do, a
   click pins it. Without script they are plain text, never a dead button.
+- **One light surface, on purpose:** the booking calendar on /contact. Calendly
+  paints its own white interface and ignores the colour parameters, so the embed
+  is a card we place — white (`--bf-paper`), generous padding, the design's 2px
+  radius, a hairline (`--bf-paper-line`), our caption on it (`--bf-paper-muted`,
+  7.81:1) — with its height reserved so the iframe cannot shift the page, a
+  placeholder behind it, and a visible note under it carrying the email and the
+  project form for a browser that blocks the third party. Inside that panel the
+  focus ring and links switch to the deeper brand fill, which reads on white.
 - **The logo** is the Forward Monogram (*Decided 2026-09-16*): `lib/mark.ts`
   holds the geometry, `components/LogoMarkSvg.tsx` draws it (the stem and upper
   bowl in `currentColor`, the lower bowl in `var(--brand)`, which the redesign's
@@ -368,6 +376,8 @@ fill is composited over its ground first. Every pair is AA:
 | brand #4c86ff | raised #141922 | 5.17:1 | 3:1 | a tier meter step on the chip (non-text) |
 | focus #8ab4ff | ground #07090d | 9.54:1 | 3:1 | the focus ring on the ground (non-text) |
 | focus #8ab4ff | surface #0d1016 | 9.12:1 | 3:1 | the focus ring in the footer and drawer (non-text) |
+| paperMuted #4a5266 | paper #ffffff | 7.81:1 | 4.5:1 | the booking calendar panel's caption and placeholder (/contact) |
+| brandFill #2a62e0 | paper #ffffff | 5.35:1 | 3:1 | that panel's focus ring and links on white (non-text) |
 
 The wordmark keeps its logotype exemption (checks 18 and 20), and no longer
 needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
@@ -589,6 +599,12 @@ for more than five seconds has a pause control.
   "We build AI systems that are still running in six months." verify-site check
   12 enforces it, and the site-content schema refuses a homepage description that
   does not open with it.
+- **A meta description is 50–160 characters** (check 26), so the homepage's — and
+  the layout's default — is the canonical line and nothing else: 117 characters.
+  /contact's is its own, 103. The company line, what we build and how we work
+  live in the Organization node, which has no length limit. The site-content
+  schema checks all three lengths, so this fails the build, not the suite. The
+  homepage's was 211 until 2026-09-16.
 - JSON-LD from `lib/structured-data.ts`. The homepage graph: Organization (the
   new description, the apple-touch icon as its logo), WebSite, **one Service per
   capability** from `content/engineering.ts` (robotics' description carries its
