@@ -61,7 +61,7 @@ Three retrieval lanes, with every query classified *before* any paid inference
 runs, so most traffic never reaches a model.
 
 **Keyword lane** — simple intents, no model call.
-PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
+PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic (`target`), under 80ms.
 `$0 marginal cost`
 
 **AI lane** — complex intent becomes structured retrieval.
@@ -84,7 +84,7 @@ to answer. That is what makes the unit economics predictable as volume grows.
 
 | Value | Label | Status |
 |---|---|---|
-| `<100ms` | Search response, 80% of traffic | shipped |
+| `<100ms` | Search response, 80% of traffic (the 80% share: `target`) | shipped |
 | `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 

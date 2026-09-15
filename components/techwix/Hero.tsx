@@ -96,7 +96,9 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
             {metrics.map((m) => (
               <li key={m.id} className="tw-proof__item">
                 <p className="tw-proof__figure">{m.value}</p>
-                <p className="tw-proof__label">{m.label}</p>
+                <p className="tw-proof__label">
+                  <FigureText text={m.label} />
+                </p>
                 <p className="tw-proof__meta">
                   <StatusChip status={m.status} />
                   {m.href ? (

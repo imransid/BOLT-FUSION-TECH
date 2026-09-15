@@ -328,10 +328,7 @@ at the end, which means nobody has decided yet.
   Enforced at build time in `/content/metrics.ts`, by the site-content schema
   for the case-study KPIs, by the KPI type in the WarmChats component, and by
   `content/figure-labels.ts` for in-sentence labels and exemptions. *Holds* on
-  every page, the homepage included, except the "80% of traffic" figures — the
-  proof strip's and /work's "Search response, 80% of traffic", lane 1's
-  "Roughly 80% of traffic", and the restaurant write-up's "~80% of traffic" and
-  "~80% of queries hit the fast lane" — which await the owner (verify-site check 8).
+  every page, the homepage included (verify-site check 8).
   **One scoped exception, decided 2026-09-11:** the restaurant-search meta
   description says "keeping most traffic under 100ms" with no label. The figure
   is `search-response` in `/content/metrics.ts`, labelled shipped everywhere the
@@ -491,6 +488,12 @@ them says `target`. A capability is not a metric: the "Multi-tenant" and
 "Observable" KPI cards carry no status chip at all, because chipping a capability
 dilutes what the chip means. (The owner had approved them as `shipped` on an
 earlier report; that approval is withdrawn.)
+
+**Decided by the owner, 2026-09-15.** The keyword lane's "~80% of traffic" is
+`target` too: it is the complement of the ~20%, it came in the same 2026-05-02
+commit with no source, and its only `shipped` was COPY.md's metric table. All
+five instances carry a target chip, the metric label "Search response, 80% of
+traffic" included. The `<100ms` beside that label stays `shipped`.
 
 **What would have caught it:** a rule that a `shipped` label requires a recorded
 source — the measurement, dashboard, log query or document that shows the figure

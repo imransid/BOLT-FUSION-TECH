@@ -49,7 +49,7 @@ verified profile is added to the Team section, not before.
 
 **Lane 1**
 > **Keyword lane** — simple intents, no model call.
-> PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic, under 80ms.
+> PostgreSQL ILIKE with PostGIS geo filters. Roughly 80% of traffic [target], under 80ms.
 > `$0 marginal cost`
 
 **Lane 2**
@@ -68,10 +68,14 @@ verified profile is added to the Team section, not before.
 
 | Value | Label | Status |
 |---|---|---|
-| `<100ms` | Search response, 80% of traffic | shipped |
+| `<100ms` | Search response, 80% of traffic [target] | shipped |
 | `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 | `<60s` | First reply to every inbound lead | target |
+
+**Relabelled 2026-09-15: the 80% share is a target too.** It is the complement of the
+~20%, with the same history and no source. `<100ms` stays shipped; the 80% in its
+label carries its own target chip.
 
 **Relabelled 2026-09-12: both are budgets.** `~$0.001` and the AI lane's "roughly
 20% of traffic" are targets, not measurements. The 2026-05-02 write-up calls the

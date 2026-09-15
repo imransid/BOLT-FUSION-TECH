@@ -185,7 +185,7 @@ export default function CaseStudy() {
                     </span>
                     <span className="text-[10px] font-medium text-white/55">{k.label}</span>
                   </div>
-                  {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/55">{k.hint}</p> : null}
+                  {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/55"><FigureText text={k.hint} /></p> : null}
                 </article>
               );
             return (
@@ -203,7 +203,7 @@ export default function CaseStudy() {
                     {k.label}
                   </span>
                 </div>
-                {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/50">{k.hint}</p> : null}
+                {k.hint ? <p className="mt-3 text-[13px] leading-relaxed text-white/50"><FigureText text={k.hint} /></p> : null}
                 <p className="mt-auto pt-3">
                   <span
                     className={`rounded-full border px-2.5 py-0.5 text-xs ${

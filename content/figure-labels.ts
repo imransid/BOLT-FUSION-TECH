@@ -45,6 +45,8 @@ const HOME_LATENCY =
   'The restaurant write-up gives each lane\'s latency as a target ("<80ms target", "<1200ms target", "<15ms target"); the homepage lanes state the same figures in words. Owner-approved, relayed 2026-09-15.';
 const HOME_HIT_RATE =
   'The lane read "30–40% hit rate target" before the word became this chip; the write-up calls it a "goal". Owner-approved, relayed 2026-09-15.';
+const TRAFFIC_SHARE =
+  "Owner, 2026-09-15: a target. The keyword lane's share is the complement of the AI lane's ~20%, ruled a target on 2026-09-12; it came in the same 2026-05-02 commit, and its only `shipped` label came from COPY.md's metric table with no source.";
 const WARMCHATS =
   'WarmChats KPIs `24/7` and `<60s` are target; content/metrics.ts `first-reply` (<60s) is target; the KPI caption calls these figures "automation targets". Owner-approved, relayed 2026-09-14.';
 
@@ -59,9 +61,10 @@ const labels: FigureLabel[] = [
   { text: "~20% of traffic", status: "target", source: AI_SHARE },
   { text: "~$0.001 per search (budgeted)", status: "target", source: BUDGET },
 
-  /* /work/restaurant-search — the summary, the lane headers and the lane copy.
-     "~80% of traffic" and "~80% of queries hit the fast lane" are NOT here: they
-     await the owner (CLAUDE.md, the label rule). */
+  /* /work/restaurant-search — the summary, the lane headers, the lane copy and
+     the first KPI card's hint. */
+  { text: "~80% of traffic", status: "target", source: TRAFFIC_SHARE },
+  { text: "~80% of queries", status: "target", source: TRAFFIC_SHARE },
   { text: "sub-100ms path", status: "shipped", source: SEARCH_RESPONSE },
   { text: "<80ms", status: "target", source: LANE_LATENCY },
   { text: "<1200ms", status: "target", source: LANE_LATENCY },
@@ -78,9 +81,12 @@ const labels: FigureLabel[] = [
   { text: "(1536-d)", exempt: "The vector size of OpenAI's text-embedding-3-small: a property of that model, not a claim about this system" },
   { text: "every 6h", exempt: "How often the GoldenKeys cron job rebuilds the filter chips: a schedule setting, not a performance claim" },
 
-  /* The homepage (components/techwix): the lanes and the WarmChats card.
-     Lane 1's "Roughly 80% of traffic" and the proof strip's "Search response,
-     80% of traffic" are NOT here: they await the owner. */
+  /* The homepage (components/techwix): the lanes, the WarmChats card, and the
+     metric label "Search response, 80% of traffic" on / and /work. The bare
+     "80% of traffic" is the label's; inside "Roughly 80% of traffic" and
+     "~80% of traffic" the longer entry starts first and wins (FigureText). */
+  { text: "Roughly 80% of traffic", status: "target", source: TRAFFIC_SHARE },
+  { text: "80% of traffic", status: "target", source: TRAFFIC_SHARE },
   { text: "under 80ms", status: "target", source: HOME_LATENCY },
   { text: "under 1200ms", status: "target", source: HOME_LATENCY },
   { text: "Under 15ms", status: "target", source: HOME_LATENCY },

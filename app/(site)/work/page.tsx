@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import FigureText from "@/components/FigureText";
 import { metrics, projects } from "@/content";
 import { getSiteUrl } from "@/lib/site-url";
 import { jsonLdHtml } from "@/lib/structured-data";
@@ -168,7 +169,9 @@ export default function WorkIndexPage() {
                             >
                               {m.value}
                             </span>
-                            <span className="text-sm text-white/65">{m.label}</span>
+                            <span className="text-sm text-white/65">
+                              <FigureText text={m.label} />
+                            </span>
                             <span
                               className={`rounded-full border px-2 py-0.5 text-xs ${
                                 shipped

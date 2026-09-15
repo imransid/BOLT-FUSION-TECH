@@ -11,8 +11,7 @@ import Button from "./Button";
  * Lane text goes through <FigureText>, exactly as the component is, so every
  * figure content/figure-labels.ts labels carries its chip where it stands, and
  * every setting it exempts carries its reason. The chip's homepage look comes
- * from app/(home)/techwix.css. No status is decided here; "Roughly 80% of
- * traffic" stays unlabelled until the owner decides it.
+ * from app/(home)/techwix.css. No status is decided here.
  *
  * The cost line is one colour: teal and amber mean shipped and target on this
  * site, so they are not borrowed to mean "free path" and "paid path".
