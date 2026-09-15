@@ -1892,24 +1892,27 @@ const focusRuns = {};
 if (want(19))
   for (const route of ROUTES) {
     process.stderr.write(`  tabbing through ${route}\n`);
-    focusRuns[route] = await visitFocus(browser, route);
+    /* a run that dies is a finding (check 19), not a crash of the whole suite */
+    focusRuns[route] = await visitFocus(browser, route).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
   }
 const reducedRuns = {};
 if (want(21))
   for (const route of ROUTES) {
     process.stderr.write(`  reduced motion ${route}\n`);
-    reducedRuns[route] = await visitReduced(browser, route);
+    reducedRuns[route] = await visitReduced(browser, route).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
   }
 const detRuns = {};
 if (want(23))
   for (const route of ROUTES) {
     process.stderr.write(`  capturing ${route} twice\n`);
-    detRuns[route] = comparePng(await stableCapture(browser, route), await stableCapture(browser, route));
+    detRuns[route] = await (async () => comparePng(await stableCapture(browser, route), await stableCapture(browser, route)))().catch((e) => ({
+      error: String(e?.message || e).split("\n")[0].slice(0, 200),
+    }));
   }
 let faqRun = null;
 if (want(14)) {
   process.stderr.write("  opening every FAQ answer on /\n");
-  faqRun = await visitFaq(browser);
+  faqRun = await visitFaq(browser).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
 }
 await browser.close();
 let notFoundRun = null;
@@ -2122,7 +2125,8 @@ await (async () => {
   /* FAQPage — see visitFaq. It is generated from the rendered FAQ, so a mismatch
      means a second copy crept back; an answer missing from the served HTML means
      the page stopped sending it, whatever the DOM shows after a click. */
-  if (faqRun) {
+  if (faqRun?.error) F.push(`/: the FAQ run did not finish (${faqRun.error}) — unsure is a failure`);
+  else if (faqRun) {
     const { ld, rendered, served } = faqRun;
     if (!ld.length) I.push("/: no FAQPage in the structured data");
     else {
@@ -2542,6 +2546,10 @@ check(18, "axe finds no serious or critical accessibility violations", "what a s
 /* 19 */
 check(19, "Every keyboard stop shows a visible focus state", "CLAUDE.md: visible keyboard focus everywhere", (F, I) => {
   for (const [route, stops] of Object.entries(focusRuns)) {
+    if (!Array.isArray(stops)) {
+      F.push(`${route}: the keyboard run did not finish (${stops.error}) — unsure is a failure`);
+      continue;
+    }
     I.push(`${route}: ${stops.length} tab stop(s) checked`);
     for (const s of stops.filter((x) => !x.visibleFocus)) F.push(`${route}: ${s.desc} — ${s.why}`);
   }
@@ -2566,6 +2574,10 @@ check(20, "Text meets WCAG AA contrast against the pixels behind it", "text over
 /* 21 */
 check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions", (F, I) => {
   for (const [route, r] of Object.entries(reducedRuns)) {
+    if (r.error) {
+      F.push(`${route}: the reduced-motion run did not finish (${r.error}) — unsure is a failure`);
+      continue;
+    }
     const loops = r.anims.filter((a) => a.infinite);
     const late = r.anims.filter((a) => !a.infinite);
     if (loops.length) F.push(`${route}: ${loops.length} looping animation(s) still running — ${[...new Set(loops.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
@@ -2578,7 +2590,8 @@ check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: pre
 /* 23 */
 check(23, "Two captures of each page are identical once motion is pinned", "anything order- or time-dependent that makes the page differ between visits", (F) => {
   for (const [route, d] of Object.entries(detRuns)) {
-    if (d.sizeDiffers) F.push(`${route}: the page is a different size on each visit (${d.sizeDiffers})`);
+    if (d.error) F.push(`${route}: the captures did not finish (${d.error}) — unsure is a failure`);
+    else if (d.sizeDiffers) F.push(`${route}: the page is a different size on each visit (${d.sizeDiffers})`);
     else if (d.n) F.push(`${route}: ${d.n} pixel(s) differ (${d.pct.toFixed(4)}%), between y=${d.minY} and y=${d.maxY}`);
   }
 });
