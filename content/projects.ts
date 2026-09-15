@@ -11,9 +11,9 @@ import { z } from "zod";
  * - Bolt Fusion projects: FanLock, Balanzify, Go Style Business — confirmed by
  *   the owner as Bolt Fusion deliveries. Balanzify belongs to Balanzify Inc.,
  *   WarmChats to WarmChats, Inc.: "built by Bolt Fusion for …", never ours.
- * - In-house: OPAL. Its old asset, public/projects/opal-fashion-tech.png, is an
- *   AI-generated mockup and is banned (PLAN.md): the card uses a real
- *   screenshot of the live store.
+ * - In-house: OPAL. The card uses a real screenshot of the live store. Its old
+ *   asset, an AI-generated mockup banned by PLAN.md, was deleted on 2026-09-16
+ *   so nothing can reuse it.
  * - Our engineers' track record: work shipped at previous employers, credited
  *   to them — employer and role on the card, never called our client, no
  *   screenshot and no confidential detail.

@@ -141,8 +141,8 @@ does not state.
   "Fight leaks" section (its hero shows a face), Balanzify's migration page (its
   homepage dashboard shows customer avatars), Go Style Business's sign-in page
   (its only public page) and OPAL's shop (its hero collage shows faces). Never a
-  mockup: `public/projects/opal-fashion-tech.png` is AI-generated and banned
-  (PLAN.md).
+  mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
+  2026-09-16.
 - **/work is four sections,** one per kind, in `projectSections` order. The
   track-record section says what it means: "Work our engineers shipped at
   previous employers — credited to them, not claimed as ours." Every grid fills
