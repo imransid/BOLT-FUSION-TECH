@@ -806,14 +806,16 @@ body:has(main.bf-main) {
   background: radial-gradient(closest-side, rgba(76, 134, 255, 0.14), transparent 72%);
 }
 
+/* No border, no radius, no frame: the field is the ground itself, so the scene
+   reads as part of the page, not a widget set into it (coordinator's review,
+   2026-09-16). Nothing is painted over the poster — verify-site check 28
+   fails anything on top of it but a canvas with the field's box. */
 .bf-hero__field {
   position: relative;
   overflow: hidden;
   width: 100%;
   aspect-ratio: 4 / 3;
   background-color: var(--bf-ground);
-  border: 1px solid var(--bf-line);
-  border-radius: 2px;
 }
 
 @media (min-width: 768px) {
@@ -862,28 +864,14 @@ html[data-motion="paused"] .bf-hero__poster {
 }
 
 /* The pause control (components/site/MotionToggle): shown only where
-   something in the hero moves — the drift, or the live 3D scene. Below 1025px
-   its row is laid out from the first paint and the button is invisible until
-   it mounts, so it never shifts the headline; at >=1025px it sits out of flow
-   under the field, in the hero's bottom padding. */
-.bf-hero__media {
-  position: relative;
-}
-
-.bf-motion-toggle:not([data-ready]) {
-  visibility: hidden;
-}
-
-@media (min-width: 1025px) {
-  .bf-motion-toggle {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-  }
-}
-
+   something in the hero moves — the drift, or the live 3D scene — and aligned
+   to the field's right edge (align-self: flex-end), so it reads as the scene's. */
 .bf-motion-toggle {
-  display: none;
+  /* Always in the layout, shown by `visibility`: a button that appears by
+     `display` or `hidden` moved the hero text 42px when it did (CLS 0.0085 at
+     1440 when the scene went live, 0.0245 at 390 at hydration). */
+  display: inline-flex;
+  visibility: hidden;
   align-self: flex-end;
   align-items: center;
   gap: 8px;
@@ -905,11 +893,16 @@ html[data-motion="paused"] .bf-hero__poster {
 
 @media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
   (prefers-reduced-motion: no-preference) and (pointer: coarse) {
-  .bf-motion-toggle { display: inline-flex; }
+  .bf-motion-toggle[data-ready] { visibility: visible; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .bf-hero[data-scene="live"] .bf-motion-toggle { display: inline-flex; }
+  .bf-hero[data-scene="live"] .bf-motion-toggle[data-ready] { visibility: visible; }
+}
+
+/* Under reduced motion nothing moves, the button never shows, and it keeps no space. */
+@media (prefers-reduced-motion: reduce) {
+  .bf-motion-toggle { display: none; }
 }
 
 /* ── What we engineer: the index ────────────────────────────────────────── *
