@@ -363,6 +363,38 @@
         ]
       },
       {
+        "item": "Bolt Fusion feature work: Bazzile, GodConnect Online",
+        "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion",
+        "status": "required",
+        "needles": [
+          "Features we shipped into other companies’ apps",
+          "Bazzile",
+          "Delivered project: features built by Bolt Fusion for Bazzile Technology SA",
+          "A Swiss real-estate marketplace app based in Geneva: listings come only from professional agencies, are ranked by an AI matching model, and sync with most agency CRMs.",
+          "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+          "Jan 2025 – Jul 2025",
+          "App Store",
+          "Redux-Saga",
+          "Reanimated",
+          "GodConnect Online",
+          "Delivered project: features built by Bolt Fusion for GodConnect LTD",
+          "A community app with groups, live broadcasts, messaging, media uploads and a GPS-based church finder.",
+          "Feature work in the React Native app",
+          "2023 – 2024",
+          "WatermelonDB"
+        ]
+      },
+      {
+        "item": "Bazzile's download and user figures",
+        "proves": "Nothing about us: the client's growth, not Bolt Fusion's work (owner, 2026-09-16)",
+        "status": "cut",
+        "cut": "the owner, 2026-09-16: Bazzile's 70,000 downloads are the client's growth, not ours — never shown",
+        "needles": [
+          "70,000",
+          "15,000 active users"
+        ]
+      },
+      {
         "item": "In-house products: OPAL",
         "proves": "Our own product, with a real screenshot of the live store — never the AI mockup",
         "status": "required",

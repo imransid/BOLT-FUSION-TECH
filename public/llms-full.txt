@@ -97,9 +97,10 @@ Source: restaurant discovery platform.
 
 # Everything else on /work, labelled by who built it
 
-Each project below carries one of three labels on the site. Credit it as
-labelled: a product built for another company is theirs, and an engineer's
-track record is not Bolt Fusion's work.
+Each project below carries one of four labels on the site. Credit it as
+labelled: a product built for another company is theirs, an app we shipped
+features into is its owner's, and an engineer's track record is not Bolt
+Fusion's work.
 
 ## Bolt Fusion projects, built by Bolt Fusion
 
@@ -118,6 +119,28 @@ Jul 2025 – ongoing.
 management platform, in production serving real salons. Built by Bolt Fusion;
 our role: backend lead, on a multi-tenant NestJS and Prisma backend on
 PostgreSQL, deployed on Docker Swarm.
+
+## Feature work, built by Bolt Fusion inside other companies' apps
+
+We built features in these apps, not the apps. Each belongs to the company
+named, which owns it; neither is Bolt Fusion's product.
+
+**Bazzile** (App Store: https://apps.apple.com/fr/app/bazzile/id1622224603;
+Google Play: https://play.google.com/store/apps/details?id=com.bazzile.app).
+A Swiss real-estate marketplace app based in Geneva: listings come only from
+professional agencies, are ranked by an AI matching model, and sync with most
+agency CRMs. Features built by Bolt Fusion for Bazzile Technology SA, which
+owns the app: swipe-based browsing, Google Maps location matching and Firebase
+real-time sync in its React Native app. Stack: React Native, Firebase,
+Redux-Saga, Reanimated, NestJS. Live. Jan 2025 – Jul 2025.
+
+**GodConnect Online** (App Store:
+https://apps.apple.com/us/app/godconnect-online/id1518393186; Google Play:
+https://play.google.com/store/apps/details?id=com.godconnect.online). A
+community app with groups, live broadcasts, messaging, media uploads and a
+GPS-based church finder. Features built by Bolt Fusion for GodConnect LTD,
+which owns the app: feature work in its React Native app. Stack: React Native,
+Redux-Saga, WatermelonDB, Firebase. Live. 2023 – 2024.
 
 ## In-house, our own product
 

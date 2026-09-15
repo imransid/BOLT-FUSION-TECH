@@ -942,10 +942,16 @@ function collectInPage() {
   }));
   const cardEls = new Map();
   for (const img of projImgs) {
-    let c = img.parentElement;
-    while (c && c !== document.body && !c.querySelector("h2, h3")) c = c.parentElement;
+    /* a card marked with its kind is its own root — a feature-work card's name
+       is an h4, and the walk would climb past it to the sub-group's h3 —
+       otherwise the nearest box holding a heading */
+    let c = img.closest("[data-project-kind]");
+    if (!c) {
+      c = img.parentElement;
+      while (c && c !== document.body && !c.querySelector("h2, h3")) c = c.parentElement;
+    }
     if (!c || c === document.body || cardEls.has(c)) continue;
-    const h = c.querySelector("h2, h3");
+    const h = c.querySelector("h2, h3, h4");
     cardEls.set(c, {
       title: snip(h, 60),
       kind: c.closest("[data-project-kind]")?.getAttribute("data-project-kind") || null,
@@ -955,10 +961,12 @@ function collectInPage() {
   }
 
   /* 9 ── who built it (decided 2026-09-15): every project card, found two ways —
-     any element marked data-project-kind, and on /work every h3 in <main>, whose
-     card is its list item — so a card that loses its marker is still found.
-     What each card says about its kind, employer and role, and whether a reader
-     can see it: on the page, at least 24x10px, not clipped away. */
+     any element marked data-project-kind, and on /work every h3 and h4 in
+     <main>, whose card is its list item — so a card that loses its marker is
+     still found. A heading whose box holds marked cards and is not one itself
+     heads a GROUP of them (the feature-work sub-group, 2026-09-16), not a card.
+     What each card says about its kind, scope, employer and role, and whether a
+     reader can see it: on the page, at least 24x10px, not clipped away. */
   const flat = (el) => (el?.textContent || "").trim().replace(/\s+/g, " ");
   const readable = (el) => {
     if (!visible(el)) return false;
@@ -967,9 +975,14 @@ function collectInPage() {
     return r.width >= 24 && r.height >= 10 && st.clip === "auto" && (!st.clipPath || st.clipPath === "none");
   };
   const cardRoots = new Set(document.querySelectorAll("[data-project-kind]"));
-  if (location.pathname.replace(/\/$/, "") === "/work") for (const h of document.querySelectorAll("main h3")) cardRoots.add(h.closest("li, article") || h.parentElement);
+  if (location.pathname.replace(/\/$/, "") === "/work")
+    for (const h of document.querySelectorAll("main h3, main h4")) {
+      const root = h.closest("li, article") || h.parentElement;
+      if (!root.matches("[data-project-kind]") && root.querySelector("[data-project-kind]")) continue;
+      cardRoots.add(root);
+    }
   const projectCards = [...cardRoots].map((c) => {
-    const heading = c.querySelector("h2, h3");
+    const heading = c.querySelector("h2, h3, h4");
     const label = c.querySelector("[data-attribution]");
     const fact = (sel) => {
       const el = c.querySelector(sel);
@@ -978,6 +991,7 @@ function collectInPage() {
     return {
       id: c.getAttribute("data-project-id"),
       kind: c.getAttribute("data-project-kind"),
+      scope: c.getAttribute("data-project-scope"),
       title: flat(heading).slice(0, 60) || describe(c),
       label: label ? { text: flat(label), seen: readable(label), beforeHeading: Boolean(heading) && label.nextElementSibling === heading } : null,
       builtAt: fact("[data-built-at]"),
@@ -3010,10 +3024,17 @@ check(
    The words each kind's label must read, written HERE and not read from the
    site's own label function (components/techwix/ProjectCard.tsx), so a wrong
    label cannot pass by agreeing with itself. With content/projects.ts read, the
-   whole label is known: the client after "for", the employer after "at". */
+   whole label is known: the client after "for", the employer after "at".
+   A project with `scope: "features"` (decided 2026-09-16) is feature work inside
+   another company's app: "features built by Bolt Fusion for ‹client›", never
+   "built by Bolt Fusion", and no screenshot. content/projects.ts is read raw,
+   so a product project carries no scope at all. */
 const ATTRIBUTION = {
   "case-study": { starts: "Case study: built by Bolt Fusion", full: (p) => `Case study: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}` },
-  project: { starts: "Delivered project: built by Bolt Fusion", full: (p) => `Delivered project: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}` },
+  project: {
+    starts: ["Delivered project: built by Bolt Fusion", "Delivered project: features built by Bolt Fusion for "],
+    full: (p) => (p.scope === "features" ? `Delivered project: features built by Bolt Fusion for ${p.client}` : `Delivered project: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}`),
+  },
   "in-house": { starts: "In-house product: our own, not built for a client", full: () => "In-house product: our own, not built for a client" },
   "track-record": { starts: "Track record: built by our engineer at ", full: (p) => `Track record: built by our engineer at ${p.builtAt}, not by Bolt Fusion` },
 };
@@ -3067,17 +3088,27 @@ await (async () => {
         shown.add(entry.id);
         if (entry.kind !== c.kind) F.push(`${at(k)}: ${name} is shown as ${c.kind}; content/projects.ts says ${entry.kind}`);
         if (entry.state !== "published") F.push(`${at(k)}: ${name} is ${entry.state} in content/projects.ts, and still has a card`);
+        if (c.kind === "project" && (entry.scope ?? "product") !== (c.scope ?? "product"))
+          F.push(`${at(k)}: ${name} is shown as data-project-scope="${c.scope ?? ""}"; content/projects.ts says ${entry.scope ?? "product"}`);
       }
+      /* feature work in a client's app — by content/projects.ts or by the card's own marker */
+      const features = c.kind === "project" && (entry?.scope === "features" || c.scope === "features");
+      const client = entry?.client ?? "another company";
       /* the attribution label: there, visible, directly above the name, its kind's words */
       if (!c.label) F.push(`${at(k)}: ${name} (${c.kind}) carries no attribution label [data-attribution] — a reader cannot tell who built it`);
       else {
         if (!c.label.seen) F.push(`${at(k)}: ${name} — its attribution label "${c.label.text}" is not visible`);
         if (!c.label.beforeHeading) F.push(`${at(k)}: ${name} — its attribution label is not directly above the project's name, where every card carries it`);
         const expected = entry && entry.kind === c.kind ? rule.full(entry) : null;
-        if (expected ? c.label.text !== expected : !c.label.text.startsWith(rule.starts))
-          F.push(`${at(k)}: ${name} — its label reads "${c.label.text}"; a ${c.kind} card's reads "${expected ?? `${rule.starts}…`}"`);
+        const starts = [].concat(rule.starts);
+        if (expected ? c.label.text !== expected : !starts.some((s) => c.label.text.startsWith(s)))
+          F.push(`${at(k)}: ${name} — its label reads "${c.label.text}"; a ${c.kind} card's reads "${expected ?? starts.map((s) => `${s}…`).join('" or "')}"`);
         if (c.kind === "track-record" && /built by Bolt Fusion/i.test(c.label.text)) F.push(`${at(k)}: ${name} is an engineer's track record, and its label says "built by Bolt Fusion"`);
+        if (features && /built by Bolt Fusion/i.test(c.label.text) && !/\bfeatures\b/i.test(c.label.text))
+          F.push(`${at(k)}: ${name} is feature work inside ${client}'s app, and its label says "built by Bolt Fusion" without "features" — it claims the whole app`);
       }
+      if (features && c.images.length)
+        F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${c.images[0].src}) — the app's UI belongs to the client, and showing it needs their permission`);
       /* what we built — on a track record, the engineer's role — and the employer */
       const fact = (f, what, wanted) => {
         if (!f || !f.text) return void F.push(`${at(k)}: ${name} (${c.kind}) does not name ${what}`);
@@ -3098,7 +3129,7 @@ await (async () => {
       if (c.kind === "case-study" && !writeups.length) F.push(`${at(k)}: ${name} is a case study and links to no write-up`);
       if (c.kind !== "case-study" && writeups.length) F.push(`${at(k)}: ${name} (${c.kind}) links to ${new URL(writeups[0].href).pathname} — only a case study has a write-up`);
       for (const l of c.links) if (!isSameSite(l.href) && !l.href.startsWith("https://")) F.push(`${at(k)}: ${name} links to ${l.href}, which is not https`);
-      I.push(`${route}: ${name} — ${c.kind}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s), ${c.links.length} link(s)`);
+      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s), ${c.links.length} link(s)`);
     }
     if (route === "/work" && projectsTs)
       for (const p of projectsTs) if (p.state === "published" && !shown.has(p.id)) F.push(`${at(k)}: "${p.name}" is published in content/projects.ts and has no card on /work`);
@@ -3108,7 +3139,7 @@ await (async () => {
   results.push({
     id: 9,
     title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
-    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: [...new Set(I)],

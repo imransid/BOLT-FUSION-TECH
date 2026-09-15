@@ -34,7 +34,7 @@ Every figure published on this site carries a `shipped` or `target` label.
 
 ## Who built what
 
-Every project on /work carries one of four labels. Credit each one as labelled.
+Every project on /work carries one of five labels. Credit each one as labelled.
 
 Case studies, built by Bolt Fusion, each with a write-up on this site:
 
@@ -53,6 +53,23 @@ product is theirs, not ours:
   production, Jul 2025 – ongoing.
 - Go Style Business (https://business.gostyle.uk/): a salon business management
   platform. Built by Bolt Fusion; our role: backend lead. In production.
+
+Feature work, delivered by Bolt Fusion inside apps other companies own. We
+built features in these apps, not the apps: each app belongs to the company
+named, and is not Bolt Fusion's product.
+
+- Bazzile (App Store: https://apps.apple.com/fr/app/bazzile/id1622224603;
+  Google Play: https://play.google.com/store/apps/details?id=com.bazzile.app):
+  a Swiss real-estate marketplace app based in Geneva. Features built by Bolt
+  Fusion for Bazzile Technology SA, which owns the app: swipe-based browsing,
+  Google Maps location matching and Firebase real-time sync in its React
+  Native app. Live. Jan 2025 – Jul 2025.
+- GodConnect Online (App Store:
+  https://apps.apple.com/us/app/godconnect-online/id1518393186; Google Play:
+  https://play.google.com/store/apps/details?id=com.godconnect.online): a
+  community app with groups, live broadcasts, messaging, media uploads and a
+  GPS-based church finder. Features built by Bolt Fusion for GodConnect LTD,
+  which owns the app: feature work in its React Native app. Live. 2023 – 2024.
 
 In-house, our own product, not built for a client:
 

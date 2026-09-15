@@ -14,13 +14,19 @@ import { Tags } from "./Tags";
  * the case-study rows included, in the same words for every card of a kind.
  * verify-site check 9 holds its own copy of these words and fails a card whose
  * label is missing, hidden, somewhere else, or not its kind's.
+ *
+ * Feature work (a project with `scope: "features"`, decided 2026-09-16) reads
+ * "features built by Bolt Fusion for ‹client›": we built features inside the
+ * client's app, not the app, so its label never says "built by Bolt Fusion".
  */
 export function attribution(p: Project): string {
   switch (p.kind) {
     case "case-study":
       return `Case study: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}`;
     case "project":
-      return `Delivered project: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}`;
+      return p.scope === "features"
+        ? `Delivered project: features built by Bolt Fusion for ${p.client}`
+        : `Delivered project: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}`;
     case "in-house":
       return "In-house product: our own, not built for a client";
     case "track-record":
@@ -95,10 +101,19 @@ export function ProjectLinks({ p }: { p: Project }) {
 }
 
 /** One project that is not a case study: a real screenshot of its live site
- *  when it is ours (none for a track record), then the text. */
-export default function ProjectCard({ p, sizes }: { p: Project; sizes: string }) {
+ *  when it is ours (none for a track record, nor for features in a client's
+ *  app), then the text. Its name is an h3, or an h4 on a card in a sub-group
+ *  under its own h3 (/work's feature work). */
+export default function ProjectCard({ p, sizes, headingLevel = 3 }: { p: Project; sizes: string; headingLevel?: 3 | 4 }) {
+  const Name = headingLevel === 4 ? "h4" : "h3";
   return (
-    <li className={p.image ? "tw-project tw-project--shot" : "tw-project"} data-project-kind={p.kind} data-project-id={p.id} data-tw-reveal>
+    <li
+      className={p.image ? "tw-project tw-project--shot" : "tw-project"}
+      data-project-kind={p.kind}
+      data-project-scope={p.kind === "project" ? p.scope : undefined}
+      data-project-id={p.id}
+      data-tw-reveal
+    >
       {p.image ? (
         <div className="tw-project__shot">
           <ScreenImage src={p.image.src} alt={p.image.alt} sizes={sizes} className="tw-project__img" />
@@ -106,9 +121,9 @@ export default function ProjectCard({ p, sizes }: { p: Project; sizes: string })
       ) : null}
       <div className="tw-project__body">
         <AttributionLabel p={p} />
-        <h3 className="tw-title-wrapper">
+        <Name className="tw-title-wrapper">
           <span className="title-sub">{p.name}</span>
-        </h3>
+        </Name>
         <p className="tw-project__summary">
           <FigureText text={p.summary} />
         </p>

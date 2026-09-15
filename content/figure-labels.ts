@@ -116,6 +116,9 @@ const labels: FigureLabel[] = [
   /* /work's track record (content/projects.ts) and the llms files. A span of
      years joined by a dash reads as a range; this one is a date. */
   { text: "2020–2022", exempt: "The years one of our engineers worked on Go Smart at Brain Station 23: a date range, not a performance claim" },
+  /* /work's feature work (content/projects.ts) and the llms files: GodConnect
+     Online's years, a span of years joined by a spaced dash. */
+  { text: "2023 – 2024", exempt: "The years Bolt Fusion shipped feature work into GodConnect LTD's GodConnect Online app: a date range, not a performance claim" },
 
   /* /work/warmchats — hardcoded in its component; the copy lock yields to the label rule. */
   { text: "follows up 24/7", status: "target", source: WARMCHATS },

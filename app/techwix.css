@@ -2496,6 +2496,23 @@ a.tw-person:hover {
   height: 14px;
 }
 
+/* Feature work (decided 2026-09-16): inside Bolt Fusion projects, after the
+   products, the features we shipped into other companies' apps — its own h3
+   under a hairline, then text cards on a grid of their own that fills its
+   rows like the one above (no screenshots: the apps' UI is the clients'). The
+   band's gap spaces it from the products. */
+.tw-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding-top: 50px;
+  border-top: 1px solid var(--hairline);
+}
+
+@media (max-width: 767px) {
+  .tw-subgroup { gap: 24px; padding-top: 40px; }
+}
+
 /* ── Outcomes: a check and a sentence ───────────────────────────────────── */
 .tw-outcome {
   flex-direction: row;

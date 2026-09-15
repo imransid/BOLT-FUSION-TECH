@@ -118,6 +118,7 @@ does not state.
 |---|---|---|---|---|
 | `case-study` | a Bolt Fusion project with a write-up here: WarmChats, restaurant search | "Case study: built by Bolt Fusion [for ‹client›]" | its write-up (required), and the live product | a real screenshot |
 | `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
+| `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **none** — the app's UI is the client's |
 | `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
 | `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23), NIdle Finishing (Intellier) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
 
@@ -129,13 +130,30 @@ does not state.
 - **A product another company owns is "built by Bolt Fusion for …", never
   ours:** WarmChats belongs to WarmChats, Inc., Balanzify to Balanzify Inc.
   (`client`).
+- **Feature work says it is feature work (owner, 2026-09-16).** Bazzile and
+  GodConnect Online were delivered through Bolt Fusion as features inside other
+  companies' apps. We did not build those apps, so their label is "features
+  built by Bolt Fusion for ‹client›", never "built by Bolt Fusion", which would
+  claim the whole app. `scope: "features"` is allowed on kind `project` only
+  (left out, it is `"product"`). The schema requires its `client` and refuses
+  an image: the app's UI belongs to the client, and a screenshot needs their
+  permission, which is a separate decision. It may be published without the
+  screenshot a product project needs, as a text card with its store links. Its
+  role names only features the portfolio says were ours: Bazzile's three, and
+  for GodConnect just "Feature work in the React Native app", because the
+  portfolio does not say which features were ours. Bazzile's "70,000
+  downloads" is the client's growth, not ours. It is never shown, and check 30
+  fails it on /work.
 - **The label sits directly above the project's name on every card,** the
   case-study rows included, in the brand blue — never a shipped/target colour.
-  Verify-site check 9 holds its own copy of the four labels and fails a card on
+  Verify-site check 9 holds its own copy of the labels and fails a card on
   /work whose label is missing, hidden, somewhere else or not its kind's; a
-  track-record card without its employer and role, or with a screenshot; a card
-  not in `projects.ts`, or a published project with no card; a card image that
-  does not load; and a card that is not a case study linking to a write-up.
+  track-record card without its employer and role, or with a screenshot; a
+  feature-work card whose label says "built by Bolt Fusion" without "features",
+  or that shows any screenshot; a card not in `projects.ts`, or a published
+  project with no card; a card image that does not load; and a card that is not
+  a case study linking to a write-up. It reads an h3 on /work as a group's
+  heading, not a card's, when the h3's parent holds the cards.
 - **Screenshots are real captures of the live sites,** Playwright at 1440×900,
   saved as webp in `public/projects/`, of a view with no faces in it: FanLock's
   "Fight leaks" section (its hero shows a face), Balanzify's migration page (its
@@ -145,13 +163,16 @@ does not state.
   2026-09-16.
 - **/work is four sections,** one per kind, in `projectSections` order. The
   track-record section says what it means: "Work our engineers shipped at
-  previous employers — credited to them, not claimed as ours." Every grid fills
+  previous employers — credited to them, not claimed as ours." Inside Bolt
+  Fusion projects the product cards come first. Under them is a sub-group headed
+  by its own h3, "Features we shipped into other companies’ apps", whose cards
+  have h4 names so the outline nests. Every grid, that one included, fills
   its rows: three across from 1025px, two across from 768px, one on phones; a
   set that divides by neither is one column, and a card alone lays its
   screenshot beside its text.
 - **The homepage keeps its two case studies.** "See all work (N projects)" counts
-  the published projects that are ours, from the data; the track record is not
-  counted.
+  the published projects that are ours, from the data, the feature work
+  included. The track record is not counted.
 - `llms.txt` and `llms-full.txt` credit every project as its card does.
 
 **Excluded, and why — never add them:**
@@ -169,11 +190,10 @@ Check 30 fails if any of them appears on `/` or `/work`.
   page for "Playerzone" ("a platform for players to connect with coaches and
   other players") — not the multiplayer classic-games platform, with no
   signups, that the portfolio describes.
-- **Bazzile and GodConnect Online** are not listed: neither the portfolio nor
-  the CV names the employer they were built at, and a track-record entry cannot
-  exist without one. If Bazzile is added, its "70,000 downloads in France in
-  twelve months" is Bazzile's figure, not ours: shown only with a per-instance
-  `data-figure-exempt` reason and its source (Journal de l'Agence) beside it.
+
+Bazzile and GodConnect Online were held back here until 2026-09-16, as track
+record with no employer on record. The owner placed them that day: Bolt Fusion
+feature work, above.
 
 ## Design language, as built
 

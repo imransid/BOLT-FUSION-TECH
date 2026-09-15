@@ -158,6 +158,8 @@ track record, with one line:
 **Labels** — one per kind, above the project's name on every card:
 - Case study: built by Bolt Fusion (for WarmChats, Inc.)
 - Delivered project: built by Bolt Fusion (for Balanzify Inc.)
+- Delivered project: features built by Bolt Fusion for Bazzile Technology SA / GodConnect LTD —
+  feature work inside another company's app (decided 2026-09-16)
 - In-house product: our own, not built for a client
 - Track record: built by our engineer at Brain Station 23 / Intellier, not by Bolt Fusion
 
@@ -165,14 +167,30 @@ track record, with one line:
 - Case studies: WarmChats (built for WarmChats, Inc.; backend lead) and restaurant search.
 - Bolt Fusion projects: FanLock (backend lead), Balanzify (built for Balanzify Inc.; in
   production, Jul 2025 – ongoing) and Go Style Business (backend lead; in production).
+- Bolt Fusion feature work, under the products in the same section, with its own heading:
+  > Features we shipped into other companies’ apps
+
+  Bazzile (features built for Bazzile Technology SA: swipe-based browsing, Google Maps location
+  matching and Firebase real-time sync in its React Native app; live, Jan 2025 – Jul 2025) and
+  GodConnect Online (features built for GodConnect LTD: "Feature work in the React Native app";
+  live, 2023 – 2024). Text cards with App Store and Google Play links, no screenshots.
 - In-house: OPAL.
 - Our engineers' track record: Go Smart (Modhumoti Bank's digital banking app, built at Brain
   Station 23, 2020–2022; Software Engineer) and NIdle Finishing (built at Intellier, Nov 2023 –
   Feb 2024; Senior Software Engineer). No screenshots: the products are someone else's.
 
+**Why "features built by Bolt Fusion for …" (owner, 2026-09-16).** Bazzile and GodConnect Online
+were delivered through Bolt Fusion, but as features inside apps other companies own. "Built by
+Bolt Fusion" would claim the whole app. So the label says "features", names the owner, and the
+role names only features the portfolio says were ours. The portfolio does not say which of
+GodConnect's features were ours, so its card names none. The cards have no screenshots, because
+the apps' screens belong to their owners; showing one needs the owner's permission, which is a
+separate decision. Bazzile's "70,000 downloads" is the client's growth, not ours, and is never
+written.
+
 **Homepage link** — `See all work (N projects)`, beside `See all case studies`. N is counted
-from `content/projects.ts`, never typed: the published projects that are ours, without the track
-record.
+from `content/projects.ts`, never typed: the published projects that are ours, the feature work
+included, without the track record.
 
 **Meta description for /work** — "Architecture-level write-ups of the systems we shipped, the
 other products we built, and our engineers' track record, each labelled with who built it."
@@ -180,8 +198,9 @@ other products we built, and our engineers' track record, each labelled with who
 **Excluded — never write them:** the Jumatechs apps (Myrep, IQ Test, Cleva, Bidesh App), Bangladesh
 RAB, Team Pharma and JTI Sheikh. The reasons are in CLAUDE.md.
 
-**Held back until the owner answers:** Playzone (its live URL shows a different product) and
-Bazzile and GodConnect Online (no employer on record). The reasons are in CLAUDE.md.
+**Held back until the owner answers:** Playzone (its live URL shows a different product). The
+reasons are in CLAUDE.md. Bazzile and GodConnect Online were held back here until 2026-09-16
+(no employer on record); the owner placed them as Bolt Fusion feature work, above.
 
 ---
 

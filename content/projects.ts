@@ -11,6 +11,15 @@ import { z } from "zod";
  * - Bolt Fusion projects: FanLock, Balanzify, Go Style Business — confirmed by
  *   the owner as Bolt Fusion deliveries. Balanzify belongs to Balanzify Inc.,
  *   WarmChats to WarmChats, Inc.: "built by Bolt Fusion for …", never ours.
+ * - Bolt Fusion feature work (`scope: "features"`, owner, 2026-09-16): Bazzile
+ *   (Bazzile Technology SA) and GodConnect Online (GodConnect LTD), delivered
+ *   through Bolt Fusion as features inside those companies' apps. We did not
+ *   build the apps, so the label is "features built by Bolt Fusion for …",
+ *   never "built by Bolt Fusion". Text cards with their store links: the apps'
+ *   UI is the clients', so no screenshot without their permission. GodConnect's
+ *   role says only "feature work": the portfolio does not say which features
+ *   were ours. Bazzile's "70,000 downloads" is the client's growth, not ours,
+ *   and is not shown (check 30 fails it on /work).
  * - In-house: OPAL. The card uses a real screenshot of the live store. Its old
  *   asset, an AI-generated mockup banned by PLAN.md, was deleted on 2026-09-16
  *   so nothing can reuse it.
@@ -24,10 +33,6 @@ import { z } from "zod";
  *   ("a platform for players to connect with coaches and other players"), not
  *   the multiplayer classic-games platform with no signups the portfolio
  *   describes. A card would show one product under another's name.
- * - Bazzile and GodConnect Online (track record) are not listed: neither the
- *   portfolio nor the CV names the employer they were built at, and a
- *   track-record entry cannot exist without one (the schema refuses it). Add
- *   them when the owner names the employer.
  *
  * Excluded for good (owner, 2026-09-15) — never add them: the Jumatechs apps
  * (Myrep, IQ Test, Cleva, Bidesh App; Jumatechs is the owner's current
@@ -145,6 +150,45 @@ export const projects: Project[] = parseContent(
         height: 900,
       },
       links: [{ label: "business.gostyle.uk", href: "https://business.gostyle.uk/" }],
+      state: "published",
+    },
+
+    /* ── Bolt Fusion feature work, inside other companies' apps ───────────── */
+    {
+      id: "bazzile",
+      name: "Bazzile",
+      kind: "project",
+      scope: "features",
+      summary:
+        "A Swiss real-estate marketplace app based in Geneva: listings come only from professional agencies, are ranked by an AI matching model, and sync with most agency CRMs.",
+      role: "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+      client: "Bazzile Technology SA",
+      status: "live",
+      period: "Jan 2025 – Jul 2025",
+      stack: ["React Native", "Firebase", "Redux-Saga", "Reanimated", "NestJS"],
+      links: [
+        { label: "App Store", href: "https://apps.apple.com/fr/app/bazzile/id1622224603" },
+        { label: "Google Play", href: "https://play.google.com/store/apps/details?id=com.bazzile.app" },
+      ],
+      state: "published",
+    },
+    {
+      id: "godconnect-online",
+      name: "GodConnect Online",
+      kind: "project",
+      scope: "features",
+      summary: "A community app with groups, live broadcasts, messaging, media uploads and a GPS-based church finder.",
+      // The portfolio says "Shipped features for GodConnect Online" and no more:
+      // which features were ours is not on record, so none is named.
+      role: "Feature work in the React Native app",
+      client: "GodConnect LTD",
+      status: "live",
+      period: "2023 – 2024",
+      stack: ["React Native", "Redux-Saga", "WatermelonDB", "Firebase"],
+      links: [
+        { label: "App Store", href: "https://apps.apple.com/us/app/godconnect-online/id1518393186" },
+        { label: "Google Play", href: "https://play.google.com/store/apps/details?id=com.godconnect.online" },
+      ],
       state: "published",
     },
 

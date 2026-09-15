@@ -24,9 +24,14 @@ import { jsonLdHtml } from "@/lib/structured-data";
  *    two-item grid looks unfinished, two rows look deliberate;
  *  · Bolt Fusion projects, in-house products and our engineers' track record —
  *    cards on a grid that fills its rows at every width (app/techwix.css).
+ *    Inside Bolt Fusion projects, the products first, then a sub-group under
+ *    its own h3 for the features we shipped into other companies' apps
+ *    (`scope: "features"`, decided 2026-09-16), its cards' names h4s, on a
+ *    grid of its own that fills its rows too.
  *
  * Every card carries its attribution label directly above the project's name.
- * A track-record card is text only: the product belongs to someone else.
+ * A track-record card is text only: the product belongs to someone else. So is
+ * a feature-work card: the app's UI belongs to the client.
  *
  * INDEXABLE, deliberately: crawlable, in the sitemap, with CollectionPage
  * schema listing the write-ups.
@@ -80,6 +85,22 @@ const SIZES: Record<1 | 2 | 3, string> = {
   2: "(min-width: 768px) 50vw, 100vw",
   1: "(min-width: 768px) 55vw, 100vw",
 };
+
+/** A set of cards on a grid that fills its rows. `labelledBy` names the list
+ *  after the sub-group heading above it. */
+function ProjectGrid({ items, headingLevel, labelledBy }: { items: Project[]; headingLevel?: 3 | 4; labelledBy?: string }) {
+  const cols = columns(items.length);
+  return (
+    <ul className={`tw-projects tw-projects--${cols}`} aria-labelledby={labelledBy}>
+      {items.map((p) => (
+        <ProjectCard key={p.id} p={p} sizes={SIZES[cols]} headingLevel={headingLevel} />
+      ))}
+    </ul>
+  );
+}
+
+/** The feature-work sub-group's heading. Plain words: what these cards are. */
+const FEATURES_TITLE = "Features we shipped into other companies’ apps";
 
 /** A write-up's row: the screenshot, then the label, the name, the figures and
  *  the link to the write-up. */
@@ -195,7 +216,9 @@ export default function WorkIndexPage() {
           /* the bands alternate back from the closing panel, which is on the
              light band: the last section is white */
           const band = (sections.length - 1 - i) % 2 === 0 ? "tw-band--white" : "tw-band--light";
-          const cols = columns(s.items.length);
+          const products = s.items.filter((p) => p.scope !== "features");
+          const features = s.items.filter((p) => p.scope === "features");
+          const featuresId = `${s.id}-features-title`;
           return (
             <section key={s.id} id={s.id} className={`tw-band ${band}`} aria-labelledby={`${s.id}-title`}>
               <div className="tw-band__inner">
@@ -207,11 +230,19 @@ export default function WorkIndexPage() {
                     ))}
                   </ul>
                 ) : (
-                  <ul className={`tw-projects tw-projects--${cols}`}>
-                    {s.items.map((p) => (
-                      <ProjectCard key={p.id} p={p} sizes={SIZES[cols]} />
-                    ))}
-                  </ul>
+                  <>
+                    {products.length > 0 ? <ProjectGrid items={products} /> : null}
+                    {/* The heading's parent holds the cards it heads: verify-site
+                        check 9 reads such a heading as a group's, not a card's. */}
+                    {features.length > 0 ? (
+                      <div className="tw-subgroup">
+                        <h3 id={featuresId} className="tw-title-wrapper" data-tw-reveal>
+                          <span className="title-sub">{FEATURES_TITLE}</span>
+                        </h3>
+                        <ProjectGrid items={features} headingLevel={4} labelledBy={featuresId} />
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
             </section>
