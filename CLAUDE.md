@@ -560,6 +560,10 @@ used to pass now fails, and the site still passes. Every rule has a misuse case 
   asserted), and with Save-Data (asserted); `allowed`, once the renderer lands, needs a FINE pointer,
   no touch and no Save-Data as well as >=1025px. Every frame read is bounded: a lazy iframe caught
   mid-navigation hung the suite for half an hour before it was.
+- **25, a frame that removes itself (2026-09-15)** — a child frame that shares the page's
+  origin writes each WebGL request into the page's own log as it makes it, so a frame
+  removed before the check can read it cannot take the request with it. An unread frame
+  passes only when it was removed and shared the page's origin; any other is unsure, a failure.
 - **31, extended (K12)** — with `--repo`, the source scan sees a retired package however it is
   loaded (`from`, a dynamic `import()`, `require()`, a side-effect import, `export * from`) and at
   any subpath (`framer-motion/dom`, `three/examples/…`); Tailwind by `@import "tailwindcss…"`,

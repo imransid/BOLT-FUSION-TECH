@@ -299,8 +299,20 @@ function glHook(workerHookSrc) {
     if (!C) continue;
     const orig = C.prototype.getContext;
     C.prototype.getContext = function (type, ...rest) {
-      if (/webgl/i.test(String(type)))
-        log.push({ type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160) });
+      if (/webgl/i.test(String(type))) {
+        const entry = { type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160), id: Math.random().toString(36).slice(2) };
+        log.push(entry);
+        /* a child frame that shares the page's origin (about:blank, srcdoc,
+           blob:, same site) also reports into the page's own log at once: a
+           frame that makes a context and then removes itself cannot take the
+           request with it. A cross-origin frame throws here, and is read
+           directly (readFrameGl). */
+        try {
+          if (window.top !== window && window.top.__vsGl) window.top.__vsGl.push({ ...entry, where: `a child frame (${location.href || "no URL"})`, mirrored: true });
+        } catch {
+          /* cross-origin: read by readFrameGl */
+        }
+      }
       return orig.call(this, type, ...rest);
     };
   }
@@ -400,7 +412,8 @@ async function readFrameGl(page) {
     }
     const ours = !/^https?:/i.test(url) || isSameSite(url);
     const gl = await bounded(f.evaluate(() => (window.__vsGl ? [...window.__vsGl] : null)), 5000, null);
-    out.push({ url: (url || "(a frame with no URL)").slice(0, 120), ours, gl, loaded: Boolean(f.url()) });
+    const inherits = !url || /^(about:|blob:)/i.test(url);
+    out.push({ url: (url || "(a frame with no URL)").slice(0, 120), ours, gl, loaded: Boolean(f.url()), detached: f.isDetached(), inherits });
   }
   return out;
 }
@@ -3612,13 +3625,20 @@ await (async () => {
     /* every context: this frame's, a worker's (reported into it), and each
        frame's the page made; a third party's frame is listed, not judged */
     const reqs = [...run.gl.map((g) => ({ ...g, where: g.where || "the page" }))];
+    const mirrored = new Set(run.gl.map((g) => g.id).filter(Boolean));
     for (const f of run.frames || []) {
       if (!f.ours) {
         if (f.gl?.length) I.push(`${run.label}: ${f.gl.length} WebGL request(s) in a third-party frame ${f.url} — not this site's code`);
         continue;
       }
-      if (!Array.isArray(f.gl)) F.push(`${run.label}: the frame ${f.url} could not be read — unsure is a failure`);
-      else reqs.push(...f.gl.map((g) => ({ ...g, where: g.where ? `${g.where} in the frame ${f.url}` : `the frame ${f.url}` })));
+      if (!Array.isArray(f.gl)) {
+        /* removed before it could be read: a frame that inherits the page's
+           origin mirrored every request into the page's own log as it made it
+           (glHook), so those are already in run.gl. Any other unread frame —
+           still attached, or on another origin the page itself made — is unsure. */
+        if (f.detached && f.inherits) I.push(`${run.label}: the frame ${f.url} was removed before it could be read — it shared the page's origin, so any WebGL request it made is in the page's own log`);
+        else F.push(`${run.label}: the frame ${f.url} could not be read — unsure is a failure`);
+      } else reqs.push(...f.gl.filter((g) => !mirrored.has(g.id)).map((g) => ({ ...g, where: g.where ? `${g.where} in the frame ${f.url}` : `the frame ${f.url}` })));
     }
     if (reqs.length && !allowed)
       F.push(`${run.label}: ${reqs.length} WebGL context request(s) — ${[...new Set(reqs.map((g) => `${g.type} in ${g.where}${g.stack ? ` from ${g.stack}` : ""}`))].slice(0, 8).join("; ")} — ${why}`);
