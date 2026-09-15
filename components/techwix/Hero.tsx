@@ -1,4 +1,5 @@
 import FigureText from "@/components/FigureText";
+import HeroScene from "@/components/field/HeroScene";
 import { metrics } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 
@@ -34,8 +35,10 @@ const SIZES = "(min-width: 1025px) 660px, calc(100vw - 30px)";
  *    in a <picture> (the image optimizer stays off the LCP path) with its size,
  *    fetchpriority="high" and no lazy loading, and `data-hero-poster` for the
  *    suite to find it. It carries no information: alt="" and aria-hidden.
- *  · No canvas and no WebGL in this step. Step 4's renderer fades a canvas in
- *    over the poster, inside the same frame, so it cannot shift layout.
+ *  · <HeroScene /> (components/field) fades the three.js scene's canvas in
+ *    over the poster, inside the same frame, so it cannot shift layout — only
+ *    at >=1025px with a fine pointer, no Save-Data and motion allowed, and
+ *    only after LCP and load. The poster is a frame of that scene at t = 0.
  *  · Below 1025px, or on a coarse pointer, the poster drifts slowly (a CSS
  *    transform); under reduced motion it stays still.
  *
@@ -76,15 +79,15 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
 
           <div className="tw-hero__field" aria-hidden="true" data-hero-field>
             <picture>
-              <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/field-poster-660.avif" />
-              <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/field-poster-660.webp" />
-              <source type="image/avif" srcSet="/hero/field-poster-660.avif 660w, /hero/field-poster-1320.avif 1320w" sizes={SIZES} />
-              <source type="image/webp" srcSet="/hero/field-poster-660.webp 660w, /hero/field-poster-1320.webp 1320w" sizes={SIZES} />
+              <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/scene-poster-v1-660.avif" />
+              <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/scene-poster-v1-660.webp" />
+              <source type="image/avif" srcSet="/hero/scene-poster-v1-660.avif 660w, /hero/scene-poster-v1-1320.avif 1320w" sizes={SIZES} />
+              <source type="image/webp" srcSet="/hero/scene-poster-v1-660.webp 660w, /hero/scene-poster-v1-1320.webp 1320w" sizes={SIZES} />
               {/* eslint-disable-next-line @next/next/no-img-element -- the LCP poster: a plain <img> in a <picture>, so its fetch priority, size and formats are exactly what the served HTML says, with no optimizer round trip */}
               <img
                 data-hero-poster
                 className="tw-hero__poster"
-                src="/hero/field-poster-660.webp"
+                src="/hero/scene-poster-v1-660.webp"
                 alt=""
                 aria-hidden="true"
                 width={660}
@@ -92,6 +95,7 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
                 fetchPriority="high"
               />
             </picture>
+            <HeroScene />
           </div>
         </div>
 
