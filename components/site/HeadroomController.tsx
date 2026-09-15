@@ -3,20 +3,19 @@
 import { useEffect } from "react";
 
 /**
- * The header's scroll state machine — the clone's measured headroom.js
- * behaviour, reimplemented rather than imported (branch techwix-replica,
- * CLAUDE.md "Header"):
+ * The header's scroll state machine — the headroom behaviour the site has had
+ * since the clone study, kept with the redesign (2026-09-16):
  *
  *   offset           200   scrollY <= 200 is --top; 201 is --not-top
  *   tolerance.up     7     an upward move must EXCEED 7px to pin
  *   tolerance.down   0     any downward move at all unpins
  *
  * The classes land on the <header> itself; --bottom replaces --not-bottom at
- * scrollY + innerHeight >= scrollHeight. The slide is a CSS transition on
- * .tw-header (app/(home)/techwix.css), dropped under reduced motion; the state
- * machine still runs, because it is functional, not decorative. A focused
- * control inside the header pins it (CSS :focus-within), so a keyboard user
- * never tabs into a header that is off screen. Renders nothing.
+ * scrollY + innerHeight >= scrollHeight. The slide is a CSS transform on
+ * .bf-header (app/site.css), dropped under reduced motion; the state machine
+ * still runs, because it is functional, not decorative. A focused control
+ * inside the header pins it (CSS :focus-within), so a keyboard user never tabs
+ * into a header that is off screen. Renders nothing.
  */
 
 const OFFSET = 200;

@@ -209,7 +209,7 @@ export default function WarmChatsCaseStudy() {
             Visit warmchats.com
             <ArrowUpRightIcon className="tw-btn__icon" />
           </a>
-          <Button href="/#schedule" variant="secondary">
+          <Button href="/contact#schedule" variant="secondary">
             Book a similar build
           </Button>
         </p>
@@ -362,7 +362,7 @@ export default function WarmChatsCaseStudy() {
           <div className="tw-signoff">
             <Link href="/" prefetch={false} className="tw-signoff__brand">
               <span className="tw-logo__tile" aria-hidden="true">
-                <LogoMarkSvg uid="wc-signoff-mark" />
+                <LogoMarkSvg />
               </span>
               <span>Bolt Fusion Tech</span>
             </Link>
@@ -370,7 +370,7 @@ export default function WarmChatsCaseStudy() {
           </div>
         }
       >
-        <Button href="/#schedule" variant="light">
+        <Button href="/contact#schedule" variant="light">
           Book a strategy call
         </Button>
         <Button href="/#recent-work" variant="secondary">

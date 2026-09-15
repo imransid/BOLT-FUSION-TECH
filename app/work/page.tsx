@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { alt as ogAlt } from "../opengraph-image";
 import ScreenImage from "@/components/techwix/ScreenImage";
 
 import FigureText from "@/components/FigureText";
@@ -63,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: new URL("/opengraph-image", site).toString(),
           width: 1200,
           height: 630,
-          alt: "Bolt Fusion Tech — We build AI systems that are still running in six months.",
+          alt: ogAlt,
         },
       ],
     },
@@ -250,7 +252,7 @@ export default function WorkIndexPage() {
         })}
 
         <CtaPanel titleId="work-cta" title="Building something with a constraint like these?">
-          <Button href="/#contact" variant="light">
+          <Button href="/contact#project" variant="light">
             Start a pilot
           </Button>
         </CtaPanel>
