@@ -211,7 +211,12 @@ licence beside them, read at build time.
   `techwix--slide-up` (3rem and a fade, 1.25s, `fill-mode: none`) when they
   enter the viewport. Nothing is hidden in the server HTML, and nothing moves
   under reduced motion. Page banners and the hero have no entrance: they render
-  in place, and no h1 is ever hidden.
+  in place, and no h1 is ever hidden. **Until 2026-09-15 it animated nothing:**
+  the attribute's value names the animation, React renders a bare
+  `data-tw-reveal` as `"true"`, and every element got the class `animated true`.
+  The observer now reads `"true"` and `""` as the default. No check caught it —
+  every check reads a page at rest, where a reveal that never runs and one that
+  has finished look the same.
 - **The header's headroom** slide is a 0.25s transform (`HeadroomController.tsx`).
 - **No animation library.** framer-motion was removed on 2026-09-15. The FAQ
   uses none: each item is a `<details name="faq">` with a CSS open/close.
@@ -423,6 +428,14 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   With `--repo`, the tracked files hold no font but Barlow's and Jost's, and no
   source file holds a retired class, `data-reveal`, framer-motion, three.js,
   `next/font/local`, Tailwind, or a `next/font/google` face but Barlow and Jost.
+- **20, capture corrected 2026-09-15** — the full-page capture it samples paints
+  a fixed or sticky box where the current scroll offset puts it. At the bottom
+  of a page the headroom header is slid up just out of view, and the capture
+  painted it over the text in the band above the last viewport: its white bar,
+  logo tile and blue button became the "ground" under body text on four inner
+  pages, where no reader ever sees the header. Text inside such boxes was
+  already unmeasured; the boxes are now hidden for the capture, and the check's
+  info names every one. No text leaves the measurement.
 - **18, extended** — prints how many elements carry `data-logotype` on each
   page, and fails a page that renders more than one.
 - **10, 2, 4 and 22, extended** — a visit's settle waits (every image decoded,
