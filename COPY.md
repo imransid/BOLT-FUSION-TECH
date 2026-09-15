@@ -36,13 +36,18 @@ policy's "← Back to boltfusiontech.com". The share image kept its words too.
 
 ## 2. Trust rail
 
-> Live in production at warmchats.com. Six engineers across the UK, Malaysia and
+> Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
 > Bangladesh.
 
-**Amended 2026-09-11: ten → six.** The site lists six engineers — the six with a
-verified LinkedIn (§5, amended). A draft saying ten while the site shows six is
-exactly what a later copy pass would restore by accident. Raise the number when a
-verified profile is added to the Team section, not before.
+**Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
+with a verified LinkedIn, four with profiles pending. The trust rail is not
+rendered anywhere on the site today.
+
+*History, superseded 2026-09-15:* **Amended 2026-09-11: ten → six.** The site
+lists six engineers — the six with a verified LinkedIn (§5, amended). A draft
+saying ten while the site shows six is exactly what a later copy pass would
+restore by accident. Raise the number when a verified profile is added to the
+Team section, not before.
 
 ---
 
@@ -153,16 +158,37 @@ deliberate.
 Add the photo slot when real photographs exist. Never a template avatar, a stock
 face, or a generated one — see CLAUDE.md, "No fake faces, ever."
 
+**Amended 2026-09-15:** a pending card (below) carries an initials monogram —
+text, in the corner where a verified card carries its arrow, never a face. A
+verified card still carries none.
+
 ~~**If a member has no LinkedIn yet,** render the card without the link rather than
 omitting the person or linking to an unverified profile.~~
 
-**Amended 2026-09-11 — only people with a verified LinkedIn are listed.** A member
-without one is not shown until it exists, and an unverified profile is never linked.
-The struck rule was written when there were no photos and no roles and a card was only
-a name. It now conflicts with the stronger rule that every claim on the site is
-verifiable: a named engineer nobody can look up is exactly the claim this section
-exists to disprove. With the amendment, the body's "every profile links to a public
-LinkedIn" is true of every card.
+*History, superseded 2026-09-15:* **Amended 2026-09-11 — only people with a verified
+LinkedIn are listed.** A member without one is not shown until it exists, and an
+unverified profile is never linked. The struck rule was written when there were no
+photos and no roles and a card was only a name. It now conflicts with the stronger rule
+that every claim on the site is verifiable: a named engineer nobody can look up is
+exactly the claim this section exists to disprove. With the amendment, the body's
+"every profile links to a public LinkedIn" is true of every card.
+
+**Amended 2026-09-15 — ten engineers, four with profiles pending.** The owner restored
+the team to ten: "Team should be there 10 people, placeholder now, I'll upload the data
+later." The six with a verified LinkedIn are unchanged. Nadim, Joinal, Arifur Rahman
+and Tareq — on the original roster, off it since 2026-09-11 — are back by name only,
+never with the strangers' GitHub handles or the template faces their old cards
+carried. Each is shown as profile pending: the name, initials and "Profile coming
+soon", with no link and no Person markup. An unverified profile is still never linked;
+what changed is that a real team member without one is named instead of left out.
+
+- **Stat:** counted from the roster, never written — "10 engineers" and "6 verified
+  profiles". It read "6 specialists".
+- **Subtext:** "Each verified card opens the engineer's LinkedIn profile in a new
+  tab—so you can see who you would work with before you commit scope or budget." One
+  word added, so it stays true of the cards it describes.
+- The body above ("every profile links to a public LinkedIn") is still true: a pending
+  member has no profile on the site yet.
 
 ---
 

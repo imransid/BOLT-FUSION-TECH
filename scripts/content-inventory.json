@@ -114,13 +114,13 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "item": "Team: six verified engineers",
+        "item": "Team: ten engineers, six with a verified profile",
         "proves": "Named people you can check",
         "status": "required",
         "needles": [
           "Senior engineers.One delivery standard.",
-          "Each card opens the engineer's LinkedIn profile in a new tab—so",
-          "specialists",
+          "Each verified card opens the engineer's LinkedIn profile in a new tab—so",
+          "verified profiles",
           "Rafa",
           "@rafa",
           "Shourab",
@@ -133,6 +133,10 @@
           "@nihal",
           "Sabbir",
           "@sabbir",
+          "Nadim",
+          "Joinal",
+          "Arifur Rahman",
+          "Tareq",
           "Your bench",
           "// who builds with you"
         ]

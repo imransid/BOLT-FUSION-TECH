@@ -89,88 +89,70 @@ const raw: SiteContent = {
     headlineLine1: "Senior engineers.",
     headlineLine2: "One delivery standard.",
     subtext:
-      "Each card opens the engineer's LinkedIn profile in a new tab—so you can see who you would work with before you commit scope or budget.",
-    statLabel: "specialists",
-    // NO PHOTOGRAPHS YET, SO NO IMAGES. `image` stays null until a real
-    // photograph of that engineer exists; the card then gains its photo slot.
-    // Never a template avatar, a stock face or a generated one (CLAUDE.md, "No
-    // fake faces, ever"; COPY.md §5). The template line-art that stood here was
-    // removed, not renamed.
+      "Each verified card opens the engineer's LinkedIn profile in a new tab—so you can see who you would work with before you commit scope or budget.",
+    // Both numbers are counted from the roster — never written here.
+    statLabel: "engineers",
+    verifiedLabel: "verified profiles",
+    pendingLabel: "Profile coming soon",
+    // ── HOW TO FILL IN A TEAM MEMBER ─────────────────────────────────────────
+    // The build validates every field: `yarn build` fails, naming the member and
+    // the field, if anything below is wrong. Leave a field OUT until you have
+    // its real value — never an example, a plausible title or a round number.
     //
-    // THE SIX WITH A VERIFIED LINKEDIN, AND ONLY THEM (COPY.md §5, amended
-    // 2026-09-11). A member without a verified profile is not listed until one
-    // exists — Nadim, Arifur Rahman, Tareq and Joinal are off the section for
-    // that reason; git history records why each link was removed. The schema
-    // requires `profileUrl`, and nothing constructs a URL from a handle.
+    // status      "verified" or "pending".
+    //   pending   A named member with no verified LinkedIn yet. The card shows
+    //             the name, initials and "Profile coming soon" — no link, no
+    //             handle, no photo — and there is no Person structured data.
+    //             The build refuses a profileUrl, handle or photo here.
+    //   verified  Needs both:
+    //             profileUrl  "https://www.linkedin.com/in/<their-profile>/" —
+    //                         only a linkedin.com/in/ URL is accepted.
+    //             handle      the card's bottom line, e.g. "@nadim".
+    // PENDING -> VERIFIED: change status to "verified" and add profileUrl and
+    // handle. The card becomes a link, both counts above the cards update, and
+    // a Person node is emitted. Nothing else to edit.
     //
-    // ROLE, EXPERIENCE AND STACK ARE DELIBERATELY EMPTY, waiting on real data
-    // from each engineer. Do not fill them with examples, plausible titles or
-    // round numbers: an invented credential on a page built on verifiable claims
-    // is worse than none. Supply a real value and the card and the Person
-    // structured data take it with no component change; an empty field renders
-    // nothing, on the page or in the markup.
+    // Optional, shown only when present (a verified member's role and stack go
+    // into their Person markup too):
+    //   role      a job title, plain text: "Backend engineer".
+    //   years     years of experience, a whole number 1–60: 8, shown "8 years".
+    //             That is a figure, so it also needs one line in
+    //             content/figure-labels.ts —
+    //             { text: "8 years", exempt: "<why it is not a performance claim>" }
+    //             — the build names the line if it is missing.
+    //   stack     technology names: ["TypeScript", "PostgreSQL"].
+    //   photo     VERIFIED MEMBERS ONLY. A real photograph of that person —
+    //             never an avatar, an illustration, a stock or a generated face
+    //             (CLAUDE.md, "No fake faces"). Put the file in public/team/
+    //             and give its path: "/team/nadim.jpg" — lowercase letters,
+    //             digits and hyphens; .jpg, .jpeg, .png, .webp or .avif. It shows
+    //             above the name. A file named "avatar", "face", "placeholder"
+    //             and the like is refused.
+    //
+    // Then `yarn build`, `yarn start`, and
+    // `yarn verify:site --base http://localhost:3000 --repo .`
+    //
+    // The four pending members were on the original roster and came off on
+    // 2026-09-11, because their cards used template faces and GitHub handles
+    // that belonged to strangers. On 2026-09-15 the owner restored the team to
+    // ten: their NAMES only — never those handles, never those images.
     roster: [
-      {
-        id: "rafa",
-        name: "Rafa",
-        handle: "@rafa",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl: "https://www.linkedin.com/in/imran1993/",
-      },
+      { id: "rafa", status: "verified", name: "Rafa", handle: "@rafa", profileUrl: "https://www.linkedin.com/in/imran1993/" },
       {
         id: "shourab",
+        status: "verified",
         name: "Shourab",
         handle: "@shourab",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl:
-          "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/",
+        profileUrl: "https://www.linkedin.com/in/ashraful-abedin-shourab-a50697122/",
       },
-      {
-        id: "nazirul",
-        name: "Nazirul",
-        handle: "@nazirul",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl: "https://www.linkedin.com/in/imnazirul/",
-      },
-      {
-        id: "talha",
-        name: "Talha",
-        handle: "@talha",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl: "https://www.linkedin.com/in/talhajubair100/",
-      },
-      {
-        id: "nihal",
-        name: "Nihal",
-        handle: "@nihal",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl: "https://www.linkedin.com/in/asif-nihal",
-      },
-      {
-        id: "sabbir",
-        name: "Sabbir",
-        handle: "@sabbir",
-        image: null,
-        role: "",
-        experience: "",
-        stack: [],
-        profileUrl: "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/",
-      },
+      { id: "nazirul", status: "verified", name: "Nazirul", handle: "@nazirul", profileUrl: "https://www.linkedin.com/in/imnazirul/" },
+      { id: "talha", status: "verified", name: "Talha", handle: "@talha", profileUrl: "https://www.linkedin.com/in/talhajubair100/" },
+      { id: "nihal", status: "verified", name: "Nihal", handle: "@nihal", profileUrl: "https://www.linkedin.com/in/asif-nihal" },
+      { id: "sabbir", status: "verified", name: "Sabbir", handle: "@sabbir", profileUrl: "https://www.linkedin.com/in/sabbir-ahmed-4a500321b/" },
+      { id: "nadim", status: "pending", name: "Nadim" },
+      { id: "joinal", status: "pending", name: "Joinal" },
+      { id: "arifur-rahman", status: "pending", name: "Arifur Rahman" },
+      { id: "tareq", status: "pending", name: "Tareq" },
     ],
   },
   recentWorks: {

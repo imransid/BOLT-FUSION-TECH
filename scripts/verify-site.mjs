@@ -1034,15 +1034,34 @@ function collectInPage() {
     stuckHidden.push({ text: snip(el, 60), hider: `${hider.tagName.toLowerCase()}${hider.id ? "#" + hider.id : ""}`, style: (hider.getAttribute("style") || "").slice(0, 70), section: sectionOf(el) });
   }
 
-  /* 27 ── people: every card that presents a person, and every photo slot */
+  /* 27 ── people: every card that presents a person, and every photo slot. A
+     picture is an <img> or a CSS background image (on the element or its
+     ::before / ::after) — a face painted as a background is still a face. A
+     pending card (data-person-status="pending": a named member with no verified
+     profile yet) is shown with initials, which are text: it holds no <img>, no
+     <svg>, no <picture>, <canvas> or <video>, and no background image. */
   const personCards = [...document.querySelectorAll("[data-person-card]")];
   const peopleFallback = !personCards.length && document.getElementById("team");
+  const bgUrls = (root) =>
+    [root, ...root.querySelectorAll("*")]
+      .flatMap((e) => [null, "::before", "::after"].map((p) => getComputedStyle(e, p).backgroundImage))
+      .flatMap((b) => [...String(b).matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)].map((m) => m[1]));
   const people = {
     marked: personCards.length,
     fallback: Boolean(peopleFallback),
-    images: [...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
+    images: [
+      ...[...(peopleFallback ? peopleFallback.querySelectorAll("img") : personCards.flatMap((c) => [...c.querySelectorAll("img")]))].map((i) => srcOf(i)),
+      ...(peopleFallback ? bgUrls(peopleFallback) : personCards.flatMap((c) => bgUrls(c))),
+    ],
     emptySlots: [...document.querySelectorAll("[data-photo-slot]")].filter((s) => !s.querySelector("img")).length,
-    cards: personCards.map((c) => ({ name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(), href: c.getAttribute("href") || null })),
+    cards: personCards.map((c) => ({
+      name: (c.querySelector("h1,h2,h3,h4")?.textContent || "").trim(),
+      href: c.getAttribute("href") || null,
+      pending: c.getAttribute("data-person-status") === "pending",
+      /* a link anywhere on the card: the card itself, one inside it, or one around it */
+      linked: Boolean(c.closest("a[href]") || c.querySelector("a[href]")),
+      pictures: c.querySelectorAll("img, svg, picture, canvas, video").length + bgUrls(c).length,
+    })),
   };
 
   /* 31 ── which design the page carries. A stylesheet is known by what it
@@ -3048,8 +3067,12 @@ await (async () => {
       }
     }
   }
-  /* Person — built from the roster the Team section renders: one node per person
-     card, carrying that card's name and profile link, and no empty field */
+  /* Person — built from the roster the Team section renders: one node per
+     VERIFIED person card, carrying that card's name and profile link, and no
+     empty field. A PENDING card (data-person-status="pending", decided
+     2026-09-15) is a named member with no verified profile yet: it links
+     nowhere and has no Person node — a pending link is unverified by
+     definition. A card with no link that is not marked pending still fails. */
   {
     const v = visits[`/@${WIDTHS[0]}`];
     if (v?.people) {
@@ -3063,21 +3086,28 @@ await (async () => {
         }
       }
       const cards = v.people.cards || [];
+      const verifiedCards = cards.filter((c) => !c.pending);
+      const pendingCards = cards.filter((c) => c.pending);
       const key = (name, url) => `${name}|${url}`;
-      const cardKeys = new Set(cards.filter((c) => c.href).map((c) => key(c.name, c.href)));
+      const cardKeys = new Set(verifiedCards.filter((c) => c.href).map((c) => key(c.name, c.href)));
       const ldKeys = new Set(persons.map((p) => key(p.name, [].concat(p.sameAs || [])[0])));
+      const ldNames = new Set(persons.map((p) => p.name));
       for (const p of persons) {
         const url = [].concat(p.sameAs || [])[0];
-        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a person card on the page`);
+        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a verified person card on the page`);
         for (const [k, val] of Object.entries(p))
           if (val === null || (typeof val === "string" && !val.trim()) || (Array.isArray(val) && val.length === 0))
             F.push(`/: Person "${p.name}" carries an empty ${k} — emit only the fields that exist`);
       }
-      for (const c of cards) {
-        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link — COPY.md §5 lists only people with a verified LinkedIn`);
+      for (const c of verifiedCards) {
+        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link and is not marked pending — a verified member links to their LinkedIn; one without a verified profile is data-person-status="pending"`);
         else if (!ldKeys.has(key(c.name, c.href))) F.push(`/: the person card "${c.name}" has no Person node in the structured data`);
       }
-      I.push(`/: Person ${persons.length}, person cards ${cards.length}`);
+      for (const c of pendingCards) {
+        if (c.linked) F.push(`/: the pending card "${c.name}" carries a link — a member whose profile is pending links nowhere until it is verified`);
+        if (ldNames.has(c.name)) F.push(`/: the pending card "${c.name}" has a Person node — Person is only for a verified profile`);
+      }
+      I.push(`/: Person ${persons.length}, person cards ${cards.length} (${verifiedCards.length} verified, ${pendingCards.length} pending)`);
     }
   }
   for (const [u, where] of urls) {
@@ -3090,7 +3120,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page; a Person node or a link for a member whose profile is pending", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
@@ -3707,8 +3737,12 @@ check(27, "No template, placeholder or generated faces — a person's picture is
       if (!PHOTO.test(f)) once(`${route}|photo|${f}`, `${route}: ${short(f)} sits in a person card and is not a photograph`);
     }
     if (v.people.emptySlots) once(`${route}|slots`, `${at(k)}: ${v.people.emptySlots} empty photo frame(s) — the slot should not render without a photograph`);
+    /* a pending member is shown with initials — text — never a photo or a drawing (decided 2026-09-15) */
+    for (const c of v.people.cards || [])
+      if (c.pending && c.pictures) once(`${route}|pending|${c.name}`, `${at(k)}: the pending card "${c.name}" holds ${c.pictures} picture(s) — a member without a verified profile is shown with initials, never a photo or a drawing`);
+    const pending = (v.people.cards || []).filter((c) => c.pending).length;
     if (v.people.fallback) I.push(`${at(k)}: no [data-person-card] markers; checked the images inside #team`);
-    else if (v.people.marked) I.push(`${at(k)}: ${v.people.marked} person card(s), ${v.people.images.length} picture(s)`);
+    else if (v.people.marked) I.push(`${at(k)}: ${v.people.marked} person card(s), ${pending} pending, ${v.people.images.length} picture(s)`);
   }
 });
 

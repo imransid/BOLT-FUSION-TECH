@@ -93,7 +93,9 @@ fails `next build` with the file named:
 
 There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
 data is generated from the same items the sections render (`fix/faq-one-source`,
-`feat/team-verified-six`). `site.sectionOrder` must list every section exactly
+`feat/team-verified-six`, `feat/team-ten`). How to fill a team member in — each
+field, its format, and what turns a pending member into a verified one — is
+written above the roster in `content/site.ts`; the build validates all of it. `site.sectionOrder` must list every section exactly
 once — a bad order fails the build. To hide a section, set
 `site.sectionVisibility[id]` to `false`.
 
@@ -304,13 +306,24 @@ at the end, which means nobody has decided yet.
 - **No fake faces, ever** — never a template avatar, a stock face or a
   generated one, not even as a placeholder. A section ships without the photo
   slot until real photographs exist. *Holds* with `fix/team-no-template-avatars`
-  (verify-site check 27).
-- **A person is listed only with a verified LinkedIn profile — enforced at
-  load, not by convention.** A team member's `profileUrl` is required and must
-  be a `linkedin.com/in/` URL. The site content is parsed when it loads, so a
-  member without one fails the build, and no link can be built from a handle. Role, experience and stack stay empty until real data exists — never
-  examples. Person structured data comes from the same roster, emitting only
-  the fields that exist. *Holds* with `feat/team-verified-six` (checks 14, 27).
+  (verify-site check 27, which since 2026-09-15 also counts CSS background
+  images as pictures and fails any picture on a pending card).
+- **A person is linked, and marked up as Person, only with a verified LinkedIn
+  profile. A named team member without one is shown as 'profile pending', with
+  initials, never a photo or a borrowed handle. Decided 2026-09-15.** Enforced
+  at load, not by convention: a member is `status: "verified"` — a
+  `linkedin.com/in/` `profileUrl` and a handle, both required — or
+  `status: "pending"`, which refuses a `profileUrl`, a handle and a photo. Both
+  member schemas are strict, so a stray or retired key fails the build too,
+  and no link can be built from a handle. A pending card is the name, an
+  initials monogram (text, in the corner where a verified card carries its
+  arrow) and "Profile coming soon", with no link. Role, years, stack and photo
+  stay out until real data exists — never examples; a photo is a verified
+  member's own photograph under `/team/`, and a years value ("8 years" is a
+  figure) needs its exemption in `content/figure-labels.ts`, which the build
+  names. Person structured data comes from the same roster, verified members
+  only (`personLd` filters, so no caller can emit a pending one), emitting only
+  the fields that exist. *Holds* with `feat/team-ten` (checks 14, 27, 30).
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
   element the server sends at `opacity:0` is not. *Holds*: the reveal's
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
@@ -531,6 +544,17 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   never comes, a timeout under load) is a finding in its own check, "unsure is a
   failure", instead of an uncaught error that ends the whole suite with no
   results.
+- **14, 27 and 30, the team of ten (2026-09-15)** — 14: every verified person
+  card has its Person node and every Person its verified card, as before; a
+  card marked `data-person-status="pending"` must carry no link (on it, in it
+  or around it) and have no Person node, and a card with no link that is not
+  marked pending still fails. 27: a picture in a person card is an `<img>` or a
+  CSS background image (the element's, its `::before` or `::after`), and a
+  pending card holds none at all — no `<img>`, `<svg>`, `<picture>`, `<canvas>`,
+  `<video>` or background — because initials are text. 30: the four pending
+  names are required needles; the stat's needle is "verified profiles" (its
+  numbers are counted, so the needle carries none), and the subtext's reads
+  "Each verified card opens…", every word of the old needle kept.
 
 **Checks changed in the review fix pass (2026-09-15).** Four reviewers found holes in the suite;
 each was reproduced on a served fixture — a real page with one edit — and closed: the fixture that
@@ -673,6 +697,7 @@ without a `source` string — the same idea, not yet a checked reference).
 | The layouts | **One root layout**; the 404 is the standard `app/not-found.tsx`, with no experimental flag and no Next-internal import | `redesign/techwix-home` |
 | The hero field | **Static image first.** The three.js nebula and its four packages are deleted; the raw WebGL2 renderer comes later as its own change | `redesign/techwix-home` |
 | "~80% of traffic" | **`target`**, all five instances (*A figure labelled shipped with nothing behind it*) | `fb5b83e` |
+| The Team section | **Ten engineers** — the owner: "Team should be there 10 people, placeholder now, I'll upload the data later." The six verified are unchanged; Nadim, Joinal, Arifur Rahman and Tareq return by name only, `pending`: initials, "Profile coming soon", no link, handle, photo or Person node. The stat is counted from the roster ("10 engineers", "6 verified profiles") and the subtext says "Each verified card". Role, years, stack and photo come from the owner later, validated by the build. Supersedes the 2026-09-11 "six" rows | `feat/team-ten` |
 | Then | **To `main`** | — |
 
 ## Decided 2026-09-11: the rule or the design
@@ -702,13 +727,13 @@ wordmark's "Fusion") have not been ruled on.
 
 | question | decision | where |
 |---|---|---|
-| The Team section | **The six people with a verified LinkedIn**, shown with name, handle and link. Role, stack and years stay empty until real data exists — thin cards because the data is thin. COPY.md §5 amended: a member without a verified profile is not listed | `feat/team-verified-six` |
+| The Team section | **The six people with a verified LinkedIn**, shown with name, handle and link. Role, stack and years stay empty until real data exists — thin cards because the data is thin. COPY.md §5 amended: a member without a verified profile is not listed. *Superseded 2026-09-15: ten, four with profiles pending (Decided 2026-09-15)* | `feat/team-verified-six` |
 | The logo wordmark's contrast | **The check was wrong, not the mark.** WCAG 1.4.3 exempts logotypes; the exemption is scoped to the wordmark and guarded | `tooling/verify-site` |
 | FAQ vs FAQPage structured data | **The rendered five are canonical**, and the markup is generated from them: one source, not a corrected second copy | `fix/faq-one-source` |
 | COPY.md §4 layout note | **Superseded.** The section is a carousel; two cards on a two-column grid is a separate decision, not made | `docs/copy-md-decisions` |
 | The "under 100ms" meta description | **Stays unlabelled**: a scoped exception to the label rule, recorded under Hard rules | `chore/low-findings` |
 | FAQ answers missing from the served HTML | **Fixed in the same branch as the one-source fix:** the answers are in `<details>`, and check 14 reads them from the served HTML | `fix/faq-one-source` |
-| COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six | `docs/copy-md-decisions` |
+| COPY.md §2, "Ten engineers" | **Six**, with the reason recorded, so a copy pass cannot restore ten while the site shows six. *Superseded 2026-09-15: the site shows ten, and §2 says ten again* | `docs/copy-md-decisions` |
 | The CMS | **Removed**: content, schema and validation moved to `/content`; admin, store, API and seven dependencies deleted (see Content) | `chore/remove-cms` |
 | Unused CSS — `.ai-rise`, `animate-mesh`, `blob-*`, the old FAQ block (`.faq-item`), `.cv-section` and `.grain-overlay` | **Deleted on 2026-09-15**, with the rest of `app/globals.css`, when the old design was retired | `redesign/techwix-home` |
 
