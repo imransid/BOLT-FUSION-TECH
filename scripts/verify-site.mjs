@@ -1243,7 +1243,28 @@ async function measureContrast(page) {
     window.__vsKeep = keep;
     return out;
   }, LOGOTYPE);
-  await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}" });
+  /* A full-page capture paints a fixed or sticky box where the CURRENT scroll
+     offset puts it, not where a reader ever sees it over that part of the page.
+     Found 2026-09-15: at the bottom of a page the headroom header is slid up
+     just out of view, and the capture painted it over the text in the band just
+     above the last viewport — its white bar, its logo tile and its blue button
+     became the "ground" under body text on four pages, while no reader can see
+     that header there. Text INSIDE such a box is already unmeasured (pinned,
+     above); the box itself is hidden for the capture, so what is sampled under
+     the page's text is the page's own ground. No text leaves the measurement,
+     and every box hidden is named in the check's info. */
+  const hiddenForCapture = await page.evaluate(() => {
+    const out = [];
+    for (const el of document.body.querySelectorAll("*")) {
+      const p = getComputedStyle(el).position;
+      if ((p === "fixed" || p === "sticky") && !el.parentElement?.closest("[data-vs-pinned]")) {
+        el.setAttribute("data-vs-pinned", "");
+        if (el.getClientRects().length) out.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}`);
+      }
+    }
+    return out;
+  });
+  await page.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;text-decoration-color:transparent!important;caret-color:transparent!important}[data-vs-pinned]{visibility:hidden!important}" });
   await page.waitForTimeout(250);
   const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
   /* where each element is now: anything that moved or was replaced between the
@@ -1255,7 +1276,7 @@ async function measureContrast(page) {
       return { x: r.left + scrollX, y: r.top + scrollY };
     }),
   );
-  const res = { measured: 0, unmeasured: [], fails: [] };
+  const res = { measured: 0, unmeasured: [], fails: [], hiddenForCapture };
   for (const [idx, e] of els.entries()) {
     const n = now[idx];
     const moved = !n || Math.abs(n.x - e.x) > e.dx + 1 || Math.abs(n.y - e.y) > e.dy + 1;
@@ -2523,7 +2544,7 @@ check(20, "Text meets WCAG AA contrast against the pixels behind it", "text over
     if (!v.contrast) continue;
     const why = {};
     v.contrast.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
-    I.push(`${at(k)}: ${v.contrast.measured} measured; not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}`);
+    I.push(`${at(k)}: ${v.contrast.measured} measured; not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes hidden for the capture: ${(v.contrast.hiddenForCapture || []).join(", ") || "none"}`);
     const seen = new Set();
     for (const f of [...v.contrast.fails].sort((a, b) => a.ratio - b.ratio)) {
       if (seen.has(f.text)) continue;

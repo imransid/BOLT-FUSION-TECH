@@ -364,7 +364,7 @@ export default function WarmChatsCaseStudy() {
               <span className="tw-logo__tile" aria-hidden="true">
                 <LogoMarkSvg uid="wc-signoff-mark" />
               </span>
-              Bolt Fusion Tech
+              <span>Bolt Fusion Tech</span>
             </Link>
             <p className="tw-signoff__line">Custom software &amp; product engineering in the UK, Malaysia and Bangladesh</p>
           </div>

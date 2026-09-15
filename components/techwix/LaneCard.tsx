@@ -29,7 +29,11 @@ export default function LaneCard({
   return (
     <li className="tw-lane" data-tw-reveal>
       <div className="tw-lane__head">
-        <span className="tw-step__num">{marker}</span>
+        {/* The number in its own box, inside the circle: the text's box is then
+            wholly on the blue, not a square whose corners are the card's white */}
+        <span className="tw-step__num">
+          <span>{marker}</span>
+        </span>
         {meta ? <span className="tw-lane__meta">{meta}</span> : null}
         {tag ? <span className="tw-pill">{tag}</span> : null}
       </div>

@@ -24,7 +24,12 @@ export default function RevealObserver() {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           const el = entry.target as HTMLElement;
-          el.classList.add("animated", el.dataset.twReveal || "techwix--slide-up");
+          /* The attribute's value names the animation. React renders a bare
+             `data-tw-reveal` as "true", and until 2026-09-15 that became the
+             class — `animated true` — so nothing on any page ever animated.
+             "true" and "" both mean the default. */
+          const name = el.dataset.twReveal;
+          el.classList.add("animated", name && name !== "true" ? name : "techwix--slide-up");
           io.unobserve(el);
         }
       },
