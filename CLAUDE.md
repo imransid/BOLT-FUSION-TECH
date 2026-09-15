@@ -543,7 +543,11 @@ for more than five seconds has a pause control.
     `public/hero/` until the integration decides; nothing references them.
   - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
     where the hero moves — the drift, or a hero marked `data-scene="live"` —
-    and is `hidden` in the server HTML. `HeroScene` sets `data-scene="live"` on
+    and is invisible in the server HTML (`visibility: hidden` until it
+    carries `data-ready`), keeping its space, so appearing never shifts the
+    page. As `hidden` it moved the hero text 42px when it appeared: CLS 0.0085
+    at 1440 when the scene went live, and 0.0245 at 390 at hydration (found by
+    the scene's probe, fixed 2026-09-16). `HeroScene` sets `data-scene="live"` on
     `#hero` once the scene has drawn and removes it on teardown, so the button
     stays while the scene is paused and can resume it. Pausing sets
     `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
@@ -1014,10 +1018,21 @@ fresh context, with no input and no scroll.
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
 | the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
 
-**The scene chunk, measured.** Before the build (the gate), esbuild put
-`components/field/scene.ts` with three.js 0.186.0, tree-shaken and minified,
-at 561KB raw and 142.8KB gzipped. That is an estimate; the Next build's own
-chunk replaces it below.
+**The scene chunk, measured 2026-09-16.** One Turbopack chunk holds three.js
+0.186.0 and the scene: 555KB raw, **137.9KB on the wire**. That is the
+response's `encodedBodySize` under `next start`'s gzip, read in the browser at
+1440; the file itself is 140.5KB at `gzip -9`. It is requested at about 2.2s,
+after the load event (164ms locally), and none of the nine scripts before load
+holds three.js. esbuild's estimate before the build was 142.8KB. So named
+imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
+three bump or a new import pushes it past 180KB, import from
+`three/src/...` module paths.
+
+**The posters:** `scene-poster-v1-660.avif` 7.0KB, `-1320.avif` 15.3KB,
+`-660.webp` 13.6KB, `-1320.webp` 31.8KB (AVIF 4:4:4 at quality 56, WebP 82).
+The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF: a dark
+frame of hard-edged shapes compresses far better than a cloud of points, which
+takes weight off the LCP path.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in

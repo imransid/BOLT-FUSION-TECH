@@ -812,7 +812,11 @@ html[data-motion="paused"] .bf-hero__poster {
 /* The pause control (components/site/MotionToggle): shown only where
    something in the hero moves — the drift, or the live 3D scene. */
 .bf-motion-toggle {
-  display: none;
+  /* Always in the layout, shown by `visibility`: a button that appears by
+     `display` or `hidden` moved the hero text 42px when it did (CLS 0.0085 at
+     1440 when the scene went live, 0.0245 at 390 at hydration). */
+  display: inline-flex;
+  visibility: hidden;
   align-self: flex-end;
   align-items: center;
   gap: 8px;
@@ -834,11 +838,16 @@ html[data-motion="paused"] .bf-hero__poster {
 
 @media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
   (prefers-reduced-motion: no-preference) and (pointer: coarse) {
-  .bf-motion-toggle { display: inline-flex; }
+  .bf-motion-toggle[data-ready] { visibility: visible; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .bf-hero[data-scene="live"] .bf-motion-toggle { display: inline-flex; }
+  .bf-hero[data-scene="live"] .bf-motion-toggle[data-ready] { visibility: visible; }
+}
+
+/* Under reduced motion nothing moves, the button never shows, and it keeps no space. */
+@media (prefers-reduced-motion: reduce) {
+  .bf-motion-toggle { display: none; }
 }
 
 /* ── What we engineer: the index ────────────────────────────────────────── *

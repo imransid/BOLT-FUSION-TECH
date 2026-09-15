@@ -105,23 +105,24 @@ const SLOW_FOR_MS = 2000;
 
 /* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
 const FOV = 30;
-const CAM_DIST = 12.6;
-const CAM_ELEV = 0.36; // radians above the horizon
-const CAM_TARGET_Y = 1.02;
+const CAM_DIST = 12.4;
+const CAM_ELEV = 0.54; // radians above the horizon: a raised, drawing-board view
+const CAM_TARGET_Y = 0.62;
 const PARALLAX_AZ = 0.11; // radians of yaw at the pointer's extreme
 const PARALLAX_EL = 0.045; // radians of pitch at the pointer's extreme
 const PARALLAX_EASE = 1.6; // per second: a slow, eased follow
 
 /* ── The core ─────────────────────────────────────────────────────────────── */
-const PLINTH = { r: 1.34, h: 0.12 };
+const PLINTH = { r: 1.26, h: 0.11 };
 const PLATES: ReadonlyArray<readonly [radius: number, height: number]> = [
-  [1.02, 0.25],
-  [0.96, 0.22],
-  [0.89, 0.2],
-  [0.79, 0.18],
-  [0.63, 0.15],
+  [1.0, 0.24],
+  [0.95, 0.22],
+  [0.89, 0.21],
+  [0.81, 0.2],
+  [0.71, 0.18],
+  [0.58, 0.16],
 ];
-const GAP = 0.055; // the seam between plates, where the blue edge light sits
+const GAP = 0.036; // the seam between plates, where the thin blue edge light sits
 
 /* ── The tiers ────────────────────────────────────────────────────────────── */
 type Tier = {
@@ -132,14 +133,14 @@ type Tier = {
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
 };
-const INNER: Tier = { radius: 2.2, y: 1.2, speed: 0.07, phase: 0.28, from: { r: 0.98, y: 1.05 }, lift: 1.72 };
-const OUTER: Tier = { radius: 3.28, y: 0.44, speed: -0.045, phase: 0.55, from: { r: 1.36, y: 0.08 }, lift: 0.1 };
+const INNER: Tier = { radius: 1.95, y: 1.9, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.3 };
+const OUTER: Tier = { radius: 2.7, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
 
 /* Pulses: two per connection, one outward and one back. */
-const PULSE_LEN = 0.075;
-const PULSE_R = 0.019;
-const HALO_LEN = 2.0;
-const HALO_R = 3.0;
+const PULSE_LEN = 0.07;
+const PULSE_R = 0.017;
+const HALO_LEN = 1.7;
+const HALO_R = 2.6;
 
 /** Write a scaled frame (tangent x L; y and z x R) and a position into a column-major 4x4 at k. */
 function putFrame(
@@ -178,8 +179,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const target = new Vector3(0, CAM_TARGET_Y, 0);
 
   /* ── Materials ── */
-  const graphite = mat(new MeshStandardMaterial({ color: 0x2b313a, metalness: 0.6, roughness: 0.35, flatShading: true }));
-  const graphiteLight = mat(new MeshStandardMaterial({ color: 0x4a5260, metalness: 0.6, roughness: 0.36, flatShading: true }));
+  const graphite = mat(new MeshStandardMaterial({ color: 0x30363f, metalness: 0.6, roughness: 0.35, flatShading: true }));
+  const graphiteLight = mat(new MeshStandardMaterial({ color: 0x566070, metalness: 0.6, roughness: 0.36, flatShading: true }));
   const screenMat = mat(new MeshStandardMaterial({ color: 0x0b0f16, metalness: 0.3, roughness: 0.5 }));
   const edge = mat(new MeshBasicMaterial({ color: BRAND }));
   const edgeDim = mat(new MeshBasicMaterial({ color: 0x2f5bb8 }));
@@ -187,7 +188,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const connMat = mat(new MeshBasicMaterial({ color: 0x31435f }));
   const orbitMat = mat(new MeshBasicMaterial({ color: 0x1c2533 }));
   const pulseMat = mat(new MeshBasicMaterial({ color: FLOW }));
-  const haloMat = mat(new MeshBasicMaterial({ color: FLOW, transparent: true, opacity: 0.13, blending: AdditiveBlending, depthWrite: false }));
+  const haloMat = mat(new MeshBasicMaterial({ color: FLOW, transparent: true, opacity: 0.1, blending: AdditiveBlending, depthWrite: false }));
 
   /* ── Geometry helpers ── */
   /** A chamfered octagonal plate: a lathe of 8 segments, a flat face toward +z. */
@@ -217,8 +218,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   };
 
   /* ── Lights: hemisphere, a key, and a cool rim from behind ── */
-  scene.add(new HemisphereLight(0x9fb2d8, GROUND, 0.85));
-  const key = new DirectionalLight(0xf1f4f9, 2.3);
+  scene.add(new HemisphereLight(0x9fb2d8, GROUND, 1.05));
+  const key = new DirectionalLight(0xf1f4f9, 2.5);
   key.position.set(4.5, 7.5, 6);
   scene.add(key);
   const rim = new DirectionalLight(0x5a8cff, 3.4);
@@ -346,7 +347,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const buildCloud = () => {
     const g = new Group();
     const ring = new Group();
-    ring.rotation.x = 1.15; // tilted, so the ring reads as a ring
+    ring.rotation.x = 0.32; // facing the viewer, tipped back a little: it reads as a ring
     add(ring, geo(new TorusGeometry(0.25, 0.052, 12, 56)), graphiteLight);
     add(ring, geo(new TorusGeometry(0.25, 0.008, 5, 56)), edge, 0, 0, 0.05);
     g.add(ring);
@@ -400,18 +401,23 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     return g;
   };
 
-  /* Which module sits where, and which way it faces the camera (world yaw). */
+  /* Which module sits where (degrees from the front, +z), and which way it
+     faces the viewer (world yaw). Placed for t = 0, the poster: no two modules
+     overlap on screen, none hides the core, and all seven sit inside a
+     480px-wide centre crop. The spacing is deliberately uneven, so the
+     composition never reads as a mirrored diagram. */
   type Slot = { build: () => Group; angle: number; yaw: number; scale: number };
+  const deg = (d: number) => (d * Math.PI) / 180;
   const innerSlots: Slot[] = [
-    { build: buildWeb, angle: 0.0, yaw: 0.32, scale: 1 },
-    { build: buildAi, angle: Math.PI * 0.5, yaw: 0, scale: 1 },
-    { build: buildMobile, angle: Math.PI, yaw: -0.3, scale: 1 },
-    { build: buildCloud, angle: Math.PI * 1.5, yaw: 0, scale: 1 },
+    { build: buildWeb, angle: deg(325), yaw: 0.38, scale: 1.3 },
+    { build: buildAi, angle: deg(35), yaw: 0, scale: 1.3 },
+    { build: buildCloud, angle: deg(145), yaw: 0, scale: 1.3 },
+    { build: buildMobile, angle: deg(215), yaw: -0.35, scale: 1.3 },
   ];
   const outerSlots: Slot[] = [
-    { build: buildRobot, angle: Math.PI * 0.2, yaw: -0.5, scale: 1.1 },
-    { build: buildErp, angle: Math.PI * 0.87, yaw: 0.45, scale: 1.05 },
-    { build: buildPos, angle: Math.PI * 1.53, yaw: 0.55, scale: 1.05 },
+    { build: buildRobot, angle: deg(20), yaw: -0.65, scale: 1.55 },
+    { build: buildErp, angle: deg(125), yaw: -0.5, scale: 1.4 },
+    { build: buildPos, angle: deg(250), yaw: 0.5, scale: 1.4 },
   ];
 
   type BuiltTier = {

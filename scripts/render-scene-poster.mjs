@@ -79,7 +79,10 @@ try {
     document.addEventListener("DOMContentLoaded", () => {
       const s = document.createElement("style");
       s.textContent =
-        "[data-hero-field]{box-sizing:content-box!important;width:660px!important;height:560px!important;max-width:none!important;border:0!important;border-radius:0!important;flex:none!important}" +
+        /* at whole-pixel coordinates (in flow the field can sit at a fractional x,
+           and the capture would be resampled), clear of the sticky header */
+        "[data-hero-field]{position:fixed!important;left:0!important;top:200px!important;margin:0!important;z-index:9999!important;" +
+        "box-sizing:content-box!important;width:660px!important;height:560px!important;max-width:none!important;border:0!important;border-radius:0!important;flex:none!important}" +
         "[data-hero-field] canvas{transition:none!important}";
       document.head.append(s);
     });
@@ -103,11 +106,12 @@ try {
   const info = await page.evaluate(() => {
     const f = document.querySelector("[data-hero-field]");
     const c = f.querySelector("canvas");
-    return { field: `${f.clientWidth}x${f.clientHeight}`, buffer: `${c.width}x${c.height}` };
+    const b = f.getBoundingClientRect();
+    return { field: `${f.clientWidth}x${f.clientHeight}`, at: `${b.left},${b.top}`, buffer: `${c.width}x${c.height}` };
   });
-  if (info.field !== "660x560") throw new Error(`the field is ${info.field}, not 660x560`);
+  if (info.field !== "660x560" || info.at !== "0,200") throw new Error(`the field is ${info.field} at ${info.at}, not 660x560 at 0,200`);
 
-  const png = await page.locator("[data-hero-field]").screenshot({ type: "png" });
+  const png = await page.screenshot({ type: "png", clip: { x: 0, y: 200, width: 660, height: 560 } });
   if (PNG_OUT) await writeFile(PNG_OUT, png);
 
   /* the canvas must have drawn: most pixels are the ground, but not all */
