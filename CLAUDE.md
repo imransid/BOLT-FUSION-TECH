@@ -722,6 +722,19 @@ at the end, which means nobody has decided yet.
     It freezes requestAnimationFrame when `data-scene-ready` appears, so the
     canvas holds t = 0, and captures the field at 660x560 (its 1px border
     removed for the capture) at DPR 2.
+  - **It dissolves into the page; it never stops at a box** (coordinator's
+    review, 2026-09-16). The field has no border, and its background is the
+    ground, `#07090D`, which is also the canvas's clear colour. The grid floor
+    and the blue pool under the core fade to exactly that ground by r = 2.8
+    (`FLOOR_FADE` in `scene.ts`). The camera frames the system so that at
+    480x560, with the pointer at either parallax extreme, the fade ends at
+    least 43px inside every edge, the rings at least 80px, and every module,
+    at every orbit angle, at least 35px, on bounding spheres. That was checked
+    by projection and on rendered frames at t = 0, 20, 30 and 45s. The poster
+    script refuses a capture whose 16px edge band is not the ground, and the
+    probe reads the live canvas's edge band. It is done in the scene itself:
+    no overlay and no post-processing, since anything painted over the poster
+    but the canvas fails check 28.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
@@ -1031,11 +1044,13 @@ imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
-**The posters:** `scene-poster-v1-660.avif` 7.0KB, `-1320.avif` 15.3KB,
-`-660.webp` 13.6KB, `-1320.webp` 31.8KB (AVIF 4:4:4 at quality 56, WebP 82).
-The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF: a dark
-frame of hard-edged shapes compresses far better than a cloud of points, which
-takes weight off the LCP path.
+**The posters:** `scene-poster-v1-660.avif` 4.9KB, `-1320.avif` 10.3KB,
+`-660.webp` 9.0KB, `-1320.webp` 22.2KB (AVIF 4:4:4 at quality 56, WebP 82).
+The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
+frame of hard-edged shapes that dissolves into the ground compresses far
+better than a cloud of points, which takes weight off the LCP path. They were
+re-rendered for the dissolve on 2026-09-16 under the same v1 names, since v1
+had never been deployed. From the first deploy on, a re-render is v2.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in
