@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import PageBanner from "@/components/techwix/PageBanner";
 import PageShell from "@/components/techwix/PageShell";
@@ -197,7 +198,9 @@ export default function PrivacyPolicyPage() {
             ))}
 
             <p className="tw-prose__foot">
-              <a href="/">← Back to boltfusiontech.com</a>
+              <Link href="/" prefetch={false}>
+                ← Back to boltfusiontech.com
+              </Link>
             </p>
           </article>
         </div>

@@ -2303,9 +2303,19 @@ summary {
   font-size: 15px;
 }
 
-/* ── The 404 ────────────────────────────────────────────────────────────── */
+/* ── The 404 ────────────────────────────────────────────────────────────── *
+   A short page: <main> takes the height the header and footer leave, so the
+   footer sits at the bottom of the window, not above a strip of white. */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
 .tw-notfound {
-  min-height: 62dvh;
   padding-bottom: 120px;
 }
 

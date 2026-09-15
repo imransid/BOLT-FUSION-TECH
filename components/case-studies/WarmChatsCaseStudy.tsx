@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import FigureText from "@/components/FigureText";
 import LogoMarkSvg from "@/components/LogoMarkSvg";
 import Button from "@/components/techwix/Button";
@@ -358,12 +360,12 @@ export default function WarmChatsCaseStudy() {
         text="We design and ship product-grade AI systems — from lead capture to booking — on architecture built to scale. Let's talk about yours."
         after={
           <div className="tw-signoff">
-            <a href="/" className="tw-signoff__brand">
+            <Link href="/" prefetch={false} className="tw-signoff__brand">
               <span className="tw-logo__tile" aria-hidden="true">
                 <LogoMarkSvg uid="wc-signoff-mark" />
               </span>
               Bolt Fusion Tech
-            </a>
+            </Link>
             <p className="tw-signoff__line">Custom software &amp; product engineering in the UK, Malaysia and Bangladesh</p>
           </div>
         }
