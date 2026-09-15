@@ -7,6 +7,7 @@ import FinalCta from "@/components/site/home/FinalCta";
 import Hero from "@/components/site/home/Hero";
 import HowWeBuild from "@/components/site/home/HowWeBuild";
 import Industries from "@/components/site/home/Industries";
+import InsightsTeaser from "@/components/site/home/InsightsTeaser";
 import Stories from "@/components/site/home/Stories";
 import SystemMapSection from "@/components/site/home/SystemMapSection";
 import TechnicalDepth from "@/components/site/home/TechnicalDepth";
@@ -76,7 +77,13 @@ function renderSection(id: SectionId, c: SiteContent) {
     case "team":
       return <Team team={c.team} />;
     case "faq":
-      return <Faq faq={c.faq} />;
+      /* the Insights teaser sits before the FAQ (SPEC §6) */
+      return (
+        <>
+          <InsightsTeaser />
+          <Faq faq={c.faq} />
+        </>
+      );
     case "final_cta":
       return <FinalCta cta={c.finalCta} />;
     default:
