@@ -25,8 +25,9 @@
  *  - Nothing is allocated per frame. The pulses are two InstancedMeshes per
  *    tier (a core and a halo), and the loop writes their matrices straight
  *    into the instance buffers. Every other vector it uses is allocated once.
- *  - The frame-time watchdog: after 2s of frames over 20ms, the pulses go;
- *    after 2s more, the outer tier goes.
+ *  - The frame-time watchdog: once the running average frame (about ten
+ *    frames, so jitter cannot reset it) has stayed over 20ms for 2s, the
+ *    pulses go; after 2s more, the outer tier goes.
  *  - Paused while the canvas is offscreen and while the tab is hidden.
  *  - `dispose()` frees every geometry, material and instance buffer, then the
  *    renderer, then the context itself. The scene creates no textures.
@@ -503,6 +504,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let time = 0;
   let last = 0;
   let slowFor = 0;
+  let avgMs = 1000 / 60; // the running average frame time, for the watchdog
   let degrade = 0; // 0 all, 1 no pulses, 2 no outer tier
   let raf = 0;
   let running = false;
@@ -614,7 +616,12 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     last = now;
     /* the watchdog: 2s of slow frames drops the pulses, 2s more the outer tier */
     if (dtMs && degrade < 2) {
-      slowFor = dtMs > SLOW_FRAME_MS ? slowFor + dtMs : 0;
+      /* judged on a running average over about ten frames: a slow device's
+         frames are uneven, and testing each frame alone reset the count on
+         every fast one, so it never fired (probe 6e). One long hitch is
+         clamped, so it cannot trip it alone. */
+      avgMs += (Math.min(dtMs, 250) - avgMs) * 0.1;
+      slowFor = avgMs > SLOW_FRAME_MS ? slowFor + dtMs : 0;
       if (slowFor > SLOW_FOR_MS) {
         slowFor = 0;
         degrade++;
@@ -638,6 +645,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     if (running || disposed || lost || !drawn) return;
     running = true;
     last = 0;
+    slowFor = 0;
     raf = requestAnimationFrame(frame);
   };
   const stop = () => {

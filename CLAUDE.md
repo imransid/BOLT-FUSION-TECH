@@ -694,8 +694,11 @@ at the end, which means nobody has decided yet.
     and the loop writes their matrices straight into the instance buffers.
     Every geometry, material and vector is made once, and the hot loops use no
     iterators or closures.
-  - DPR capped at 1.75. After two seconds of frames over 20ms the pulses go;
-    after two more, the outer tier. Paused offscreen (IntersectionObserver) and
+  - DPR capped at 1.75. Once the running average frame (about ten frames) has
+    stayed over 20ms for two seconds the pulses go; after two more, the outer
+    tier. Testing each frame alone reset the count on every fast frame, and a
+    slow device's uneven frames kept resetting it, so it never fired (probe 6e,
+    2026-09-16). Paused offscreen (IntersectionObserver) and
     when the tab is hidden. On teardown every geometry, material and instance
     buffer is disposed, then the renderer, and the context is released
     (`forceContextLoss`); the scene makes no textures. A lost context
