@@ -721,6 +721,13 @@ at the end, which means nobody has decided yet.
     the field's box (`position:absolute; inset:0`), `aria-hidden`, at opacity
     0. It fades in over 700ms once the first frame is drawn, and the field then
     carries `data-scene-ready`.
+  - **It builds in slices, and draws once.** Construction runs a few
+    milliseconds at a time, a frame apart, and each group's shaders are
+    compiled as that group appears; one frame is drawn at the end, the whole
+    scene at t = 0, which is the poster's frame. Built in one block it was the
+    page's longest task after load (*Performance targets*, "The scene's
+    main-thread cost"). Nothing is visible during the build: the canvas is at
+    opacity 0 until that frame is drawn.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
     so the fade shows no jump. The scene keeps a fixed vertical field of view,
@@ -1074,6 +1081,31 @@ frame of hard-edged shapes that dissolves into the ground compresses far
 better than a cloud of points, which takes weight off the LCP path. They were
 re-rendered for the dissolve on 2026-09-16 under the same v1 names, since v1
 had never been deployed. From the first deploy on, a re-render is v2.
+
+**The scene's main-thread cost, measured 2026-09-16.** Check 29 budgets
+blocking time on the mobile profile only, and the scene never runs there, so
+no check fails on this — but its desktop line is real for the machines that do
+get the scene. Counted its way (every long task from navigation to load + 4s,
+each task's time over 50ms), on the merged homepage at 1440:
+
+| | before | after |
+|---|---|---|
+| unthrottled, long-task total | 62–177ms | **0–59ms** (no long task at all in 3 runs of 4, DPR 2 included) |
+| unthrottled, longest task | 111ms | **59ms** |
+| CPU throttled 4x, total | 249–264ms | **123–139ms** |
+| CPU throttled 4x, longest task | 127–159ms | **70–75ms** |
+
+The render loop was never the problem: after the first frame it produces no
+long tasks at all, and its callbacks run 0.3–0.5ms. Shader compilation was not
+either (`compileShader` and `linkProgram` both measure 0ms). The cost was two
+tasks — evaluating the chunk, which is the price of its size, and building the
+whole scene in one synchronous block, which is now sliced (`scene.ts`, "The
+build, in slices"). What is left is the first draw, 48–52ms of upload and
+program setup, which is the scene's longest task. Two ways of spreading THAT
+were measured and both were rejected; `scene.ts` records the numbers, and the
+second is worth knowing generally: **resizing a canvas's backing store costs
+far more than the frame it saves** — an 8x8 warm-up draw turned a 54ms first
+render into 815ms.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in

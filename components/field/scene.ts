@@ -22,6 +22,8 @@
  *  - Named imports from `three`, so the bundler keeps only what is used.
  *  - Clears to the ground, #07090D. No post-processing and no bloom.
  *  - DPR capped at 1.75.
+ *  - The build runs in slices of a few milliseconds, a frame apart, so it
+ *    never becomes a long task. Nothing is drawn until every slice is done.
  *  - Nothing is allocated per frame. The pulses are two InstancedMeshes per
  *    tier (a core and a halo), and the loop writes their matrices straight
  *    into the instance buffers. Every other vector it uses is allocated once.
@@ -103,6 +105,7 @@ const FLOW = 0x2ee6d6; // the one cyan: the pulses only
 const MAX_DPR = 1.75;
 const SLOW_FRAME_MS = 20;
 const SLOW_FOR_MS = 2000;
+const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
 
 /* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
 const FOV = 30;
@@ -303,12 +306,12 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const footprint = add(scene, geo(new RingGeometry(1.6, 1.618, 8, 1, Math.PI / 8)), orbitMat, 0, 0.002, 0);
   footprint.rotation.x = -Math.PI / 2;
 
-  /* ── The core ── */
-  const core = new Group();
-  scene.add(core);
-  add(core, plate(PLINTH.r, PLINTH.h, 0.03), graphite, 0, PLINTH.h / 2, 0);
+  /* ── The core: one slice of the build ── */
   const plates: Group[] = [];
-  {
+  const buildCore = () => {
+    const core = new Group();
+    scene.add(core);
+    add(core, plate(PLINTH.r, PLINTH.h, 0.03), graphite, 0, PLINTH.h / 2, 0);
     let y = PLINTH.h + GAP;
     let below = PLINTH.r;
     PLATES.forEach(([r, h], i) => {
@@ -332,7 +335,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const inlay = add(top, geo(new RingGeometry(0.45, 0.466, 8, 1, Math.PI / 8)), edge, 0, 0.002, 0);
     inlay.rotation.x = -Math.PI / 2;
     plates.push(top);
-  }
+  };
 
   /* ── The modules: each a distinct form, no text ── */
   const shoulder = new Group();
@@ -464,37 +467,16 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const tmpB = new Vector3();
   const tmpC = new Vector3();
 
-  const buildTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
+  const tiers: BuiltTier[] = [];
+
+  /** A tier's cheap parts: its group, its orbit ring, and the pulse instances
+   *  (the instances themselves cost nothing; the modules and tubes are what
+   *  take the time, and each of those is its own slice). */
+  const startTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
     const group = new Group();
     scene.add(group);
     const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), orbitMat, 0, tier.y, 0);
     ring.rotation.x = Math.PI / 2;
-
-    const curves = new Float32Array(slots.length * 9);
-    const modules: BuiltTier["modules"] = [];
-    slots.forEach((s, i) => {
-      const dx = Math.sin(s.angle);
-      const dz = Math.cos(s.angle);
-      const obj = s.build();
-      const holder = new Group();
-      holder.position.set(dx * tier.radius, tier.y, dz * tier.radius);
-      holder.scale.setScalar(s.scale);
-      holder.add(obj);
-      group.add(holder);
-      modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
-
-      /* a connection: from the core's surface to just short of the module */
-      const endR = tier.radius - 0.3;
-      tmpA.set(dx * tier.from.r, tier.from.y, dz * tier.from.r);
-      tmpC.set(dx * endR, tier.y - 0.02, dz * endR);
-      const midR = (tier.from.r + endR) / 2;
-      tmpB.set(dx * midR, tier.lift, dz * midR);
-      curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
-      const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
-      add(group, geo(new TubeGeometry(curve, 48, 0.0068, 4, false)), connMat);
-      add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
-      add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
-    });
 
     const n = slots.length * 2;
     const pulses = new InstancedMesh(pulseGeo, pulseMat, n);
@@ -516,10 +498,47 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       pulsePhase[i] = (j * 0.381966 + (i & 1) * 0.5 + seed * 0.13) % 1;
       pulseRate[i] = 1 / (3.8 + (j % 3) * 0.6); // one traverse every 3.8–5s
     }
-    return { tier, group, ring, modules, curves, pulses, halos, pulseCurve, pulsePhase, pulseRate, pulseDir };
+    const bt: BuiltTier = {
+      tier,
+      group,
+      ring,
+      modules: [],
+      curves: new Float32Array(slots.length * 9),
+      pulses,
+      halos,
+      pulseCurve,
+      pulsePhase,
+      pulseRate,
+      pulseDir,
+    };
+    tiers.push(bt);
+    return bt;
   };
 
-  const tiers = [buildTier(INNER, innerSlots, 0), buildTier(OUTER, outerSlots, 2)];
+  /** One module, its connection curve and the two lit ports: one slice. */
+  const addModule = (bt: BuiltTier, s: Slot, i: number, seed: number) => {
+    const { tier, group, curves } = bt;
+    const dx = Math.sin(s.angle);
+    const dz = Math.cos(s.angle);
+    const holder = new Group();
+    holder.position.set(dx * tier.radius, tier.y, dz * tier.radius);
+    holder.scale.setScalar(s.scale);
+    holder.add(s.build());
+    group.add(holder);
+    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
+
+    /* a connection: from the core's surface to just short of the module */
+    const endR = tier.radius - 0.3;
+    tmpA.set(dx * tier.from.r, tier.from.y, dz * tier.from.r);
+    tmpC.set(dx * endR, tier.y - 0.02, dz * endR);
+    const midR = (tier.from.r + endR) / 2;
+    tmpB.set(dx * midR, tier.lift, dz * midR);
+    curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
+    const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
+    add(group, geo(new TubeGeometry(curve, 48, 0.0068, 4, false)), connMat);
+    add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
+    add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
+  };
 
   /* ── Per-frame state (allocated once) ── */
   const pointer = { x: 0, y: 0 }; // -1..1, the pointer over the viewport
@@ -632,6 +651,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     renderer.render(scene, camera);
   };
 
+
   const frame = (now: number) => {
     if (!running) return;
     raf = requestAnimationFrame(frame);
@@ -707,12 +727,70 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   io.observe(canvas);
   ro.observe(canvas);
 
-  /* Compile off the main thread where the driver allows it, then draw t = 0. */
-  const ready = renderer.compileAsync(scene, camera).then(() => {
-    if (disposed || lost) return;
-    render();
+  /* ── The build, in slices ────────────────────────────────────────────────
+     Built in one synchronous block this was the page's longest task after
+     load: 105–164ms with the CPU throttled 4x, on top of the chunk's own
+     parse. The steps below run for a few milliseconds at a time, a frame
+     apart, and each group's shaders are compiled as that group appears —
+     off the main thread wherever the driver supports it.
+
+     ONE frame is drawn, last, and it is the whole scene at t = 0 — the
+     poster's frame. The canvas is at opacity 0 throughout, so nothing of the
+     build is ever seen.
+
+     Two ways of spreading that first draw were measured on 2026-09-16 and
+     BOTH were rejected; do not reach for them again without measuring:
+       - drawing the scene as it grows, at full size, after the core and each
+         tier: about the same at DPR 1 (83ms against 92ms for the longest
+         task) but far worse at DPR 2, 185ms against 78ms, since every extra
+         frame is filled again;
+       - the same, into an 8x8 buffer to avoid that fill cost: catastrophic.
+         Shrinking the drawing buffer and restoring it makes the driver
+         reallocate it, and the final render went from 54ms to 815ms (1069ms
+         with the CPU throttled 4x). Resizing a canvas's backing store is far
+         more expensive than the frame it was meant to save.
+     What remains of the first draw is upload and program setup for the whole
+     scene in one task: 52-92ms here, and the scene's longest task.
+
+     Frames do not run in a hidden tab, so a background tab builds nothing
+     until it is looked at. */
+  let inner!: BuiltTier;
+  let outer!: BuiltTier;
+  const steps: Array<() => void | Promise<unknown>> = [buildCore];
+  steps.push(() => {
+    inner = startTier(INNER, innerSlots, 0);
+  });
+  innerSlots.forEach((s, i) => steps.push(() => addModule(inner, s, i, 0)));
+  steps.push(() => renderer.compileAsync(inner.group, camera, scene));
+  steps.push(() => {
+    outer = startTier(OUTER, outerSlots, 2);
+  });
+  outerSlots.forEach((s, i) => steps.push(() => addModule(outer, s, i, 2)));
+  steps.push(() => renderer.compileAsync(outer.group, camera, scene));
+  steps.push(() => renderer.compileAsync(scene, camera)); // the floor, the core and the lights
+  steps.push(() => {
+    render(); // the first and only frame of the build: t = 0, the poster's frame
     drawn = true;
     sync();
+  });
+
+  let buildRaf = 0;
+  const ready = new Promise<void>((resolve) => {
+    let at = 0;
+    const slice = async () => {
+      buildRaf = 0;
+      const until = performance.now() + BUILD_SLICE_MS;
+      while (at < steps.length) {
+        if (disposed || lost) return;
+        const pending = steps[at++]();
+        if (pending) await pending; // a compile: hand the driver the work
+        if (performance.now() > until) break;
+      }
+      if (disposed || lost) return;
+      if (at < steps.length) buildRaf = requestAnimationFrame(slice);
+      else resolve();
+    };
+    buildRaf = requestAnimationFrame(slice);
   });
 
   return {
@@ -725,6 +803,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       if (disposed) return;
       disposed = true;
       stop();
+      cancelAnimationFrame(buildRaf); // a build still in slices stops here
       io.disconnect();
       ro.disconnect();
       canvas.removeEventListener("webglcontextlost", onLost);
