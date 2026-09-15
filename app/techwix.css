@@ -59,9 +59,24 @@
   box-sizing: border-box;
 }
 
+/* WCAG 2.2 SC 2.4.11, Focus Not Obscured. The sticky header covers the top of
+   the viewport — 80px below 1200px, 91.94px from 1200 (measured) — and a focus
+   moved UP the page (Shift+Tab) is scrolled only to the viewport's top edge,
+   where the header, pinned again by the upward scroll, sits over it. The
+   scroll padding keeps a focused element, and an anchor's target, below the
+   header, with room for the 3px focus ring and its 3px offset. verify-site
+   check 19 tabs backwards to hold it. */
 html {
+  --header-h: 80px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 12px);
+}
+
+@media (min-width: 1200px) {
+  html {
+    --header-h: 92px;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -38,7 +38,22 @@ export default function RevealObserver() {
     for (const el of document.querySelectorAll<HTMLElement>("[data-tw-reveal]")) {
       if (el.getBoundingClientRect().top > window.innerHeight) io.observe(el);
     }
-    return () => io.disconnect();
+    /* A keyboard user tabbing into a card below the fold sees it at once. The
+       focus scrolls it into view, and the observer would then start the 1.25s
+       fade from opacity 0 around the focused control. Focus ends the reveal
+       instead: an element not yet revealed never animates, and one mid-reveal
+       jumps to its end. */
+    const onFocus = (e: FocusEvent) => {
+      const el = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-tw-reveal]") : null;
+      if (!el) return;
+      io.unobserve(el);
+      for (const a of el.getAnimations()) a.finish();
+    };
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("focusin", onFocus);
+    };
   }, []);
 
   return null;

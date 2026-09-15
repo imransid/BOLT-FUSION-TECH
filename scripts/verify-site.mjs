@@ -102,11 +102,19 @@ const PERF_PROFILES = {
 };
 const BUDGET = { mobileLcp: 1500, mobileTbt: 150, desktopLcp: 500, cls: 0.005, initialJs: 260 * 1024 };
 
-/* 28 — where the poster must be the LCP element */
+/* 28 — where the poster must be the LCP element, and still rendered, opaque,
+   on top and beside the headline once the page has settled. H1/K6
+   (2026-09-15): the layout switches at 1025, and nothing measured 1024, 1025
+   or 1280 — a CSS change there made the h1 the LCP element and this check
+   passed. One run at >=1025 is at DPR 2. */
 const LCP_PROFILES = [
   { width: 390, label: "@390" },
   { width: 390, phone: true, label: "@390 phone (touch, 3x DPR)" },
   { width: 768, label: "@768" },
+  { width: 1024, label: "@1024" },
+  { width: 1025, label: "@1025" },
+  { width: 1280, label: "@1280" },
+  { width: 1280, dpr: 2, label: "@1280 DPR 2" },
   { width: 1440, label: "@1440" },
 ];
 
@@ -412,6 +420,7 @@ async function visitLcp(browser, prof) {
   const ctx = await browser.newContext({
     viewport: { width: prof.width, height: prof.width < 768 ? 844 : 900 },
     ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}),
+    ...(prof.dpr ? { deviceScaleFactor: prof.dpr } : {}),
   });
   await ctx.addInitScript(() => {
     const out = (window.__vsLcp = []);
@@ -437,7 +446,80 @@ async function visitLcp(browser, prof) {
   const r = await page.evaluate(() => {
     const p = document.querySelector("img[data-hero-poster]");
     const b = p?.getBoundingClientRect();
-    return { entries: window.__vsLcp || [], posterSrc: p ? p.currentSrc : null, posterBox: b ? `${Math.round(b.width)}x${Math.round(b.height)}` : null };
+    const out = { entries: window.__vsLcp || [], posterSrc: p ? p.currentSrc : null, posterBox: b ? `${Math.round(b.width)}x${Math.round(b.height)}` : null, state: null };
+    if (!p) return out;
+    /* H2/K6: an LCP entry is never withdrawn, so the identity test cannot see a
+       poster hidden, faded, covered or moved after it painted. Read it again,
+       settled: rendered, opaque, its box the field's, on top of everything in
+       the field but a canvas with the field's box, and never under the h1. */
+    const field = p.closest("[data-hero-field]");
+    const tag = (el) => `${el.localName}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className.trim() ? `.${el.className.trim().split(/\s+/)[0]}` : ""}`;
+    let op = 1;
+    let why = "";
+    for (let a = p; a && a.nodeType === 1; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      op *= parseFloat(s.opacity);
+      if (!why && s.display === "none") why = `display:none on ${tag(a)}`;
+    }
+    if (!why && getComputedStyle(p).visibility !== "visible") why = `visibility:${getComputedStyle(p).visibility}`;
+    if (!why && !p.getClientRects().length) why = "it has no box";
+    const same = (el) => field && Math.abs(el.offsetWidth - field.clientWidth) <= 1 && Math.abs(el.offsetHeight - field.clientHeight) <= 1 && el.offsetParent === field && Math.abs(el.offsetLeft) <= 1 && Math.abs(el.offsetTop) <= 1;
+    const fb = field ? field.getBoundingClientRect() : b;
+    /* the visible poster: its box inside the field's (the drift's scale overflows it, clipped) */
+    const vis = { l: Math.max(b.left, fb.left), t: Math.max(b.top, fb.top), r: Math.min(b.right, fb.right), btm: Math.min(b.bottom, fb.bottom) };
+    const pe = document.createElement("style");
+    pe.textContent = "*,*::before,*::after{pointer-events:auto!important}";
+    document.head.append(pe);
+    let coveredBy = "";
+    for (const fx of [0.2, 0.5, 0.8])
+      for (const fy of [0.2, 0.5, 0.8]) {
+        const x = vis.l + (vis.r - vis.l) * fx;
+        const y = vis.t + (vis.btm - vis.t) * fy;
+        if (coveredBy || x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+        const top = document.elementFromPoint(x, y);
+        if (!top || top === p || (top.localName === "canvas" && field?.contains(top) && same(top))) continue;
+        coveredBy = tag(top);
+      }
+    pe.remove();
+    /* the h1's line boxes, against the visible poster */
+    let h1Overlap = 0;
+    const h1 = document.querySelector("h1");
+    if (h1) {
+      const rg = document.createRange();
+      rg.selectNodeContents(h1);
+      for (const q of [...rg.getClientRects(), h1.getBoundingClientRect()]) {
+        const w = Math.min(q.right, vis.r) - Math.max(q.left, vis.l);
+        const h = Math.min(q.bottom, vis.btm) - Math.max(q.top, vis.t);
+        if (w > 1 && h > 1) h1Overlap = Math.max(h1Overlap, Math.round(w * h));
+      }
+    }
+    const badCanvases = [...document.querySelectorAll("canvas")].filter((c) => !field?.contains(c) || !same(c)).map((c) => `${tag(c)} ${c.offsetWidth}x${c.offsetHeight}${field?.contains(c) ? " inside the field, not its box" : " outside [data-hero-field]"}`);
+    /* H4: how far the chosen file is stretched to cover the field. The file's
+       own width is its srcset `w` descriptor — naturalWidth is density-corrected
+       by `sizes` for a srcset image, and says nothing about the file. */
+    let fileW = 0;
+    for (const s of [...(p.parentElement?.querySelectorAll("source") || []), p])
+      for (const c of (s.getAttribute("srcset") || "").split(",")) {
+        const [u, d] = c.trim().split(/\s+/);
+        if (u && d && /^\d+w$/.test(d) && new URL(u, location.href).href === p.currentSrc) fileW = parseInt(d, 10);
+      }
+    const aspect = p.naturalWidth && p.naturalHeight ? p.naturalWidth / p.naturalHeight : 0;
+    const needW = field && aspect ? Math.max(field.clientWidth, field.clientHeight * aspect) * devicePixelRatio : 0;
+    out.state = {
+      rendered: !why,
+      why,
+      opacity: op,
+      boxEqual: Boolean(same(p)),
+      pBox: `${p.offsetWidth}x${p.offsetHeight} at ${p.offsetLeft},${p.offsetTop}`,
+      fBox: field ? `${field.clientWidth}x${field.clientHeight}` : "no [data-hero-field] around it",
+      coveredBy,
+      h1Overlap,
+      badCanvases,
+      upscale: needW && fileW ? +(needW / fileW).toFixed(2) : null,
+      natural: fileW || "?",
+      dpr: devicePixelRatio,
+    };
+    return out;
   });
   await ctx.close();
   return { ...prof, ...r };
@@ -1320,10 +1402,22 @@ function readFigures(tokenizeFigures) {
 
   /* ── a data-status wrapper labels exactly one figure: one chip over two would
      let a second, unmeasured figure borrow the first one's status ────────── */
+  /* a status wrapper's own words: its text less its chip's (K11) */
+  const ownText = (el) => {
+    const status = el.getAttribute("data-status");
+    let s = "";
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      const p = t.parentElement;
+      if (p !== el && p.closest("[data-status]") === el && p.textContent.trim() === status) continue;
+      s += t.textContent;
+    }
+    return s.trim();
+  };
   const statusWraps = [...document.querySelectorAll("[data-status]")].map((el) => {
     const covers = figures.filter((x) => x.nodes.every((n) => el.contains(n)));
     const problem = covers.length > 1 ? `it covers ${covers.length} figures with one chip — a chip labels exactly one` : "";
-    return { el, status: el.getAttribute("data-status"), problem, figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
+    return { el, status: el.getAttribute("data-status"), problem, rendered: covers.length > 0 || hasShownText(el), text: ownText(el), figures: covers.map((x) => x.text), sentence: covers[0]?.sentence || oneLine(el.textContent).slice(0, 160), section: sectionOf(el) };
   });
 
   /* ── each token's verdict ─────────────────────────────────────────────── */
@@ -1357,6 +1451,18 @@ function readFigures(tokenizeFigures) {
 
   pe.remove();
   return {
+    /* K11: every rendered wrapper, to be found in content/figure-labels.ts; every
+       rendered [data-metric] box, to be found in content/metrics.ts */
+    registryWraps: [
+      ...exemptions.filter((e) => e.rendered).map((e) => ({ kind: "exempt", value: e.reason, text: (e.el.textContent || "").trim(), section: e.section })),
+      ...statusWraps.filter((w) => w.rendered).map((w) => ({ kind: "status", value: w.status, text: w.text, section: w.section })),
+    ],
+    metricsShown: [...document.querySelectorAll("[data-metric]")]
+      .filter((el) => el.getClientRects().length)
+      .map((el) => {
+        const fig = figureEls.find((f) => el.contains(f));
+        return { id: el.getAttribute("data-metric"), figure: fig ? fig.textContent.trim() : null, status: fig ? standalone.get(fig)?.label || null : null, section: sectionOf(el) };
+      }),
     tokens,
     statusWraps: statusWraps.filter((w) => w.problem).map((w) => ({ status: w.status, problem: w.problem, figures: w.figures, sentence: w.sentence, section: w.section })),
     exemptions: exemptions.map((e) => ({ reason: e.reason, rendered: e.rendered, problem: e.problem, figures: e.figures, sentence: e.sentence, section: e.section })),
@@ -1671,6 +1777,71 @@ async function visitFocus(browser, route) {
       if (Math.abs(focused.data[k] - blurred.data[k]) + Math.abs(focused.data[k + 1] - blurred.data[k + 1]) + Math.abs(focused.data[k + 2] - blurred.data[k + 2]) > 30) diff++;
     }
     stops.push({ ...info, visibleFocus: diff >= 8, why: diff >= 8 ? "" : "no visible change when focused" });
+  }
+  await ctx.close();
+  return stops;
+}
+
+/* 19 (A1) ── WCAG 2.2 SC 2.4.11, Focus Not Obscured (Minimum): Shift+Tab BACK up
+   the page, from its last stop. The browser scrolls a stop above the viewport
+   only to the viewport's top edge, and the headroom header, pinned again by the
+   upward scroll, sits over it — a FAQ question under the 80px header at / @390,
+   "← All work" under the 92px one on /work/warmchats @1440 and @768 (found
+   2026-09-15). Tabbing forward never shows it: focus moving down lands at the
+   viewport's bottom edge. A stop fails when no part of it can be seen — hit-
+   tested at 15 points, anything fixed or sticky on top counts as a cover.
+   Reduced motion, so the scroll and the header's slide are instant; iframes are
+   hidden, as in the forward pass (Calendly's own stops are not this site's). */
+const FOCUS_BACK_WIDTHS = [1440, 768, 390];
+async function visitFocusBack(browser, route, width) {
+  const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.addStyleTag({ content: "iframe{visibility:hidden!important}*,*::before,*::after{pointer-events:auto!important}" });
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(800);
+  const total = await page.evaluate(() => {
+    const els = [...document.querySelectorAll("a[href], button, summary, input, select, textarea, [tabindex]:not([tabindex='-1'])")].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility === "visible");
+    els.at(-1)?.focus({ preventScroll: true });
+    return els.length;
+  });
+  await page.waitForTimeout(250);
+  const stops = [];
+  const seen = new Set();
+  for (let n = 0; n < Math.min(90, total + 3); n++) {
+    await page.keyboard.press("Shift+Tab");
+    await page.waitForTimeout(250);
+    const s = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (!el || el === document.body || el === document.documentElement) return null;
+      if (!el.dataset.vsBack) el.dataset.vsBack = String(Math.random()).slice(2);
+      const r = el.getBoundingClientRect();
+      const covers = [...document.body.querySelectorAll("*")].filter((c) => {
+        const st = getComputedStyle(c);
+        return (st.position === "fixed" || st.position === "sticky") && !c.contains(el) && st.visibility === "visible";
+      });
+      let seenPts = 0;
+      let covered = 0;
+      let by = "";
+      for (const fx of [0.1, 0.3, 0.5, 0.7, 0.9])
+        for (const fy of [0.15, 0.5, 0.85]) {
+          const x = r.left + r.width * fx;
+          const y = r.top + r.height * fy;
+          if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
+          const top = document.elementFromPoint(x, y);
+          const cover = top && !el.contains(top) && !top.contains(el) ? covers.find((c) => c.contains(top)) : null;
+          if (cover) {
+            covered++;
+            by = `${cover.localName}${cover.id ? `#${cover.id}` : ""}`;
+          } else seenPts++;
+        }
+      const label = (el.getAttribute("aria-label") || el.textContent || el.getAttribute("title") || "").trim().replace(/\s+/g, " ").slice(0, 40);
+      return { id: el.dataset.vsBack, desc: `${el.localName} "${label}"`, seen: seenPts, covered, by, top: Math.round(r.top), bottom: Math.round(r.bottom) };
+    });
+    if (!s || seen.has(s.id)) break;
+    seen.add(s.id);
+    stops.push(s);
   }
   await ctx.close();
   return stops;
@@ -2187,6 +2358,13 @@ if (want(19))
     /* a run that dies is a finding (check 19), not a crash of the whole suite */
     focusRuns[route] = await visitFocus(browser, route).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
   }
+const focusBackRuns = {};
+if (want(19))
+  for (const route of ROUTES)
+    for (const w of FOCUS_BACK_WIDTHS) {
+      process.stderr.write(`  tabbing backwards through ${route} @${w}\n`);
+      focusBackRuns[`${route}@${w}`] = await visitFocusBack(browser, route, w).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
+    }
 const reducedRuns = {};
 if (want(21))
   for (const route of ROUTES) {
@@ -2295,6 +2473,16 @@ check(
   "Every figure, standalone or inside a sentence, carries its own visible shipped/target label — or an exemption that says why",
   "an unlabelled number anywhere in the text — the four in-sentence figures in the architecture lanes a standalone-only check could not see; a chip beside the wrapper or up in the section passing for the figure's own; a chip nobody can see, or one chip shared by two figures; an exemption with no real reason, or one wide enough to swallow a second figure",
   (F, I) => {
+    /* the registries the page is built from (K10, K11): the in-sentence labels
+       and exemptions, and the metrics */
+    let registry = [];
+    let metricsTs = null;
+    try {
+      registry = loadContent("content/figure-labels.ts").figureLabels || [];
+      metricsTs = loadContent("content/metrics.ts").metrics || null;
+    } catch (e) {
+      F.push(`content/figure-labels.ts or content/metrics.ts could not be read (${e.message}) — the wrappers and exemptions cannot be checked against them; unsure is a failure`);
+    }
     /* one line per finding, however many widths show it: a width-only one says
        so, and one that occurs more than once on the page says how often */
     const rows = new Map();
@@ -2344,6 +2532,23 @@ check(
       /* a data-status wrapper that covers more than one figure */
       for (const w of r.statusWraps || [])
         row(F, `sw|${route}|${w.section}|${w.figures.join("|")}|${w.sentence}`, `${route}${w.section ? ` ${w.section}` : ""}: data-status="${w.status}" around ${w.figures.map((f) => `"${f}"`).join(", ")} — ${w.problem} — in "${w.sentence}"`, width);
+      /* K11 — every wrapper on the page is an entry in content/figure-labels.ts,
+         word for word: an exemption with its reason, a label with its status. A
+         wrapper written by hand, or a junk reason long enough to pass the reason
+         test, is not one. A [data-metric] box names a metric in content/metrics.ts
+         and shows its value and status. */
+      for (const w of r.registryWraps || []) {
+        const hit = registry.some((l) => l.text === w.text && (w.kind === "exempt" ? "exempt" in l && l.exempt === w.value : !("exempt" in l) && l.status === w.value));
+        if (!hit)
+          row(F, `reg|${route}|${w.kind}|${w.value}|${w.text}`, `${route}${w.section ? ` ${w.section}` : ""}: ${w.kind === "exempt" ? `data-figure-exempt="${w.value}"` : `data-status="${w.value}"`} around "${w.text}" is not an entry in content/figure-labels.ts — ${w.kind === "exempt" ? "an exemption and its reason" : "a label and its status"} come from the registry, word for word`, width);
+      }
+      for (const m of metricsTs ? r.metricsShown || [] : []) {
+        const e = metricsTs.find((x) => x.id === m.id);
+        const where = `${route}${m.section ? ` ${m.section}` : ""}`;
+        if (!e) row(F, `met|${route}|${m.id}`, `${where}: data-metric="${m.id}" is not an id in content/metrics.ts`, width);
+        else if (m.figure !== e.value || m.status !== e.status)
+          row(F, `met|${route}|${m.id}|${m.figure}|${m.status}`, `${where}: data-metric="${m.id}" shows "${m.figure ?? "no figure"}" ${m.status ?? "with no status"} — content/metrics.ts says "${e.value}" ${e.status}`, width);
+      }
       /* and every number judged not a figure, with the reason */
       for (const x of r.notFigures) row(I, `not|${route}|${x.tok}|${x.reason}|${x.sentence}`, `${route}: not a figure: "${x.tok}" — ${x.reason} — in "${x.sentence}"`, width);
       I.push(`${at(k)}: ${r.tokens.length} figure(s) — ${n.standalone} standalone, ${n.status} labelled in place, ${n.exempt} exempt, ${n.failing} failing; ${r.exemptions.length} exemption(s); ${r.notFigures.length} number(s) not figures`);
@@ -2354,12 +2559,6 @@ check(
        its status in words after it, or is a term exempted for that instance in
        content/figure-labels.ts (its reason printed), or is the one allowlisted
        string (META_ALLOW, printed) — or it fails. */
-    let registry = [];
-    try {
-      registry = loadContent("content/figure-labels.ts").figureLabels || [];
-    } catch (e) {
-      F.push(`content/figure-labels.ts could not be read (${e.message}) — exemptions outside the visible text cannot be checked; unsure is a failure`);
-    }
     const exemptBy = (text, f) =>
       registry.find((l) => {
         if (!("exempt" in l)) return false;
@@ -2981,6 +3180,21 @@ check(19, "Every keyboard stop shows a visible focus state", "CLAUDE.md: visible
     I.push(`${route}: ${stops.length} tab stop(s) checked`);
     for (const s of stops.filter((x) => !x.visibleFocus)) F.push(`${route}: ${s.desc} — ${s.why}`);
   }
+  /* A1 — Shift+Tab back up the page: no stop entirely under a fixed or sticky box */
+  for (const [k, stops] of Object.entries(focusBackRuns)) {
+    if (!Array.isArray(stops)) {
+      F.push(`${at(k)}: the Shift+Tab run did not finish (${stops.error}) — unsure is a failure`);
+      continue;
+    }
+    const partly = stops.filter((s) => s.covered && s.seen);
+    I.push(`${at(k)}: Shift+Tab — ${stops.length} stop(s), ${partly.length} partly under a fixed or sticky box${partly.length ? ` (${partly.slice(0, 3).map((s) => `${s.desc} under ${s.by}`).join("; ")})` : ""}`);
+    for (const s of stops.filter((x) => !x.seen))
+      F.push(
+        s.covered
+          ? `${at(k)}: Shift+Tab to ${s.desc} — it is entirely hidden under ${s.by} (y ${s.top}–${s.bottom}) — WCAG 2.2 SC 2.4.11, Focus Not Obscured`
+          : `${at(k)}: Shift+Tab to ${s.desc} — it is off screen while focused (y ${s.top}–${s.bottom})`,
+      );
+  }
 });
 
 /* 20 */
@@ -3327,6 +3541,19 @@ check(
       const line = `/ ${r.label}: ${last.desc}${file ? ` (${file})` : ""}, entry size ${last.size}px², at ${last.t}ms${r.posterBox ? `; the poster renders ${r.posterBox}` : ""}; ${r.entries.length} entr${r.entries.length === 1 ? "y" : "ies"}`;
       if (isPoster) I.push(line);
       else F.push(`${line} — the final LCP element must be the poster img[data-hero-poster]${last.tag === "canvas" ? ", never the canvas" : ""}`);
+      /* (d) H2/K6: the poster after the settle — see visitLcp */
+      const st = r.state;
+      if (!st) {
+        F.push(`/ ${r.label}: there is no img[data-hero-poster] on the settled page`);
+        continue;
+      }
+      if (!st.rendered) F.push(`/ ${r.label}: after the settle the poster is not rendered (${st.why}) — an LCP entry is never withdrawn, so only this reading can see it`);
+      if (st.opacity < 0.99) F.push(`/ ${r.label}: after the settle the poster is at opacity ${st.opacity.toFixed(2)} — it stays opaque; a canvas fades in over it, it never fades out`);
+      if (!st.boxEqual) F.push(`/ ${r.label}: the poster's box (${st.pBox}) is not the field's (${st.fBox}) — the poster fills [data-hero-field]`);
+      if (st.coveredBy) F.push(`/ ${r.label}: after the settle ${st.coveredBy} sits on top of the poster — only a canvas with the field's box may`);
+      if (st.h1Overlap) F.push(`/ ${r.label}: the poster sits behind the headline — ${st.h1Overlap}px² of it under the h1; the field is beside the headline, never behind it`);
+      for (const c of st.badCanvases) F.push(`/ ${r.label}: a canvas ${c} — any canvas sits inside [data-hero-field] with the field's box`);
+      I.push(`/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to cover the field`);
     }
   },
 );
