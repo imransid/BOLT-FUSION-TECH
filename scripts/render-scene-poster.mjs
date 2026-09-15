@@ -121,6 +121,16 @@ try {
   for (let i = 0; i < data.length; i += px.channels) if (Math.abs(data[i] - 7) + Math.abs(data[i + 1] - 9) + Math.abs(data[i + 2] - 13) > 12) lit++;
   const litPct = (100 * lit) / (px.width * px.height);
   if (litPct < 3) throw new Error(`only ${litPct.toFixed(1)}% of the capture differs from the ground; the scene did not draw`);
+  /* the scene dissolves into the page: a 16px band (32 device px) around the
+     poster is exactly the ground, #07090D, with nothing reaching an edge */
+  let edgeDev = 0;
+  for (let y = 0; y < px.height; y++)
+    for (let x = 0; x < px.width; x++) {
+      if (x >= 32 && x < px.width - 32 && y >= 32 && y < px.height - 32) continue;
+      const i = (y * px.width + x) * px.channels;
+      edgeDev = Math.max(edgeDev, Math.abs(data[i] - 7), Math.abs(data[i + 1] - 9), Math.abs(data[i + 2] - 13));
+    }
+  if (edgeDev > 1) throw new Error(`the poster's edge band is not the ground: a channel is ${edgeDev} off #07090D; something reaches the edge`);
 
   const small = await sharp(png).resize(660, 560, { kernel: "lanczos3" }).png().toBuffer();
   const files = [
@@ -133,7 +143,7 @@ try {
     const r = await pipeline.toFile(path.join(OUT, name));
     console.log(`${name.padEnd(28)} ${r.width}x${r.height}  ${(r.size / 1024).toFixed(1)}KB`);
   }
-  console.log(`captured at t = 0: field ${info.field}, canvas buffer ${info.buffer}, DPR ${env.dpr}, ${litPct.toFixed(1)}% of pixels off the ground, ${GPU ? "GPU" : "SwiftShader"}`);
+  console.log(`captured at t = 0: field ${info.field}, canvas buffer ${info.buffer}, DPR ${env.dpr}, ${litPct.toFixed(1)}% of pixels off the ground, edge band within ${edgeDev} of #07090D, ${GPU ? "GPU" : "SwiftShader"}`);
   if (errors.length) console.log(`console errors during the capture:\n  ${errors.join("\n  ")}`);
 } finally {
   await browser.close();

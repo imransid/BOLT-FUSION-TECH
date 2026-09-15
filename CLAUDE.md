@@ -30,9 +30,14 @@ returns as plain three.js, with no React Three Fiber.
   on every page, the homepage and /contact. `app/techwix.css` is the older design,
   still under /work, both write-ups, the privacy policy and the 404; the next
   wave moves each page onto `app/site.css` and then deletes it. Both load from
-  `app/layout.tsx`, techwix first. Verify-site check 31 knows the design by
-  `app/site.css`'s rules and fails the older one — its stylesheet, any `tw-`
-  class, `components/techwix` — until it is gone (*Verify before pushing*).
+  `app/layout.tsx`, techwix first. It cannot move to the older pages alone: the
+  404 boundary is bundled into every route's layout tree, so a stylesheet
+  `components/techwix/PageShell.tsx` imports reaches every page anyway — as a
+  SECOND render-blocking file, which measured worse on the homepage's LCP than
+  one combined file (check 29, 2026-09-16: 1,352ms against 1,204ms).
+  Verify-site check 31 knows the design by `app/site.css`'s rules and fails the
+  older one — its stylesheet, any `tw-` class, `components/techwix` — until it
+  is gone (*Verify before pushing*).
 - **three.js returns** (owner, 2026-09-16; *Decided 2026-09-16*): for the hero's
   3D scene only — three.js core, dynamically imported after load, desktop-only,
   at most 180KB gzipped. It landed with the 3D wave (`redesign/eng-scene`;
@@ -468,7 +473,7 @@ are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3
   hero's H1 is upper case by `text-transform` over its sentence-case source
   ("Build what's next."), set as two lines that never break inside ("Build" /
   "what's next.") so check 7 never sees an orphaned last word:
-  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(56px, 5vw, 72px)` from it,
+  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(52px, 4.6vw, 68px)` from it,
   sized so the longer line fits its column at every width. Negative tracking is
   not tracked-out capitals.
 - H2s are 48px from 768 and 32 below; Barlow 600 for H3 and H4 (22 and 18);
@@ -667,8 +672,13 @@ at the end, which means nobody has decided yet.
   Decided 2026-09-11 for the homepage rebuild; amended by the owner on
   2026-09-16 (*Decided 2026-09-16*). The canvas over the poster is now the
   three.js scene (*Motion, as built*), and the field is the right column of the
-  graphite hero (`components/site/home/Hero.tsx`): a 560px-tall frame, at most
-  660px wide, on the ground colour, with the poster drawn 660px wide. The
+  graphite hero (`components/site/home/Hero.tsx`): 660 x 560 from 1280px up —
+  the width `sizes` declares and the scene is composed for, so the canvas and
+  the poster frame the scene identically — and as wide as the grid allows below
+  that (536px at 1100, 467px at 1025), where `cover` crops it. It has NO border
+  and NO radius, only the ground colour, so the scene reads as part of the page
+  and not a card (the coordinator's review, 2026-09-16); nothing is painted over
+  the poster. The
   poster `<img data-hero-poster>` is the final LCP entry,
   measured with a buffered `PerformanceObserver` on a fresh, unscrolled load —
   verify-site check 28 asserts it by identity at 390 (also as a phone), 768,
@@ -677,8 +687,8 @@ at the end, which means nobody has decided yet.
   everything in the field but a canvas with the field's box, and clear of the
   h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
   poster hidden, faded, covered or moved after it painted). At ≥1025px the
-  field is 560px tall and at most 660px wide (narrower between about 1025 and
-  1300px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
+  field is 560px tall and at most 660px wide (narrower between 1025 and
+  1280px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
   at the column's full height, 832px at 1025, the browser once fetched a file
   about 1.5x too small at every DPR); below that it sits above the text.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
@@ -734,6 +744,22 @@ at the end, which means nobody has decided yet.
     It freezes requestAnimationFrame when `data-scene-ready` appears, so the
     canvas holds t = 0, and captures the field at 660x560 (its 1px border
     removed for the capture) at DPR 2.
+  - **It dissolves into the page; it never stops at a box** (coordinator's
+    review, 2026-09-16). The field has no border, and its background is the
+    ground, `#07090D`, which is also the canvas's clear colour. The grid floor
+    and the blue pool under the core fade to exactly that ground by r = 2.8
+    (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for**,
+    and 480x560 — the narrowest the field goes — is the safe area nothing
+    important may leave. With the pointer at either parallax extreme, at 480
+    the fade ends at least 23px inside every edge, the rings at least 63px and
+    every module, at every orbit angle, at least 13px, on bounding spheres; at
+    660 the same objects clear the sides by at least 103px and the top and
+    bottom by at least 65px and 50px. That was checked by projection and on
+    rendered frames at t = 0, 20, 30 and 45s. The poster
+    script refuses a capture whose 16px edge band is not the ground, and the
+    probe reads the live canvas's edge band. It is done in the scene itself:
+    no overlay and no post-processing, since anything painted over the poster
+    but the canvas fails check 28.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
@@ -1155,6 +1181,16 @@ fresh context, with no input and no scroll.
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
 | the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
 
+**The homepage, measured 2026-09-16** (check 29 against `next start`, the median
+of three runs, on a machine also building elsewhere — its load average is printed
+beside each run). Mobile lab: **LCP 892–916ms**, the poster the LCP element in
+every run, FCP equal to it, blocking 31–43ms, **CLS 0.000**. Desktop: LCP
+72–264ms, CLS 0.000. Initial JavaScript 145.4KB gzipped. Two figures worth
+watching: the homepage's HTML is 42KB gzipped (161KB of it the RSC payload, which
+repeats the markup) against production's 22KB, and desktop blocking time is
+0.9–1.9s, which is the scene's chunk parsing and starting after load — outside
+check 29's budget, which measures blocking on the mobile profile only.
+
 **The scene chunk, measured 2026-09-16.** One Turbopack chunk holds three.js
 0.186.0 and the scene: 555KB raw, **137.9KB on the wire**. That is the
 response's `encodedBodySize` under `next start`'s gzip, read in the browser at
@@ -1174,11 +1210,13 @@ JavaScript. Check 25 holds the 180KB: it gzips each scene file as served (level
 6), because its WebGL runs re-serve scripts through the worker hook and their
 resource timings are not the wire.
 
-**The posters:** `scene-poster-v1-660.avif` 7.0KB, `-1320.avif` 15.3KB,
-`-660.webp` 13.6KB, `-1320.webp` 31.8KB (AVIF 4:4:4 at quality 56, WebP 82).
-The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF: a dark
-frame of hard-edged shapes compresses far better than a cloud of points, which
-takes weight off the LCP path.
+**The posters:** `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
+`-660.webp` 10.3KB, `-1320.webp` 24.8KB (AVIF 4:4:4 at quality 56, WebP 82).
+The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
+frame of hard-edged shapes that dissolves into the ground compresses far
+better than a cloud of points, which takes weight off the LCP path. They were
+re-rendered for the dissolve on 2026-09-16 under the same v1 names, since v1
+had never been deployed. From the first deploy on, a re-render is v2.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in

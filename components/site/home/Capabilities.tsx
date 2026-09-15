@@ -57,11 +57,16 @@ function CapabilitySection({ c, flip }: { c: Capability; flip: boolean }) {
               <FigureText text={c.buildNote} />
             </p>
           ) : null}
-          <ul className={`bf-build${c.whatWeBuild.length > 6 ? " bf-build--modules" : ""}`}>
+          {/* Three columns only for a long list of short, chip-free names (ERP's
+              modules); a list whose items carry a tier chip keeps two, so a
+              chip sits beside its label instead of under it. */}
+          <ul className={`bf-build${c.whatWeBuild.length > 6 && c.whatWeBuild.every((b) => !b.tier) ? " bf-build--modules" : ""}`}>
             {c.whatWeBuild.map((b) => (
               <li key={b.label}>
-                <FigureText text={b.label} />
-                {b.tier ? <TierChip tier={b.tier} /> : null}
+                <span className="bf-build__label">
+                  <FigureText text={b.label} />
+                  {b.tier ? <TierChip tier={b.tier} /> : null}
+                </span>
               </li>
             ))}
           </ul>

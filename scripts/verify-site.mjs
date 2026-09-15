@@ -2025,6 +2025,28 @@ async function measureContrast(page) {
           if (as.position === "fixed" || as.position === "sticky") pinnedBox = a;
         }
         if (op < 0.05) continue;
+        /* 2026-09-16 — WHEN A PINNED BOX IS MEASURABLE. The rule below exists
+           because the ground under a fixed or sticky box changes as the page
+           scrolls, so no one capture shows what its text sits on. That does not
+           hold when an OPAQUE background travels with the text: the first
+           element from the text up to and including the pinned box whose own
+           background-color is fully opaque (alpha 1) IS the ground, at every
+           scroll position — and it moves with the text, so the pixels under the
+           text are the same wherever the page is. Any ancestor opacity below 1
+           disqualifies it: then what shows through is the page behind, which
+           does change. A transparent or semi-transparent pinned box still
+           fails, exactly as before. */
+        let opaqueGround = "";
+        if (pinnedBox && op === 1)
+          for (let a = el; a; a = a.parentElement) {
+            const bg = getComputedStyle(a).backgroundColor;
+            const px = rgba(bg);
+            if (px[3] === 255) {
+              opaqueGround = tagOf(a);
+              break;
+            }
+            if (a === pinnedBox) break;
+          }
         total++;
         if (out.length >= cap) continue;
         /* text scrolled out of view inside a carousel is not on screen at all */
@@ -2055,7 +2077,8 @@ async function measureContrast(page) {
           color,
           op,
           pinned: pinnedBox ? tagOf(pinnedBox) : "",
-          allowed: Boolean(pinnedBox && pinnedBox.matches(allow)),
+          allowed: Boolean(pinnedBox && (pinnedBox.matches(allow) || opaqueGround)),
+          opaqueGround,
           clipped,
           underFrame,
           clipText,
@@ -2132,15 +2155,24 @@ async function measureContrast(page) {
     for (const [i, e] of els.entries()) {
       if (e.logotype || e.clipText || e.clipped || e.underFrame || (e.pinned && !e.allowed)) continue;
       /* the header's text: from the capture at the top only, where it rests */
-      if (e.pinned && view.sy !== 0) continue;
+      if (e.pinned && !e.opaqueGround && view.sy !== 0) continue;
       const v = view.at[i];
       if (!v) continue;
-      /* anything that moved since it was measured is not under these pixels */
-      if (Math.abs(v.x - (e.x - e.dx)) > 1 || Math.abs(v.y - (e.y - e.dy)) > 1) {
+      /* A PINNED BOX WITH ITS OWN OPAQUE GROUND MOVES, and that is the point:
+         its background travels with its text, so the pixels under the text are
+         the same wherever the page is. Its samples are taken from where it is
+         NOW, at each capture — the document-position test below would call
+         every sticky box "moved while measuring" and measure nothing. */
+      const moved = Math.abs(v.x - (e.x - e.dx)) > 1 || Math.abs(v.y - (e.y - e.dy)) > 1;
+      if (moved && !(e.pinned && e.opaqueGround)) {
         movedSeen[i]++;
         continue;
       }
-      grid[i].forEach(([px, py], k) => {
+      const points =
+        e.pinned && e.opaqueGround
+          ? grid[i].map(([px, py]) => [Math.round(px - (e.x - e.dx) + v.x + e.dx), Math.round(py - (e.y - e.dy) + v.y + e.dy)])
+          : grid[i];
+      points.forEach(([px, py], k) => {
         if (got[i][k]) return;
         const vy = py - view.sy;
         if (px < 0 || vy < 0 || px >= png.width || vy >= png.height) return;
@@ -2156,12 +2188,13 @@ async function measureContrast(page) {
   /* the page as it was: check 8 reads it next, and hit-tests its chips */
   await style.evaluate((s) => s.remove());
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
-  const res = { measured: 0, unmeasured: [], fails: [], pinnedBoxes, total, cap: CONTRAST_CAP, outside: [], covered: [], captures: steps.length };
+  const res = { measured: 0, unmeasured: [], fails: [], pinnedBoxes, total, cap: CONTRAST_CAP, outside: [], onPinned: [], covered: [], captures: steps.length };
   for (const [i, e] of els.entries()) {
     if (e.pinned && !e.allowed) {
       res.outside.push({ text: e.text, box: e.pinned });
       continue;
     }
+    if (e.pinned && e.opaqueGround) res.onPinned.push({ text: e.text, box: e.pinned, ground: e.opaqueGround });
     const why = e.logotype ? "the wordmark (WCAG 1.4.3 logotype)" : e.clipText ? "gradient text" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "";
     if (why) {
       res.unmeasured.push({ text: e.text, why });
@@ -3922,15 +3955,17 @@ check(
       const why = {};
       c.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
       I.push(
-        `${at(k)}: ${c.measured} measured in ${c.captures} viewport capture(s); not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes: ${c.pinnedBoxes.join(", ") || "none"} — text measured only in ${PINNED_ALLOW}, at the top of the page`,
+        `${at(k)}: ${c.measured} measured in ${c.captures} viewport capture(s); not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes: ${c.pinnedBoxes.join(", ") || "none"} — text in one is measured in ${PINNED_ALLOW} at the top of the page, or where the box carries its own opaque background`,
       );
+      /* 2026-09-16: text in a pinned box that paints its own opaque ground IS measured, against that ground */
+      for (const o of c.onPinned || []) I.push(`${at(k)}: "${o.text}" sits in ${o.box}, a fixed or sticky box whose own ground is opaque (${o.ground}) — measured against it, wherever the page is scrolled`);
       /* K5: a cap reached is text never measured */
       if (c.total > c.cap) F.push(`${at(k)}: the contrast pass stopped at its ${c.cap}-element cap — ${c.total - c.cap} text element(s) further down the page were never measured; unsure is a failure`);
       const seen = new Set();
       for (const o of c.outside) {
         if (seen.has(`out|${o.text}`)) continue;
         seen.add(`out|${o.text}`);
-        F.push(`${at(k)}: "${o.text}" sits in a fixed or sticky box (${o.box}) outside the allowlist (${PINNED_ALLOW}) — the ground under it changes as the page scrolls and no one capture is what a reader sees; unsure is a failure`);
+        F.push(`${at(k)}: "${o.text}" sits in a fixed or sticky box (${o.box}) that paints no opaque ground of its own — the page behind it shows through, and what that is changes as the page scrolls, so no one capture is what a reader sees; give the box an opaque background, or take the text out of it; unsure is a failure`);
       }
       for (const o of c.covered) F.push(`${at(k)}: "${o.text}" is under a fixed or sticky box at every scroll position — no reader can see it`);
       for (const f of [...c.fails].sort((a, b) => a.ratio - b.ratio)) {

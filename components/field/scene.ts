@@ -106,9 +106,24 @@ const SLOW_FOR_MS = 2000;
 
 /* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
 const FOV = 30;
-const CAM_DIST = 12.4;
-const CAM_ELEV = 0.54; // radians above the horizon: a raised, drawing-board view
-const CAM_TARGET_Y = 0.62;
+const CAM_DIST = 13.1;
+const CAM_ELEV = 0.72; // radians above the horizon: a raised, drawing-board view
+const CAM_TARGET_Y = 0.88;
+
+/* The scene DISSOLVES into the page; it never stops at a box. The canvas
+   clears to the field's own ground, and the floor's grid and light pool fade
+   to exactly that ground by FLOOR_FADE.to. Framed with the camera above, at
+   660x560 — the primary frame — and inside 480x560, the narrowest the field
+   goes, which is the safe area nothing important may leave. At 480, with the
+   pointer at either parallax extreme, the fade circle ends >= 23px inside
+   every edge, the rings >= 63px, and every module at every orbit angle
+   >= 13px, on bounding spheres; at 660 the same objects clear the sides by
+   >= 103px and the top and bottom by >= 65px and >= 50px (a projection check
+   outside the repo, confirmed on rendered frames, 2026-09-16). The camera's
+   height spends the frame's spare vertical room: raising it does not move the
+   side margins, which only the orbits' radii set. So no line, ring or module
+   reaches a canvas edge at 480–660px wide. */
+const FLOOR_FADE = { from: 1.1, to: 2.8 };
 const PARALLAX_AZ = 0.11; // radians of yaw at the pointer's extreme
 const PARALLAX_EL = 0.045; // radians of pitch at the pointer's extreme
 const PARALLAX_EASE = 1.6; // per second: a slow, eased follow
@@ -134,8 +149,8 @@ type Tier = {
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
 };
-const INNER: Tier = { radius: 1.95, y: 1.9, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.3 };
-const OUTER: Tier = { radius: 2.7, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
+const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65 };
+const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
 
 /* Pulses: two per connection, one outward and one back. */
 const PULSE_LEN = 0.07;
@@ -175,7 +190,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const mat = <T extends Material>(x: T): T => (materials.push(x), x);
 
   const scene = new Scene();
-  scene.fog = new Fog(GROUND, 11.5, 22);
+  scene.fog = new Fog(GROUND, CAM_DIST - 1, CAM_DIST + 9.5); // depth, not a cut-off: it follows the camera
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 60);
   const target = new Vector3(0, CAM_TARGET_Y, 0);
 
@@ -236,6 +251,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         uMinor: { value: new Color(0x121820) },
         uMajor: { value: new Color(0x1c2431) },
         uPool: { value: new Color(0x0c1a3a) },
+        uFadeFrom: { value: FLOOR_FADE.from },
+        uFadeTo: { value: FLOOR_FADE.to },
       },
       vertexShader: /* glsl */ `
         varying vec3 vWorld;
@@ -249,6 +266,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         uniform vec3 uMinor;
         uniform vec3 uMajor;
         uniform vec3 uPool;
+        uniform float uFadeFrom;
+        uniform float uFadeTo;
         varying vec3 vWorld;
         float grid(vec2 p, float step) {
           vec2 q = p / step;
@@ -262,12 +281,16 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         void main() {
           vec2 p = vWorld.xz;
           float r = length(p);
-          float dist = distance(vWorld, cameraPosition);
-          float fade = (1.0 - smoothstep(9.0, 19.0, dist)) * (1.0 - smoothstep(5.5, 12.0, r));
+          /* the floor dissolves into the page: its lines and its pool reach
+             exactly the ground at uFadeTo, so past it the plane IS the clear
+             colour and the canvas edge cannot be seen. Squared, so the last
+             lines are faint long before the rim. */
+          float fade = 1.0 - smoothstep(uFadeFrom, uFadeTo, r);
+          fade *= fade;
           vec3 col = uGround;
-          col = mix(col, uMinor, grid(p, 0.5) * fade);
-          col = mix(col, uMajor, grid(p, 2.0) * fade);
-          col += uPool * exp(-(r * r) / 2.6) * 0.55;
+          col = mix(col, uMinor, grid(p, 0.25) * fade);
+          col = mix(col, uMajor, grid(p, 1.0) * fade);
+          col += uPool * exp(-(r * r) / 2.2) * 0.55 * fade;
           gl_FragColor = vec4(col, 1.0);
           #include <colorspace_fragment>
         }`,
@@ -416,9 +439,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     { build: buildMobile, angle: deg(215), yaw: -0.35, scale: 1.3 },
   ];
   const outerSlots: Slot[] = [
-    { build: buildRobot, angle: deg(20), yaw: -0.65, scale: 1.55 },
-    { build: buildErp, angle: deg(125), yaw: -0.5, scale: 1.4 },
-    { build: buildPos, angle: deg(250), yaw: 0.5, scale: 1.4 },
+    { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55 },
+    { build: buildErp, angle: deg(115), yaw: -0.5, scale: 1.4 },
+    { build: buildPos, angle: deg(265), yaw: 0.5, scale: 1.4 },
   ];
 
   type BuiltTier = {
