@@ -79,6 +79,10 @@ const want = (id) => !ONLY || ONLY.has(String(id));
    pointer and no reduced motion, from a renderer chunk of at most
    RENDERER_MAX_GZ gzipped that is requested after the load event. */
 const GL_WIDTHS = [390, 768, 1440];
+
+/* 8 (K9) — check 8 also reads every page at these widths, beyond WIDTHS: a
+   figure shown only by the 768–1024 layout was never read. */
+const FIGURE_WIDTHS = [768, 1024];
 const WEBGL_ON_HOME = false;
 const RENDERER_MAX_GZ = 15 * 1024;
 
@@ -146,6 +150,16 @@ const servedSquashed = (html) =>
        quietly widen it. It is not a small-text exemption. */
 const LOGOTYPE = "[data-logotype]";
 const LOGOTYPE_TEXT = "Bolt Fusion Tech";
+
+/* 8 (K10) — the ONE figure allowed outside the visible text with no label: the
+   restaurant-search meta description (CLAUDE.md, Hard rules, "One scoped
+   exception, decided 2026-09-11"). That string, on that route, wherever the
+   page emits it — its meta description, og:description, twitter:description
+   and its Article's description are the same constant — and nothing else. The
+   check prints every place it allows it. */
+const META_ALLOW = [
+  { route: "/work/restaurant-search", text: "How we built a multi-tenant restaurant search service that classifies queries before any paid inference, keeping most traffic under 100ms." },
+];
 
 /* ── helpers ─────────────────────────────────────────────────────────────── */
 const baseUrl = new URL(BASE);
@@ -817,13 +831,117 @@ function collectInPage() {
   const logos = [...document.querySelectorAll("[data-logotype]")];
   const logotypeCount = { dom: logos.length, rendered: logos.filter((e) => e.getClientRects().length > 0).length };
 
+  /* 8 (K10) ── the strings a reader or a crawler gets OUTSIDE the visible text:
+     the attributes that name or describe a rendered element, <svg> titles, the
+     document title and the text-bearing meta tags (JSON-LD is read in node,
+     from `jsonld`). Only strings holding a digit. */
+  const META_ATTRS = ["aria-label", "aria-description", "aria-roledescription", "aria-valuetext", "alt", "title", "placeholder"];
+  const metaStrings = [];
+  for (const el of document.body.querySelectorAll(META_ATTRS.map((a) => `[${a}]`).join(","))) {
+    if (!el.getClientRects().length) continue;
+    for (const a of META_ATTRS) {
+      const v = el.getAttribute(a);
+      if (v && /\d/.test(v)) metaStrings.push({ where: `${a} on ${describe(el)}`, text: v });
+    }
+  }
+  for (const t of document.querySelectorAll("svg title")) if (/\d/.test(t.textContent)) metaStrings.push({ where: "an <svg> <title>", text: t.textContent.trim() });
+  if (/\d/.test(document.title)) metaStrings.push({ where: "the <title>", text: document.title });
+  for (const m of document.querySelectorAll("meta[content]")) {
+    const key = m.getAttribute("name") || m.getAttribute("property") || "";
+    if (!/^(description|keywords|application-name|apple-mobile-web-app-title|og:|twitter:)/.test(key)) continue;
+    if (/(^|:)(image|url|video|audio|type|locale|card|site|creator|width|height|secure_url)$/.test(key)) continue;
+    const v = m.getAttribute("content") || "";
+    if (/\d/.test(v)) metaStrings.push({ where: `meta ${key}`, text: v });
+  }
+
   /* 25 ── scripts the page loaded */
   const scripts = performance
     .getEntriesByType("resource")
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
+}
+
+/* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
+   why every other number is not. Self-contained — it runs in the browser
+   (readFigures is evaluated with it) and in node (the metadata and llms
+   passes), so every place a figure can appear is read by one grammar.
+
+   `input` may carry boundary characters: U+FFFF (masked — nothing matches
+   across it), U+200B (an atomic box's edge) and U+2063 (a word break between
+   two text nodes, "Latency" + "45ms"). Returns character offsets into it.
+
+   K9 (2026-09-15) added "3X" (a capital multiplier), "×2" (a leading
+   multiplier), scale words ("2 million") and thousands-separated counts
+   ("10,000 queries"). Spelled-out numbers are NOT figures here, deliberately:
+   "Still running in six months" is the canonical line (CLAUDE.md, check 8). */
+function tokenizeFigures(input) {
+  const MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
+  const NUM = String.raw`\d+(?:[.,]\d+)*`;
+  /* [pattern, reason, extra test] — in order, each on what the earlier ones left */
+  const NOT_FIGURE = [
+    [/(?:©|\(c\)|copyright)\s*\d{4}(?:\s?[-–]\s?\d{4})?/giu, "a year in the © line"],
+    [new RegExp(String.raw`\b\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\b\.?(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b`, "gu"), "a date"],
+    [/(?:§§?\s*|\b(?:sections?|clauses?|articles?|art\.|paragraphs?|para\.|schedules?|annex(?:es)?|recitals?)\s+)\d+(?:[.(]\w+\)?)*(?:\s?(?:[-–,]|and|to)\s?\d+(?:[.(]\w+\)?)*)*|\b(?:regulation|directive)\s+\((?:eu|ec)\)\s+(?:no\.?\s+)?\d+\/\d+|\bact\s+\d{4}\b/giu, "a legal section or citation number"],
+    [/\+\d{1,3}(?:[\s.‑-]?\(?\d{1,5}\)?){2,5}/gu, "a phone number", (t) => (t.match(/\d/g) || []).length >= 9],
+    [/\b\d+(?:st|nd|rd|th)\b/gu, "an ordinal"],
+    [/(?:\b(?:week|step|phase|stage|lane|part|day|round|sprint|chapter|level|tier|milestone|no\.)|#)\s?\d+(?:\s?[-–]\s?\d+)?\b/giu, "an ordinal — a sequence label"],
+  ];
+  /* a number is a figure when it carries a unit, %, currency, an approximation or
+     bound, a multiplier, a range, a rate, a scale word or a trailing + — or is a
+     thousands-separated count */
+  const FIGURE = new RegExp(
+    String.raw`(?<![\p{N}_])(?<!\p{L}(?![$£€]))` +
+      String.raw`(?<pre>[~≈<>≤≥±+−×]\s?)?(?<cur>[$£€]\s?)?` +
+      `(?<num>${NUM})` +
+      String.raw`(?<range>\s?[-‐‑–—]\s?[$£€]?${NUM})?` +
+      "(?<unit>" +
+      [
+        String.raw`\s?%`,
+        String.raw`\s?×`,
+        String.raw`[xX](?![\p{L}\p{N}])`,
+        String.raw`\/(?:s|sec|min|h|hr|hour|d|day|wk|week|mo|month|yr|year)(?!\p{L})`,
+        String.raw`\/\d+(?![\p{N}\/])`,
+        String.raw`(?:\s|[-‐‑])?(?:milliseconds?|ms|seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|wks?|months?|mos?|years?|yrs?|[KMGT]B)(?![\p{L}\p{N}])`,
+        String.raw`\s?(?:thousand|million|billion|trillion)(?![\p{L}\p{N}])`,
+        String.raw`[-‐‑]d(?![\p{L}\p{N}])`,
+        String.raw`(?:s|m|h|d|k|K|M|B|bn)(?![\p{L}\p{N}])`,
+      ].join("|") +
+      ")?" +
+      String.raw`(?<plus>\+(?!\p{N}))?`,
+    "gu",
+  );
+  const MASK = "\uFFFF";
+  let left = input;
+  const figures = [];
+  const not = [];
+  const mask = (s, e) => (left = left.slice(0, s) + MASK.repeat(e - s) + left.slice(e));
+  for (const [re, reason, keep] of NOT_FIGURE)
+    for (const m of left.matchAll(re))
+      if (/\d/.test(m[0]) && (!keep || keep(m[0]))) {
+        not.push({ start: m.index, end: m.index + m[0].length, reason });
+        mask(m.index, m.index + m[0].length);
+      }
+  const here = [];
+  for (const m of left.matchAll(FIGURE)) {
+    const g = m.groups;
+    if (g.pre || g.cur || g.range || g.unit || g.plus || /^\d{1,3}(?:,\d{3})+$/.test(g.num)) here.push({ start: m.index, end: m.index + m[0].length });
+  }
+  for (const f of here) mask(f.start, f.end);
+  figures.push(...here);
+  /* what is left: every word still holding a digit */
+  for (const m of left.matchAll(/[^\s\uFFFF\u200B\u2063]*\d[^\s\uFFFF\u200B\u2063]*/gu)) {
+    const lead = /^[("“‘'[{`*_]*/u.exec(m[0])[0].length;
+    const word = m[0].slice(lead).replace(/[)"”’'\]}.,;:!?`*_|]+$/u, "");
+    const d = /\d+(?:[.,]\d+)*/u.exec(word);
+    if (!d) continue;
+    /* a letter against the digits (S3, 0x1F), or a word hyphened onto them from
+       the left (GPT-4.1), makes it part of a name; "3-step" is still a count */
+    const named = /\p{L}[-‐‑]?$/u.test(word.slice(0, d.index)) || /^\p{L}/u.test(word.slice(d.index + d[0].length));
+    not.push({ start: m.index + lead, end: m.index + lead + word.length, reason: named ? "part of a name, version or identifier" : "a bare number — no unit, %, currency, ~ < > ≈ prefix, multiplier or range" });
+  }
+  return { figures, not };
 }
 
 /* 8 ── every figure in the visible text, standalone or inside a sentence (runs in the browser)
@@ -850,7 +968,7 @@ function collectInPage() {
    number; an ordinal (1st, "Week 2", a heading's "4.", a zero-padded 01); a
    number that is part of a name (GPT-4.1, S3); and a bare number with no unit,
    %, currency, ~ < > ≈ prefix, multiplier or range. Nothing is dropped unprinted. */
-function readFigures() {
+function readFigures(tokenizeFigures) {
   const csMemo = new Map();
   const cs = (el) => {
     let s = csMemo.get(el);
@@ -953,7 +1071,10 @@ function readFigures() {
   };
   /* EDGE marks where an atomic box sat inside a run: nothing matches across it, and it prints as nothing */
   const EDGE = "\u200B";
-  const oneLine = (s) => s.replaceAll(EDGE, "").replace(/\s+/g, " ").trim();
+  /* SEP is a word break between two text nodes a reader sees as two words run
+     together: "Latency" + "45ms" built from spans (K9). It prints as nothing */
+  const SEP = "\u2063";
+  const oneLine = (s) => s.replaceAll(EDGE, "").replaceAll(SEP, "").replace(/\s+/g, " ").trim();
 
   /* ── standalone metrics: the check's original rule, unchanged ──────────── */
   const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|hrs?|days?|weeks?|%|x|×|k|K|M|B)?\s*\+?$|^\d+\/\d+$/;
@@ -1009,9 +1130,16 @@ function readFigures() {
   const SVG_NS = "http://www.w3.org/2000/svg";
   const runs = [];
   let cur = null;
+  /* the last text node put in any run, and its run: a touching box joins THAT run */
+  let lastSeg = null;
   const begin = (el) => runs.push((cur = { el, text: "", segs: [] }));
   const put = (node, text) => {
-    if (node) cur.segs.push({ node, start: cur.text.length, end: cur.text.length + text.length });
+    /* a letter from one node straight against a digit from the next: two words */
+    if (node && /^\d/.test(text) && /\p{L}$/u.test(cur.text)) cur.text += SEP;
+    if (node) {
+      cur.segs.push({ node, start: cur.text.length, end: cur.text.length + text.length });
+      if (node.nodeType === 3) lastSeg = { run: cur, node };
+    }
     cur.text += text;
   };
   const shown = (node) => {
@@ -1020,6 +1148,45 @@ function readFigures() {
     const r = document.createRange();
     r.selectNodeContents(node);
     return [...r.getClientRects()].some((q) => q.width > 0 && q.height > 0);
+  };
+  /* K9: text a stylesheet writes (content: "45ms" in ::before / ::after) is
+     visible text too. Strings and attr() only; counters are list numbering. */
+  const pseudoText = (el, which) => {
+    const s = getComputedStyle(el, which);
+    if (!s.content || s.content === "none" || s.content === "normal" || s.display === "none" || s.visibility !== "visible" || opacity(el) < 0.05) return "";
+    let out = "";
+    for (const m of s.content.matchAll(/"((?:[^"\\]|\\.)*)"|attr\(\s*([\w-]+)\s*\)/g)) out += m[1] !== undefined ? m[1].replace(/\\(.)/g, "$1") : el.getAttribute(m[2]) || "";
+    return /\d/.test(out) ? out : "";
+  };
+  const rects = (node) => {
+    const r = document.createRange();
+    r.selectNodeContents(node);
+    return [...r.getClientRects()].filter((q) => q.width > 0 && q.height > 0);
+  };
+  const firstTextRect = (el) => {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) if (/\S/.test(t.textContent) && shown(t)) return rects(t)[0] || null;
+    return null;
+  };
+  /* K9: an atomic box (inline-block, inline-flex) or a flex or grid item whose
+     text sits on the same line as the text before it, touching it, reads as
+     one word with it: "45" in an inline-block, then "ms". A chip is set off by
+     its margin and padding, and a flex row by its gap, so they stay apart. */
+  const touching = (c) => {
+    if (!lastSeg) return false;
+    const a = rects(lastSeg.node).at(-1);
+    const b = firstTextRect(c);
+    if (!a || !b) return false;
+    const overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    const gap = b.left - a.right;
+    return overlap >= 0.5 * Math.min(a.height, b.height) && gap >= -1 && gap <= 2;
+  };
+  const walkEl = (c) => {
+    const before = pseudoText(c, "::before");
+    if (before) put(c, before);
+    walk(c);
+    const after = pseudoText(c, "::after");
+    if (after) put(c, after);
   };
   const walk = (parent) => {
     for (let c = parent.firstChild; c; c = c.nextSibling) {
@@ -1037,14 +1204,20 @@ function readFigures() {
       if (d === "none") continue;
       const svgBox = c.namespaceURI === SVG_NS && c.localName !== "tspan" && c.localName !== "a";
       if (!svgBox && (d === "inline" || d === "contents")) {
-        walk(c);
+        walkEl(c);
         continue;
       }
       const outer = cur;
-      const atomic = !svgBox && (d.startsWith("inline") || /^(absolute|fixed)$/.test(cs(c).position) || cs(c).cssFloat !== "none");
+      const positioned = /^(absolute|fixed)$/.test(cs(c).position) || cs(c).cssFloat !== "none";
+      if (!svgBox && !positioned && touching(c)) {
+        cur = lastSeg.run; /* joined: the run of the text it touches, no edge */
+        walkEl(c);
+        continue;
+      }
+      const atomic = !svgBox && (d.startsWith("inline") || positioned);
       if (atomic) put(null, EDGE);
       begin(c);
-      walk(c);
+      walkEl(c);
       if (atomic) {
         cur = outer;
         put(null, EDGE);
@@ -1054,40 +1227,10 @@ function readFigures() {
   begin(document.body);
   walk(document.body);
 
-  /* ── figure tokens, and every number that is not one ─────────────────── */
-  const MONTH = "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
-  const NUM = String.raw`\d+(?:[.,]\d+)*`;
-  /* [pattern, reason, extra test] — in order, each on what the earlier ones left */
-  const NOT_FIGURE = [
-    [/(?:©|\(c\)|copyright)\s*\d{4}(?:\s?[-–]\s?\d{4})?/giu, "a year in the © line"],
-    [new RegExp(String.raw`\b\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}\b\.?(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{1,2}(?:st|nd|rd|th)?\b(?:,?\s+\d{4}\b)?|\b${MONTH}\.?\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b`, "gu"), "a date"],
-    [/(?:§§?\s*|\b(?:sections?|clauses?|articles?|art\.|paragraphs?|para\.|schedules?|annex(?:es)?|recitals?)\s+)\d+(?:[.(]\w+\)?)*(?:\s?(?:[-–,]|and|to)\s?\d+(?:[.(]\w+\)?)*)*|\b(?:regulation|directive)\s+\((?:eu|ec)\)\s+(?:no\.?\s+)?\d+\/\d+|\bact\s+\d{4}\b/giu, "a legal section or citation number"],
-    [/\+\d{1,3}(?:[\s.‑-]?\(?\d{1,5}\)?){2,5}/gu, "a phone number", (t) => (t.match(/\d/g) || []).length >= 9],
-    [/\b\d+(?:st|nd|rd|th)\b/gu, "an ordinal"],
-    [/(?:\b(?:week|step|phase|stage|lane|part|day|round|sprint|chapter|level|tier|milestone|no\.)|#)\s?\d+(?:\s?[-–]\s?\d+)?\b/giu, "an ordinal — a sequence label"],
-  ];
-  /* a number is a figure when it carries a unit, %, currency, an approximation or
-     bound, a multiplier, a range, a rate or a trailing + */
-  const FIGURE = new RegExp(
-    String.raw`(?<![\p{N}_])(?<!\p{L}(?![$£€]))` +
-      String.raw`(?<pre>[~≈<>≤≥±+−]\s?)?(?<cur>[$£€]\s?)?` +
-      `(?<num>${NUM})` +
-      String.raw`(?<range>\s?[-‐‑–—]\s?[$£€]?${NUM})?` +
-      "(?<unit>" +
-      [
-        String.raw`\s?%`,
-        String.raw`\s?×`,
-        String.raw`x(?![\p{L}\p{N}])`,
-        String.raw`\/(?:s|sec|min|h|hr|hour|d|day|wk|week|mo|month|yr|year)(?!\p{L})`,
-        String.raw`\/\d+(?![\p{N}\/])`,
-        String.raw`(?:\s|[-‐‑])?(?:milliseconds?|ms|seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|wks?|months?|mos?|years?|yrs?|[KMGT]B)(?![\p{L}\p{N}])`,
-        String.raw`[-‐‑]d(?![\p{L}\p{N}])`,
-        String.raw`(?:s|m|h|d|k|K|M|B|bn)(?![\p{L}\p{N}])`,
-      ].join("|") +
-      ")?" +
-      String.raw`(?<plus>\+(?!\p{N}))?`,
-    "gu",
-  );
+  /* ── figure tokens, and every number that is not one: the grammar is
+     tokenizeFigures, shared with the metadata and llms passes (K10); the masks
+     below are the ones only the page can tell — a tel: link, a heading's
+     section number, a zero-padded step marker ─────────────────────────── */
   const MASK = "\uFFFF"; /* not a letter, digit or space: nothing matches across it */
   const found = [];
   const notFigures = [];
@@ -1112,25 +1255,9 @@ function readFigures() {
     if (heading) not(heading[1].length, heading[1].length + heading[2].length, "a section number opening a heading");
     const marker = /^(\s*)(0\d+)\s*$/.exec(left);
     if (marker) not(marker[1].length, marker[1].length + marker[2].length, "a zero-padded sequence marker (01, 02 …)");
-    for (const [re, reason, keep] of NOT_FIGURE)
-      for (const m of left.matchAll(re)) if (/\d/.test(m[0]) && (!keep || keep(m[0]))) not(m.index, m.index + m[0].length, reason);
-    const here = [];
-    for (const m of left.matchAll(FIGURE)) {
-      const g = m.groups;
-      if (g.pre || g.cur || g.range || g.unit || g.plus) here.push({ run, start: m.index, end: m.index + m[0].length });
-    }
-    for (const f of here) mask(f.start, f.end);
-    found.push(...here);
-    /* what is left: every word still holding a digit */
-    for (const m of left.matchAll(/[^\s\uFFFF\u200B]*\d[^\s\uFFFF\u200B]*/gu)) {
-      const lead = /^[("“‘'[{]*/u.exec(m[0])[0].length;
-      const word = m[0].slice(lead).replace(/[)"”’'\]}.,;:!?]+$/u, "");
-      const d = /\d+(?:[.,]\d+)*/u.exec(word);
-      /* a letter against the digits (S3, 0x1F), or a word hyphened onto them from
-         the left (GPT-4.1), makes it part of a name; "3-step" is still a count */
-      const named = /\p{L}[-‐‑]?$/u.test(word.slice(0, d.index)) || /^\p{L}/u.test(word.slice(d.index + d[0].length));
-      notFigures.push({ run, start: m.index + lead, end: m.index + lead + word.length, reason: named ? "part of a name, version or identifier" : "a bare number — no unit, %, currency, ~ < > ≈ prefix, multiplier or range" });
-    }
+    const t = tokenizeFigures(left);
+    for (const f of t.figures) found.push({ run, start: f.start, end: f.end });
+    for (const x of t.not) notFigures.push({ run, start: x.start, end: x.end, reason: x.reason });
   }
 
   /* the sentence a token sits in, from its run. A full stop straight after a
@@ -1752,35 +1879,59 @@ async function visit(browser, route, width) {
   /* 20 ── last, because it repaints the page */
   if (want(20)) data.contrast = await measureContrast(page);
 
-  /* 8 ── last, because it changes the page. Every <details> is opened: its
-     answer is page content. They share a `name`, and opening one closes the
-     others, so the name goes first. Each is brought into view, so anything that
-     reveals on entry inside it has played before the text is read. */
-  if (want(8)) {
-    const opened = await page.evaluate(() => {
-      const all = [...document.querySelectorAll("details")];
-      for (const d of all) {
-        d.removeAttribute("name");
-        d.open = true;
-      }
-      return all.length;
-    });
-    if (opened) {
-      await page.evaluate(async () => {
-        for (const d of document.querySelectorAll("details")) {
-          d.scrollIntoView({ block: "center" });
-          await new Promise((r) => setTimeout(r, 150));
-        }
-      });
-      await page.waitForTimeout(1700);
-    }
-    data.figures = await page.evaluate(readFigures).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
-  }
+  /* 8 ── last, because it changes the page (readFiguresIn) */
+  if (want(8)) data.figures = await readFiguresIn(page);
 
   data.console = consoleMsgs;
   data.failed = failed;
   await ctx.close();
   return data;
+}
+
+/* 8 ── the figures on a page already scrolled at reading speed. Last, because it
+   changes the page. Every <details> is opened: its answer is page content. They
+   share a `name`, and opening one closes the others, so the name goes first.
+   Each is brought into view, so anything that reveals on entry inside it has
+   played before the text is read. readFigures is evaluated with the grammar,
+   tokenizeFigures, as its argument. */
+async function readFiguresIn(page) {
+  const opened = await page.evaluate(() => {
+    const all = [...document.querySelectorAll("details")];
+    for (const d of all) {
+      d.removeAttribute("name");
+      d.open = true;
+    }
+    return all.length;
+  });
+  if (opened) {
+    await page.evaluate(async () => {
+      for (const d of document.querySelectorAll("details")) {
+        d.scrollIntoView({ block: "center" });
+        await new Promise((r) => setTimeout(r, 150));
+      }
+    });
+    await page.waitForTimeout(1700);
+  }
+  return page.evaluate(`(${readFigures.toString()})(${tokenizeFigures.toString()})`).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+}
+
+/* 8 (K9) ── the figures at a width the full visits do not cover: 768 and 1024,
+   where the tablet layout can show text that neither 390 nor 1440 shows. A fresh
+   page, its fonts settled, one reading-speed scroll, then readFiguresIn. */
+async function visitFigures(browser, route, width) {
+  const ctx = await browser.newContext({ viewport: { width, height: width < 768 ? 844 : 900 }, bypassCSP: true });
+  const page = await ctx.newPage();
+  let loadTimeout = null;
+  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 }).catch((e) => {
+    loadTimeout = String(e?.message || e).split("\n")[0];
+  });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await settle(page, "fonts");
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(2500);
+  const figures = await readFiguresIn(page);
+  await ctx.close();
+  return { figures, loadTimeout };
 }
 
 /* 14 (FAQ) — the FAQPage structured data is the FAQ the page renders:
@@ -1937,6 +2088,20 @@ async function probeNotFound() {
   return { path, status: r.status, masthead: /<header\b[^>]*\bid="masthead"/i.test(html), h1: (html.match(/<h1\b/gi) || []).length, sheets };
 }
 
+/* 8 (K10) ── the llms files: /llms.txt, /llms-full.txt and any other .txt the
+   first links to. An AI reads these as the site's own account of itself. */
+async function fetchLlms() {
+  const files = ["/llms.txt", "/llms-full.txt"];
+  const first = await http(`${BASE}/llms.txt`);
+  for (const m of (first.text || "").matchAll(/\]\((\/[^)\s]+\.txt)\)/g)) if (!files.includes(m[1])) files.push(m[1]);
+  const out = [];
+  for (const f of files) {
+    const r = await http(BASE + f);
+    out.push({ file: f, status: r.status || r.error, text: r.text || "" });
+  }
+  return out;
+}
+
 /* ── run ─────────────────────────────────────────────────────────────────── */
 const started = new Date();
 const sm = await http(`${BASE}/sitemap.xml`);
@@ -1986,6 +2151,14 @@ for (const route of ROUTES)
     visits[`${route}@${w}`] = await visit(browser, route, w);
     if (want(4)) noJs[`${route}@${w}`] = await visitNoJs(browser, route, w);
   }
+/* 8 (K9) ── the figures at the tablet widths the full visits do not cover */
+const figRuns = {};
+if (want(8))
+  for (const route of ROUTES)
+    for (const w of FIGURE_WIDTHS.filter((x) => !WIDTHS.includes(x))) {
+      process.stderr.write(`  reading figures ${route} @${w}\n`);
+      figRuns[`${route}@${w}`] = await visitFigures(browser, route, w).catch((e) => ({ figures: { error: String(e?.message || e).split("\n")[0].slice(0, 200) }, loadTimeout: null }));
+    }
 const widthRuns = {};
 if (want(6) || want(7))
   for (const route of ROUTES)
@@ -2038,6 +2211,11 @@ let notFoundRun = null;
 if (want(31)) {
   process.stderr.write("  an unknown URL, for the 404\n");
   notFoundRun = await probeNotFound().catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+}
+let llmsRun = null;
+if (want(8)) {
+  process.stderr.write("  the llms files, for figures\n");
+  llmsRun = await fetchLlms().catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
 }
 
 const results = [];
@@ -2126,9 +2304,12 @@ check(
       r.count[width] = (r.count[width] || 0) + 1;
       rows.set(key, r);
     };
-    for (const [k, v] of Object.entries(visits)) {
+    /* the full visits at WIDTHS, and the figure reads at FIGURE_WIDTHS (K9) */
+    const reads = [...Object.entries(visits).map(([k, v]) => [k, v.figures, null]), ...Object.entries(figRuns).map(([k, v]) => [k, v.figures, v.loadTimeout])];
+    const widthsRead = new Set(reads.map(([k]) => k.split("@")[1]));
+    for (const [k, r, loadTimeout] of reads) {
       const [route, width] = k.split("@");
-      const r = v.figures;
+      if (loadTimeout) row(F, `load|${k}`, `${at(k)}: the page never reached "load" (${loadTimeout}) — its figures were read as far as it got`, width);
       if (!r || r.error) {
         row(F, `reader|${k}`, `${at(k)}: the figure reader did not run${r?.error ? ` (${r.error})` : ""} — unsure is a failure`, width);
         continue;
@@ -2167,9 +2348,136 @@ check(
       for (const x of r.notFigures) row(I, `not|${route}|${x.tok}|${x.reason}|${x.sentence}`, `${route}: not a figure: "${x.tok}" — ${x.reason} — in "${x.sentence}"`, width);
       I.push(`${at(k)}: ${r.tokens.length} figure(s) — ${n.standalone} standalone, ${n.status} labelled in place, ${n.exempt} exempt, ${n.failing} failing; ${r.exemptions.length} exemption(s); ${r.notFigures.length} number(s) not figures`);
     }
+    /* K10 — figures OUTSIDE the visible text: a page's attributes, meta tags
+       and JSON-LD, and the llms files, read by the same grammar
+       (tokenizeFigures). There is no chip in a meta tag: a figure there carries
+       its status in words after it, or is a term exempted for that instance in
+       content/figure-labels.ts (its reason printed), or is the one allowlisted
+       string (META_ALLOW, printed) — or it fails. */
+    let registry = [];
+    try {
+      registry = loadContent("content/figure-labels.ts").figureLabels || [];
+    } catch (e) {
+      F.push(`content/figure-labels.ts could not be read (${e.message}) — exemptions outside the visible text cannot be checked; unsure is a failure`);
+    }
+    const exemptBy = (text, f) =>
+      registry.find((l) => {
+        if (!("exempt" in l)) return false;
+        for (let a = text.indexOf(l.text); a >= 0; a = text.indexOf(l.text, a + 1)) if (a <= f.start && f.end <= a + l.text.length) return true;
+        return false;
+      });
+    const LABEL_WORD = /(?<![\p{L}\p{N}])(shipped|target)(?![\p{L}\p{N}])/iu;
+    /* a status in words: shipped/target after the figure, before the end of its
+       sentence, with no OTHER figure between (the same figure restated may be) */
+    const labelledAfter = (text, figs, i) => {
+      const f = figs[i];
+      const same = text.slice(f.start, f.end);
+      const next = figs.slice(i + 1).find((g) => text.slice(g.start, g.end) !== same);
+      let end = next ? next.start : text.length;
+      const stop = /[.!?](?=\s|$)/g;
+      stop.lastIndex = f.end;
+      const m = stop.exec(text);
+      if (m && m.index < end) end = m.index + 1;
+      return LABEL_WORD.test(text.slice(f.end, end));
+    };
+    const around = (text, f) => text.slice(Math.max(0, f.start - 60), Math.min(text.length, f.end + 60)).replace(/\s+/g, " ").trim();
+    const seenMeta = new Set();
+    for (const route of ROUTES) {
+      const strings = [];
+      for (const [k, v] of Object.entries(visits)) if (k.split("@")[0] === route) strings.push(...(v.metaStrings || []));
+      const walkLd = (o, p) => {
+        if (typeof o === "string") {
+          if (/\d/.test(o) && !/(^|\.)(@context|@type|@id|url|item|image|logo|sameAs|mainEntityOfPage|contentUrl|thumbnailUrl|email)$/.test(p)) strings.push({ where: `JSON-LD ${p}`, text: o });
+        } else if (o && typeof o === "object") for (const [key, val] of Object.entries(o)) walkLd(val, `${p}.${key}`);
+      };
+      for (const raw of visits[`${route}@${WIDTHS[0]}`]?.jsonld || []) {
+        try {
+          const j = JSON.parse(raw);
+          for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) walkLd(n, [].concat(n["@type"] || "node")[0]);
+        } catch {
+          /* check 14 reports it */
+        }
+      }
+      for (const s of strings) {
+        const key = `${route}|${s.where}|${s.text}`;
+        if (seenMeta.has(key)) continue;
+        seenMeta.add(key);
+        const figs = tokenizeFigures(s.text).figures;
+        figs.forEach((f, i) => {
+          const fig = s.text.slice(f.start, f.end);
+          if (META_ALLOW.some((a) => a.route === route && a.text === s.text.trim())) I.push(`${route}: allowlisted — "${fig}" in ${s.where}: "${s.text}" — the one scoped exception (CLAUDE.md, Hard rules)`);
+          else if (labelledAfter(s.text, figs, i)) I.push(`${route}: "${fig}" in ${s.where} → its status in words — "${around(s.text, f)}"`);
+          else {
+            const ex = exemptBy(s.text, f);
+            if (ex) I.push(`${route}: exempt "${fig}" in ${s.where} — content/figure-labels.ts "${ex.text}": "${ex.exempt}"`);
+            else F.push(`${route}: "${fig}" in ${s.where} has no shipped/target label — "${around(s.text, f)}" — a figure outside the visible text carries its status or goes`);
+          }
+        });
+      }
+    }
+    /* the llms files: a table row cell by cell — the row's Status cell labels its
+       first figure, any other figure needs its own status in its cell — and prose
+       paragraph by paragraph, soft line breaks joined */
+    if (!llmsRun || llmsRun.error) F.push(`the llms files could not be read${llmsRun?.error ? ` (${llmsRun.error})` : ""} — unsure is a failure`);
+    else
+      for (const file of llmsRun) {
+        if (file.status !== 200) {
+          F.push(`${file.file} answered ${file.status} — its figures cannot be checked`);
+          continue;
+        }
+        const blocks = [];
+        let para = null;
+        file.text.split("\n").forEach((line, n) => {
+          if (/^\s*\|/.test(line)) {
+            para = null;
+            if (!/^\s*\|[\s:|-]+\|?\s*$/.test(line)) blocks.push({ row: true, text: line, line: n + 1 });
+            return;
+          }
+          if (!line.trim() || /^\s*---\s*$/.test(line)) {
+            para = null;
+            return;
+          }
+          if (!para || /^\s*(#|[-*+]\s|\d+\.\s)/.test(line)) blocks.push((para = { row: false, text: "", line: n + 1, starts: [] }));
+          para.starts.push(para.text ? para.text.length + 1 : 0);
+          para.text += (para.text ? " " : "") + line;
+          if (/^\s*#/.test(line)) para = null;
+        });
+        let labelled = 0;
+        let exempt = 0;
+        const judge = (text, figs, i, lineOf, rowLabel) => {
+          const f = figs[i];
+          const fig = text.slice(f.start, f.end);
+          if (rowLabel || labelledAfter(text, figs, i)) return void labelled++;
+          const ex = exemptBy(text, f);
+          if (ex) {
+            exempt++;
+            I.push(`${file.file} line ${lineOf(f.start)}: exempt "${fig}" — content/figure-labels.ts "${ex.text}": "${ex.exempt}"`);
+          } else F.push(`${file.file} line ${lineOf(f.start)}: "${fig}" has no shipped/target label — in "${around(text, f)}"`);
+        };
+        for (const b of blocks) {
+          if (b.row) {
+            const cells = b.text.split("|").slice(1, -1);
+            const rowStatus = cells.some((c) => /^\s*`?(shipped|target)`?\s*$/i.test(c));
+            let first = true;
+            for (const c of cells) {
+              const figs = tokenizeFigures(c).figures;
+              figs.forEach((_, i) => {
+                judge(c, figs, i, () => b.line, first && rowStatus);
+                first = false;
+              });
+            }
+          } else {
+            const figs = tokenizeFigures(b.text).figures;
+            const lineOf = (off) => b.line + b.starts.filter((s) => s <= off).length - 1;
+            figs.forEach((_, i) => judge(b.text, figs, i, lineOf, false));
+          }
+        }
+        I.push(`${file.file}: ${labelled} figure(s) with their status, ${exempt} exempt`);
+      }
+
     for (const r of rows.values()) {
       const n = Math.max(...Object.values(r.count));
-      r.out.push(`${r.line}${n > 1 ? ` (×${n})` : ""}${r.widths.size < WIDTHS.length ? ` (at ${[...r.widths].join(", ")} only)` : ""}`);
+      r.out.push(`${r.line}${n > 1 ? ` (×${n})` : ""}${r.widths.size < widthsRead.size ? ` (at ${[...r.widths].join(", ")} only)` : ""}`);
     }
   },
 );

@@ -108,6 +108,9 @@ const labels: FigureLabel[] = [
   { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
   { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },
   { text: "30\u2011minute intro call", exempt: "The length of the intro call offered above the booking calendar: a meeting length, not a performance claim" },
+  /* Not visible text: the booking calendar frame's title, its accessible name
+     (components/techwix/Contact.tsx). verify-site check 8 reads attributes too. */
+  { text: "Schedule a 30-minute call", exempt: "The length of the intro call the booking calendar's frame books, as its title names it: a meeting length, not a performance claim" },
   { text: "30-second TTL", exempt: "How long the homepage's cache lane keeps a result in Redis: a configured TTL, not a performance claim" },
 
   /* /work/warmchats — hardcoded in its component; the copy lock yields to the label rule. */
