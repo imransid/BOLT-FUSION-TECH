@@ -726,11 +726,14 @@ at the end, which means nobody has decided yet.
     review, 2026-09-16). The field has no border, and its background is the
     ground, `#07090D`, which is also the canvas's clear colour. The grid floor
     and the blue pool under the core fade to exactly that ground by r = 2.8
-    (`FLOOR_FADE` in `scene.ts`). The camera frames the system so that at
-    480x560, with the pointer at either parallax extreme, the fade ends at
-    least 43px inside every edge, the rings at least 80px, and every module,
-    at every orbit angle, at least 35px, on bounding spheres. That was checked
-    by projection and on rendered frames at t = 0, 20, 30 and 45s. The poster
+    (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for**,
+    and 480x560 — the narrowest the field goes — is the safe area nothing
+    important may leave. With the pointer at either parallax extreme, at 480
+    the fade ends at least 23px inside every edge, the rings at least 63px and
+    every module, at every orbit angle, at least 13px, on bounding spheres; at
+    660 the same objects clear the sides by at least 103px and the top and
+    bottom by at least 65px and 50px. That was checked by projection and on
+    rendered frames at t = 0, 20, 30 and 45s. The poster
     script refuses a capture whose 16px edge band is not the ground, and the
     probe reads the live canvas's edge band. It is done in the scene itself:
     no overlay and no post-processing, since anything painted over the poster
@@ -1044,8 +1047,8 @@ imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
-**The posters:** `scene-poster-v1-660.avif` 4.9KB, `-1320.avif` 10.3KB,
-`-660.webp` 9.0KB, `-1320.webp` 22.2KB (AVIF 4:4:4 at quality 56, WebP 82).
+**The posters:** `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
+`-660.webp` 10.3KB, `-1320.webp` 24.8KB (AVIF 4:4:4 at quality 56, WebP 82).
 The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
 frame of hard-edged shapes that dissolves into the ground compresses far
 better than a cloud of points, which takes weight off the LCP path. They were

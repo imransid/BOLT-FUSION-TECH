@@ -106,19 +106,23 @@ const SLOW_FOR_MS = 2000;
 
 /* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
 const FOV = 30;
-const CAM_DIST = 14.6;
-const CAM_ELEV = 0.66; // radians above the horizon: a raised, drawing-board view
-const CAM_TARGET_Y = 0.8;
+const CAM_DIST = 13.1;
+const CAM_ELEV = 0.72; // radians above the horizon: a raised, drawing-board view
+const CAM_TARGET_Y = 0.88;
 
 /* The scene DISSOLVES into the page; it never stops at a box. The canvas
    clears to the field's own ground, and the floor's grid and light pool fade
    to exactly that ground by FLOOR_FADE.to. Framed with the camera above, at
-   480x560 (the narrowest field) and at both parallax extremes, the fade circle
-   ends >= 43px inside every edge, the rings >= 80px, and every module at every
-   orbit angle >= 35px, on bounding spheres (a projection check outside the
-   repo, confirmed on rendered frames, 2026-09-16). The camera's height spends the frame's spare vertical room:
-   raising it does not move the side margins, which only the orbits' radii set. So no line, ring or module reaches a canvas edge at 480–660px
-   wide. */
+   660x560 — the primary frame — and inside 480x560, the narrowest the field
+   goes, which is the safe area nothing important may leave. At 480, with the
+   pointer at either parallax extreme, the fade circle ends >= 23px inside
+   every edge, the rings >= 63px, and every module at every orbit angle
+   >= 13px, on bounding spheres; at 660 the same objects clear the sides by
+   >= 103px and the top and bottom by >= 65px and >= 50px (a projection check
+   outside the repo, confirmed on rendered frames, 2026-09-16). The camera's
+   height spends the frame's spare vertical room: raising it does not move the
+   side margins, which only the orbits' radii set. So no line, ring or module
+   reaches a canvas edge at 480–660px wide. */
 const FLOOR_FADE = { from: 1.1, to: 2.8 };
 const PARALLAX_AZ = 0.11; // radians of yaw at the pointer's extreme
 const PARALLAX_EL = 0.045; // radians of pitch at the pointer's extreme
@@ -145,7 +149,7 @@ type Tier = {
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
 };
-const INNER: Tier = { radius: 1.75, y: 2.05, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.45 };
+const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65 };
 const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
 
 /* Pulses: two per connection, one outward and one back. */
@@ -437,7 +441,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const outerSlots: Slot[] = [
     { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55 },
     { build: buildErp, angle: deg(115), yaw: -0.5, scale: 1.4 },
-    { build: buildPos, angle: deg(250), yaw: 0.5, scale: 1.4 },
+    { build: buildPos, angle: deg(265), yaw: 0.5, scale: 1.4 },
   ];
 
   type BuiltTier = {
