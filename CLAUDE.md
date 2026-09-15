@@ -446,6 +446,18 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   `/_next/image?url=/projects/case-fnb-smart-search.png&w=640&q=75` — never got
   an answer at `/` @390 in the suite's sequence (four runs of four; never in a
   fresh browser); unbounded, the suite hung or died instead of reporting it.
+  **Reproduced 2026-09-15, outside the suite:** on a `next start` that had lived
+  through a load spike (load average 30–40), that URL asked for with a browser's
+  `Accept: image/avif,…` gave no answer in 60s, while every other width of the
+  same image, and every other image, answered in milliseconds. On a freshly
+  started server it answered 200 AVIF in 0.22s. It is one optimizer request
+  stuck in the long-running process, and every later request for that variant
+  waits on it; restart the server before a run. Vercel's optimizer is not this
+  code path.
+- **6, 14, 19, 21 and 23, hardened 2026-09-15** — a run that dies (a load that
+  never comes, a timeout under load) is a finding in its own check, "unsure is a
+  failure", instead of an uncaught error that ends the whole suite with no
+  results.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
