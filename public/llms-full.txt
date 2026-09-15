@@ -10,6 +10,9 @@ measured. Nothing here is unlabelled.
 
 Live at https://warmchats.com · Write-up: /work/warmchats
 
+Built by Bolt Fusion for WarmChats, Inc., which owns the product. Our role:
+backend lead.
+
 ## The problem
 
 Real estate leads go cold fast. An agent who replies first usually wins the
@@ -89,6 +92,52 @@ to answer. That is what makes the unit economics predictable as volume grows.
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 
 Source: restaurant discovery platform.
+
+---
+
+# Everything else on /work, labelled by who built it
+
+Each project below carries one of three labels on the site. Credit it as
+labelled: a product built for another company is theirs, and an engineer's
+track record is not Bolt Fusion's work.
+
+## Bolt Fusion projects, built by Bolt Fusion
+
+**FanLock** (https://fanlock-pi.vercel.app/). A content-protection platform for
+online creators that scans Telegram, Google and social media for leaked content
+and automates takedowns. Built by Bolt Fusion; our role: backend lead. Stack:
+Next.js, Django. Live.
+
+**Balanzify** (https://balanzify.com/). An HR and payroll platform, built as
+NestJS microservices that all speak GraphQL: onboarding, payslips, attendance,
+tax logic and leave management. Built by Bolt Fusion for Balanzify Inc., which
+owns the product. Stack: NestJS, PostgreSQL, GraphQL. In production,
+Jul 2025 – ongoing.
+
+**Go Style Business** (https://business.gostyle.uk/). A salon business
+management platform, in production serving real salons. Built by Bolt Fusion;
+our role: backend lead, on a multi-tenant NestJS and Prisma backend on
+PostgreSQL, deployed on Docker Swarm.
+
+## In-house, our own product
+
+**OPAL** (https://opal-sooty.vercel.app/). A curated fashion and tech e-commerce
+store we co-founded and built: catalogue, cart, secure checkout and order
+tracking. Stack: Next.js, Firebase, Firestore. Live.
+
+## Our engineers' track record
+
+Work our engineers shipped at previous employers, credited to them and to those
+employers. None of it is Bolt Fusion's work, and none of the companies below is
+our client.
+
+**Go Smart**, Modhumoti Bank's digital banking app. Built at Brain Station 23,
+2020–2022, where our engineer was a Software Engineer on its secure backend
+services. A production system still serving live customers.
+
+**NIdle Finishing**, finishing-stage digitisation for a ready-made-garments
+factory floor. Built at Intellier, Nov 2023 – Feb 2024, where our engineer was a
+Senior Software Engineer on its React Native app over GraphQL and NestJS.
 
 ---
 

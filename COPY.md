@@ -138,6 +138,51 @@ on a two-column grid is a different decision, and it has not been made.
 homepage. The section is now the clone design's case-study row — a larger card
 beside a smaller one, stacked on phones. The copy above is unchanged.
 
+## 4a. /work — every approved project, labelled by who built it (decided 2026-09-15)
+
+The homepage section above keeps its two write-ups. /work shows every project the owner
+approved on 2026-09-15, in four sections, each card labelled with who built it (CLAUDE.md,
+"Projects and attribution"). The words and facts are the owner's portfolio's
+(imran-khan-chi.vercel.app); nothing is invented. OPAL is back, as an in-house product with a
+real screenshot of the live store and never the AI mockup, so "Why two, not three" still holds
+for the homepage and no longer for /work.
+
+**Banner** — the approved lead stays, and a second line follows it:
+> Below the write-ups: the other products we built, for clients and for ourselves, and what
+> our engineers shipped at previous employers. Every card says who built it.
+
+**Sections**, in order: Case studies. Bolt Fusion projects. In-house products. Our engineers'
+track record, with one line:
+> Work our engineers shipped at previous employers — credited to them, not claimed as ours.
+
+**Labels** — one per kind, above the project's name on every card:
+- Case study: built by Bolt Fusion (for WarmChats, Inc.)
+- Delivered project: built by Bolt Fusion (for Balanzify Inc.)
+- In-house product: our own, not built for a client
+- Track record: built by our engineer at Brain Station 23 / Intellier, not by Bolt Fusion
+
+**Projects**:
+- Case studies: WarmChats (built for WarmChats, Inc.; backend lead) and restaurant search.
+- Bolt Fusion projects: FanLock (backend lead), Balanzify (built for Balanzify Inc.; in
+  production, Jul 2025 – ongoing) and Go Style Business (backend lead; in production).
+- In-house: OPAL.
+- Our engineers' track record: Go Smart (Modhumoti Bank's digital banking app, built at Brain
+  Station 23, 2020–2022; Software Engineer) and NIdle Finishing (built at Intellier, Nov 2023 –
+  Feb 2024; Senior Software Engineer). No screenshots: the products are someone else's.
+
+**Homepage link** — `See all work (N projects)`, beside `See all case studies`. N is counted
+from `content/projects.ts`, never typed: the published projects that are ours, without the track
+record.
+
+**Meta description for /work** — "Architecture-level write-ups of the systems we shipped, the
+other products we built, and our engineers' track record, each labelled with who built it."
+
+**Excluded — never write them:** the Jumatechs apps (Myrep, IQ Test, Cleva, Bidesh App), Bangladesh
+RAB, Team Pharma and JTI Sheikh. The reasons are in CLAUDE.md.
+
+**Held back until the owner answers:** Playzone (its live URL shows a different product) and
+Bazzile and GodConnect Online (no employer on record). The reasons are in CLAUDE.md.
+
 ---
 
 ## 5. The engineers

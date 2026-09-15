@@ -157,7 +157,26 @@
           "Multi-tenant microservice, tiered search, observable by design",
           "Intelligent restaurant search",
           "Conversational discovery with explicit routing, predictable AI u",
-          "See all case studies"
+          "See all case studies",
+          "See all work"
+        ]
+      },
+      {
+        "item": "Excluded projects",
+        "proves": "Nothing: the owner excluded them on 2026-09-15 (CLAUDE.md, \"Projects and attribution\")",
+        "status": "cut",
+        "cut": "excluded 2026-09-15 — the owner's current employer's apps, a client under US Treasury sanctions, and two the owner struck",
+        "needles": [
+          "Jumatechs",
+          "Myrep",
+          "IQ Test",
+          "Cleva",
+          "Bidesh",
+          "Bangladesh RAB",
+          "Rapid Action Battalion",
+          "rab.gov.bd",
+          "Team Pharma",
+          "JTI Sheikh"
         ]
       },
       {
@@ -268,7 +287,20 @@
         "status": "required",
         "needles": [
           "The systems, and how they were built.",
-          "Two write-ups so far. Each one covers the actual architecture —"
+          "Two write-ups so far. Each one covers the actual architecture —",
+          "Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
+        ]
+      },
+      {
+        "item": "Case studies, each labelled built by Bolt Fusion",
+        "proves": "Who built the two write-ups, and for whom (decided 2026-09-15)",
+        "status": "required",
+        "needles": [
+          "Case studies",
+          "Case study: built by Bolt Fusion for WarmChats, Inc.",
+          "Backend lead: the Django CRM core, NestJS and Flask services, Telnyx voice and SMS, and Claude for the messaging",
+          "warmchats.com",
+          "The multi-tenant restaurant discovery microservice"
         ]
       },
       {
@@ -304,6 +336,86 @@
           "pgvector",
           "Redis",
           "Read the write-up for Intelligent restaurant search"
+        ]
+      },
+      {
+        "item": "Bolt Fusion projects: FanLock, Balanzify, Go Style Business",
+        "proves": "Deliveries the owner confirmed on 2026-09-15, each labelled built by Bolt Fusion — Balanzify's for Balanzify Inc., which owns it",
+        "status": "required",
+        "needles": [
+          "Bolt Fusion projects",
+          "FanLock",
+          "Delivered project: built by Bolt Fusion",
+          "A content-protection platform for online creators that scans Telegram, Google and social media for leaked content and automates takedowns.",
+          "fanlock-pi.vercel.app",
+          "Balanzify",
+          "Delivered project: built by Bolt Fusion for Balanzify Inc.",
+          "An HR and payroll platform, built as NestJS microservices that all speak GraphQL.",
+          "The platform's microservices: onboarding, payslips, attendance, tax logic and leave management",
+          "Jul 2025 – ongoing",
+          "balanzify.com",
+          "Go Style Business",
+          "A salon business management platform, in production serving real salons.",
+          "Backend lead: a multi-tenant NestJS and Prisma backend on PostgreSQL, deployed on Docker Swarm",
+          "business.gostyle.uk",
+          "In production",
+          "Live"
+        ]
+      },
+      {
+        "item": "In-house products: OPAL",
+        "proves": "Our own product, with a real screenshot of the live store — never the AI mockup",
+        "status": "required",
+        "needles": [
+          "In-house products",
+          "OPAL",
+          "In-house product: our own, not built for a client",
+          "A curated fashion and tech e-commerce store.",
+          "Co-founded and built it: catalogue, cart, secure checkout and order tracking",
+          "opal-sooty.vercel.app"
+        ]
+      },
+      {
+        "item": "Our engineers’ track record: Go Smart, NIdle Finishing",
+        "proves": "Work our engineers shipped at previous employers, credited to them — the employer and the engineer's role on every card, never called our client",
+        "status": "required",
+        "needles": [
+          "Our engineers’ track record",
+          "Work our engineers shipped at previous employers — credited to them, not claimed as ours.",
+          "Go Smart",
+          "Track record: built by our engineer at Brain Station 23, not by Bolt Fusion",
+          "Modhumoti Bank's digital banking app, a production system still serving live customers.",
+          "Our engineer’s role",
+          "Software Engineer: secure backend services",
+          "Built at",
+          "Brain Station 23",
+          "2020–2022",
+          "The Daily Star",
+          "Google Play",
+          "NIdle Finishing",
+          "Track record: built by our engineer at Intellier, not by Bolt Fusion",
+          "Finishing-stage digitisation for a ready-made-garments factory floor.",
+          "Senior Software Engineer: a React Native app over GraphQL and NestJS",
+          "Nov 2023 – Feb 2024",
+          "Intellier's case study"
+        ]
+      },
+      {
+        "item": "Excluded projects",
+        "proves": "Nothing: the owner excluded them on 2026-09-15 (CLAUDE.md, \"Projects and attribution\")",
+        "status": "cut",
+        "cut": "excluded 2026-09-15 — the owner's current employer's apps, a client under US Treasury sanctions, and two the owner struck",
+        "needles": [
+          "Jumatechs",
+          "Myrep",
+          "IQ Test",
+          "Cleva",
+          "Bidesh",
+          "Bangladesh RAB",
+          "Rapid Action Battalion",
+          "rab.gov.bd",
+          "Team Pharma",
+          "JTI Sheikh"
         ]
       },
       {

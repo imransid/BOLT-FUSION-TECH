@@ -3,7 +3,7 @@
  *  which is server-only. */
 export * from "./schema";
 export type { SiteContent, SectionId } from "./site-schema";
-export { projects } from "./projects";
+export { projects, projectSections } from "./projects";
 export { metrics } from "./metrics";
 export { services } from "./services";
 export { lanes, type Lane } from "./architecture";
