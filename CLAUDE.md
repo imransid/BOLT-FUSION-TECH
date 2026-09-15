@@ -273,6 +273,9 @@ licence beside them, read at build time.
   WebSite, Service, FAQPage, Person (only engineers with a verified LinkedIn),
   BreadcrumbList. `/work` and both case studies emit their own; each case study
   is BreadcrumbList + Article. Breadcrumbs point at pages, never at anchors.
+  `/work` is named "Case studies" in every breadcrumb — its own and the
+  write-ups' — as the navigation names it, and each Article's headline is its
+  page's h1, from the same source the page renders (A7, 2026-09-15).
 - **FAQPage is generated from the FAQ the page renders** — the same `faq.items`
   the section is given, and only when the section renders. There is no second
   copy to keep in sync. verify-site check 14 compares them question for
@@ -469,7 +472,8 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
 - **25, rewritten** — no WebGL at 390 or 768, as a phone, or under reduced
   motion at any width, and until the renderer lands none on `/` at all: a
   `getContext` hook is installed before any page script, on every visit and on
-  dedicated runs. No three.js or @react-three chunk on any page. Ready for the
+  dedicated runs (extended in the review fix pass, below: workers, every frame,
+  a first input, 1024, touch tablets and Save-Data). No three.js or @react-three chunk on any page. Ready for the
   renderer behind `WEBGL_ON_HOME`: a renderer chunk (any script asking for a
   WebGL context) is at most 15KB gzipped, requested after the load event, and
   never at 390 or 768 or under reduced motion. Its font check reads every route:
@@ -478,9 +482,10 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   headline, subtext, call to action and every proof-strip figure with its
   label, status and source link are in the served HTML with scripts stripped;
   the final `largest-contentful-paint` entry is `img[data-hero-poster]`, by
-  identity, at 390 (also as a phone), 768 and 1440, and a canvas or anything
-  else fails; the poster has `width`, `height` and `fetchpriority="high"` and is
-  never `loading="lazy"`.
+  identity, at 390 (also as a phone), 768, 1024, 1025, 1280 (also at DPR 2) and
+  1440 — the last four added in the review fix pass (below) — and a canvas or
+  anything else fails; the poster has `width`, `height` and
+  `fetchpriority="high"` and is never `loading="lazy"`.
 - **29, new** — the performance budget (*Performance targets*, below).
 - **31, rewritten 2026-09-15 — one design.** It guarded the split while two
   designs coexisted; it now guards the one. Every page loads a stylesheet of
@@ -494,14 +499,16 @@ the needle at the boundary (`8716ba5`); it never deletes a required word.
   With `--repo`, the tracked files hold no font but Barlow's and Jost's, and no
   source file holds a retired class, `data-reveal`, framer-motion, three.js,
   `next/font/local`, Tailwind, or a `next/font/google` face but Barlow and Jost.
-- **20, capture corrected 2026-09-15** — the full-page capture it samples paints
-  a fixed or sticky box where the current scroll offset puts it. At the bottom
-  of a page the headroom header is slid up just out of view, and the capture
-  painted it over the text in the band above the last viewport: its white bar,
-  logo tile and blue button became the "ground" under body text on four inner
-  pages, where no reader ever sees the header. Text inside such boxes was
-  already unmeasured; the boxes are now hidden for the capture, and the check's
-  info names every one. No text leaves the measurement.
+- **20, capture corrected 2026-09-15, then rewritten** — the full-page capture it
+  sampled painted a fixed or sticky box where the current scroll offset put it.
+  At the bottom of a page the headroom header is slid up just out of view, and
+  the capture painted it over the text in the band above the last viewport: its
+  white bar, logo tile and blue button became the "ground" under body text on
+  four inner pages, where no reader ever sees the header. Hiding those boxes for
+  the capture fixed that and broke the reverse — text over a fixed ground was
+  measured against the page behind it, and the header's text was never
+  measured. The review fix pass replaced the full-page capture with captures
+  viewport by viewport (below).
 - **18, extended** — prints how many elements carry `data-logotype` on each
   page, and fails a page that renders more than one.
 - **10, 2, 4 and 22, extended** — a visit's settle waits (every image decoded,
