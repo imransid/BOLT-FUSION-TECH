@@ -5,6 +5,8 @@ import PageBanner from "@/components/techwix/PageBanner";
 import PageShell from "@/components/techwix/PageShell";
 import { getSiteUrl } from "@/lib/site-url";
 
+import { alt as ogAlt } from "../opengraph-image";
+
 const LAST_UPDATED = "3 June 2026";
 const CONTACT_EMAIL = "hello@boltfusiontech.com";
 
@@ -27,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: new URL("/opengraph-image", site).toString(),
           width: 1200,
           height: 630,
-          alt: "Bolt Fusion Tech — We build AI systems that are still running in six months.",
+          alt: ogAlt,
         },
       ],
     },
@@ -56,7 +58,7 @@ const sections: Section[] = [
     body: (
       <p>
         We collect only what we need: information you give us (name, email,
-        company, message details when you contact us or book a call); basic
+        company, message details when you contact us or schedule a call); basic
         anonymised usage data (pages visited, browser type, approximate region);
         and cookies that help the site function and measure traffic. We do{" "}
         <strong>not</strong> sell your personal
