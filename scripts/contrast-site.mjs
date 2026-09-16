@@ -31,6 +31,8 @@ const T = {
   target: "#fbbf24",
   focus: "#8ab4ff",
   white: "#ffffff",
+  paper: "#ffffff",
+  paperMuted: "#4a5266",
 };
 
 const hex = (h) => [0, 2, 4].map((i) => parseInt(h.replace("#", "").slice(i, i + 2), 16));
@@ -79,6 +81,8 @@ const pairs = [
   ["brand", "raised", UI, "a tier meter step on the chip (non-text)"],
   ["focus", "ground", UI, "the focus ring on the ground (non-text)"],
   ["focus", "surface", UI, "the focus ring in the footer and drawer (non-text)"],
+  ["paperMuted", "paper", TEXT, "the booking calendar panel's caption and placeholder (/contact)"],
+  ["brandFill", "paper", UI, "that panel's focus ring and links on white (non-text)"],
 ];
 
 const color = (c) => (typeof c === "string" ? (T[c] ? hex(T[c]) : hex(c)) : c);

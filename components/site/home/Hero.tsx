@@ -1,3 +1,4 @@
+import HeroScene from "@/components/field/HeroScene";
 import type { SiteContent } from "@/content/site-schema";
 
 import Cta, { ctaKind } from "../Cta";
@@ -39,9 +40,10 @@ function headlineLines(title: string): [string, string] {
  * no layout shift); under reduced motion it is still, and the pause control
  * stops it (components/site/MotionToggle).
  *
- * The 3D wave mounts its scene inside the field, over the poster, and swaps the
- * poster for a rendered frame of that scene (under a new file name: /hero/* is
- * served immutable).
+ * <HeroScene /> (components/field) mounts the three.js scene inside the field,
+ * over the poster, at >=1025px with a fine pointer, no Save-Data and motion
+ * allowed, after LCP and load. The poster is that scene's first frame, t = 0
+ * (scene-poster-v1-*: /hero/* is served immutable, so a re-render is v2).
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   const [first, rest] = headlineLines(hero.title);
@@ -68,15 +70,15 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
           <div className="bf-hero__stage">
             <div className="bf-hero__field" aria-hidden="true" data-hero-field>
               <picture>
-                <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/field-poster-660.avif" />
-                <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/field-poster-660.webp" />
-                <source type="image/avif" srcSet="/hero/field-poster-660.avif 660w, /hero/field-poster-1320.avif 1320w" sizes={SIZES} />
-                <source type="image/webp" srcSet="/hero/field-poster-660.webp 660w, /hero/field-poster-1320.webp 1320w" sizes={SIZES} />
+                <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/scene-poster-v1-660.avif" />
+                <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/scene-poster-v1-660.webp" />
+                <source type="image/avif" srcSet="/hero/scene-poster-v1-660.avif 660w, /hero/scene-poster-v1-1320.avif 1320w" sizes={SIZES} />
+                <source type="image/webp" srcSet="/hero/scene-poster-v1-660.webp 660w, /hero/scene-poster-v1-1320.webp 1320w" sizes={SIZES} />
                 {/* The LCP poster: a plain <img> in a <picture>, never next/image, so its fetch priority, size and formats are exactly what the served HTML says, with no optimizer round trip. */}
                 <img
                   data-hero-poster
                   className="bf-hero__poster"
-                  src="/hero/field-poster-660.webp"
+                  src="/hero/scene-poster-v1-660.webp"
                   alt=""
                   aria-hidden="true"
                   width={660}
@@ -84,7 +86,7 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
                   fetchPriority="high"
                 />
               </picture>
-              {/* HeroScene mounts here: components/field/HeroScene (3D wave) */}
+              <HeroScene />
             </div>
           </div>
           <MotionToggle />

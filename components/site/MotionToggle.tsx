@@ -20,7 +20,12 @@ const subscribeNothing = () => () => {};
  * scene stops its loop on `paused: true` and resumes on `false`; the CSS drift
  * reads the attribute.
  *
- * In the server HTML it is `hidden`: without JavaScript it could do nothing.
+ * In the server HTML it is invisible: without JavaScript it could do nothing.
+ * It is `visibility: hidden` (so neither focusable nor read) until it carries
+ * `data-ready` after mount, and app/site.css shows it only where something
+ * moves. It keeps its space the whole time, so appearing never shifts the page.
+ * As `hidden` it moved the hero text 42px when it appeared: CLS 0.0085 at 1440
+ * when the scene went live, and 0.0245 at 390 at hydration (2026-09-16).
  */
 export default function MotionToggle() {
   const [paused, setPaused] = useState(false);
@@ -40,7 +45,7 @@ export default function MotionToggle() {
   };
 
   return (
-    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle} hidden={!mounted}>
+    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle} data-ready={mounted ? "" : undefined}>
       <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
         {paused ? <path d="M4 2.5v11L13 8z" fill="currentColor" /> : <path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor" />}
       </svg>

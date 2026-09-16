@@ -3,20 +3,23 @@ import { Barlow, Jost } from "next/font/google";
 import "./techwix.css";
 import "./site.css";
 
-import { CANONICAL_DESCRIPTION, COMPANY_LINE } from "@/content/canonical";
+import { CANONICAL_DESCRIPTION } from "@/content/canonical";
 import { getSiteUrl } from "@/lib/site-url";
 
 /* The site's one root layout, for every page and the 404.
 
-   Two stylesheets, in this order, until the inner pages move (owner's
-   redesign, 2026-09-16):
-     app/techwix.css  the older design, still under /work, both write-ups, the
-                      privacy policy and the 404 — the next wave moves each onto
-                      the redesign and then deletes this file;
-     app/site.css     the redesign: the graphite ground, the type ramp, the
-                      shell (header, drawer, footer) on every page, the homepage
-                      and /contact. Every class is `bf-`, so nothing in it
-                      restyles the older pages' bodies.
+   The stylesheet is app/site.css: the redesign (owner, 2026-09-16) — the
+   graphite ground, the type ramp, the shell (header, drawer, footer) on every
+   page, the homepage and /contact. Every class is `bf-`, so nothing in it
+   restyles the older pages' bodies.
+
+   The older design's app/techwix.css is loaded here too, first, until the next
+   wave moves the pages still in it (/work, both write-ups, the privacy policy,
+   the 404) and deletes it. It cannot move to those pages alone: the 404
+   boundary is bundled into every route's layout tree, so a stylesheet the 404
+   imports reaches every page anyway — as a SECOND render-blocking file, which
+   measured worse on the homepage's LCP than one combined file (verify-site
+   check 29, 2026-09-16: 1,352ms against 1,204ms).
 
    The faces: Barlow 500 / 600 / 700 and Jost 400 / 500 / 600 — no new family
    (SPEC §3; verify-site checks 2 and 31). All normal, no italic. A weight
@@ -32,9 +35,13 @@ import { getSiteUrl } from "@/lib/site-url";
 const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap", preload: true });
 const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap", preload: true });
 
-/* The canonical description, then the company line (COPY.md, "Company
-   description — canonical"; changed by the owner on 2026-09-16). */
-const DESCRIPTION = `${CANONICAL_DESCRIPTION} ${COMPANY_LINE}`;
+/* The canonical description, alone: a meta description is 50–160 characters
+   (verify-site check 26) and the canonical line is 117 of them, so nothing
+   follows it here. COPY.md, "Company description — canonical"; the owner
+   changed the line on 2026-09-16. The fuller description — the company line,
+   what we build, how we work — is the Organization node's
+   (lib/structured-data.ts), which has no length limit. */
+const DESCRIPTION = CANONICAL_DESCRIPTION;
 const OG_TITLE = "Bolt Fusion Tech — Build what's next.";
 
 export const viewport: Viewport = {

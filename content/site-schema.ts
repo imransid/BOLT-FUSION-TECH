@@ -398,7 +398,19 @@ export const siteContentSchema = z
       emailLabel: z.string(),
       emailHref: safeHref,
       emailAddress: z.string().email(),
-      schedule: z.strictObject({ title: z.string().min(1), blurb: z.string().min(1), frameTitle: z.string().min(1) }),
+      schedule: z.strictObject({
+        title: z.string().min(1),
+        blurb: z.string().min(1),
+        frameTitle: z.string().min(1),
+        /** Whose calendar this is and who hosts it, on the panel itself. */
+        caption: z.string().min(1),
+        /** Inside the reserved frame, behind the iframe: what should appear there. */
+        placeholder: z.string().min(1),
+        /** The same place, raised above the frame when the calendar never loads. */
+        stalled: z.string().min(1),
+        /** Always visible under the panel, for a browser that blocks Calendly. */
+        fallbackNote: z.string().min(1),
+      }),
       project: z.strictObject({
         title: z.string().min(1),
         lead: z.string().min(1),
@@ -417,6 +429,17 @@ export const siteContentSchema = z
     for (const key of ["description", "ogDescription"] as const)
       if (!c.meta[key].startsWith(CANONICAL_DESCRIPTION))
         ctx.addIssue({ code: "custom", path: ["meta", key], message: "starts with the canonical description (content/canonical.ts), word for word" });
+    /* ...and every description is a description: 50–160 characters
+       (verify-site check 26). The homepage's was 211 — the canonical line plus
+       the company line — until 2026-09-16. */
+    const descriptions: [string[], string][] = [
+      [["meta", "description"], c.meta.description],
+      [["meta", "ogDescription"], c.meta.ogDescription],
+      [["contact", "meta", "description"], c.contact.meta.description],
+    ];
+    for (const [path, text] of descriptions)
+      if (text.length < 50 || text.length > 160)
+        ctx.addIssue({ code: "custom", path, message: `a meta description is 50–160 characters (verify-site check 26); this is ${text.length}` });
     /* "Book a call" is retired everywhere (SPEC §1): every primary call to
        action says "Schedule a Call". */
     for (const [s, path] of strings(c))

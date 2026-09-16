@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import FigureText from "@/components/FigureText";
+import BookingCalendar from "@/components/site/BookingCalendar";
 import ContactForm from "@/components/site/ContactForm";
 import Cta from "@/components/site/Cta";
 import SiteShell from "@/components/site/SiteShell";
@@ -47,6 +48,10 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default function ContactPage() {
   const c = siteContent.contact;
+  /* The fallback line is one sentence in the content; the address inside it is
+     the link. */
+  const [before, after = ""] = c.schedule.fallbackNote.split(c.emailAddress);
+  const fallback = { before, after };
   const site = getSiteUrl().toString();
   const crumbs = {
     "@context": "https://schema.org",
@@ -91,15 +96,24 @@ export default function ContactPage() {
                 <FigureText text={c.schedule.blurb} />
               </p>
             </div>
-            <div className="bf-calendar">
-              <iframe
-                title={c.schedule.frameTitle}
-                src={CALENDLY_SRC}
-                loading="lazy"
-                allow="camera; microphone; fullscreen; payment"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
+            {/* Calendly paints its own white interface and ignores the
+                colour parameters, so the embed is a light card we place on
+                purpose: our caption, generous padding, the design's radius and
+                a hairline. Its height is reserved, so the iframe cannot shift
+                the page when it loads, and the note under it keeps the email
+                and the project form obvious if the third party is blocked. */}
+            <BookingCalendar
+              caption={c.schedule.caption}
+              placeholder={c.schedule.placeholder}
+              stalled={c.schedule.stalled}
+              frameTitle={c.schedule.frameTitle}
+              src={CALENDLY_SRC}
+            />
+            <p className="bf-calendar__note">
+              {fallback.before}
+              <a href={c.emailHref}>{c.emailAddress}</a>
+              {fallback.after}
+            </p>
           </div>
         </section>
 

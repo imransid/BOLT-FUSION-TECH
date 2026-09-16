@@ -518,7 +518,10 @@ read "We build AI systems that are still running in six months." until then.
 >
 > Live work: warmchats.com
 
-The meta description is the first two sentences of the above, trimmed for length.
+The meta description is the FIRST LINE alone — the canonical line, 117
+characters — because a meta description is 50–160 characters (verify-site check
+26). The rest of the description above is the Organization node's, which has no
+length limit.
 
 ---
 
