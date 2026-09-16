@@ -1090,22 +1090,32 @@ each task's time over 50ms), on the merged homepage at 1440:
 
 | | before | after |
 |---|---|---|
-| unthrottled, long-task total | 62–177ms | **0–59ms** (no long task at all in 3 runs of 4, DPR 2 included) |
-| unthrottled, longest task | 111ms | **59ms** |
-| CPU throttled 4x, total | 249–264ms | **123–139ms** |
-| CPU throttled 4x, longest task | 127–159ms | **70–75ms** |
+| unthrottled, long-task total | 62–177ms | **0–60ms** (no long task at all in 2 runs of 4, DPR 2 included) |
+| unthrottled, longest task | 111ms | **60ms** |
+| CPU throttled 4x, total | 249–264ms | **128–152ms** |
+| CPU throttled 4x, longest task | 127–159ms | **67–96ms** |
+| CPU throttled 6x, total | 381ms | **170–196ms** |
+| CPU throttled 6x, longest task | 217ms | **90–102ms** |
 
 The render loop was never the problem: after the first frame it produces no
 long tasks at all, and its callbacks run 0.3–0.5ms. Shader compilation was not
 either (`compileShader` and `linkProgram` both measure 0ms). The cost was two
 tasks — evaluating the chunk, which is the price of its size, and building the
 whole scene in one synchronous block, which is now sliced (`scene.ts`, "The
-build, in slices"). What is left is the first draw, 48–52ms of upload and
-program setup, which is the scene's longest task. Two ways of spreading THAT
-were measured and both were rejected; `scene.ts` records the numbers, and the
-second is worth knowing generally: **resizing a canvas's backing store costs
-far more than the frame it saves** — an 8x8 warm-up draw turned a 54ms first
-render into 815ms.
+build, in slices"). What is left of the first draw is 25ms of upload and
+program setup, which is no longer a long task on this machine.
+
+**Nothing resizes the canvas after its first draw** — checked at DPR 1 and
+DPR 2, five seconds past the fade and a pointer move, by hooking the
+`width`/`height` setters (every assignment reallocates the drawing buffer,
+even one that writes the value it already holds). What that check did find was
+a redundant sizing BEFORE the first draw: `setPixelRatio` then `setSize` wrote
+each dimension twice, and at DPR 1 the first pair wrote 300 over 300. Sizing
+once, through `setDrawingBufferSize` (`applySize`), took it to two assignments
+and halved the first draw, from 48–53ms to 25ms. The general lesson, learnt
+the expensive way in a rejected experiment: **resizing a canvas's backing
+store costs far more than the frame it saves** — an 8x8 warm-up draw turned a
+54ms first render into 815ms.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in

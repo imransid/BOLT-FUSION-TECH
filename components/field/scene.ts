@@ -185,6 +185,20 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   }
   renderer.setClearColor(GROUND, 1);
 
+  /* The drawing buffer is sized in ONE pass, by `applySize` below.
+     `setPixelRatio` re-applies the renderer's CURRENT size at the new ratio,
+     so `setPixelRatio` then `setSize` assigned canvas.width and .height twice
+     per sizing: four assignments where two will do, and at DPR 1 the first
+     pair wrote the values they already held. Every assignment reallocates the
+     drawing buffer, even an unchanged one, and a reallocation is expensive
+     (see "The build, in slices"). Setting the ratio at construction only moved
+     those two assignments earlier — the canvas is 300x150 then — so the size
+     and the ratio go together, through `setDrawingBufferSize`, which assigns
+     each once. Measured 2026-09-16. */
+  let sizedPr = 0;
+  let sizedW = 0;
+  let sizedH = 0;
+
   /* Every GPU resource is registered here as it is made, and freed from here. */
   const geometries: BufferGeometry[] = [];
   const materials: Material[] = [];
@@ -639,8 +653,14 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     sizeDirty = false;
     const w = Math.max(1, canvas.clientWidth);
     const h = Math.max(1, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
-    renderer.setSize(w, h, false);
+    const pr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    /* nothing changed — a ResizeObserver reporting the same box, say: do not
+       touch the canvas, since assigning its size reallocates the buffer */
+    if (w === sizedW && h === sizedH && pr === sizedPr) return;
+    sizedW = w;
+    sizedH = h;
+    sizedPr = pr; // a zoom, or a move to another screen, changes it
+    renderer.setDrawingBufferSize(w, h, pr);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   };
@@ -750,7 +770,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
          with the CPU throttled 4x). Resizing a canvas's backing store is far
          more expensive than the frame it was meant to save.
      What remains of the first draw is upload and program setup for the whole
-     scene in one task: 52-92ms here, and the scene's longest task.
+     scene in one task: 25ms here, once the drawing buffer stopped being
+     allocated twice (see `applySize`), and no longer a long task at all.
 
      Frames do not run in a hidden tab, so a background tab builds nothing
      until it is looked at. */
