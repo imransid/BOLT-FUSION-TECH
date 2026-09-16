@@ -745,6 +745,13 @@ at the end, which means nobody has decided yet.
     the field's box (`position:absolute; inset:0`), `aria-hidden`, at opacity
     0. It fades in over 700ms once the first frame is drawn, and the field then
     carries `data-scene-ready`.
+  - **It builds in slices, and draws once.** Construction runs a few
+    milliseconds at a time, a frame apart, and each group's shaders are
+    compiled as that group appears; one frame is drawn at the end, the whole
+    scene at t = 0, which is the poster's frame. Built in one block it was the
+    page's longest task after load (*Performance targets*, "The scene's
+    main-thread cost"). Nothing is visible during the build: the canvas is at
+    opacity 0 until that frame is drawn.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
     so the fade shows no jump. The scene keeps a fixed vertical field of view,
@@ -755,6 +762,22 @@ at the end, which means nobody has decided yet.
     It freezes requestAnimationFrame when `data-scene-ready` appears, so the
     canvas holds t = 0, and captures the field at 660x560 (its 1px border
     removed for the capture) at DPR 2.
+  - **It dissolves into the page; it never stops at a box** (coordinator's
+    review, 2026-09-16). The field has no border, and its background is the
+    ground, `#07090D`, which is also the canvas's clear colour. The grid floor
+    and the blue pool under the core fade to exactly that ground by r = 2.8
+    (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for**,
+    and 480x560 — the narrowest the field goes — is the safe area nothing
+    important may leave. With the pointer at either parallax extreme, at 480
+    the fade ends at least 23px inside every edge, the rings at least 63px and
+    every module, at every orbit angle, at least 13px, on bounding spheres; at
+    660 the same objects clear the sides by at least 103px and the top and
+    bottom by at least 65px and 50px. That was checked by projection and on
+    rendered frames at t = 0, 20, 30 and 45s. The poster
+    script refuses a capture whose 16px edge band is not the ground, and the
+    probe reads the live canvas's edge band. It is done in the scene itself:
+    no overlay and no post-processing, since anything painted over the poster
+    but the canvas fails check 28.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
     with Save-Data off. Phones get the poster and a CSS drift; under reduced
     motion, the poster alone. Check 25 hooks `getContext` before any page
@@ -1075,11 +1098,48 @@ imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
-**The posters:** `scene-poster-v1-660.avif` 7.0KB, `-1320.avif` 15.3KB,
-`-660.webp` 13.6KB, `-1320.webp` 31.8KB (AVIF 4:4:4 at quality 56, WebP 82).
-The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF: a dark
-frame of hard-edged shapes compresses far better than a cloud of points, which
-takes weight off the LCP path.
+**The posters:** `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
+`-660.webp` 10.3KB, `-1320.webp` 24.8KB (AVIF 4:4:4 at quality 56, WebP 82).
+The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
+frame of hard-edged shapes that dissolves into the ground compresses far
+better than a cloud of points, which takes weight off the LCP path. They were
+re-rendered for the dissolve on 2026-09-16 under the same v1 names, since v1
+had never been deployed. From the first deploy on, a re-render is v2.
+
+**The scene's main-thread cost, measured 2026-09-16.** Check 29 budgets
+blocking time on the mobile profile only, and the scene never runs there, so
+no check fails on this — but its desktop line is real for the machines that do
+get the scene. Counted its way (every long task from navigation to load + 4s,
+each task's time over 50ms), on the merged homepage at 1440:
+
+| | before | after |
+|---|---|---|
+| unthrottled, long-task total | 62–177ms | **0–60ms** (no long task at all in 2 runs of 4, DPR 2 included) |
+| unthrottled, longest task | 111ms | **60ms** |
+| CPU throttled 4x, total | 249–264ms | **128–152ms** |
+| CPU throttled 4x, longest task | 127–159ms | **67–96ms** |
+| CPU throttled 6x, total | 381ms | **170–196ms** |
+| CPU throttled 6x, longest task | 217ms | **90–102ms** |
+
+The render loop was never the problem: after the first frame it produces no
+long tasks at all, and its callbacks run 0.3–0.5ms. Shader compilation was not
+either (`compileShader` and `linkProgram` both measure 0ms). The cost was two
+tasks — evaluating the chunk, which is the price of its size, and building the
+whole scene in one synchronous block, which is now sliced (`scene.ts`, "The
+build, in slices"). What is left of the first draw is 25ms of upload and
+program setup, which is no longer a long task on this machine.
+
+**Nothing resizes the canvas after its first draw** — checked at DPR 1 and
+DPR 2, five seconds past the fade and a pointer move, by hooking the
+`width`/`height` setters (every assignment reallocates the drawing buffer,
+even one that writes the value it already holds). What that check did find was
+a redundant sizing BEFORE the first draw: `setPixelRatio` then `setSize` wrote
+each dimension twice, and at DPR 1 the first pair wrote 300 over 300. Sizing
+once, through `setDrawingBufferSize` (`applySize`), took it to two assignments
+and halved the first draw, from 48–53ms to 25ms. The general lesson, learnt
+the expensive way in a rejected experiment: **resizing a canvas's backing
+store costs far more than the frame it saves** — an 8x8 warm-up draw turned a
+54ms first render into 815ms.
 
 The timings need a quiet machine; the check prints the load average beside
 them. Not measured by anything: INP (≤ 200ms in the plan) and Lighthouse 95+ in

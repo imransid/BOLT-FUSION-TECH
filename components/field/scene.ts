@@ -22,6 +22,8 @@
  *  - Named imports from `three`, so the bundler keeps only what is used.
  *  - Clears to the ground, #07090D. No post-processing and no bloom.
  *  - DPR capped at 1.75.
+ *  - The build runs in slices of a few milliseconds, a frame apart, so it
+ *    never becomes a long task. Nothing is drawn until every slice is done.
  *  - Nothing is allocated per frame. The pulses are two InstancedMeshes per
  *    tier (a core and a halo), and the loop writes their matrices straight
  *    into the instance buffers. Every other vector it uses is allocated once.
@@ -103,12 +105,28 @@ const FLOW = 0x2ee6d6; // the one cyan: the pulses only
 const MAX_DPR = 1.75;
 const SLOW_FRAME_MS = 20;
 const SLOW_FOR_MS = 2000;
+const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
 
 /* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
 const FOV = 30;
-const CAM_DIST = 12.4;
-const CAM_ELEV = 0.54; // radians above the horizon: a raised, drawing-board view
-const CAM_TARGET_Y = 0.62;
+const CAM_DIST = 13.1;
+const CAM_ELEV = 0.72; // radians above the horizon: a raised, drawing-board view
+const CAM_TARGET_Y = 0.88;
+
+/* The scene DISSOLVES into the page; it never stops at a box. The canvas
+   clears to the field's own ground, and the floor's grid and light pool fade
+   to exactly that ground by FLOOR_FADE.to. Framed with the camera above, at
+   660x560 — the primary frame — and inside 480x560, the narrowest the field
+   goes, which is the safe area nothing important may leave. At 480, with the
+   pointer at either parallax extreme, the fade circle ends >= 23px inside
+   every edge, the rings >= 63px, and every module at every orbit angle
+   >= 13px, on bounding spheres; at 660 the same objects clear the sides by
+   >= 103px and the top and bottom by >= 65px and >= 50px (a projection check
+   outside the repo, confirmed on rendered frames, 2026-09-16). The camera's
+   height spends the frame's spare vertical room: raising it does not move the
+   side margins, which only the orbits' radii set. So no line, ring or module
+   reaches a canvas edge at 480–660px wide. */
+const FLOOR_FADE = { from: 1.1, to: 2.8 };
 const PARALLAX_AZ = 0.11; // radians of yaw at the pointer's extreme
 const PARALLAX_EL = 0.045; // radians of pitch at the pointer's extreme
 const PARALLAX_EASE = 1.6; // per second: a slow, eased follow
@@ -134,8 +152,8 @@ type Tier = {
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
 };
-const INNER: Tier = { radius: 1.95, y: 1.9, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.3 };
-const OUTER: Tier = { radius: 2.7, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
+const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65 };
+const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
 
 /* Pulses: two per connection, one outward and one back. */
 const PULSE_LEN = 0.07;
@@ -167,6 +185,20 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   }
   renderer.setClearColor(GROUND, 1);
 
+  /* The drawing buffer is sized in ONE pass, by `applySize` below.
+     `setPixelRatio` re-applies the renderer's CURRENT size at the new ratio,
+     so `setPixelRatio` then `setSize` assigned canvas.width and .height twice
+     per sizing: four assignments where two will do, and at DPR 1 the first
+     pair wrote the values they already held. Every assignment reallocates the
+     drawing buffer, even an unchanged one, and a reallocation is expensive
+     (see "The build, in slices"). Setting the ratio at construction only moved
+     those two assignments earlier — the canvas is 300x150 then — so the size
+     and the ratio go together, through `setDrawingBufferSize`, which assigns
+     each once. Measured 2026-09-16. */
+  let sizedPr = 0;
+  let sizedW = 0;
+  let sizedH = 0;
+
   /* Every GPU resource is registered here as it is made, and freed from here. */
   const geometries: BufferGeometry[] = [];
   const materials: Material[] = [];
@@ -175,7 +207,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const mat = <T extends Material>(x: T): T => (materials.push(x), x);
 
   const scene = new Scene();
-  scene.fog = new Fog(GROUND, 11.5, 22);
+  scene.fog = new Fog(GROUND, CAM_DIST - 1, CAM_DIST + 9.5); // depth, not a cut-off: it follows the camera
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 60);
   const target = new Vector3(0, CAM_TARGET_Y, 0);
 
@@ -236,6 +268,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         uMinor: { value: new Color(0x121820) },
         uMajor: { value: new Color(0x1c2431) },
         uPool: { value: new Color(0x0c1a3a) },
+        uFadeFrom: { value: FLOOR_FADE.from },
+        uFadeTo: { value: FLOOR_FADE.to },
       },
       vertexShader: /* glsl */ `
         varying vec3 vWorld;
@@ -249,6 +283,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         uniform vec3 uMinor;
         uniform vec3 uMajor;
         uniform vec3 uPool;
+        uniform float uFadeFrom;
+        uniform float uFadeTo;
         varying vec3 vWorld;
         float grid(vec2 p, float step) {
           vec2 q = p / step;
@@ -262,12 +298,16 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         void main() {
           vec2 p = vWorld.xz;
           float r = length(p);
-          float dist = distance(vWorld, cameraPosition);
-          float fade = (1.0 - smoothstep(9.0, 19.0, dist)) * (1.0 - smoothstep(5.5, 12.0, r));
+          /* the floor dissolves into the page: its lines and its pool reach
+             exactly the ground at uFadeTo, so past it the plane IS the clear
+             colour and the canvas edge cannot be seen. Squared, so the last
+             lines are faint long before the rim. */
+          float fade = 1.0 - smoothstep(uFadeFrom, uFadeTo, r);
+          fade *= fade;
           vec3 col = uGround;
-          col = mix(col, uMinor, grid(p, 0.5) * fade);
-          col = mix(col, uMajor, grid(p, 2.0) * fade);
-          col += uPool * exp(-(r * r) / 2.6) * 0.55;
+          col = mix(col, uMinor, grid(p, 0.25) * fade);
+          col = mix(col, uMajor, grid(p, 1.0) * fade);
+          col += uPool * exp(-(r * r) / 2.2) * 0.55 * fade;
           gl_FragColor = vec4(col, 1.0);
           #include <colorspace_fragment>
         }`,
@@ -280,12 +320,12 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const footprint = add(scene, geo(new RingGeometry(1.6, 1.618, 8, 1, Math.PI / 8)), orbitMat, 0, 0.002, 0);
   footprint.rotation.x = -Math.PI / 2;
 
-  /* ── The core ── */
-  const core = new Group();
-  scene.add(core);
-  add(core, plate(PLINTH.r, PLINTH.h, 0.03), graphite, 0, PLINTH.h / 2, 0);
+  /* ── The core: one slice of the build ── */
   const plates: Group[] = [];
-  {
+  const buildCore = () => {
+    const core = new Group();
+    scene.add(core);
+    add(core, plate(PLINTH.r, PLINTH.h, 0.03), graphite, 0, PLINTH.h / 2, 0);
     let y = PLINTH.h + GAP;
     let below = PLINTH.r;
     PLATES.forEach(([r, h], i) => {
@@ -309,7 +349,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const inlay = add(top, geo(new RingGeometry(0.45, 0.466, 8, 1, Math.PI / 8)), edge, 0, 0.002, 0);
     inlay.rotation.x = -Math.PI / 2;
     plates.push(top);
-  }
+  };
 
   /* ── The modules: each a distinct form, no text ── */
   const shoulder = new Group();
@@ -416,9 +456,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     { build: buildMobile, angle: deg(215), yaw: -0.35, scale: 1.3 },
   ];
   const outerSlots: Slot[] = [
-    { build: buildRobot, angle: deg(20), yaw: -0.65, scale: 1.55 },
-    { build: buildErp, angle: deg(125), yaw: -0.5, scale: 1.4 },
-    { build: buildPos, angle: deg(250), yaw: 0.5, scale: 1.4 },
+    { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55 },
+    { build: buildErp, angle: deg(115), yaw: -0.5, scale: 1.4 },
+    { build: buildPos, angle: deg(265), yaw: 0.5, scale: 1.4 },
   ];
 
   type BuiltTier = {
@@ -441,37 +481,16 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const tmpB = new Vector3();
   const tmpC = new Vector3();
 
-  const buildTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
+  const tiers: BuiltTier[] = [];
+
+  /** A tier's cheap parts: its group, its orbit ring, and the pulse instances
+   *  (the instances themselves cost nothing; the modules and tubes are what
+   *  take the time, and each of those is its own slice). */
+  const startTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
     const group = new Group();
     scene.add(group);
     const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), orbitMat, 0, tier.y, 0);
     ring.rotation.x = Math.PI / 2;
-
-    const curves = new Float32Array(slots.length * 9);
-    const modules: BuiltTier["modules"] = [];
-    slots.forEach((s, i) => {
-      const dx = Math.sin(s.angle);
-      const dz = Math.cos(s.angle);
-      const obj = s.build();
-      const holder = new Group();
-      holder.position.set(dx * tier.radius, tier.y, dz * tier.radius);
-      holder.scale.setScalar(s.scale);
-      holder.add(obj);
-      group.add(holder);
-      modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
-
-      /* a connection: from the core's surface to just short of the module */
-      const endR = tier.radius - 0.3;
-      tmpA.set(dx * tier.from.r, tier.from.y, dz * tier.from.r);
-      tmpC.set(dx * endR, tier.y - 0.02, dz * endR);
-      const midR = (tier.from.r + endR) / 2;
-      tmpB.set(dx * midR, tier.lift, dz * midR);
-      curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
-      const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
-      add(group, geo(new TubeGeometry(curve, 48, 0.0068, 4, false)), connMat);
-      add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
-      add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
-    });
 
     const n = slots.length * 2;
     const pulses = new InstancedMesh(pulseGeo, pulseMat, n);
@@ -493,10 +512,47 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       pulsePhase[i] = (j * 0.381966 + (i & 1) * 0.5 + seed * 0.13) % 1;
       pulseRate[i] = 1 / (3.8 + (j % 3) * 0.6); // one traverse every 3.8–5s
     }
-    return { tier, group, ring, modules, curves, pulses, halos, pulseCurve, pulsePhase, pulseRate, pulseDir };
+    const bt: BuiltTier = {
+      tier,
+      group,
+      ring,
+      modules: [],
+      curves: new Float32Array(slots.length * 9),
+      pulses,
+      halos,
+      pulseCurve,
+      pulsePhase,
+      pulseRate,
+      pulseDir,
+    };
+    tiers.push(bt);
+    return bt;
   };
 
-  const tiers = [buildTier(INNER, innerSlots, 0), buildTier(OUTER, outerSlots, 2)];
+  /** One module, its connection curve and the two lit ports: one slice. */
+  const addModule = (bt: BuiltTier, s: Slot, i: number, seed: number) => {
+    const { tier, group, curves } = bt;
+    const dx = Math.sin(s.angle);
+    const dz = Math.cos(s.angle);
+    const holder = new Group();
+    holder.position.set(dx * tier.radius, tier.y, dz * tier.radius);
+    holder.scale.setScalar(s.scale);
+    holder.add(s.build());
+    group.add(holder);
+    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
+
+    /* a connection: from the core's surface to just short of the module */
+    const endR = tier.radius - 0.3;
+    tmpA.set(dx * tier.from.r, tier.from.y, dz * tier.from.r);
+    tmpC.set(dx * endR, tier.y - 0.02, dz * endR);
+    const midR = (tier.from.r + endR) / 2;
+    tmpB.set(dx * midR, tier.lift, dz * midR);
+    curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
+    const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
+    add(group, geo(new TubeGeometry(curve, 48, 0.0068, 4, false)), connMat);
+    add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
+    add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
+  };
 
   /* ── Per-frame state (allocated once) ── */
   const pointer = { x: 0, y: 0 }; // -1..1, the pointer over the viewport
@@ -597,8 +653,14 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     sizeDirty = false;
     const w = Math.max(1, canvas.clientWidth);
     const h = Math.max(1, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
-    renderer.setSize(w, h, false);
+    const pr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    /* nothing changed — a ResizeObserver reporting the same box, say: do not
+       touch the canvas, since assigning its size reallocates the buffer */
+    if (w === sizedW && h === sizedH && pr === sizedPr) return;
+    sizedW = w;
+    sizedH = h;
+    sizedPr = pr; // a zoom, or a move to another screen, changes it
+    renderer.setDrawingBufferSize(w, h, pr);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   };
@@ -608,6 +670,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     pose(time);
     renderer.render(scene, camera);
   };
+
 
   const frame = (now: number) => {
     if (!running) return;
@@ -684,12 +747,71 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   io.observe(canvas);
   ro.observe(canvas);
 
-  /* Compile off the main thread where the driver allows it, then draw t = 0. */
-  const ready = renderer.compileAsync(scene, camera).then(() => {
-    if (disposed || lost) return;
-    render();
+  /* ── The build, in slices ────────────────────────────────────────────────
+     Built in one synchronous block this was the page's longest task after
+     load: 105–164ms with the CPU throttled 4x, on top of the chunk's own
+     parse. The steps below run for a few milliseconds at a time, a frame
+     apart, and each group's shaders are compiled as that group appears —
+     off the main thread wherever the driver supports it.
+
+     ONE frame is drawn, last, and it is the whole scene at t = 0 — the
+     poster's frame. The canvas is at opacity 0 throughout, so nothing of the
+     build is ever seen.
+
+     Two ways of spreading that first draw were measured on 2026-09-16 and
+     BOTH were rejected; do not reach for them again without measuring:
+       - drawing the scene as it grows, at full size, after the core and each
+         tier: about the same at DPR 1 (83ms against 92ms for the longest
+         task) but far worse at DPR 2, 185ms against 78ms, since every extra
+         frame is filled again;
+       - the same, into an 8x8 buffer to avoid that fill cost: catastrophic.
+         Shrinking the drawing buffer and restoring it makes the driver
+         reallocate it, and the final render went from 54ms to 815ms (1069ms
+         with the CPU throttled 4x). Resizing a canvas's backing store is far
+         more expensive than the frame it was meant to save.
+     What remains of the first draw is upload and program setup for the whole
+     scene in one task: 25ms here, once the drawing buffer stopped being
+     allocated twice (see `applySize`), and no longer a long task at all.
+
+     Frames do not run in a hidden tab, so a background tab builds nothing
+     until it is looked at. */
+  let inner!: BuiltTier;
+  let outer!: BuiltTier;
+  const steps: Array<() => void | Promise<unknown>> = [buildCore];
+  steps.push(() => {
+    inner = startTier(INNER, innerSlots, 0);
+  });
+  innerSlots.forEach((s, i) => steps.push(() => addModule(inner, s, i, 0)));
+  steps.push(() => renderer.compileAsync(inner.group, camera, scene));
+  steps.push(() => {
+    outer = startTier(OUTER, outerSlots, 2);
+  });
+  outerSlots.forEach((s, i) => steps.push(() => addModule(outer, s, i, 2)));
+  steps.push(() => renderer.compileAsync(outer.group, camera, scene));
+  steps.push(() => renderer.compileAsync(scene, camera)); // the floor, the core and the lights
+  steps.push(() => {
+    render(); // the first and only frame of the build: t = 0, the poster's frame
     drawn = true;
     sync();
+  });
+
+  let buildRaf = 0;
+  const ready = new Promise<void>((resolve) => {
+    let at = 0;
+    const slice = async () => {
+      buildRaf = 0;
+      const until = performance.now() + BUILD_SLICE_MS;
+      while (at < steps.length) {
+        if (disposed || lost) return;
+        const pending = steps[at++]();
+        if (pending) await pending; // a compile: hand the driver the work
+        if (performance.now() > until) break;
+      }
+      if (disposed || lost) return;
+      if (at < steps.length) buildRaf = requestAnimationFrame(slice);
+      else resolve();
+    };
+    buildRaf = requestAnimationFrame(slice);
   });
 
   return {
@@ -702,6 +824,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       if (disposed) return;
       disposed = true;
       stop();
+      cancelAnimationFrame(buildRaf); // a build still in slices stops here
       io.disconnect();
       ro.disconnect();
       canvas.removeEventListener("webglcontextlost", onLost);
