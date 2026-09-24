@@ -117,6 +117,8 @@ const labels: FigureLabel[] = [
 
   /* /work's track record (content/projects.ts) and the llms files. A span of
      years joined by a dash reads as a range; this one is a date. */
+  /* The Team section (homepage and /about) and the llms files. */
+  { text: "15+", exempt: "The team's size as the owner states it (2026-09-24): a headcount, not a performance claim" },
   { text: "2020–2022", exempt: "The years one of our engineers worked on Go Smart at Brain Station 23: a date range, not a performance claim" },
   /* /work's feature work (content/projects.ts) and the llms files: GodConnect
      Online's years, a span of years joined by a spaced dash. */

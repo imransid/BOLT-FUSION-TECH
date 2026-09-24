@@ -10,18 +10,17 @@ import { capabilities } from "@/content/engineering";
  *  · `foundingDate`   — not in /content, and not stated on the LinkedIn page.
  *  · `address`        — not in /content.
  *  · `numberOfEmployees` — OMITTED BECAUSE THE SOURCES CONTRADICT. The site
- *    lists ten engineers, six of them with a verified profile (since
- *    2026-09-15); LinkedIn's visible band says "11-50 employees"; LinkedIn's
- *    own embedded JSON-LD says `numberOfEmployees: 1`. Several values, two
- *    sources.
+ *    says "15+ developers" (the owner, 2026-09-24); LinkedIn's visible band
+ *    says "11-50 employees"; LinkedIn's own embedded JSON-LD says
+ *    `numberOfEmployees: 1`. Several values, three sources.
  *    PLAN.md §7: "Contradictions cause LLMs to drop or dilute the source." Emitting
  *    any one of them would assert a number we cannot stand behind, so the property
  *    is left out until the owner reconciles it.
  *
- * `Person` is emitted for the VERIFIED people the Team section lists — each has
- * a verified LinkedIn URL — and for no pending member. A Person node with no
- * `sameAs` is an unverifiable name, which is the exact claim the Team section
- * exists to disprove.
+ * No `Person` is emitted, anywhere. The team is a headcount (the owner,
+ * 2026-09-24: "15+ developer team, no details"): no one is named on the page,
+ * so no one is named in its markup either. Verify-site check 14 fails a Person
+ * node on any page.
  *
  * `Service` is one node per capability, from content/engineering.ts — the same
  * entries the capability sections render. Robotics' description carries its
@@ -115,39 +114,6 @@ export function faqPageLd(siteUrl: string, renderedFaq: RenderedFaq): Json[] {
   ];
 }
 
-/** The people the Team section renders, and nothing else. Pass the SAME roster
- *  the section is given (`content.team.roster`), or [] when it is hidden.
- *  Only a VERIFIED member becomes a Person: a pending one has no verified
- *  profile, and a Person with no `sameAs` is an unverifiable name. The filter
- *  lives here, where Person is built, so no caller can emit one for a pending
- *  member (decided 2026-09-15). Only fields that exist are emitted: role becomes
- *  jobTitle and stack becomes knowsAbout the moment real values are supplied,
- *  and an empty one is left out, never sent blank. Years of experience has no
- *  schema.org property on Person, so it stays on the card only. */
-export type RenderedTeam = (
-  | { status: "verified"; id: string; name: string; profileUrl: string; role?: string; stack?: string[] }
-  | { status: "pending"; id: string; name: string }
-)[];
-
-export function personLd(siteUrl: string, renderedTeam: RenderedTeam): Json[] {
-  return renderedTeam.flatMap((m) => {
-    if (m.status !== "verified") return [];
-    const role = m.role?.trim();
-    const stack = (m.stack ?? []).map((t) => t.trim()).filter(Boolean);
-    return [
-      {
-        "@type": "Person",
-        "@id": `${siteUrl}#person-${m.id}`,
-        name: m.name,
-        sameAs: [m.profileUrl],
-        worksFor: { "@id": `${siteUrl}#organization` },
-        ...(role ? { jobTitle: role } : {}),
-        ...(stack.length > 0 ? { knowsAbout: stack } : {}),
-      },
-    ];
-  });
-}
-
 export function breadcrumbLd(
   siteUrl: string,
   trail: { name: string; path: string }[],
@@ -169,7 +135,6 @@ export function buildGraph(
   siteUrl: string,
   sameAs: string[],
   renderedFaq: RenderedFaq,
-  renderedTeam: RenderedTeam,
   extra: Json[] = [],
   withServices = true,
 ) {
@@ -187,7 +152,6 @@ export function buildGraph(
       },
       ...(withServices ? serviceLd(siteUrl) : []),
       ...faqPageLd(siteUrl, renderedFaq),
-      ...personLd(siteUrl, renderedTeam),
       ...extra,
     ],
   };

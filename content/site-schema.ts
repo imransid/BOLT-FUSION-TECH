@@ -110,106 +110,21 @@ const featuredWorkSchema = z
     }
   });
 
-const LINKEDIN_PROFILE = /^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?$/;
-
-/* ── The team roster (`team.roster` in content/site.ts; how to fill a member in
-   is written above the roster). Two states, and the build refuses anything in
-   between (CLAUDE.md: "A person is linked, and marked up as Person, only with a
-   verified LinkedIn profile", decided 2026-09-15):
-   · verified — a linkedin.com/in/ profile and a handle. The card links to the
-     profile, and the homepage emits a Person node for it.
-   · pending — a named team member with no verified profile yet. No link, no
-     handle, no photo: the card shows the name, initials and the pending label,
-     and there is no Person node. A pending link is unverified by definition,
-     so the schema refuses one.
-   Both are STRICT: a misspelt or retired key (`image`, `experience`) fails the
-   build instead of being dropped without a word — which is also why the
-   pending state names the three fields it refuses, with the reason. ── */
-
-const filled = (what: string) =>
-  z.string().refine((v) => v.trim().length > 0, { message: `${what} is empty — leave the field out until a real value exists` });
-
-/* verify-site check 27's test for a file named as a stand-in, so the build
-   refuses a photo the suite would fail */
-const STAND_IN = /(^|[\/_.-])(avatars?|placeholders?|generated|fake|faces?|illustrations?|default-user|user-default)([-_.\d]|$)/i;
-const TEAM_PHOTO = /^\/team\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:jpe?g|png|webp|avif)$/;
-
-/** The words a `years` value renders as on its card. */
-export const yearsText = (years: number) => `${years} ${years === 1 ? "year" : "years"}`;
-
-/* Supplied later by the owner, and rendered only when present. Never an
-   example, a plausible title or a round number. */
-const laterFields = {
-  role: filled("role").optional(),
-  years: z.number().int().min(1).max(60).optional(),
-  stack: z
-    .array(filled("a stack item"))
-    .min(1, { message: "stack is empty — leave the field out until real values exist" })
-    .optional(),
-};
-
-const verifiedMemberSchema = z.strictObject({
-  /** Stable list key. Names and handles can collide; an id cannot, so React
-   *  reconciliation never mixes two people's cards up. */
-  id: filled("id"),
-  status: z.literal("verified"),
-  name: filled("name"),
-  handle: filled("handle"),
-  /** A VERIFIED LinkedIn profile, required. Must be a linkedin.com/in/ URL, so
-   *  a link is never constructed from a handle again. */
-  profileUrl: z
-    .string({ error: "A verified member needs profileUrl: their https://www.linkedin.com/in/… profile" })
-    .refine((v) => !DANGEROUS_SCHEME.test(v), { message: "Unsafe URL scheme" })
-    .refine((v) => LINKEDIN_PROFILE.test(v), { message: "profileUrl must be a verified linkedin.com/in/ profile URL" }),
-  /** A real photograph of this person, in public/team/ — never an avatar, an
-   *  illustration, a stock or a generated face (CLAUDE.md, "No fake faces"). */
-  photo: z
-    .string()
-    .regex(TEAM_PHOTO, { message: 'photo must be a path under /team/ — e.g. "/team/nadim.jpg": lowercase letters, digits and hyphens, then .jpg, .jpeg, .png, .webp or .avif' })
-    .refine((v) => !STAND_IN.test(v), { message: "photo is named as a stand-in (avatar, placeholder, face, illustration…) — only a real photograph of the person goes on a card" })
-    .optional(),
-  ...laterFields,
-});
-
-const pendingMemberSchema = z.strictObject({
-  id: filled("id"),
-  status: z.literal("pending"),
-  name: filled("name"),
-  profileUrl: z
-    .never({ error: 'A pending member has no profileUrl: a pending link is unverified by definition. When the profile is verified, set status to "verified" and add profileUrl and handle together.' })
-    .optional(),
-  handle: z
-    .never({ error: 'A pending member has no handle — never one borrowed from someone else. It comes with the verified profile: set status to "verified".' })
-    .optional(),
-  photo: z
-    .never({ error: 'A pending member is shown with initials, never a photo. A photo comes with the verified profile: set status to "verified".' })
-    .optional(),
-  ...laterFields,
-});
-
-const teamMemberSchema = z.discriminatedUnion("status", [verifiedMemberSchema, pendingMemberSchema], {
-  error: 'status must be "verified" (with profileUrl and handle) or "pending" (with neither)',
-});
-
-const rosterSchema = z.array(teamMemberSchema).superRefine((roster, ctx) => {
-  const ids = new Set<string>();
-  roster.forEach((m, i) => {
-    if (ids.has(m.id)) ctx.addIssue({ code: "custom", path: [i, "id"], message: `id "${m.id}" is used twice — each member needs their own` });
-    ids.add(m.id);
-    /* "8 years" is a figure, and every figure on the site carries a label or an
-       exemption (CLAUDE.md, Hard rules; verify-site check 8). The card renders
-       it inside the exemption content/figure-labels.ts holds for that exact
-       text, so a years value without one fails here, not on the live page. */
-    if (m.years !== undefined) {
-      const text = yearsText(m.years);
-      if (!figureLabels.some((l) => l.text === text && "exempt" in l))
-        ctx.addIssue({
-          code: "custom",
-          path: [i, "years"],
-          message: `years ${m.years} renders "${text}", a figure: add { text: "${text}", exempt: "<why this figure is not a performance claim>" } to content/figure-labels.ts`,
-        });
-    }
-  });
+/* ── The team (`team` in content/site.ts). The owner, 2026-09-24: "we just
+   show we have 15+ developer team, no details". The section states the team's
+   size and nothing about any one person — no names, no profiles, no photographs,
+   no Person structured data. The roster, its verified/pending states and their
+   rules (decided 2026-09-15) are retired with it; the team object is STRICT, so
+   a `roster` put back fails the build instead of rendering nowhere. `size` is a
+   figure ("15+"): it renders inside the exemption content/figure-labels.ts holds
+   for that exact text, and a size without one fails here, not on the page
+   (verify-site check 8). ── */
+const teamSizeSchema = z.string().superRefine((v, ctx) => {
+  if (!figureLabels.some((l) => l.text === v && "exempt" in l))
+    ctx.addIssue({
+      code: "custom",
+      message: `team.size "${v}" is a figure: add { text: "${v}", exempt: "<why it is not a performance claim>" } to content/figure-labels.ts`,
+    });
 });
 
 /* Every figure carries a shipped or target label (CLAUDE.md hard rule).
@@ -316,19 +231,17 @@ export const siteContentSchema = z
       primaryCta: scheduleCtaSchema,
       secondaryCta: linkSchema,
     }),
-    team: z.object({
+    team: z.strictObject({
       benchLabel: z.string(),
       codeComment: z.string(),
       headlineLine1: z.string(),
       headlineLine2: z.string(),
       subtext: z.string(),
-      /** Beside the roster's size: "10 engineers". The number is counted, never written. */
-      statLabel: z.string(),
-      /** Beside the verified count: "6 verified profiles". Counted, never written. */
-      verifiedLabel: z.string(),
-      /** A pending card's line where a verified card shows its handle. */
-      pendingLabel: z.string(),
-      roster: rosterSchema,
+      /** The team's size, as the owner states it: "15+". A figure, exempted in
+       *  content/figure-labels.ts. */
+      size: teamSizeSchema,
+      /** Beside the size: "developers". */
+      sizeLabel: z.string().min(1),
     }),
     recentWorks: z.object({
       eyebrow: z.string().min(1),

@@ -107,7 +107,10 @@ policy's "← Back to boltfusiontech.com". The share image kept its words too.
 > Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
 > Bangladesh.
 
-**Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
+**Amended 2026-09-24:** the site states the team as "15+ developers" and names no
+one (§5). If the trust rail is ever rendered, its headcount follows §5.
+
+*History, superseded 2026-09-24:* **Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
 with a verified LinkedIn, four with profiles pending. The trust rail is not
 rendered anywhere on the site today.
 
@@ -321,6 +324,22 @@ what changed is that a real team member without one is named instead of left out
   word added, so it stays true of the cards it describes.
 - The body above ("every profile links to a public LinkedIn") is still true: a pending
   member has no profile on the site yet.
+
+**Amended 2026-09-24 — the team is a headcount.** The owner: "we just show we have
+15+ developer team, no details". Everything above about cards, profiles, photos and
+initials is history: the section names no one, links no one and pictures no one,
+and there is no Person markup.
+
+- **Eyebrow and H2:** unchanged — "Your bench // who builds with you", "Senior
+  engineers. One delivery standard."
+- **Stat:** "15+ developers" — the owner's figure, written in content/site.ts
+  (`team.size`), with its exemption in content/figure-labels.ts: a headcount, not a
+  performance claim.
+- **Subtext:** "Named engineers are assigned before you sign. Ask on the call who
+  would work on your project." Its first half is the promise the Organization
+  description and llms.txt already make ("named engineers assigned before you sign").
+- The body above, which says every profile links to LinkedIn, is retired with the
+  cards: there are no profiles on the site to link.
 
 ---
 

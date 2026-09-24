@@ -113,8 +113,6 @@ export default function Home() {
   // FAQPage is built from the very items the FAQ section renders, and only when
   // it renders: one source, so the markup and the page cannot diverge.
   const renderedFaq = sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
-  // Person nodes likewise come from the roster the Team section renders.
-  const renderedTeam = sectionOrder.includes("team") && isVisible(sectionVisibility, "team") ? content.team.roster : [];
   // One Service node per capability, when the capabilities render.
   const withServices = sectionOrder.includes("capabilities") && isVisible(sectionVisibility, "capabilities");
 
@@ -126,7 +124,7 @@ export default function Home() {
           // Escape `<` so a "</script>" in any content string can't break out of
           // the JSON-LD block.
           __html: jsonLdHtml(
-            buildGraph(siteUrl, sameAs, renderedFaq, renderedTeam, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])], withServices),
+            buildGraph(siteUrl, sameAs, renderedFaq, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])], withServices),
           ),
         }}
       />

@@ -14,7 +14,7 @@ import { pages } from "@/content/pages";
 import { siteContent } from "@/content/site";
 import { pageMetadata } from "@/lib/page-meta";
 import { getSiteUrl } from "@/lib/site-url";
-import { breadcrumbLd, organizationLd, personLd } from "@/lib/structured-data";
+import { breadcrumbLd, organizationLd } from "@/lib/structured-data";
 
 export function generateMetadata(): Metadata {
   const m = pages.about.head.meta;
@@ -22,19 +22,17 @@ export function generateMetadata(): Metadata {
 }
 
 /**
- * /about (SPEC §4): who we are; the ten engineers (the homepage's Team section,
- * every rule intact — verified members link to their LinkedIn and get a Person
- * node, pending members show initials and "Profile coming soon", with no link,
- * no picture and no Person node); where our engineers work (SPEC §8b.12:
+ * /about (SPEC §4): who we are; the team (the homepage's Team section: its
+ * size, 15+ developers, and no one named — the owner, 2026-09-24); where our
+ * engineers work (SPEC §8b.12:
  * never "offices", never an address); how we work with clients — the terms,
  * the engagement models (content/services.ts), the line under the table, the
  * operating detail and the pilot (content/pilot.ts), each moved here from the
  * old homepage word for word ($SP/engineering/MOVES.md); and what we won't do,
  * only commitments the site keeps. Then the final call to action.
  *
- * Person structured data is generated from the roster the Team section
- * renders (personLd filters to verified members, so no caller can emit a
- * pending one).
+ * No Person structured data: the team is a headcount, so no one is named in
+ * the markup either.
  */
 export default function AboutPage() {
   const site = getSiteUrl().toString();
@@ -51,7 +49,6 @@ export default function AboutPage() {
         { name: "Home", path: "/" },
         { name: "About", path: "/about" },
       ]),
-      ...personLd(site, team.roster),
     ],
   };
   const how = a.howWeWork;

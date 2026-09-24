@@ -95,6 +95,33 @@
           "research and prototype work today"
         ]
       }
+    ],
+    "team-roster-cut": [
+      {
+        "item": "Team: the named roster (ten engineers, six with a verified profile)",
+        "proves": "Nothing: the owner replaced it with a headcount on 2026-09-24",
+        "status": "cut",
+        "cut": "owner, 2026-09-24: \"we just show we have 15+ developer team, no details\"",
+        "needles": [
+          "Shourab",
+          "@shourab",
+          "Nazirul",
+          "@nazirul",
+          "@talha",
+          "Nihal",
+          "@nihal",
+          "Sabbir",
+          "@sabbir",
+          "Nadim",
+          "Joinal",
+          "Arifur Rahman",
+          "Tareq",
+          "@rafa",
+          "Profile coming soon",
+          "verified profiles",
+          "Each verified card opens the engineer's LinkedIn profile"
+        ]
+      }
     ]
   },
   "routes": {
@@ -247,32 +274,20 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "item": "Team: ten engineers, six with a verified profile",
-        "proves": "Named people you can check",
+        "item": "Team: the headcount",
+        "proves": "How many developers — 15+, as the owner states it (2026-09-24) — and no one named",
         "status": "required",
         "needles": [
-          "Senior engineers.One delivery standard.",
-          "Each verified card opens the engineer's LinkedIn profile in a new tab—so",
-          "verified profiles",
-          "Rafa",
-          "@rafa",
-          "Shourab",
-          "@shourab",
-          "Nazirul",
-          "@nazirul",
-          "Talha",
-          "@talha",
-          "Nihal",
-          "@nihal",
-          "Sabbir",
-          "@sabbir",
-          "Nadim",
-          "Joinal",
-          "Arifur Rahman",
-          "Tareq",
           "Your bench",
-          "// who builds with you"
+          "// who builds with you",
+          "Senior engineers.One delivery standard.",
+          "Named engineers are assigned before you sign. Ask on the call who would work on your project.",
+          "15+",
+          "developers"
         ]
+      },
+      {
+        "include": "team-roster-cut"
       },
       {
         "item": "Proof: the two write-ups",

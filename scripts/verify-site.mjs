@@ -1896,11 +1896,21 @@ function readFigures(tokenizeFigures) {
 /* 4 ── with JavaScript off, is the text there? (runs in the browser) ───── */
 function hiddenWithoutJs() {
   const out = [];
+  const skipped = [];
   let total = 0;
   for (const el of document.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span,div")) {
     if (el.closest("script, style, noscript, template")) continue;
     if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
     if (!el.getClientRects().length) continue; /* display:none at this width — by design, not by script */
+    /* A button of type "button" outside any form does nothing without script, so
+       it is not content: hidden without JS is progressive enhancement (the hero's
+       pause control, 2026-09-24). Listed in the report, never silently skipped. A
+       submit button, a link, or any text around the control is still read. */
+    const control = el.closest('button[type="button"]');
+    if (control && !control.form) {
+      skipped.push(control.textContent.trim().replace(/\s+/g, " ").slice(0, 40));
+      continue;
+    }
     total++;
     let op = 1;
     let hider = null;
@@ -1920,7 +1930,7 @@ function hiddenWithoutJs() {
       });
     }
   }
-  return { out, total };
+  return { out, total, skipped: [...new Set(skipped)] };
 }
 
 /* 7 ── the homepage headline: the words on each rendered line, per span — and
@@ -3061,6 +3071,7 @@ check(4, "With JavaScript off, every heading and paragraph is visible", "content
     const scriptOnly = v.out.filter((o) => shown.has(o.text));
     const alsoHiddenWithJs = v.out.length - scriptOnly.length;
     if (alsoHiddenWithJs) I.push(`${at(k)}: ${alsoHiddenWithJs} hidden with JS on as well (hover or state reveals — not a script dependency)`);
+    if (v.skipped?.length) I.push(`${at(k)}: not read, script-only controls (type="button", no form — they do nothing without JS): ${v.skipped.map((t) => `"${t}"`).join(", ")}`);
     if (!scriptOnly.length) continue;
     const by = {};
     scriptOnly.forEach((o) => {
@@ -3482,48 +3493,26 @@ await (async () => {
       }
     }
   }
-  /* Person — built from the roster the Team section renders: one node per
-     VERIFIED person card, carrying that card's name and profile link, and no
-     empty field. A PENDING card (data-person-status="pending", decided
-     2026-09-15) is a named member with no verified profile yet: it links
-     nowhere and has no Person node — a pending link is unverified by
-     definition. A card with no link that is not marked pending still fails. */
-  {
-    const v = visits[`/@${WIDTHS[0]}`];
-    if (v?.people) {
-      const persons = [];
-      for (const raw of v.jsonld) {
-        try {
-          const j = JSON.parse(raw);
-          for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Person")) persons.push(n);
-        } catch {
-          /* reported by the parse above */
-        }
+  /* Person — none, on any page. The team is a headcount (the owner,
+     2026-09-24: "we just show we have 15+ developer team, no details"): no one
+     is named on the site, so a person card ([data-person-card]) or a Person
+     node anywhere is a finding. It replaced the verified/pending roster rule of
+     2026-09-15 (one Person per verified card, none for a pending one). */
+  for (const route of ROUTES) {
+    const v = visits[`${route}@${WIDTHS[0]}`];
+    if (!v?.people) continue;
+    const persons = [];
+    for (const raw of v.jsonld) {
+      try {
+        const j = JSON.parse(raw);
+        for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Person")) persons.push(n);
+      } catch {
+        /* reported by the parse above */
       }
-      const cards = v.people.cards || [];
-      const verifiedCards = cards.filter((c) => !c.pending);
-      const pendingCards = cards.filter((c) => c.pending);
-      const key = (name, url) => `${name}|${url}`;
-      const cardKeys = new Set(verifiedCards.filter((c) => c.href).map((c) => key(c.name, c.href)));
-      const ldKeys = new Set(persons.map((p) => key(p.name, [].concat(p.sameAs || [])[0])));
-      const ldNames = new Set(persons.map((p) => p.name));
-      for (const p of persons) {
-        const url = [].concat(p.sameAs || [])[0];
-        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a verified person card on the page`);
-        for (const [k, val] of Object.entries(p))
-          if (val === null || (typeof val === "string" && !val.trim()) || (Array.isArray(val) && val.length === 0))
-            F.push(`/: Person "${p.name}" carries an empty ${k} — emit only the fields that exist`);
-      }
-      for (const c of verifiedCards) {
-        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link and is not marked pending — a verified member links to their LinkedIn; one without a verified profile is data-person-status="pending"`);
-        else if (!ldKeys.has(key(c.name, c.href))) F.push(`/: the person card "${c.name}" has no Person node in the structured data`);
-      }
-      for (const c of pendingCards) {
-        if (c.linked) F.push(`/: the pending card "${c.name}" carries a link — a member whose profile is pending links nowhere until it is verified`);
-        if (ldNames.has(c.name)) F.push(`/: the pending card "${c.name}" has a Person node — Person is only for a verified profile`);
-      }
-      I.push(`/: Person ${persons.length}, person cards ${cards.length} (${verifiedCards.length} verified, ${pendingCards.length} pending)`);
     }
+    for (const p of persons) F.push(`${route}: a Person node for "${p.name || "(no name)"}" — the team is shown as a headcount (owner, 2026-09-24), and no one is named in the markup`);
+    for (const c of v.people.cards || []) F.push(`${route}: a person card for "${c.name || "(no name)"}" — the team is shown as a headcount (owner, 2026-09-24), and no one is named on the page`);
+    if (route === "/" || persons.length || (v.people.cards || []).length) I.push(`${route}: Person ${persons.length}, person cards ${(v.people.cards || []).length}`);
   }
   for (const [u, where] of urls) {
     if (!isSameSite(u)) {
@@ -3535,7 +3524,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page; a Person node or a link for a member whose profile is pending", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; a person card or a Person node anywhere — the team is a headcount (owner, 2026-09-24)", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */

@@ -62,7 +62,7 @@ returns as plain three.js, with no React Three Fiber.
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
 | `/engineering` | how we build (the homepage's six stages, and the three phases of `content/process.ts`), the stack by layer (SPEC §8b.2), architecture principles each linked to where it is written up, and the verify-before-release discipline | `content/engineering.ts`, `content/process.ts`, `content/pages.ts` · static |
-| `/about` | who we are; the ten engineers (the homepage's Team section, every rule intact, Person nodes for the verified six); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
+| `/about` | who we are; the team (the homepage's Team section: 15+ developers, no one named, no Person node); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
 | `/insights` | the index of the articles | `content/insights.ts`, `content/pages.ts` · static |
 | `/insights/[slug]` | an article (`generateStaticParams`, `dynamicParams = false`): the sections in reading order, code in Barlow 500, each "diagram" an ordered flow, related work; Article JSON-LD | `content/insights.ts` · SSG |
 | `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
@@ -170,11 +170,10 @@ fails `next build` with the file named:
   bullet: titles, deks and headings feed the Article JSON-LD and meta tags,
   where no chip can render.
 
-There is one FAQ (`faq.items`) and one team (`team.roster`); their structured
-data is generated from the same items the sections render (`fix/faq-one-source`,
-`feat/team-verified-six`, `feat/team-ten`). How to fill a team member in — each
-field, its format, and what turns a pending member into a verified one — is
-written above the roster in `content/site.ts`; the build validates all of it. `site.sectionOrder` must list every section exactly
+There is one FAQ (`faq.items`); its structured data is generated from the same
+items the section renders (`fix/faq-one-source`). The team is a headcount
+(`team.size`, "15+", and `team.sizeLabel`; *The team is a headcount*): no
+roster, no Person structured data. `site.sectionOrder` must list every section exactly
 once — a bad order fails the build. To hide a section, set
 `site.sectionVisibility[id]` to `false`.
 
@@ -592,8 +591,8 @@ for more than five seconds has a pause control.
     It is a plain `<img>` in a `<picture>`, the LCP element, with the image
     optimizer off that path. Below 1025px or on a coarse pointer it drifts
     slowly — a CSS transform, so no layout shift; under reduced motion it is
-    still. The step-3 files, `field-poster-{660,1320}.*`, stay in
-    `public/hero/` until the integration decides; nothing references them.
+    still. The step-3 files, `field-poster-{660,1320}.*`, were deleted at the
+    integration (2026-09-24): nothing referenced them.
   - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
     where the hero moves — the drift, or a hero marked `data-scene="live"` —
     and is invisible in the server HTML (`visibility: hidden` until it
@@ -643,13 +642,12 @@ for more than five seconds has a pause control.
 - JSON-LD from `lib/structured-data.ts`. The homepage graph: Organization (the
   new description, the apple-touch icon as its logo), WebSite, **one Service per
   capability** from `content/engineering.ts` (robotics' description carries its
-  honesty line), FAQPage, Person (only engineers with a verified LinkedIn),
-  BreadcrumbList. `/contact` emits a BreadcrumbList. `/work` and both case
+  honesty line), FAQPage, BreadcrumbList — and no Person, on any page (*The
+  team is a headcount*). `/contact` emits a BreadcrumbList. `/work` and both case
   studies emit their own; each case study is BreadcrumbList + Article.
   `/capabilities` emits Organization, one Service per capability and a
   BreadcrumbList; `/industries` and `/engineering` a BreadcrumbList; `/about`
-  Organization, AboutPage, BreadcrumbList and a Person per verified engineer,
-  from the roster the page renders; `/insights` CollectionPage and
+  Organization, AboutPage and BreadcrumbList; `/insights` CollectionPage and
   BreadcrumbList; each article an Article (its headline the page's h1, its
   author "Bolt Fusion Tech engineering", `datePublished`) and a BreadcrumbList.
   Every Service points at its section on `/capabilities`.
@@ -695,22 +693,21 @@ at the end, which means nobody has decided yet.
   slot until real photographs exist. *Holds* with `fix/team-no-template-avatars`
   (verify-site check 27, which since 2026-09-15 also counts CSS background
   images as pictures and fails any picture on a pending card).
-- **A person is linked, and marked up as Person, only with a verified LinkedIn
-  profile. A named team member without one is shown as 'profile pending', with
-  initials, never a photo or a borrowed handle. Decided 2026-09-15.** Enforced
-  at load, not by convention: a member is `status: "verified"` — a
-  `linkedin.com/in/` `profileUrl` and a handle, both required — or
-  `status: "pending"`, which refuses a `profileUrl`, a handle and a photo. Both
-  member schemas are strict, so a stray or retired key fails the build too,
-  and no link can be built from a handle. A pending card is the name, an
-  initials monogram (text, in the corner where a verified card carries its
-  arrow) and "Profile coming soon", with no link. Role, years, stack and photo
-  stay out until real data exists — never examples; a photo is a verified
-  member's own photograph under `/team/`, and a years value ("8 years" is a
-  figure) needs its exemption in `content/figure-labels.ts`, which the build
-  names. Person structured data comes from the same roster, verified members
-  only (`personLd` filters, so no caller can emit a pending one), emitting only
-  the fields that exist. *Holds* with `feat/team-ten` (checks 14, 27, 30).
+- **The team is a headcount. Decided by the owner 2026-09-24: "we just show
+  we have 15+ developer team, no details".** The Team section (homepage and
+  /about) states "15+ developers" and nothing about any one person: no names,
+  no profiles, no LinkedIn links, no photographs, no initials, and no Person
+  structured data on any page. Enforced at load: `team` is a strict object with
+  `size` and `sizeLabel`, so a `roster` put back fails the build, and `size` is
+  a figure whose exemption must exist in `content/figure-labels.ts`. Checked on
+  the page: check 14 fails a person card (`[data-person-card]`) or a Person
+  node on any page; check 30 fails a named member coming back (a cut item on /
+  and /about). It supersedes the rule of 2026-09-15 below.
+  *History, superseded 2026-09-24:* **A person is linked, and marked up as
+  Person, only with a verified LinkedIn profile; a named member without one is
+  shown as "profile pending", with initials** (`feat/team-ten`, checks 14, 27,
+  30). The roster, its verified and pending member schemas, `personLd` and the
+  cards' CSS were deleted with it.
 - **Reveals render visible in the server HTML.** Fade-on-scroll is allowed; an
   element the server sends at `opacity:0` is not. *Holds*: the reveal's
   `fill-mode: none` has no hidden resting state (checks 4 and 5).
@@ -1150,7 +1147,15 @@ with a guard that refused to write it otherwise.
   never comes, a timeout under load) is a finding in its own check, "unsure is a
   failure", instead of an uncaught error that ends the whole suite with no
   results.
-- **14, 27 and 30, the team of ten (2026-09-15)** — 14: every verified person
+- **14 and 30, the team as a headcount (2026-09-24)** — 14 fails any
+  `[data-person-card]` and any Person node, on every page it reads: the team
+  names no one. 30: the team item's needles are the headcount ("15+",
+  "developers") and the new subtext; the ten names, the handles, "Profile coming
+  soon" and "verified profiles" are a cut item on / and /about. 27 is unchanged
+  (no fake faces, anywhere). The gate's "person" case (an empty jobTitle) is
+  RETIRED — there is no Person node left to empty — and a "person-card" case
+  takes its place; RUN 3 adds "a roster put back".
+- *History:* **14, 27 and 30, the team of ten (2026-09-15)** — 14: every verified person
   card has its Person node and every Person its verified card, as before; a
   card marked `data-person-status="pending"` must carry no link (on it, in it
   or around it) and have no Person node, and a card with no link that is not

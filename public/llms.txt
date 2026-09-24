@@ -61,8 +61,8 @@ Every figure published on this site carries a `shipped` or `target` label.
 - [Engineering](/engineering): how we build, as six stages in order; the stack
   by layer; architecture principles from the systems we built, each linked to
   where it is written up; and the checks this site passes before every release.
-- [About](/about): who we are; the ten engineers, six with a verified LinkedIn
-  profile; where our engineers work (the UK, Malaysia and Bangladesh); how we
+- [About](/about): who we are; the team, 15+ developers; where our engineers
+  work (the UK, Malaysia and Bangladesh); how we
   work with clients: engagement models, the two-week pilot, IP and NDA; and what
   we won't do.
 - [Insights](/insights): technical articles written from real work, by Bolt

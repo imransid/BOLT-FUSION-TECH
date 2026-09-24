@@ -261,13 +261,13 @@ const raw: z.input<typeof pagesSchema> = {
         "Text below AA contrast against what is actually behind it.",
         "Content that is invisible with JavaScript off, or still hidden after a reading-speed scroll.",
         "Sideways scrolling or cut-off content at any width it tests.",
-        "A template, placeholder or generated face, or any picture on a team card without a verified profile.",
+        "A template, placeholder or generated face, or a named person on the team section, which shows a headcount only.",
         "A project card that does not say who built it, or a screenshot that does not load.",
         "Structured data that disagrees with the page it describes.",
         "Anything still moving when reduced motion is requested.",
         "A piece of inventoried content missing from its page.",
       ],
-      note: "Some of it is refused earlier, by the build: content that fails its schema — an unlabelled figure, a team member marked verified without a LinkedIn profile, a Lab capability without its honesty line — stops the build and names the file.",
+      note: "Some of it is refused earlier, by the build: content that fails its schema — an unlabelled figure, a named team roster, a Lab capability without its honesty line — stops the build and names the file.",
     },
   },
 
@@ -338,7 +338,7 @@ const raw: z.input<typeof pagesSchema> = {
         },
         {
           title: "Use stock photography or stock faces",
-          body: "Screenshots are real captures of live products. An engineer is shown with their own photograph or, until one exists, their initials — and is linked only once their profile is verified.",
+          body: "Screenshots are real captures of live products. No template, stock or generated face appears anywhere on the site, and the team is shown as a headcount, not as stand-in portraits.",
         },
         {
           title: "Take credit for work we didn't do",

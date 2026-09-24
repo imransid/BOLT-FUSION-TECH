@@ -113,8 +113,9 @@ export const insightSchema = z
      *  Article JSON-LD keeps the dek. */
     description: text.refine((s) => /[.?]$/.test(s) && !/[.?!]\s+\p{Lu}/u.test(s), "one sentence, ending in a full stop").optional(),
     datePublished: isoDateSchema,
-    /** SPEC §6: an engineer's name only if the owner assigns one. Until then,
-     *  the team. Widen this deliberately, to a verified member, when he does. */
+    /** SPEC §6: an engineer's name only if the owner assigns one. The site
+     *  names no one (the owner, 2026-09-24: the team is a headcount), so the
+     *  author is the team. */
     author: z.literal("Bolt Fusion Tech engineering"),
     capabilities: z.array(capabilityIdSchema).min(1).refine(unique, "each capability once"),
     /** Ids of published projects in content/projects.ts (checked in

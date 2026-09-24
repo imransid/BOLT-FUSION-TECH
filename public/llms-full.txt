@@ -210,7 +210,7 @@ now, which is still in development.
 - /engineering — how we build (six stages), the stack by layer, architecture
   principles from the systems we built, and the checks this site passes before
   every release.
-- /about — who we are, the ten engineers (six with a verified profile), where
+- /about — who we are, the team (15+ developers), where
   our engineers work (the UK, Malaysia and Bangladesh), how we work with
   clients, and what we won't do.
 
