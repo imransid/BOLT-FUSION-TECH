@@ -922,6 +922,18 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
+**The gate (`scripts/gate/`, moved into the repository 2026-09-24).** Nothing
+goes to `main` unless `scripts/gate/gate.sh` passes on the committed HEAD: RUN 1,
+the full suite with `--repo` on a fresh copy and a fresh server (:3465); RUN 2,
+every misuse case in `gate-cases.py` patched into one build, each of which must
+fail its own check with its own finding (and that finding must not already be on
+the clean build); RUN 3, bad content the build must refuse in the schema's own
+words. `--only` is derived from the case table, never written by hand. A case
+whose anchor stops applying aborts the gate; a rule that cannot exist any more is
+RETIRED with its reason, printed on every run. Scratch copies go under
+`$GATE_TMP` (default `$TMPDIR/bf-gate`). It lived in a session scratchpad until
+then, and was lost with it once.
+
 **The redesign and the suite (2026-09-16).** The suite wave (`redesign/eng-suite`)
 brought the suite to the owner's redesign (the redesign spec, §8, with the binding
 §8b): checks 7, 12, 23, 25, 28, 29, 30 and 31 changed, and 32 and 33 are new. The

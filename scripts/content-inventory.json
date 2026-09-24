@@ -8,7 +8,8 @@
     "`retired`, its reason — printed, never checked). `scope` (header, footer, main) matches inside that part of the page;",
     "`match: \"word\"` matches whole words (\"Expo\" is not \"export\"); `ignoreCase`. `sets` hold items a route includes",
     "({ \"include\": name }). `awaiting` holds a page not yet published: printed until it is in the sitemap, then it must",
-    "move into `routes`. Adding a route is data only."
+    "move into `routes`. Adding a route is data only.",
+    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too."
   ],
   "excludedAsInterfaceText": [
     ", LinkedIn profile (opens in a new tab)",
@@ -120,6 +121,21 @@
           "Profile coming soon",
           "verified profiles",
           "Each verified card opens the engineer's LinkedIn profile"
+        ]
+      }
+    ],
+    "team-headcount": [
+      {
+        "item": "Team: the headcount",
+        "proves": "How many developers — 15+, as the owner states it (2026-09-24) — and no one named",
+        "status": "required",
+        "needles": [
+          "Your bench",
+          "// who builds with you",
+          "Senior engineers.One delivery standard.",
+          "Named engineers are assigned before you sign. Ask on the call who would work on your project.",
+          "15+",
+          "developers"
         ]
       }
     ]
@@ -274,17 +290,7 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "item": "Team: the headcount",
-        "proves": "How many developers — 15+, as the owner states it (2026-09-24) — and no one named",
-        "status": "required",
-        "needles": [
-          "Your bench",
-          "// who builds with you",
-          "Senior engineers.One delivery standard.",
-          "Named engineers are assigned before you sign. Ask on the call who would work on your project.",
-          "15+",
-          "developers"
-        ]
+        "include": "team-headcount"
       },
       {
         "include": "team-roster-cut"
@@ -595,6 +601,16 @@
           "Contact",
           "Contact page",
           "Schedule a Call"
+        ]
+      },
+      {
+        "item": "Insights: the homepage teaser",
+        "proves": "The articles, linked from the homepage (the pages wave, 2026-09-16)",
+        "status": "required",
+        "needles": [
+          "Notes from the systems we build.",
+          "All insights",
+          "Routing AI so most queries never reach a model"
         ]
       }
     ],
@@ -1278,43 +1294,260 @@
           "← Back to boltfusiontech.com"
         ]
       }
+    ],
+    "/about": [
+      {
+        "item": "Engagement models (moved from /, 2026-09-16)",
+        "proves": "PROOF: what a founder buys, from content/services.ts (COPY.md §6)",
+        "status": "required",
+        "needles": [
+          "Model",
+          "Shape",
+          "Timeline",
+          "MVP build",
+          "Scope, architecture, shippable v1",
+          "8–16 weeks",
+          "Embedded team",
+          "Roadmap delivery with your PMs",
+          "Stabilise and scale",
+          "Performance, reliability, maintainability",
+          "Ongoing",
+          "As needed"
+        ]
+      },
+      {
+        "item": "The pilot and the working terms (moved from /, 2026-09-16)",
+        "proves": "PROOF: the two-week pilot and how an engagement runs, from content/pilot.ts and the old hero",
+        "status": "required",
+        "needles": [
+          "Most engagements start with the two-week pilot below. We’ll give",
+          "Two-week sprints, a demo at the end of each, a named escalation",
+          "Senior-only teams, named engineers up front, 4–8 hours of overla",
+          "Start a 2-week pilot"
+        ]
+      },
+      {
+        "item": "Who we are, and where our engineers work",
+        "proves": "The page's own head and places — never an office or an address (SPEC §8b.12)",
+        "status": "required",
+        "needles": [
+          "Who we are, and how we work.",
+          "Where our engineers work.",
+          "United Kingdom",
+          "Malaysia",
+          "Bangladesh"
+        ]
+      },
+      {
+        "include": "team-headcount"
+      },
+      {
+        "include": "team-roster-cut"
+      },
+      {
+        "item": "The pilot's plan",
+        "proves": "Two weeks, fixed price, full IP (content/pilot.ts)",
+        "status": "required",
+        "needles": [
+          "Two weeks. Fixed price. Full IP. No obligation.",
+          "Week 1",
+          "Week 2",
+          "Deliverable"
+        ]
+      },
+      {
+        "item": "What we won't do",
+        "proves": "Only commitments the site already keeps",
+        "status": "required",
+        "needles": [
+          "Commitments this site already keeps.",
+          "Publish a figure without its label",
+          "Use stock photography or stock faces",
+          "Take credit for work we didn't do",
+          "Claim delivery we haven't done"
+        ]
+      }
+    ],
+    "/capabilities": [
+      {
+        "item": "The six capabilities, each headline",
+        "proves": "SPEC §8: every capability, none posing as the whole company",
+        "status": "required",
+        "needles": [
+          "Six capabilities, each with its evidence.",
+          "Software that becomes infrastructure for your business.",
+          "Turn intelligence into action.",
+          "One system for complex operations.",
+          "Commerce systems built around real operations.",
+          "Bringing intelligence beyond the screen.",
+          "The systems behind the systems."
+        ]
+      },
+      {
+        "item": "Robotics' honesty line",
+        "proves": "Lab tier: no hardware, nothing shipped (owner's brief §8)",
+        "status": "required",
+        "needles": [
+          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
+          "Concept — not a shipped system"
+        ]
+      },
+      {
+        "item": "Each capability's structure and evidence tiers",
+        "proves": "What we build, how, and the evidence behind it",
+        "status": "required",
+        "needles": [
+          "How we approach it",
+          "How we’d approach it",
+          "What we build",
+          "What we'd build",
+          "Evidence",
+          "Linked work",
+          "Written up",
+          "Proven",
+          "Core",
+          "Capable",
+          "Lab"
+        ]
+      }
+    ],
+    "/industries": [
+      {
+        "item": "Industries, split by delivered work",
+        "proves": "\"Technology we can build for…\" — past work claimed only where it exists (owner's brief §10)",
+        "status": "required",
+        "needles": [
+          "Technology we can build for…",
+          "Industries with delivered work.",
+          "No delivered work here yet.",
+          "Where we’ve built it",
+          "What we’d build",
+          "The problems",
+          "Draws on",
+          "Retail point of sale in development."
+        ]
+      },
+      {
+        "item": "The industries",
+        "proves": "Each named, none implying a client portfolio",
+        "status": "required",
+        "needles": [
+          "Restaurants & hospitality",
+          "Retail & commerce",
+          "Real estate",
+          "HR & professional services",
+          "Salons & beauty",
+          "Healthcare",
+          "Education",
+          "Logistics",
+          "Enterprise operations",
+          "Startups & technology companies"
+        ]
+      }
+    ],
+    "/engineering": [
+      {
+        "item": "How we build: six stages",
+        "proves": "The owner's brief §11, in order",
+        "status": "required",
+        "needles": [
+          "How we build, and what we build with.",
+          "A sequence, not a slogan.",
+          "Discover",
+          "Architect",
+          "Engineer",
+          "Integrate",
+          "Deploy",
+          "Scale"
+        ]
+      },
+      {
+        "item": "How a project runs, the stack and the principles",
+        "proves": "SPEC §8b.2: the stack by layer; principles linked to where they are written up",
+        "status": "required",
+        "needles": [
+          "How a project actually runs.",
+          "Discovery and plan",
+          "Build in iterations",
+          "Launch and operate",
+          "The stack, by layer.",
+          "Principles we can point to.",
+          "Route before you pay for a model",
+          "Enforce tenancy in the database",
+          "Label every figure",
+          "Written up in"
+        ]
+      },
+      {
+        "item": "The release checks",
+        "proves": "The discipline this site is held to",
+        "status": "required",
+        "needles": [
+          "Checked before every push."
+        ]
+      }
+    ],
+    "/insights": [
+      {
+        "item": "The articles",
+        "proves": "Three technical articles from real work, by the team",
+        "status": "required",
+        "needles": [
+          "Notes from the systems we build.",
+          "Routing AI so most queries never reach a model",
+          "Offline-first point of sale: keeping the till selling when the network drops",
+          "Multi-tenant SaaS on Postgres row-level security",
+          "Bolt Fusion Tech engineering",
+          "16 September 2026"
+        ]
+      }
+    ],
+    "/insights/routing-ai-so-most-queries-never-reach-a-model": [
+      {
+        "item": "The article",
+        "proves": "Its sections, its labelled figure and its related work",
+        "status": "required",
+        "needles": [
+          "Routing AI so most queries never reach a model",
+          "← All insights",
+          "The expensive part is deciding when to call a model",
+          "Classify first, pay second",
+          "keyword lane for ~80% of traffic",
+          "target",
+          "Related work",
+          "Intelligent restaurant search",
+          "TypeScript",
+          "Pseudo-code for the order of operations"
+        ]
+      }
+    ],
+    "/insights/offline-first-point-of-sale": [
+      {
+        "item": "The article",
+        "proves": "Its sections and its diagram",
+        "status": "required",
+        "needles": [
+          "Offline-first point of sale: keeping the till selling when the network drops",
+          "A till that waits for the network loses sales",
+          "SQL",
+          "Python",
+          "One sale, from the till to the server and back."
+        ]
+      }
+    ],
+    "/insights/multi-tenant-saas-on-postgres-row-level-security": [
+      {
+        "item": "The article",
+        "proves": "Its sections and its diagram",
+        "status": "required",
+        "needles": [
+          "Multi-tenant SaaS on Postgres row-level security",
+          "Tenancy is the one thing you cannot retrofit",
+          "The policy every tenant table gets",
+          "One request, one tenant, one transaction."
+        ]
+      }
     ]
   },
-  "awaiting": {
-    "/about": {
-      "by": "the pages wave (redesign/eng-pages) — SPEC §4: who we are, and how we work with clients (the engagement ladder, IP/NDA, overlap hours)",
-      "rows": [
-        {
-          "item": "Engagement models (moved from /, 2026-09-16)",
-          "proves": "PROOF: what a founder buys, from content/services.ts (COPY.md §6)",
-          "status": "required",
-          "needles": [
-            "Model",
-            "Shape",
-            "Timeline",
-            "MVP build",
-            "Scope, architecture, shippable v1",
-            "8–16 weeks",
-            "Embedded team",
-            "Roadmap delivery with your PMs",
-            "Stabilise and scale",
-            "Performance, reliability, maintainability",
-            "Ongoing",
-            "As needed"
-          ]
-        },
-        {
-          "item": "The pilot and the working terms (moved from /, 2026-09-16)",
-          "proves": "PROOF: the two-week pilot and how an engagement runs, from content/pilot.ts and the old hero",
-          "status": "required",
-          "needles": [
-            "Most engagements start with the two-week pilot below. We’ll give",
-            "Two-week sprints, a demo at the end of each, a named escalation",
-            "Senior-only teams, named engineers up front, 4–8 hours of overla",
-            "Start a 2-week pilot"
-          ]
-        }
-      ]
-    }
-  }
+  "awaiting": {}
 }
