@@ -31,10 +31,13 @@ returns as plain three.js, with no React Three Fiber.
   (`app/techwix.css`, the `.tw-` classes, `components/techwix`) was retired the
   same day, once the inner pages had moved (*Retired 2026-09-16: the Techwix
   design*).
+  Verify-site check 31 knows the design by `app/site.css`'s rules and fails the
+  retired one — its stylesheet, any `tw-` class, `components/techwix` — if any
+  of it comes back (*Verify before pushing*).
 - **three.js returns** (owner, 2026-09-16; *Decided 2026-09-16*): for the hero's
   3D scene only — three.js core, dynamically imported after load, desktop-only,
-  at most 180KB gzipped. The 3D wave adds the dependency and rewrites *The hero
-  field* under Hard rules; until it lands there is no canvas on any page.
+  at most 180KB gzipped. It landed with the 3D wave (`redesign/eng-scene`;
+  *The hero field*).
 - Package manager: yarn 4 (`packageManager` in package.json), `nodeLinker:
   node-modules` — Turbopack does not support Plug'n'Play. `yarn.lock` is the
   only lockfile.
@@ -42,7 +45,9 @@ returns as plain three.js, with no React Three Fiber.
   `zod`. `three` is pinned exactly (`0.186.0`), and `@types/three` in
   devDependencies matches it (`0.186.0`): bump the two together, and
   re-measure the scene chunk when you do. Only `components/field/scene.ts`
-  imports it. Verify-site check 24 fails a dependency nothing imports.
+  imports it, and only `components/field/HeroScene.tsx` imports that, dynamically
+  — check 31 (`--repo`) fails three.js imported anywhere else, or `scene.ts`
+  imported statically. Verify-site check 24 fails a dependency nothing imports.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
 - Scripts beside the suite: `scripts/generate-icons.mjs` (the icons, from the
   mark), `scripts/contrast-site.mjs` (the contrast table below),
@@ -817,11 +822,11 @@ at the end, which means nobody has decided yet.
     and 1366x1024, a coarse pointer), with Save-Data on, or under reduced
     motion. The conditions are watched live: when they stop holding (a resize
     below 1025, reduced motion switched on) the scene is torn down and
-    disposed. Until the suite wave rewrites check 25 for the scene
-    (engineering SPEC §8), it also fails any context on `/` at all, any
-    three.js chunk, and a renderer chunk over 15KB. On `redesign/eng-scene`
-    those three findings are expected. Width alone is never the gate: an iPad
-    in landscape is 1180 or 1366 wide.
+    disposed. Since the suite wave (2026-09-16) check 25 also requires the
+    scene where it is allowed — a granted context at 1440 with a fine pointer,
+    its canvas in the field, `data-scene-ready` — and holds the scene chunk to
+    180KB gzipped, requested after the load event (*Verify before pushing*).
+    Width alone is never the gate: an iPad in landscape is 1180 or 1366 wide.
   - **It sits beside the headline, never behind it.** On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
@@ -920,12 +925,109 @@ exists to catch. `--repo .` adds the repository checks. Check 17 keeps the retir
 `/admin`, `/admin/login` and the four `/api/admin/*` routes must answer 404,
 robots.txt must not name them, and no page may link to them.
 
-**The redesign and the suite (2026-09-16).** The suite wave updates checks 7,
-12, 25, 28, 29, 30 and 31 and adds the "Schedule a Call" check (the redesign
-spec, §8), with the inventory changes taken from the homepage agent's MOVES.md.
-Until it lands, four checks fail on purpose: 28 (the proof strip left the hero
-for the engineering stories), 30 (the old homepage's inventory), and — since the
-scene merged — 25 and 31, which still ban WebGL and three.js anywhere.
+**The redesign and the suite (2026-09-16).** The suite wave (`redesign/eng-suite`)
+brought the suite to the owner's redesign (the redesign spec, §8, with the binding
+§8b): checks 7, 12, 23, 25, 28, 29, 30 and 31 changed, and 32 and 33 are new. The
+inventory follows the homepage agent's MOVES.md, every fate recorded. Each change
+was proven both ways on a served fixture — the page passes, the same page with one
+misuse fails — and every new rule has a misuse case in the gate's RUN 2.
+- **7** — the headline is two spans, "Build" / "what's next.", and a span of one
+  word is by design; so besides each span's own lines the check reads the lines
+  of the WHOLE headline, across its spans, and fails a last line of one word. The
+  per-span rule alone passed "Build what's" / "next." set as two spans that never
+  wrap: neither span breaks, and the headline still ends on an orphan.
+- **12** — the canonical line is the owner's of 2026-09-16, written in the suite
+  (as check 9 writes its labels) and compared with `content/canonical.ts`, so a
+  changed line cannot pass by agreeing with itself; changing it means changing
+  both, on purpose. It must open the Organization description and appear word for
+  word in the meta, og and twitter descriptions, the share image's alt text and
+  BOTH llms files — the check never read `llms-full.txt`, so a copy changed there
+  alone passed.
+- **25, rewritten for the three.js scene** — exactly one profile may have a WebGL
+  context: `/` at ≥1025px with a fine pointer, no touch, no Save-Data and no
+  reduced motion. There one MUST exist — a context the browser grants, a canvas
+  inside `[data-hero-field]`, and `data-scene-ready` on the field — because every
+  "never" rule passes on a scene that is silently dead. The browser is launched
+  with ANGLE's SwiftShader (the scene's own probes' flags) so a headless run can
+  draw; the flags make WebGL available and change nothing a page decides, and a
+  refused context at 1440 is unsure, a failure. The scene chunk — what the
+  allowed profile requests on `/` that no other profile does, plus any script
+  that is three.js (its GLSL strings survive minification) or asks for a context
+  — is at most 180KB gzipped and requested after the load event. three.js is
+  never requested at 390, 768 or 1024, as a phone, on a touch tablet, with
+  Save-Data, under reduced motion or on another page; @react-three never. Every
+  older hardening stays: every frame, workers, a frame that removes itself, the
+  first input, the 1024 run, both tablets, Save-Data, reduced motion.
+- **28** — the hero contract is the owner's words: "Build what's next.", the
+  support line "Software. Intelligence. Automation. Machines.", the body
+  paragraph after it, and both calls to action, "Schedule a Call" to
+  /contact#schedule and "Explore Our Capabilities" to /capabilities — each in the
+  served HTML with scripts stripped. The proof-strip assertions followed the strip
+  to the engineering stories, `#recent-work`: the list holding the `[data-metric]`
+  rows, every row's figure, label, status and source compared with
+  `content/metrics.ts` and served as shown. At ≥1025px the settled poster is read
+  once the scene has drawn over it (up to 12s more), so "the poster stays
+  rendered under the canvas" is a finding about the scene, not about a page
+  without one; and the poster is BESIDE the h1 there — right of every line of
+  it — and above it below 1025.
+- **29** — the budget is unchanged. The scene chunk is not counted because it is
+  requested after the load event, and that exclusion is now written into the
+  check: every scene chunk the runs requested is printed with its start time, and
+  one requested before the load event ended fails — a scene imported statically
+  would put three.js in the initial JavaScript (check 25 fails it too).
+- **30** — the inventory follows MOVES.md for `/` and adds `/contact` (*Check 30
+  is the content contract*, below). New in the check: `retired` items, a `scope`,
+  whole-word matching, `ignoreCase`, shared `sets` and `awaiting` routes; a cut or
+  retired item without its reason, or a status, scope or match it does not know,
+  fails.
+- **31, one design: the redesign's** — the site's stylesheet is known by
+  `app/site.css`'s `.bf-header` / `.bf-wrap` / `.bf-hero` / `.bf-main` rules. The
+  Techwix design joins the retired list: a stylesheet with its `.tw-root` /
+  `.tw-hero` / `.tw-header` rules, any element with a `tw-` class (the 404's markup
+  too), and with `--repo` a tracked `app/techwix.css` or `components/techwix/*` and
+  any import of them. three.js is allowed only under `components/field/`, in a
+  module nothing imports statically (a type-only import is erased) and only
+  `components/field/HeroScene.tsx` imports dynamically; @react-three,
+  framer-motion and Tailwind stay banned everywhere. **Until the pages wave
+  deletes the Techwix design, check 31 fails on it:** every page's
+  `<body class="tw-root">`, `<FigureText>`'s `.tw-figchip`, the inner pages'
+  markup, and `app/techwix.css` with its pieces.
+- **32, new — "Schedule a Call"** — no page says "Book a call", in any case: each
+  page's served HTML (text, attributes, head, JSON-LD and page data), each page
+  as rendered (hidden text and every attribute), the 404 and the llms files. The
+  WarmChats write-up's locked "Book a similar build" and "Book a strategy call",
+  and the restaurant write-up's "Book a technical call", are other phrases. The
+  header's primary button — every link in `header#masthead` that is not the
+  navigation or the logo's link home — reads exactly "Schedule a Call", carries
+  `data-cta="schedule"` and goes to /contact#schedule; every `[data-cta]` reads
+  its kind's words and goes to its kind's page (schedule → /contact#schedule,
+  explore → /capabilities, project → /contact#project); `/` carries all three;
+  and /contact answers 200 with `#schedule` and `#project`.
+- **33, new — the honesty contract** — every `[data-capability]` shows a tier chip
+  a reader can see; the robotics capability (on `/`, and on /capabilities once it
+  exists) shows a visible Lab chip, no other tier, and a `[data-honesty]` element
+  holding SPEC §8b.7's line verbatim where a reader can see it; no tier chip
+  carries or holds a `data-status`, which check 8 reads as a figure's label; and
+  a tier chip says its tier.
+- **23** — unchanged in what it compares. It captures under reduced motion, where
+  the scene never mounts (check 25 fails one that does), and hides every canvas
+  for the capture, so the live canvas cannot reach it; it now prints what the page
+  held (its canvases, and whether a scene drew). Pausing the scene with
+  `bf:motion` instead would make the capture depend on the scene's own pause
+  working; reduced motion keeps the scene out of the page.
+
+**The gate (2026-09-16).** RUN 1 builds a fresh copy of HEAD, serves it fresh and
+runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
+every misuse case to another copy in one build; each must fail its own check
+with its own finding, and that finding must not already be on RUN 1's report —
+a pattern that matches the clean build proves nothing. RUN 3 builds four kinds
+of bad content — a figure KPI with no status, a capability KPI with one, an
+exemption with an empty reason, a capability tier outside proven, core, capable
+and lab — and requires the schema's own refusal in the build log: a build that
+fails for another reason is unsure. The suite's `--only` list for RUN 2 is
+derived from the case table: a hand-written list once omitted check 9, and its
+case could not fail. A case whose target does not exist yet names the wave that
+brings it and holds the verdict at INCOMPLETE until it runs.
 
 **The inner pages (2026-09-16).** With `app/techwix.css` deleted, check 31 as
 written — it knows the site's stylesheet by `.tw-root` / `.tw-hero` /
@@ -959,7 +1061,31 @@ review, not by this check.
 **Check 30 is the content contract.** `scripts/content-inventory.json` lists every
 page's content; a required needle missing from the served HTML fails, and so does
 a cut item coming back. A restyle that moves text into different nodes splits
-the needle at the boundary (`8716ba5`); it never deletes a required word.
+the needle at the boundary (`8716ba5`); it never deletes a required word. Since
+2026-09-16:
+- an item is `required`, `cut` (with its reason) or `retired` (with its reason:
+  printed on every run, checked neither way). "About", cut on 2026-09-15 when it
+  pointed at #team, is retired: it is the /about link again, and a required
+  Navigation needle;
+- `scope` matches inside the header, footer or main only — a link cut from the
+  navigation ("Services", "Team") can still be a word on the page, and
+  "Services" is one, in a diagram's label;
+- `match: "word"` matches whole words with the text's spaces kept: "Expo" never
+  matches "export" or "exposure". The squashed matching stays the default, because
+  a restyle splits words across nodes; `ignoreCase` covers "Book a call" in any
+  case;
+- `sets` hold items several routes include (`{ "include": name }`): the excluded
+  projects on `/` and /work, and SPEC §8b's cuts (Expo, Supabase, Whisper,
+  FastAPI, Kubernetes, Kafka, RabbitMQ, GoRestora, nResto, B-POS, "Book a call",
+  the old honesty line) on `/` and /contact;
+- `awaiting` holds the inventory of a page not yet published — /about, with the
+  engagement models, the pilot and the overlap hours that left `/` — printed on
+  every run and required the moment the page is in the sitemap, where it must
+  move into `routes`. Adding a route is data only.
+
+Every old `/` needle has a fate — kept, cut, retired, moved to /contact or
+awaiting /about — and none was dropped silently; the inventory was generated
+with a guard that refused to write it otherwise.
 
 **Checks added or changed in step 3:**
 - **25, rewritten** — no WebGL at 390 or 768, as a phone, or under reduced
@@ -1135,6 +1261,15 @@ holds three.js. esbuild's estimate before the build was 142.8KB. So named
 imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
+
+**The scene is not initial JavaScript, and check 29 says so (2026-09-16).** The
+260KB counts what is requested by the end of the load event, and the scene chunk
+is imported after it: check 29 prints every scene chunk its runs requested, with
+its start time against the load event, and fails one requested before the load
+event ended — a static import of the scene would put three.js in the initial
+JavaScript. Check 25 holds the 180KB: it gzips each scene file as served (level
+6), because its WebGL runs re-serve scripts through the worker hook and their
+resource timings are not the wire.
 
 **The posters:** `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
 `-660.webp` 10.3KB, `-1320.webp` 24.8KB (AVIF 4:4:4 at quality 56, WebP 82).
