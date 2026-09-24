@@ -1,29 +1,32 @@
 import type { Metadata } from "next";
-import ScreenImage from "@/components/techwix/ScreenImage";
+
+import { alt as ogAlt } from "../opengraph-image";
 
 import FigureText from "@/components/FigureText";
-import Button from "@/components/techwix/Button";
-import CtaPanel from "@/components/techwix/CtaPanel";
-import PageBanner from "@/components/techwix/PageBanner";
-import PageShell from "@/components/techwix/PageShell";
-import ProjectCard, { AttributionLabel, ProjectFacts, ProjectLinks } from "@/components/techwix/ProjectCard";
-import SectionHeading from "@/components/techwix/SectionHeading";
-import StatusChip from "@/components/techwix/StatusChip";
-import { Tags } from "@/components/techwix/Tags";
+import Cta from "@/components/site/Cta";
+import CtaBand from "@/components/site/CtaBand";
+import JsonLd from "@/components/site/JsonLd";
+import { Tags } from "@/components/site/Lists";
+import PageHead from "@/components/site/PageHead";
+import ProjectCard, { AttributionLabel, ProjectFacts, ProjectLinks } from "@/components/site/ProjectCard";
+import ScreenImage from "@/components/site/ScreenImage";
+import SectionHead from "@/components/site/SectionHead";
+import SiteShell from "@/components/site/SiteShell";
+import StatusChip from "@/components/site/StatusChip";
 import { metrics, projectSections, projects, type Project } from "@/content";
 import { getSiteUrl } from "@/lib/site-url";
-import { jsonLdHtml } from "@/lib/structured-data";
 
 /**
  * /work — every project the owner approved, each labelled with who built it
- * (CLAUDE.md, "Projects and attribution", decided 2026-09-15). Four sections,
- * one per kind, in `projectSections` order:
+ * (CLAUDE.md, "Projects and attribution", decided 2026-09-15), in the site's
+ * one design since 2026-09-16 with every word and the section order kept.
+ * Four sections, one per kind, in `projectSections` order:
  *
  *  · case studies — one row per write-up: a large screenshot beside the text,
  *    its figures each with its shipped/target chip. Rows, not a grid: a
  *    two-item grid looks unfinished, two rows look deliberate;
  *  · Bolt Fusion projects, in-house products and our engineers' track record —
- *    cards on a grid that fills its rows at every width (app/techwix.css).
+ *    cards on a grid that fills its rows at every width (app/site.css, "/work").
  *    Inside Bolt Fusion projects, the products first, then a sub-group under
  *    its own h3 for the features we shipped into other companies' apps
  *    (`scope: "features"`, decided 2026-09-16), its cards' names h4s, on a
@@ -31,7 +34,10 @@ import { jsonLdHtml } from "@/lib/structured-data";
  *
  * Every card carries its attribution label directly above the project's name.
  * A track-record card is text only: the product belongs to someone else. So is
- * a feature-work card: the app's UI belongs to the client.
+ * a feature-work card: the app's UI belongs to the client. The data
+ * attributes (`data-project-kind`, `-scope`, `-id`, `data-attribution`,
+ * `data-role`, `data-built-at`, `data-metric`) are verify-site check 9's and
+ * check 8's contract, and no h3 or h4 sits outside a card or the sub-group.
  *
  * INDEXABLE, deliberately: crawlable, in the sitemap, with CollectionPage
  * schema listing the write-ups.
@@ -63,7 +69,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: new URL("/opengraph-image", site).toString(),
           width: 1200,
           height: 630,
-          alt: "Bolt Fusion Tech — We build AI systems that are still running in six months.",
+          alt: ogAlt,
         },
       ],
     },
@@ -81,9 +87,9 @@ export async function generateMetadata(): Promise<Metadata> {
  *  text). */
 const columns = (n: number) => (n > 1 && n % 3 === 0 ? 3 : n > 1 && n % 2 === 0 ? 2 : 1);
 const SIZES: Record<1 | 2 | 3, string> = {
-  3: "(min-width: 1025px) 420px, (min-width: 768px) 50vw, 100vw",
-  2: "(min-width: 768px) 50vw, 100vw",
-  1: "(min-width: 768px) 55vw, 100vw",
+  3: "(min-width: 1025px) 400px, (min-width: 768px) 50vw, calc(100vw - 32px)",
+  2: "(min-width: 768px) 50vw, calc(100vw - 32px)",
+  1: "(min-width: 768px) 55vw, calc(100vw - 32px)",
 };
 
 /** A set of cards on a grid that fills its rows. `labelledBy` names the list
@@ -91,7 +97,7 @@ const SIZES: Record<1 | 2 | 3, string> = {
 function ProjectGrid({ items, headingLevel, labelledBy }: { items: Project[]; headingLevel?: 3 | 4; labelledBy?: string }) {
   const cols = columns(items.length);
   return (
-    <ul className={`tw-projects tw-projects--${cols}`} aria-labelledby={labelledBy}>
+    <ul className={`bf-projects bf-projects--${cols}`} aria-labelledby={labelledBy}>
       {items.map((p) => (
         <ProjectCard key={p.id} p={p} sizes={SIZES[cols]} headingLevel={headingLevel} />
       ))}
@@ -109,37 +115,35 @@ function CaseStudyRow({ p }: { p: Project }) {
     .map((id) => metrics.find((m) => m.id === id))
     .filter((m): m is NonNullable<typeof m> => Boolean(m));
   return (
-    <li className="tw-work__row" data-project-kind={p.kind} data-project-id={p.id}>
+    <li className="bf-work__row" data-project-kind={p.kind} data-project-id={p.id}>
       {/* Large screenshot — this page is the portfolio, thumbnails waste it.
           The button below is the row's link for keyboards and screen readers;
           this one is for the pointer. */}
-      <a href={p.href!} className="tw-work__shot" tabIndex={-1} aria-hidden data-tw-reveal>
-        <ScreenImage src={p.image!.src} alt="" fill sizes="(min-width: 1025px) 55vw, 100vw" className="tw-work__img" />
+      <a href={p.href!} className="bf-work__shot" tabIndex={-1} aria-hidden data-bf-reveal>
+        <ScreenImage src={p.image!.src} alt="" fill sizes="(min-width: 1025px) 700px, calc(100vw - 32px)" className="bf-work__img" />
       </a>
 
-      <div className="tw-work__body" data-tw-reveal>
+      <div className="bf-work__body" data-bf-reveal>
         <AttributionLabel p={p} />
-        <h3 className="tw-title-wrapper">
-          <span className="title-sub">{p.name}</span>
-        </h3>
+        <h3 className="bf-work__name">{p.name}</h3>
 
-        <p className="tw-work__summary">{p.summary}</p>
+        <p className="bf-work__summary">{p.summary}</p>
 
         <ProjectFacts p={p} />
 
         {/* Every figure keeps its shipped/target label, beside it. No exceptions. */}
         {rowMetrics.length > 0 ? (
-          <ul className="tw-metrics">
+          <ul className="bf-metrics">
             {rowMetrics.map((m) => (
-              <li key={m.id} className="tw-metric">
+              <li key={m.id} className="bf-metric">
                 {/* The figure and its own chip, in a box that names the metric
                     (content/metrics.ts): a chip in the label is the label's
                     figure's, never this one's. */}
-                <span className="tw-metric__fig" data-metric={m.id}>
-                  <span className="tw-metric__value">{m.value}</span>
+                <span className="bf-metric__fig" data-metric={m.id}>
+                  <span className="bf-metric__value">{m.value}</span>
                   <StatusChip status={m.status} />
                 </span>
-                <span className="tw-metric__label">
+                <span className="bf-metric__label">
                   <FigureText text={m.label} />
                 </span>
               </li>
@@ -151,11 +155,11 @@ function CaseStudyRow({ p }: { p: Project }) {
 
         <ProjectLinks p={p} />
 
-        <p>
-          <Button href={p.href!} variant="primary">
+        <p className="bf-work__cta">
+          <Cta href={p.href!} variant="ghost">
             Read the write-up
             <span className="sr-only"> for {p.name}</span>
-          </Button>
+          </Cta>
         </p>
       </div>
     </li>
@@ -198,33 +202,30 @@ export default function WorkIndexPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(graph) }} />
-      <PageShell current="/work">
-        <PageBanner titleId="work-title" title="The systems, and how they were built." titleSize="major">
-          <p className="tw-banner__lead">
+      <JsonLd data={graph} />
+      <SiteShell ground="graphite" current="/work">
+        <PageHead id="work-title" title="The systems, and how they were built.">
+          <p className="bf-lead">
             {caseStudies.length === 2 ? "Two write-ups so far." : `${caseStudies.length} write-ups so far.`} Each one
             covers the actual architecture — constraints, decisions, tradeoffs, and what we&rsquo;d change. Not a
             screenshot and a paragraph.
           </p>
-          <p className="tw-banner__lead">
+          <p className="bf-lead">
             Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers
             shipped at previous employers. Every card says who built it.
           </p>
-        </PageBanner>
+        </PageHead>
 
-        {sections.map((s, i) => {
-          /* the bands alternate back from the closing panel, which is on the
-             light band: the last section is white */
-          const band = (sections.length - 1 - i) % 2 === 0 ? "tw-band--white" : "tw-band--light";
+        {sections.map((s) => {
           const products = s.items.filter((p) => p.scope !== "features");
           const features = s.items.filter((p) => p.scope === "features");
           const featuresId = `${s.id}-features-title`;
           return (
-            <section key={s.id} id={s.id} className={`tw-band ${band}`} aria-labelledby={`${s.id}-title`}>
-              <div className="tw-band__inner">
-                <SectionHeading id={`${s.id}-title`} title={s.title} intro={s.intro ?? undefined} />
+            <section key={s.id} id={s.id} className="bf-section" aria-labelledby={`${s.id}-title`}>
+              <div className="bf-wrap">
+                <SectionHead id={`${s.id}-title`} title={s.title} lead={s.intro ?? undefined} />
                 {s.kind === "case-study" ? (
-                  <ul className="tw-work">
+                  <ul className="bf-work">
                     {s.items.map((p) => (
                       <CaseStudyRow key={p.id} p={p} />
                     ))}
@@ -235,9 +236,9 @@ export default function WorkIndexPage() {
                     {/* The heading's parent holds the cards it heads: verify-site
                         check 9 reads such a heading as a group's, not a card's. */}
                     {features.length > 0 ? (
-                      <div className="tw-subgroup">
-                        <h3 id={featuresId} className="tw-title-wrapper" data-tw-reveal>
-                          <span className="title-sub">{FEATURES_TITLE}</span>
+                      <div className="bf-subgroup">
+                        <h3 id={featuresId} className="bf-subgroup__title" data-bf-reveal>
+                          {FEATURES_TITLE}
                         </h3>
                         <ProjectGrid items={features} headingLevel={4} labelledBy={featuresId} />
                       </div>
@@ -249,12 +250,12 @@ export default function WorkIndexPage() {
           );
         })}
 
-        <CtaPanel titleId="work-cta" title="Building something with a constraint like these?">
-          <Button href="/#contact" variant="light">
+        <CtaBand titleId="work-cta" title="Building something with a constraint like these?">
+          <Cta href="/contact#project" variant="ghost">
             Start a pilot
-          </Button>
-        </CtaPanel>
-      </PageShell>
+          </Cta>
+        </CtaBand>
+      </SiteShell>
     </>
   );
 }

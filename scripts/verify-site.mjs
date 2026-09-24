@@ -72,12 +72,15 @@ const EXPECT_LD = [
 
 const want = (id) => !ONLY || ONLY.has(String(id));
 
-/* 25 — WebGL. It is never created at these phone and tablet widths, nor under
-   reduced motion at any width. Step 3 ships the poster and no canvas, so there
-   is none on / at all: WEBGL_ON_HOME is false. Step 4 sets it to true, and then
-   check 25 allows exactly one thing — a context on / at >=1025px with a fine
-   pointer and no reduced motion, from a renderer chunk of at most
-   RENDERER_MAX_GZ gzipped that is requested after the load event. */
+/* 25 — WebGL (the owner's redesign, 2026-09-16: three.js returns for the hero
+   scene, lazy and desktop-only, at most 180KB gzipped). Exactly one profile may
+   have a context: / at >=1025px with a FINE pointer, no touch, no Save-Data and
+   no reduced motion — and there one MUST be created, drawn into a canvas inside
+   [data-hero-field], which then carries data-scene-ready (a scene that is
+   silently dead passes every "never" rule). Every other profile, and every other
+   page, has none, and never requests three.js. The scene chunk — the script that
+   asks for the context and the three.js code it imports — is at most
+   SCENE_MAX_GZ gzipped and requested only after the load event. */
 const GL_WIDTHS = [390, 768, 1440];
 
 /* 8 (K9) — check 8 also reads every page at these widths, beyond WIDTHS: a
@@ -92,8 +95,60 @@ const GL_EXTRA = [
   { width: 1366, height: 1024, touch: true, label: "/ @1366x1024 tablet (touch, coarse pointer)" },
   { width: 1440, saveData: true, label: "/ @1440 Save-Data" },
 ];
-const WEBGL_ON_HOME = false;
-const RENDERER_MAX_GZ = 15 * 1024;
+/* SPEC §7 and PLAN.md §5.2: the whole scene chunk, three.js included. The
+   15KB raw-WebGL2 renderer budget it replaces was reversed by the owner on
+   2026-09-16 (CLAUDE.md, "Decided 2026-09-16"). Measured by gzipping each file
+   as served (level 6) — what a gzip transfer carries; the WebGL runs re-serve
+   scripts through the worker hook, so their resource timings are not the wire. */
+const SCENE_MAX_GZ = 180 * 1024;
+/* the one profile allowed a WebGL context (see GL_WIDTHS) */
+const glAllowed = (run) => run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer === "fine";
+/* three.js by what its code carries, @react-three (banned: SPEC §7, three.js
+   core and not React Three Fiber) by its names, and a script that asks for a
+   WebGL context by the call */
+/* a minifier may rename the classes, never a shader's source: three.js ships
+   its GLSL chunks as strings, "#include <begin_vertex>" among them */
+const THREE_CODE = /WebGLRenderer|three\.module|__THREE__|#include <begin_vertex>/;
+const REACT_THREE_CODE = /@react-three|react-three-fiber|__r3f/;
+const GL_CALL_CODE = /getContext\(\s*["'`](?:webgl2?|experimental-webgl)["'`]|WebGL2RenderingContext/;
+
+/* 12 — the canonical company description, word for word (owner, 2026-09-16;
+   COPY.md, "Company description — canonical"). Written HERE, as check 9 writes
+   its labels, so a changed line cannot pass by agreeing with itself: the site's
+   own copy is content/canonical.ts, and the check fails if that file and this
+   line differ. Changing the description means changing both, on purpose. */
+const CANONICAL = "We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.";
+
+/* 28 — the hero contract (SPEC §5, the copy deck): the headline, the support
+   line and both calls to action, word for word. The body is the paragraph
+   after the support line; its words are check 30's. */
+const HERO = {
+  headline: "Build what's next.",
+  support: "Software. Intelligence. Automation. Machines.",
+  ctas: [
+    { kind: "schedule", text: "Schedule a Call", path: "/contact", hash: "#schedule" },
+    { kind: "explore", text: "Explore Our Capabilities", path: "/capabilities", hash: "" },
+  ],
+};
+
+/* 32 — "Schedule a Call" (SPEC §1, owner, 2026-09-16): the words of every
+   primary call to action, and where each goes. "Book a call" is retired
+   everywhere; the WarmChats write-up's locked labels ("Book a similar build",
+   "Book a strategy call") and the restaurant write-up's "Book a technical call"
+   are other phrases. */
+const CTA_WORDS = {
+  schedule: { text: "Schedule a Call", path: "/contact", hash: "#schedule" },
+  explore: { text: "Explore Our Capabilities", path: "/capabilities", hash: "" },
+  project: { text: "Tell Us About Your Project", path: "/contact", hash: "#project" },
+};
+const BOOK_A_CALL = /\bbook\s+a\s+call\b/i;
+
+/* 33 — the honesty contract (SPEC §8b.7, binding, verbatim): robotics is Lab,
+   and says so where it is shown. The tiers and their labels (CLAUDE.md,
+   "Evidence tiers"; content/engineering-schema.ts). */
+const ROBOTICS_HONESTY =
+  "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.";
+const TIER_LABELS = { proven: "Proven", core: "Core", capable: "Capable", lab: "Lab" };
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
    targets). Measured on / as the Phase 1 baseline was (scratchpad perf.mjs): a
@@ -137,18 +192,20 @@ const decodeEntities = (s) =>
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
     .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&");
 const squash = (s) => String(s).replace(/[\s\u00a0\u202f\u2009]+/g, "");
-const servedSquashed = (html) =>
-  squash(
-    decodeEntities(
-      html
-        .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, " ")
-        .replace(/<!--[\s\S]*?-->/g, "")
-        /* an image's alt text is content — it describes the screenshot — so it is
-           lifted out of the tag before the tags are dropped */
-        .replace(/<img\b[^>]*?\balt="([^"]*)"[^>]*>/gi, " $1 ")
-        .replace(/<[^>]+>/g, " "),
-    ),
+const servedText = (html) =>
+  decodeEntities(
+    html
+      .replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, " ")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      /* an image's alt text is content — it describes the screenshot — so it is
+         lifted out of the tag before the tags are dropped */
+      .replace(/<img\b[^>]*?\balt="([^"]*)"[^>]*>/gi, " $1 ")
+      .replace(/<[^>]+>/g, " "),
   );
+const servedSquashed = (html) => squash(servedText(html));
+/* 30 (2026-09-16) — the same text with its words kept apart, for a needle that
+   must match a whole word: "Expo" is not "export" or "exposure" */
+const servedWords = (html) => servedText(html).replace(/[\s   ]+/g, " ");
 
 /* WCAG 2.2 Success Criterion 1.4.3 Contrast (Minimum), exception "Logotypes":
    "Text that is part of a logo or brand name has no contrast requirement."
@@ -299,21 +356,26 @@ function glHook(workerHookSrc) {
     if (!C) continue;
     const orig = C.prototype.getContext;
     C.prototype.getContext = function (type, ...rest) {
-      if (/webgl/i.test(String(type))) {
-        const entry = { type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160), id: Math.random().toString(36).slice(2) };
-        log.push(entry);
-        /* a child frame that shares the page's origin (about:blank, srcdoc,
-           blob:, same site) also reports into the page's own log at once: a
-           frame that makes a context and then removes itself cannot take the
-           request with it. A cross-origin frame throws here, and is read
-           directly (readFrameGl). */
-        try {
-          if (window.top !== window && window.top.__vsGl) window.top.__vsGl.push({ ...entry, where: `a child frame (${location.href || "no URL"})`, mirrored: true });
-        } catch {
-          /* cross-origin: read by readFrameGl */
-        }
+      if (!/webgl/i.test(String(type))) return orig.call(this, type, ...rest);
+      const entry = { type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160), id: Math.random().toString(36).slice(2), granted: false };
+      log.push(entry);
+      /* a child frame that shares the page's origin (about:blank, srcdoc,
+         blob:, same site) also reports into the page's own log at once: a
+         frame that makes a context and then removes itself cannot take the
+         request with it. A cross-origin frame throws here, and is read
+         directly (readFrameGl). */
+      let mirror = null;
+      try {
+        if (window.top !== window && window.top.__vsGl) window.top.__vsGl.push((mirror = { ...entry, where: `a child frame (${location.href || "no URL"})`, mirrored: true }));
+      } catch {
+        /* cross-origin: read by readFrameGl */
       }
-      return orig.call(this, type, ...rest);
+      const ctx = orig.call(this, type, ...rest);
+      /* 25 (2026-09-16): whether the browser gave a context — the scene must
+         get one at 1440, and a refused request there is unsure, not a pass */
+      entry.granted = Boolean(ctx);
+      if (mirror) mirror.granted = entry.granted;
+      return ctx;
     };
   }
   /* K7 (2026-09-15): a context made in a WORKER never touched this frame's
@@ -354,9 +416,11 @@ function workerGlHook() {
   if (!C) return;
   const orig = C.prototype.getContext;
   C.prototype.getContext = function (type, ...rest) {
-    if (/webgl/i.test(String(type)))
-      ch.postMessage({ type: String(type), at: Math.round(performance.now()), stack: String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160), worker: String(self.location.href).slice(0, 100) });
-    return orig.call(this, type, ...rest);
+    if (!/webgl/i.test(String(type))) return orig.call(this, type, ...rest);
+    const stack = String(new Error().stack || "").split("\n").slice(2, 4).map((x) => x.trim()).join(" <- ").slice(0, 160);
+    const ctx = orig.call(this, type, ...rest);
+    ch.postMessage({ type: String(type), at: Math.round(performance.now()), stack, worker: String(self.location.href).slice(0, 100), granted: Boolean(ctx) });
+    return ctx;
   };
 }
 /* every hook a WebGL run carries: the frame hook (init scripts run in every
@@ -454,11 +518,17 @@ async function firstInput(page, prof) {
    time against the load event: a renderer must never be initial JavaScript */
 function glReport() {
   const nav = performance.getEntriesByType("navigation")[0];
+  const field = document.querySelector("[data-hero-field]");
   return {
     gl: window.__vsGl ? [...window.__vsGl] : null,
     pointer: matchMedia("(pointer: coarse)").matches ? "coarse" : matchMedia("(pointer: fine)").matches ? "fine" : "none",
     saveDataSeen: Boolean(navigator.connection && navigator.connection.saveData),
     canvases: document.querySelectorAll("canvas").length,
+    /* 25 (2026-09-16): the scene's own evidence that it drew — its canvas in
+       the field, and the field's data-scene-ready */
+    field: Boolean(field),
+    fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
+    sceneReady: Boolean(field && field.hasAttribute("data-scene-ready")),
     loadEnd: nav ? nav.loadEventEnd : 0,
     scripts: performance
       .getEntriesByType("resource")
@@ -495,6 +565,12 @@ async function visitGl(browser, route, prof) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(2000);
+  /* the one allowed profile: the scene waits for LCP, load and an idle
+     callback (up to 3s) before it imports, then draws — give it up to 12s more
+     to mark the field ready. Every other profile never gets one, so nothing
+     waits there. */
+  if (glAllowed({ ...prof, route, pointer: "fine" }))
+    await page.waitForFunction(() => document.querySelector("[data-hero-field][data-scene-ready]"), null, { timeout: 12000 }).catch(() => {});
   glTrace(prof.label, "report");
   const r = await bounded(page.evaluate(glReport), 20000, { gl: null, scripts: [], error: "the page did not answer for 20s" });
   glTrace(prof.label, "frames");
@@ -508,8 +584,11 @@ async function visitGl(browser, route, prof) {
 /* 28 (a, c) ── the hero as a crawler gets it: the SERVED HTML, scripts, styles
    and templates stripped, parsed in the page and compared with the hero the
    browser renders. The roles are read from the rendered hero — the h1, the
-   first paragraph after it, the first link after that, and every list item
-   holding a figure — and each must be in the served hero, word for word. */
+   first paragraph after it (the support line), the next (the body), and every
+   link after those (the calls to action) — and each must be in the served hero,
+   word for word. The proof strip left the hero for the engineering stories on
+   2026-09-16 (SPEC §5): its rows are read in #recent-work — the list holding
+   the [data-metric] rows — and each must be in the served section as shown. */
 async function visitHero(browser) {
   const raw = await (await fetch(`${BASE}/`)).text();
   const stripped = raw.replace(/<(script|style|template|noscript)\b[\s\S]*?<\/\1>/gi, "").replace(/<!--[\s\S]*?-->/g, "");
@@ -520,18 +599,26 @@ async function visitHero(browser) {
   const r = await page.evaluate((html) => {
     const n = (x) => String(x || "").replace(/\s+/g, " ").trim();
     const served = new DOMParser().parseFromString(html, "text/html");
-    const h1 = document.querySelector("h1");
+    const h1 = document.querySelector("#hero h1") || document.querySelector("h1");
     const hero = h1?.closest("section");
     if (!hero) return { error: "no <h1> inside a <section> on / — the hero cannot be found" };
     const sHero = hero.id ? served.getElementById(hero.id) : served.querySelector("h1")?.closest("section");
     const follows = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    const items = [...hero.querySelectorAll("li")].filter((li) => /\d/.test(li.textContent));
-    const inItem = (el) => items.some((li) => li.contains(el));
-    const subtext = [...hero.querySelectorAll("p")].find((p) => follows(h1, p) && !inItem(p) && n(p.textContent));
-    const cta = [...hero.querySelectorAll("a[href]")].find((a) => follows(subtext || h1, a) && !inItem(a) && n(a.textContent));
+    const paras = [...hero.querySelectorAll("p")].filter((p) => follows(h1, p) && n(p.textContent) && !p.querySelector("a, button"));
+    const support = paras[0] || null;
+    const body = paras[1] || null;
+    const ctas = [...hero.querySelectorAll("a[href]")].filter((a) => follows(body || support || h1, a) && n(a.textContent));
     const roles = [{ role: "headline", text: n(h1.textContent) }];
-    if (subtext) roles.push({ role: "subtext", text: n(subtext.textContent) });
-    if (cta) roles.push({ role: "call to action", text: n(cta.textContent), href: cta.getAttribute("href") });
+    if (support) roles.push({ role: "support line", text: n(support.textContent) });
+    if (body) roles.push({ role: "body", text: n(body.textContent) });
+    for (const a of ctas) roles.push({ role: "call to action", text: n(a.textContent), href: a.getAttribute("href"), cta: a.getAttribute("data-cta") });
+    /* the proof strip: the list in #recent-work that holds the [data-metric]
+       rows — every row of it holding a digit, so a row that loses its
+       data-metric is still read (and fails for it) */
+    const work = document.getElementById("recent-work");
+    const sWork = served.getElementById("recent-work");
+    const list = work ? [...work.querySelectorAll("ul, ol")].find((l) => l.querySelector("[data-metric]")) : null;
+    const items = list ? [...list.children].filter((li) => li.localName === "li" && /\d/.test(li.textContent)) : [];
     const FIG = /^[<>≤≥~≈+−-]?\s*[$£€]?\s*\d[\d,.]*\s*(ms|s|sec|min|h|%|x|×|k|K|M|B)?\s*\+?$/;
     /* K1: the figure's status is ITS chip — in its [data-metric] row when the
        card names one, and never a chip inside another figure's [data-status]
@@ -571,7 +658,11 @@ async function visitHero(browser) {
       roles,
       sText: n(sHero?.textContent),
       sLinks: sHero ? [...sHero.querySelectorAll("a[href]")].map((a) => ({ href: a.getAttribute("href"), text: n(a.textContent) })) : [],
-      sItems: sHero ? [...sHero.querySelectorAll("li")].map((li) => n(li.textContent)) : [],
+      work: Boolean(work),
+      servedWork: Boolean(sWork),
+      proofList: Boolean(list),
+      sItems: sWork ? [...sWork.querySelectorAll("li")].map((li) => n(li.textContent)) : [],
+      sProofLinks: sWork ? [...sWork.querySelectorAll("a[href]")].map((a) => ({ href: a.getAttribute("href"), text: n(a.textContent) })) : [],
       proof,
       posters,
     };
@@ -611,6 +702,12 @@ async function visitLcp(browser, prof) {
   const page = await ctx.newPage();
   await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
   await page.waitForTimeout(3000);
+  /* 2026-09-16: where the scene may run (>=1025px, a fine pointer — every
+     desktop profile here), the settled poster is read once the scene has drawn
+     over it, up to 12s more: "the poster stays rendered under the canvas" is
+     only a finding about the scene if the scene is there. No input is sent. */
+  if (prof.width >= 1025 && !prof.phone)
+    await page.waitForFunction(() => document.querySelector("[data-hero-field][data-scene-ready]"), null, { timeout: 12000 }).catch(() => {});
   const r = await page.evaluate(() => {
     const p = document.querySelector("img[data-hero-poster]");
     const b = p?.getBoundingClientRect();
@@ -652,15 +749,23 @@ async function visitLcp(browser, prof) {
     /* the h1's line boxes, against the visible poster */
     let h1Overlap = 0;
     const h1 = document.querySelector("h1");
+    /* SPEC §7: beside the headline at >=1025px — the field in the right-hand
+       column, clear of every line of the h1 — and above it below that */
+    let h1Box = null;
     if (h1) {
       const rg = document.createRange();
       rg.selectNodeContents(h1);
-      for (const q of [...rg.getClientRects(), h1.getBoundingClientRect()]) {
+      const lines = [...rg.getClientRects()].filter((q) => q.width > 1 && q.height > 1);
+      for (const q of [...lines, h1.getBoundingClientRect()]) {
         const w = Math.min(q.right, vis.r) - Math.max(q.left, vis.l);
         const h = Math.min(q.bottom, vis.btm) - Math.max(q.top, vis.t);
         if (w > 1 && h > 1) h1Overlap = Math.max(h1Overlap, Math.round(w * h));
       }
+      if (lines.length) h1Box = { l: Math.min(...lines.map((q) => q.left)), r: Math.max(...lines.map((q) => q.right)), t: Math.min(...lines.map((q) => q.top)), b: Math.max(...lines.map((q) => q.bottom)) };
     }
+    const beside = h1Box ? vis.l >= h1Box.r - 1 && vis.t < h1Box.b && vis.btm > h1Box.t : null;
+    const above = h1Box ? vis.btm <= h1Box.t + 1 : null;
+    const where = h1Box ? `the visible poster spans x ${Math.round(vis.l)}–${Math.round(vis.r)}, y ${Math.round(vis.t)}–${Math.round(vis.btm)}; the h1's lines x ${Math.round(h1Box.l)}–${Math.round(h1Box.r)}, y ${Math.round(h1Box.t)}–${Math.round(h1Box.b)}` : "no h1";
     const badCanvases = [...document.querySelectorAll("canvas")].filter((c) => !field?.contains(c) || !same(c)).map((c) => `${tag(c)} ${c.offsetWidth}x${c.offsetHeight}${field?.contains(c) ? " inside the field, not its box" : " outside [data-hero-field]"}`);
     /* H4: how far the chosen file is stretched to cover the field. The file's
        own width is its srcset `w` descriptor — naturalWidth is density-corrected
@@ -682,6 +787,11 @@ async function visitLcp(browser, prof) {
       fBox: field ? `${field.clientWidth}x${field.clientHeight}` : "no [data-hero-field] around it",
       coveredBy,
       h1Overlap,
+      beside,
+      above,
+      where,
+      sceneReady: Boolean(field && field.hasAttribute("data-scene-ready")),
+      fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
       badCanvases,
       upscale: needW && fileW ? +(needW / fileW).toFixed(2) : null,
       natural: fileW || "?",
@@ -733,9 +843,15 @@ async function perfRun(browser, prof) {
     const nav = performance.getEntriesByType("navigation")[0];
     const loadEnd = nav ? nav.loadEventEnd : 0;
     const js = performance.getEntriesByType("resource").filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name));
+    /* INITIAL JavaScript is what is requested by the end of the load event.
+       The hero's scene chunk is imported after load (inside an idle callback),
+       so it is not counted — by design, and made explicit: check 29 lists every
+       scene chunk with its start time, and fails one that starts before load
+       (the guard: a scene imported statically would be initial JavaScript). */
     const initial = js.filter((e) => e.startTime <= loadEnd);
     const sent = (list) => list.reduce((a, e) => a + (e.transferSize || e.encodedBodySize), 0);
     return {
+      scripts: js.map((e) => ({ url: e.name, start: e.startTime, sent: e.transferSize || e.encodedBodySize })),
       lcp: p.lcp,
       lcpEl: p.lcpEl,
       lcpPoster: p.lcpPoster,
@@ -1025,6 +1141,7 @@ function collectInPage() {
     robots: metaContent('meta[name="robots"]'),
     canonical: document.querySelector('link[rel="canonical"]')?.href ?? null,
     ogDescription: metaContent('meta[property="og:description"]'),
+    twitterDescription: metaContent('meta[name="twitter:description"]'),
     ogImage: metaContent('meta[property="og:image"]'),
     ogImageAlt: metaContent('meta[property="og:image:alt"]'),
     twitterImage: metaContent('meta[name="twitter:image"]'),
@@ -1113,14 +1230,18 @@ function collectInPage() {
   };
 
   /* 31 ── which design the page carries. A stylesheet is known by what it
-     styles, not by its hashed file name: the site's one design
+     styles, not by its hashed file name: the site's one design — the owner's
+     engineering redesign of 2026-09-16, app/site.css — by its .bf-header /
+     .bf-wrap / .bf-hero / .bf-main rules; the Techwix design it retires
      (app/techwix.css) by its .tw-root / .tw-hero / .tw-header rules; the
      retired dark design (the old app/globals.css) by its beam button, corner
      glow, content-visibility sections, grain, logo animations, FAQ items and
      [data-reveal] rules; Tailwind, which styled it, by the --tw-* properties
-     it emits. The retired design's markup is the same classes and attribute
-     in the DOM, and the old homepage's cut About section. */
-  const TECHWIX_SEL = /\.tw-(root|hero|header)\b/;
+     it emits. Each retired design's markup is its classes in the DOM: the dark
+     design's classes and attribute and the old homepage's cut About section,
+     and any class of the Techwix design (every one is tw-). */
+  const DESIGN_SEL = /\.bf-(header|wrap|hero|main)(?![\w-])/;
+  const RETIRED_TW_SEL = /\.tw-(root|hero|header)(?![\w-])/;
   const RETIRED_SEL = /\.(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b|\[data-reveal\b/;
   const sheets = [];
   for (const sheet of document.styleSheets) {
@@ -1139,10 +1260,78 @@ function collectInPage() {
       continue; /* cross-origin sheet: not ours */
     }
     const text = sels.join("\n");
-    sheets.push({ href: sheet.href ? sheet.href.replace(location.origin, "") : "(inline <style>)", techwix: TECHWIX_SEL.test(text), retired: RETIRED_SEL.test(text), tailwind });
+    sheets.push({ href: sheet.href ? sheet.href.replace(location.origin, "") : "(inline <style>)", design: DESIGN_SEL.test(text), retiredTw: RETIRED_TW_SEL.test(text), retired: RETIRED_SEL.test(text), tailwind });
   }
   const RETIRED_MARKUP = ".cv-section, .faq-item, .beam-button, .corner-glow, .grain-overlay, .logo-chip-breathe, .logo-jewel-aurora, [data-reveal], #about";
-  const design = { sheets, retired: [...document.querySelectorAll(RETIRED_MARKUP)].map((e) => describe(e)) };
+  const twClasses = (e) => [...(e.classList || [])].filter((c) => /^tw-/.test(c));
+  const design = {
+    sheets,
+    retired: [...document.querySelectorAll(RETIRED_MARKUP)].map((e) => describe(e)),
+    /* the Techwix design's markup: any element, <html> and <body> included, with a tw- class */
+    techwix: [document.documentElement, ...document.querySelectorAll("[class]")].filter((e) => twClasses(e).length).map((e) => `${e.localName}.${twClasses(e).join(".")}`),
+  };
+
+  /* 32 ── the calls to action the suite follows (data-cta, components/site/Cta),
+     the header's own button — every link in the header that is not the
+     navigation or the logo's link home — and every place a page says "Book a
+     call": its text, hidden or not, every attribute, and the document's head */
+  const flatText = (el) => (el?.textContent || "").trim().replace(/\s+/g, " ");
+  const ctas = [...document.querySelectorAll("[data-cta]")].map((a) => ({
+    kind: a.getAttribute("data-cta"),
+    text: flatText(a),
+    href: a.getAttribute("href"),
+    abs: a.href || "",
+    tag: a.localName,
+    inHeader: Boolean(a.closest("header#masthead")),
+    shown: visible(a),
+  }));
+  const masthead = document.querySelector("header#masthead");
+  const headerButtons = masthead
+    ? [...masthead.querySelectorAll("a[href]")]
+        .filter((a) => !a.closest("nav") && new URL(a.href, location.href).pathname !== "/")
+        .map((a) => ({ text: flatText(a), href: a.getAttribute("href"), abs: a.href, cta: a.getAttribute("data-cta"), shown: visible(a) }))
+    : null;
+  const bookCall = [];
+  {
+    const BOOK = /\bbook\s+a\s+call\b/i;
+    const w = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      if (t.parentElement?.closest("script:not([type='application/ld+json']), style")) continue;
+      const m = BOOK.exec(t.textContent);
+      if (m) bookCall.push({ where: `text in ${t.parentElement ? describe(t.parentElement) : "the document"}`, text: t.textContent.slice(Math.max(0, m.index - 40), m.index + 60).replace(/\s+/g, " ").trim() });
+    }
+    for (const el of document.querySelectorAll("*"))
+      for (const at of el.attributes) {
+        const m = BOOK.exec(at.value);
+        if (m) bookCall.push({ where: `${at.name} on ${el.localName}`, text: at.value.slice(Math.max(0, m.index - 40), m.index + 60).replace(/\s+/g, " ").trim() });
+      }
+  }
+
+  /* 33 ── the capabilities and their evidence: every [data-capability], with
+     its tier chips and its honesty line as a reader sees them, and every tier
+     chip that carries — or holds — a figure's data-status */
+  const seenByReader = (el) => {
+    if (!visible(el)) return false;
+    const r = el.getBoundingClientRect();
+    const st = getComputedStyle(el);
+    if (r.width < 4 || r.height < 4) return false;
+    if (/^inset\(\s*(50|[5-9]\d|100)%/.test(st.clipPath) || /^rect\(\s*0(px)?[\s,]+0(px)?[\s,]+0(px)?[\s,]+0(px)?\s*\)$/.test(st.clip)) return false;
+    const L = r.left + scrollX;
+    const T = r.top + scrollY;
+    return L + r.width > 0 && T + r.height > 0 && L < document.documentElement.scrollWidth && T < document.documentElement.scrollHeight;
+  };
+  const capabilities = [...document.querySelectorAll("[data-capability]")].map((c) => ({
+    id: c.getAttribute("data-capability"),
+    tiers: [...c.querySelectorAll("[data-tier]")].map((t) => ({ tier: t.getAttribute("data-tier"), text: (t.innerText || t.textContent || "").replace(/\s+/g, " ").trim(), seen: seenByReader(t) })),
+    honesty: [...c.querySelectorAll("[data-honesty]")].map((h) => ({ text: flatText(h), seen: seenByReader(h) })),
+  }));
+  const tierChips = [...document.querySelectorAll("[data-tier]")].map((t) => ({
+    tier: t.getAttribute("data-tier"),
+    text: (t.innerText || t.textContent || "").replace(/\s+/g, " ").trim(),
+    status: t.hasAttribute("data-status") ? t.getAttribute("data-status") : t.querySelector("[data-status]") ? `inside: ${t.querySelector("[data-status]").getAttribute("data-status")}` : null,
+    shown: visible(t),
+    where: sectionOf(t),
+  }));
 
   /* 18 ── the logotype scope: how many elements carry it, and how many render */
   const logos = [...document.querySelectorAll("[data-logotype]")];
@@ -1177,7 +1366,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, bookCall, capabilities, tierChips };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -1403,7 +1592,6 @@ function readFigures(tokenizeFigures) {
   const figureEls = [...document.body.querySelectorAll("*")].filter(
     (el) => !el.closest("script, style, noscript, template, svg, title") && isFigure(el) && ![...el.children].some((c) => c.textContent.trim() === el.textContent.trim()) && visible(el),
   );
-  const isLabel = (e) => /^(shipped|target)$/i.test(e.textContent.trim()) && visible(e);
   /* K1 (2026-09-15): a chip inside a [data-status] wrapper is THAT wrapper's
      figure's chip. The first proof card's label, "Search response, 80% of
      traffic", carries its own target chip for the 80%; the old rule took the
@@ -1708,11 +1896,21 @@ function readFigures(tokenizeFigures) {
 /* 4 ── with JavaScript off, is the text there? (runs in the browser) ───── */
 function hiddenWithoutJs() {
   const out = [];
+  const skipped = [];
   let total = 0;
   for (const el of document.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span,div")) {
     if (el.closest("script, style, noscript, template")) continue;
     if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
     if (!el.getClientRects().length) continue; /* display:none at this width — by design, not by script */
+    /* A button of type "button" outside any form does nothing without script, so
+       it is not content: hidden without JS is progressive enhancement (the hero's
+       pause control, 2026-09-24). Listed in the report, never silently skipped. A
+       submit button, a link, or any text around the control is still read. */
+    const control = el.closest('button[type="button"]');
+    if (control && !control.form) {
+      skipped.push(control.textContent.trim().replace(/\s+/g, " ").slice(0, 40));
+      continue;
+    }
     total++;
     let op = 1;
     let hider = null;
@@ -1732,17 +1930,19 @@ function hiddenWithoutJs() {
       });
     }
   }
-  return { out, total };
+  return { out, total, skipped: [...new Set(skipped)] };
 }
 
-/* 7 ── the homepage headline: the words on each rendered line, per span */
+/* 7 ── the homepage headline: the words on each rendered line, per span — and
+   (2026-09-16) the lines of the WHOLE headline, across its spans: "Build what's
+   next." is set as two spans, "Build" / "what's next.", and a last line of one
+   word is an orphan whether or not a span boundary sits before it */
 function headlineLines() {
   const h1 = document.querySelector("#hero h1") || document.querySelector("h1");
   if (!h1) return null;
-  const parts = h1.children.length ? [...h1.children] : [h1];
-  return parts.map((p) => {
+  const wordsOf = (root) => {
     const words = [];
-    const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const re = /\S+/g;
       let m;
@@ -1754,6 +1954,9 @@ function headlineLines() {
         if (rect) words.push({ w: m[0], top: Math.round(rect.top) });
       }
     }
+    return words;
+  };
+  const toLines = (words) => {
     const lines = [];
     for (const w of words) {
       const last = lines[lines.length - 1];
@@ -1761,7 +1964,9 @@ function headlineLines() {
       else lines.push({ top: w.top, words: [w.w] });
     }
     return lines.map((l) => l.words.join(" "));
-  });
+  };
+  const parts = h1.children.length ? [...h1.children] : [h1];
+  return { text: h1.textContent.replace(/\s+/g, " ").trim(), parts: parts.map((p) => toLines(wordsOf(p))), all: toLines(wordsOf(h1)) };
 }
 
 /* 20 ── WCAG 2.x luminance and contrast */
@@ -1830,6 +2035,28 @@ async function measureContrast(page) {
           if (as.position === "fixed" || as.position === "sticky") pinnedBox = a;
         }
         if (op < 0.05) continue;
+        /* 2026-09-16 — WHEN A PINNED BOX IS MEASURABLE. The rule below exists
+           because the ground under a fixed or sticky box changes as the page
+           scrolls, so no one capture shows what its text sits on. That does not
+           hold when an OPAQUE background travels with the text: the first
+           element from the text up to and including the pinned box whose own
+           background-color is fully opaque (alpha 1) IS the ground, at every
+           scroll position — and it moves with the text, so the pixels under the
+           text are the same wherever the page is. Any ancestor opacity below 1
+           disqualifies it: then what shows through is the page behind, which
+           does change. A transparent or semi-transparent pinned box still
+           fails, exactly as before. */
+        let opaqueGround = "";
+        if (pinnedBox && op === 1)
+          for (let a = el; a; a = a.parentElement) {
+            const bg = getComputedStyle(a).backgroundColor;
+            const px = rgba(bg);
+            if (px[3] === 255) {
+              opaqueGround = tagOf(a);
+              break;
+            }
+            if (a === pinnedBox) break;
+          }
         total++;
         if (out.length >= cap) continue;
         /* text scrolled out of view inside a carousel is not on screen at all */
@@ -1860,7 +2087,8 @@ async function measureContrast(page) {
           color,
           op,
           pinned: pinnedBox ? tagOf(pinnedBox) : "",
-          allowed: Boolean(pinnedBox && pinnedBox.matches(allow)),
+          allowed: Boolean(pinnedBox && (pinnedBox.matches(allow) || opaqueGround)),
+          opaqueGround,
           clipped,
           underFrame,
           clipText,
@@ -1937,15 +2165,24 @@ async function measureContrast(page) {
     for (const [i, e] of els.entries()) {
       if (e.logotype || e.clipText || e.clipped || e.underFrame || (e.pinned && !e.allowed)) continue;
       /* the header's text: from the capture at the top only, where it rests */
-      if (e.pinned && view.sy !== 0) continue;
+      if (e.pinned && !e.opaqueGround && view.sy !== 0) continue;
       const v = view.at[i];
       if (!v) continue;
-      /* anything that moved since it was measured is not under these pixels */
-      if (Math.abs(v.x - (e.x - e.dx)) > 1 || Math.abs(v.y - (e.y - e.dy)) > 1) {
+      /* A PINNED BOX WITH ITS OWN OPAQUE GROUND MOVES, and that is the point:
+         its background travels with its text, so the pixels under the text are
+         the same wherever the page is. Its samples are taken from where it is
+         NOW, at each capture — the document-position test below would call
+         every sticky box "moved while measuring" and measure nothing. */
+      const moved = Math.abs(v.x - (e.x - e.dx)) > 1 || Math.abs(v.y - (e.y - e.dy)) > 1;
+      if (moved && !(e.pinned && e.opaqueGround)) {
         movedSeen[i]++;
         continue;
       }
-      grid[i].forEach(([px, py], k) => {
+      const points =
+        e.pinned && e.opaqueGround
+          ? grid[i].map(([px, py]) => [Math.round(px - (e.x - e.dx) + v.x + e.dx), Math.round(py - (e.y - e.dy) + v.y + e.dy)])
+          : grid[i];
+      points.forEach(([px, py], k) => {
         if (got[i][k]) return;
         const vy = py - view.sy;
         if (px < 0 || vy < 0 || px >= png.width || vy >= png.height) return;
@@ -1961,12 +2198,13 @@ async function measureContrast(page) {
   /* the page as it was: check 8 reads it next, and hit-tests its chips */
   await style.evaluate((s) => s.remove());
   await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "instant" }));
-  const res = { measured: 0, unmeasured: [], fails: [], pinnedBoxes, total, cap: CONTRAST_CAP, outside: [], covered: [], captures: steps.length };
+  const res = { measured: 0, unmeasured: [], fails: [], pinnedBoxes, total, cap: CONTRAST_CAP, outside: [], onPinned: [], covered: [], captures: steps.length };
   for (const [i, e] of els.entries()) {
     if (e.pinned && !e.allowed) {
       res.outside.push({ text: e.text, box: e.pinned });
       continue;
     }
+    if (e.pinned && e.opaqueGround) res.onPinned.push({ text: e.text, box: e.pinned, ground: e.opaqueGround });
     const why = e.logotype ? "the wordmark (WCAG 1.4.3 logotype)" : e.clipText ? "gradient text" : e.clipped ? "scrolled out of view in a container" : e.underFrame ? "under an embedded frame" : "";
     if (why) {
       res.unmeasured.push({ text: e.text, why });
@@ -2225,7 +2463,13 @@ async function stableCapture(browser, route) {
   await page.waitForTimeout(2500); /* count-ups (~1.1s) and reveals (<1s) finish */
   await page.addStyleTag({ content: "*,*::before,*::after{transition:none!important;animation:none!important;caret-color:transparent!important}canvas,iframe{visibility:hidden!important}" });
   await page.waitForTimeout(400);
+  /* 2026-09-16, the hero's 3D scene: it never mounts under reduced motion
+     (check 25 fails one that does), and a canvas is hidden here in any case —
+     so the live scene cannot reach these captures, and pinning it (a bf:motion
+     pause) is not needed. What the page held is recorded, so that stays seen. */
+  const scene = await page.evaluate(() => ({ canvases: document.querySelectorAll("canvas").length, ready: Boolean(document.querySelector("[data-scene-ready]")) }));
   const png = PNG.sync.read(await page.screenshot({ fullPage: true }));
+  png.scene = scene;
   await ctx.close();
   return png;
 }
@@ -2582,12 +2826,16 @@ async function probeNotFound() {
     const css = (await http(toBase(new URL(h, BASE).toString()))).text || "";
     sheets.push({
       href: h,
-      design: /\.tw-(root|hero|header)\b/.test(css),
+      design: /\.bf-(header|wrap|hero|main)(?![\w-])/.test(css),
+      retiredTw: /\.tw-(root|hero|header)(?![\w-])/.test(css),
       retired: /\.(beam-button|corner-glow|cv-section|grain-overlay|logo-chip-breathe|logo-jewel-aurora|faq-item)\b|\[data-reveal\b/.test(css),
       tailwind: /--tw-/.test(css),
     });
   }
-  return { path, status: r.status, masthead: /<header\b[^>]*\bid="masthead"/i.test(html), h1: (html.match(/<h1\b/gi) || []).length, sheets };
+  /* the Techwix design's classes in the 404's markup (31), and "Book a call" anywhere in it (32) */
+  const twMarkup = [...html.matchAll(/\bclass="([^"]*)"/g)].flatMap((m) => m[1].split(/\s+/)).filter((c) => /^tw-/.test(c));
+  const book = BOOK_A_CALL.exec(decodeEntities(html));
+  return { path, status: r.status, masthead: /<header\b[^>]*\bid="masthead"/i.test(html), h1: (html.match(/<h1\b/gi) || []).length, sheets, twMarkup: [...new Set(twMarkup)], bookCall: book ? decodeEntities(html).slice(Math.max(0, book.index - 40), book.index + 60).replace(/\s+/g, " ") : null };
 }
 
 /* 8 (K10) ── the llms files: /llms.txt, /llms-full.txt and any other .txt the
@@ -2614,7 +2862,17 @@ if (!ROUTES.length) {
   process.exit(2);
 }
 
+/* The browser every check but 25 uses, with no GPU flags: check 23's full-page
+   captures failed with "Unable to capture screenshot" when the SwiftShader
+   flags below were on this one (2026-09-16), and a pixel check that cannot
+   capture is a failure, not a pass. The WebGL runs get their own browser. */
 const browser = await chromium.launch();
+/* 25 (2026-09-16): WebGL through ANGLE's SwiftShader, as the scene's own probes
+   launch it (engineering/probe-b), so the hero's scene can really draw in a
+   headless browser and its positive case is tested, not assumed. The flags make
+   WebGL AVAILABLE; they change nothing a page decides — every "never" profile is
+   judged by what the page requests, granted or not. */
+const GL_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"];
 
 /* 29 runs first, before anything else loads the machine or the browser. One
    unthrottled load warms the server; it is not measured. */
@@ -2634,6 +2892,17 @@ if (want(29)) {
   }
   perfLoad.after = os.loadavg()[0];
 }
+/* 29 (2026-09-16) ── every same-site script the performance runs requested, by
+   what its code is: the hero's scene (three.js, or a script that asks for a
+   WebGL context) is imported after load and never counts as initial
+   JavaScript — and one requested before the load event is a failure */
+const perfKinds = new Map();
+for (const r of Object.values(perfRuns).flat())
+  for (const s of r.scripts || [])
+    if (isSameSite(s.url) && !perfKinds.has(s.url)) {
+      const t = (await http(toBase(s.url))).text || "";
+      perfKinds.set(s.url, { scene: THREE_CODE.test(t) || GL_CALL_CODE.test(t) || REACT_THREE_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
+    }
 let heroRun = null;
 const lcpRuns = [];
 if (want(28)) {
@@ -2684,10 +2953,14 @@ if (want(25)) {
   plan.push(["/", { width: 390, phone: true, label: "/ @390 phone (touch, 3x DPR)" }]);
   for (const p of GL_EXTRA) plan.push(["/", p]);
   for (const w of GL_WIDTHS) plan.push(["/", { width: w, reduced: true, label: `/ @${w} reduced motion` }]);
+  /* its own browser, with the SwiftShader flags: the scene must be able to draw
+     here, and these flags stay off every other check's browser */
+  const glBrowser = await chromium.launch({ args: GL_ARGS });
   for (const [route, prof] of plan) {
     process.stderr.write(`  webgl ${prof.label}\n`);
-    glRuns[prof.label] = { route, ...prof, ...(await visitGl(browser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+    glRuns[prof.label] = { route, ...prof, ...(await visitGl(glBrowser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
   }
+  await glBrowser.close();
 }
 const focusRuns = {};
 if (want(19))
@@ -2713,7 +2986,11 @@ const detRuns = {};
 if (want(23))
   for (const route of ROUTES) {
     process.stderr.write(`  capturing ${route} twice\n`);
-    detRuns[route] = await (async () => comparePng(await stableCapture(browser, route), await stableCapture(browser, route)))().catch((e) => ({
+    detRuns[route] = await (async () => {
+      const a = await stableCapture(browser, route);
+      const b = await stableCapture(browser, route);
+      return { ...comparePng(a, b), canvases: Math.max(a.scene.canvases, b.scene.canvases), sceneReady: a.scene.ready || b.scene.ready };
+    })().catch((e) => ({
       error: String(e?.message || e).split("\n")[0].slice(0, 200),
     }));
   }
@@ -2724,12 +3001,12 @@ if (want(14)) {
 }
 await browser.close();
 let notFoundRun = null;
-if (want(31)) {
+if (want(31) || want(32)) {
   process.stderr.write("  an unknown URL, for the 404\n");
   notFoundRun = await probeNotFound().catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
 }
 let llmsRun = null;
-if (want(8)) {
+if (want(8) || want(12) || want(32)) {
   process.stderr.write("  the llms files, for figures\n");
   llmsRun = await fetchLlms().catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
 }
@@ -2794,6 +3071,7 @@ check(4, "With JavaScript off, every heading and paragraph is visible", "content
     const scriptOnly = v.out.filter((o) => shown.has(o.text));
     const alsoHiddenWithJs = v.out.length - scriptOnly.length;
     if (alsoHiddenWithJs) I.push(`${at(k)}: ${alsoHiddenWithJs} hidden with JS on as well (hover or state reveals — not a script dependency)`);
+    if (v.skipped?.length) I.push(`${at(k)}: not read, script-only controls (type="button", no form — they do nothing without JS): ${v.skipped.map((t) => `"${t}"`).join(", ")}`);
     if (!scriptOnly.length) continue;
     const by = {};
     scriptOnly.forEach((o) => {
@@ -3215,48 +3493,26 @@ await (async () => {
       }
     }
   }
-  /* Person — built from the roster the Team section renders: one node per
-     VERIFIED person card, carrying that card's name and profile link, and no
-     empty field. A PENDING card (data-person-status="pending", decided
-     2026-09-15) is a named member with no verified profile yet: it links
-     nowhere and has no Person node — a pending link is unverified by
-     definition. A card with no link that is not marked pending still fails. */
-  {
-    const v = visits[`/@${WIDTHS[0]}`];
-    if (v?.people) {
-      const persons = [];
-      for (const raw of v.jsonld) {
-        try {
-          const j = JSON.parse(raw);
-          for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Person")) persons.push(n);
-        } catch {
-          /* reported by the parse above */
-        }
+  /* Person — none, on any page. The team is a headcount (the owner,
+     2026-09-24: "we just show we have 15+ developer team, no details"): no one
+     is named on the site, so a person card ([data-person-card]) or a Person
+     node anywhere is a finding. It replaced the verified/pending roster rule of
+     2026-09-15 (one Person per verified card, none for a pending one). */
+  for (const route of ROUTES) {
+    const v = visits[`${route}@${WIDTHS[0]}`];
+    if (!v?.people) continue;
+    const persons = [];
+    for (const raw of v.jsonld) {
+      try {
+        const j = JSON.parse(raw);
+        for (const n of Array.isArray(j) ? j : j["@graph"] || [j]) if ([].concat(n["@type"]).includes("Person")) persons.push(n);
+      } catch {
+        /* reported by the parse above */
       }
-      const cards = v.people.cards || [];
-      const verifiedCards = cards.filter((c) => !c.pending);
-      const pendingCards = cards.filter((c) => c.pending);
-      const key = (name, url) => `${name}|${url}`;
-      const cardKeys = new Set(verifiedCards.filter((c) => c.href).map((c) => key(c.name, c.href)));
-      const ldKeys = new Set(persons.map((p) => key(p.name, [].concat(p.sameAs || [])[0])));
-      const ldNames = new Set(persons.map((p) => p.name));
-      for (const p of persons) {
-        const url = [].concat(p.sameAs || [])[0];
-        if (!cardKeys.has(key(p.name, url))) F.push(`/: Person "${p.name}" (${url || "no sameAs"}) is not a verified person card on the page`);
-        for (const [k, val] of Object.entries(p))
-          if (val === null || (typeof val === "string" && !val.trim()) || (Array.isArray(val) && val.length === 0))
-            F.push(`/: Person "${p.name}" carries an empty ${k} — emit only the fields that exist`);
-      }
-      for (const c of verifiedCards) {
-        if (!c.href) F.push(`/: the person card "${c.name}" has no profile link and is not marked pending — a verified member links to their LinkedIn; one without a verified profile is data-person-status="pending"`);
-        else if (!ldKeys.has(key(c.name, c.href))) F.push(`/: the person card "${c.name}" has no Person node in the structured data`);
-      }
-      for (const c of pendingCards) {
-        if (c.linked) F.push(`/: the pending card "${c.name}" carries a link — a member whose profile is pending links nowhere until it is verified`);
-        if (ldNames.has(c.name)) F.push(`/: the pending card "${c.name}" has a Person node — Person is only for a verified profile`);
-      }
-      I.push(`/: Person ${persons.length}, person cards ${cards.length} (${verifiedCards.length} verified, ${pendingCards.length} pending)`);
     }
+    for (const p of persons) F.push(`${route}: a Person node for "${p.name || "(no name)"}" — the team is shown as a headcount (owner, 2026-09-24), and no one is named in the markup`);
+    for (const c of v.people.cards || []) F.push(`${route}: a person card for "${c.name || "(no name)"}" — the team is shown as a headcount (owner, 2026-09-24), and no one is named on the page`);
+    if (route === "/" || persons.length || (v.people.cards || []).length) I.push(`${route}: Person ${persons.length}, person cards ${(v.people.cards || []).length}`);
   }
   for (const [u, where] of urls) {
     if (!isSameSite(u)) {
@@ -3268,7 +3524,7 @@ await (async () => {
     const r = await http(toBase(u.split("#")[0]));
     if (r.status !== 200) F.push(`${u} → ${r.status || r.error} (${where[0]})`);
   }
-  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; Person nodes that are not the people on the page; a Person node or a link for a member whose profile is pending", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
+  results.push({ id: 14, title: "Structured data parses, has the expected types, and every URL in it works", catches: "the /#recent-work breadcrumb; schema pointing at pages that 404; an FAQPage that is not the FAQ on the page, or whose answers are not in the served HTML; a person card or a Person node anywhere — the team is a headcount (owner, 2026-09-24)", status: F.length ? "FAIL" : "PASS", findings: [...new Set(F)], info: I });
 })();
 
 /* 15 */
@@ -3399,20 +3655,30 @@ check(6, "No sideways scrolling or cut-off content at any width", "content wider
 });
 
 /* 7 */
-check(7, "The homepage headline wraps cleanly — no line of it is a single orphaned word", "a headline sized for one line of copy showing another: the H1 became a sentence (COPY.md §1)", (F, I) => {
-  for (const [k, v] of Object.entries(widthRuns)) {
-    if (!k.startsWith("/@")) continue;
-    if (!v.headline) {
-      F.push(`${at(k)}: no headline found`);
-      continue;
+check(
+  7,
+  "The homepage headline wraps cleanly — no line of it is a single orphaned word",
+  "a headline sized for one line of copy showing another: the H1 became a sentence (COPY.md §1); 2026-09-16, \"Build what's next.\" set as two spans — a last line of one word is an orphan whether or not a span ends before it",
+  (F, I) => {
+    for (const [k, v] of Object.entries(widthRuns)) {
+      if (!k.startsWith("/@")) continue;
+      const h = v.headline;
+      if (!h) {
+        F.push(`${at(k)}: no headline found`);
+        continue;
+      }
+      I.push(`${at(k)}: "${h.text}" — ${h.all.join(" / ")} (${h.parts.map((lines) => lines.length).join(" + ")} line(s), by span)`);
+      /* each span: a part that wraps never ends on one word */
+      h.parts.forEach((lines, i) => {
+        const last = lines[lines.length - 1] || "";
+        if (lines.length > 1 && last.split(" ").length === 1) F.push(`${at(k)}: headline part ${i + 1} ends on a single word, "${last}"`);
+      });
+      /* the whole headline, across its spans: its last line is never one word */
+      const last = h.all[h.all.length - 1] || "";
+      if (h.all.length > 1 && last.split(" ").length === 1) F.push(`${at(k)}: the headline's last line is a single word, "${last}" — an orphan (${h.all.join(" / ")})`);
     }
-    I.push(`${at(k)}: ${v.headline.map((lines) => lines.length).join(" + ")} line(s)`);
-    v.headline.forEach((lines, i) => {
-      const last = lines[lines.length - 1] || "";
-      if (lines.length > 1 && last.split(" ").length === 1) F.push(`${at(k)}: headline part ${i + 1} ends on a single word, "${last}"`);
-    });
-  }
-});
+  },
+);
 
 /* 10 */
 check(10, "Every image loads, has alt text, and comes from this site", "a broken or unlabelled image; stock photography", (F, I) => {
@@ -3452,6 +3718,19 @@ await (async () => {
   if (!want(12)) return;
   const F = [];
   const I = [];
+  /* the line, three ways: the owner's words (CANONICAL, written here), the
+     site's one copy of them (content/canonical.ts), and every place the site
+     describes the company — each must carry exactly these words */
+  let canonTs = null;
+  try {
+    canonTs = loadContent("content/canonical.ts").CANONICAL_DESCRIPTION;
+    if (typeof canonTs !== "string") throw new Error("it exports no CANONICAL_DESCRIPTION string");
+  } catch (e) {
+    F.push(`content/canonical.ts could not be read (${e.message}) — unsure is a failure`);
+  }
+  if (typeof canonTs === "string" && canonTs !== CANONICAL)
+    F.push(`content/canonical.ts says "${canonTs}" — the owner's canonical description (2026-09-16) is "${CANONICAL}"; changing it changes this check too, on purpose`);
+  I.push(`the canonical description: "${CANONICAL}"`);
   const home = visits[`/@${WIDTHS[0]}`];
   let org = null;
   for (const raw of home?.jsonld || []) {
@@ -3462,19 +3741,35 @@ await (async () => {
       /* check 14 reports it */
     }
   }
-  const canon = org?.description ? org.description.split(/(?<=\.)\s/)[0].trim() : null;
-  if (!canon) F.push("no Organization description on / to take the canonical line from");
-  else {
-    I.push(`canonical line (first sentence of the Organization description): "${canon}"`);
-    const places = { "meta description on /": home.meta.description, "og:description on /": home.meta.ogDescription, "OG image alt text": home.meta.ogImageAlt };
-    for (const f of ["/llms.txt"]) {
-      const r = await http(BASE + f);
-      if (r.status !== 200) F.push(`${f} returns ${r.status || r.error}`);
-      else places[f] = r.text;
+  if (!org?.description) F.push("/: no Organization description in the structured data — it opens with the canonical description");
+  else if (!org.description.startsWith(CANONICAL)) F.push(`/: the Organization description does not open with it — it says "${org.description.slice(0, 120)}"`);
+  else I.push(`/: Organization description — opens with it`);
+  /* every place: the ones every page must have are required; the twitter card
+     is checked where the page emits one */
+  const places = [
+    ["the meta description on /", home?.meta.description, true],
+    ["og:description on /", home?.meta.ogDescription, true],
+    ["twitter:description on /", home?.meta.twitterDescription, false],
+    ["the share image's alt text (og:image:alt) on /", home?.meta.ogImageAlt, true],
+  ];
+  if (!llmsRun || llmsRun.error) F.push(`the llms files could not be read${llmsRun?.error ? ` (${llmsRun.error})` : ""} — unsure is a failure`);
+  else for (const f of llmsRun.filter((x) => ["/llms.txt", "/llms-full.txt"].includes(x.file))) places.push([f.file, f.status === 200 ? f.text : null, true, f.status]);
+  for (const [where, text, required, status] of places) {
+    if (text == null) {
+      if (required) F.push(`${where} is missing${status ? ` (it answered ${status})` : ""} — it carries the canonical description`);
+      continue;
     }
-    for (const [where, text] of Object.entries(places)) if (text != null && !text.includes(canon)) F.push(`${where} does not contain it — it says "${String(text).slice(0, 90)}"`);
+    if (!text.includes(CANONICAL)) F.push(`${where} does not carry it word for word — it says "${String(text).replace(/\s+/g, " ").slice(0, 110)}"`);
+    else I.push(`${where} — carries it`);
   }
-  results.push({ id: 12, title: "The canonical description is word for word the same everywhere it appears", catches: "the OG image saying one thing and the metadata another", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+  results.push({
+    id: 12,
+    title: "The canonical description is word for word the same everywhere it appears — the owner's line of 2026-09-16",
+    catches: "the OG image saying one thing and the metadata another; the description changed in one place only — an llms file, the share image's alt text, the structured data — or changed in content/canonical.ts without the owner's decision",
+    status: F.length ? "FAIL" : "PASS",
+    findings: F,
+    info: I,
+  });
 })();
 
 /* 13 */
@@ -3658,15 +3953,17 @@ check(
       const why = {};
       c.unmeasured.forEach((u) => (why[u.why] = (why[u.why] || 0) + 1));
       I.push(
-        `${at(k)}: ${c.measured} measured in ${c.captures} viewport capture(s); not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes: ${c.pinnedBoxes.join(", ") || "none"} — text measured only in ${PINNED_ALLOW}, at the top of the page`,
+        `${at(k)}: ${c.measured} measured in ${c.captures} viewport capture(s); not measurable: ${Object.entries(why).map(([w, n]) => `${w} ×${n}`).join(", ") || "none"}; fixed or sticky boxes: ${c.pinnedBoxes.join(", ") || "none"} — text in one is measured in ${PINNED_ALLOW} at the top of the page, or where the box carries its own opaque background`,
       );
+      /* 2026-09-16: text in a pinned box that paints its own opaque ground IS measured, against that ground */
+      for (const o of c.onPinned || []) I.push(`${at(k)}: "${o.text}" sits in ${o.box}, a fixed or sticky box whose own ground is opaque (${o.ground}) — measured against it, wherever the page is scrolled`);
       /* K5: a cap reached is text never measured */
       if (c.total > c.cap) F.push(`${at(k)}: the contrast pass stopped at its ${c.cap}-element cap — ${c.total - c.cap} text element(s) further down the page were never measured; unsure is a failure`);
       const seen = new Set();
       for (const o of c.outside) {
         if (seen.has(`out|${o.text}`)) continue;
         seen.add(`out|${o.text}`);
-        F.push(`${at(k)}: "${o.text}" sits in a fixed or sticky box (${o.box}) outside the allowlist (${PINNED_ALLOW}) — the ground under it changes as the page scrolls and no one capture is what a reader sees; unsure is a failure`);
+        F.push(`${at(k)}: "${o.text}" sits in a fixed or sticky box (${o.box}) that paints no opaque ground of its own — the page behind it shows through, and what that is changes as the page scrolls, so no one capture is what a reader sees; give the box an opaque background, or take the text out of it; unsure is a failure`);
       }
       for (const o of c.covered) F.push(`${at(k)}: "${o.text}" is under a fixed or sticky box at every scroll position — no reader can see it`);
       for (const f of [...c.fails].sort((a, b) => a.ratio - b.ratio)) {
@@ -3695,11 +3992,13 @@ check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: pre
 });
 
 /* 23 */
-check(23, "Two captures of each page are identical once motion is pinned", "anything order- or time-dependent that makes the page differ between visits", (F) => {
+check(23, "Two captures of each page are identical once motion is pinned", "anything order- or time-dependent that makes the page differ between visits", (F, I) => {
   for (const [route, d] of Object.entries(detRuns)) {
     if (d.error) F.push(`${route}: the captures did not finish (${d.error}) — unsure is a failure`);
     else if (d.sizeDiffers) F.push(`${route}: the page is a different size on each visit (${d.sizeDiffers})`);
     else if (d.n) F.push(`${route}: ${d.n} pixel(s) differ (${d.pct.toFixed(4)}%), between y=${d.minY} and y=${d.maxY}`);
+    /* the scene is pinned by reduced motion, where it never mounts (check 25), and canvases are hidden for the capture */
+    if (!d.error) I.push(`${route}: captured under reduced motion — ${d.canvases ?? 0} canvas(es) in the page (hidden for the capture)${d.sceneReady ? "; a scene DREW under reduced motion — check 25 fails that" : "; no scene drawn"}`);
   }
 });
 
@@ -3771,35 +4070,47 @@ await (async () => {
     ...Object.entries(visits).map(([k, v]) => ({ label: `${k.split("@")[0]} @${k.split("@")[1]}`, route: k.split("@")[0], width: Number(k.split("@")[1]), ...(v.glData || { gl: null, scripts: [] }) })),
     ...Object.values(glRuns),
   ];
-  const THREE = /WebGLRenderer|three\.module|__THREE__|@react-three/;
-  const RENDERER = /getContext\(\s*["'`](?:webgl2?|experimental-webgl)["'`]|WebGL2RenderingContext/;
   const kinds = new Map();
   const kind = async (url) => {
     if (!kinds.has(url)) {
       const t = (await http(toBase(url))).text || "";
-      kinds.set(url, { three: THREE.test(t), renderer: RENDERER.test(t), gz: gzipSync(Buffer.from(t)).length });
+      kinds.set(url, { three: THREE_CODE.test(t), r3f: REACT_THREE_CODE.test(t), gl: GL_CALL_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
     }
     return kinds.get(url);
   };
   const kb = (b) => `${(b / 1024).toFixed(1)}KB`;
+  /* THE SCENE CHUNK (2026-09-16): every same-site script the allowed profile
+     requests on / that no other profile of / requests — what the one allowed
+     profile adds is the scene's own code, whatever the bundler names it — and
+     every script that is three.js or asks for a WebGL context. */
+  const home = runs.filter((r) => r.route === "/" && Array.isArray(r.scripts));
+  const urlsOf = (r) => (r.scripts || []).filter((s) => isSameSite(s.url)).map((s) => s.url);
+  const otherUrls = new Set(home.filter((r) => !glAllowed(r)).flatMap(urlsOf));
+  const sceneOnly = new Set(home.filter(glAllowed).flatMap(urlsOf).filter((u) => !otherUrls.has(u)));
+  const sceneUrls = new Set();
+  let allowedRuns = 0;
   for (const run of runs) {
     if (!Array.isArray(run.gl)) {
       F.push(`${run.label}: the WebGL hook did not report${run.error ? ` (${run.error})` : ""} — unsure is a failure`);
       continue;
     }
     /* K7/H3: allowed only with a FINE pointer, no touch, no Save-Data */
-    const allowed = WEBGL_ON_HOME && run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer === "fine";
+    const allowed = glAllowed(run);
+    if (allowed) allowedRuns++;
     const why =
       run.route !== "/" ? "WebGL belongs to the homepage hero and nowhere else"
       : run.reduced ? "never under reduced motion"
       : run.saveData ? "never with Save-Data on"
       : run.phone || run.touch || (run.pointer && run.pointer !== "fine") ? `never on a touch device — a ${run.pointer || "coarse"} pointer at ${run.width}px gets the poster`
       : run.width < 1025 ? `never at ${run.width}px: phones and tablets get the poster`
-      : "step 3 ships no WebGL on / at all";
+      : "only at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion";
     /* a profile that does not emulate what it claims proves nothing */
     if (run.touch && run.pointer !== "coarse") F.push(`${run.label}: the tablet profile reports a ${run.pointer} pointer, not a coarse one — unsure is a failure`);
     if (run.saveData && !run.saveDataSeen) F.push(`${run.label}: the page does not see Save-Data (navigator.connection.saveData is false) — unsure is a failure`);
     if ("input" in run && !run.input) F.push(`${run.label}: no spot free of controls for the first pointer input — the input-triggered path went untested; unsure is a failure`);
+    /* the desktop profile must BE the allowed one, or the positive case is never tested */
+    if (run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer !== "fine")
+      F.push(`${run.label}: the desktop profile reports a ${run.pointer} pointer, not a fine one — the scene's own profile went untested; unsure is a failure`);
     /* every context: this frame's, a worker's (reported into it), and each
        frame's the page made; a third party's frame is listed, not judged */
     const reqs = [...run.gl.map((g) => ({ ...g, where: g.where || "the page" }))];
@@ -3823,16 +4134,46 @@ await (async () => {
     const found = [];
     for (const sc of (run.scripts || []).filter((x) => isSameSite(x.url))) {
       const k = await kind(sc.url);
-      if (k.three) F.push(`${run.label}: requests ${short(sc.url)}, a three.js / @react-three chunk — the field is raw WebGL2, and three.js does not come back`);
-      if (!k.renderer) continue;
-      found.push(`${short(sc.url)} ${kb(k.gz)} gzipped at ${Math.round(sc.start)}ms`);
-      if (!allowed) F.push(`${run.label}: requests ${short(sc.url)}, a WebGL renderer chunk (${kb(k.gz)} gzipped) — ${why}`);
+      if (k.r3f) F.push(`${run.label}: requests ${short(sc.url)}, a @react-three chunk — the scene is three.js core, never React Three Fiber (SPEC §7)`);
+      const scene = k.three || k.gl || sceneOnly.has(sc.url);
+      if (!scene) continue;
+      found.push(`${short(sc.url)} ${kb(k.gz)} gzipped at ${Math.round(sc.start)}ms${k.three ? " (three.js)" : k.gl ? " (asks for WebGL)" : " (only in this profile)"}`);
+      if (!allowed) F.push(`${run.label}: requests ${short(sc.url)}, ${k.three ? "a three.js chunk" : "a chunk of the WebGL scene"} (${kb(k.gz)} gzipped) — ${why}`);
       else {
-        if (k.gz > RENDERER_MAX_GZ) F.push(`${run.label}: the renderer chunk ${short(sc.url)} is ${kb(k.gz)} gzipped — the budget is ${kb(RENDERER_MAX_GZ)}`);
-        if (!run.loadEnd || sc.start < run.loadEnd) F.push(`${run.label}: the renderer chunk ${short(sc.url)} is requested at ${Math.round(sc.start)}ms, before the load event ended (${Math.round(run.loadEnd)}ms) — it is never initial JavaScript`);
+        sceneUrls.add(sc.url);
+        if (!run.loadEnd || sc.start < run.loadEnd) F.push(`${run.label}: the scene chunk ${short(sc.url)} is requested at ${Math.round(sc.start)}ms, before the load event ended (${Math.round(run.loadEnd)}ms) — the scene is imported after load, never initial JavaScript`);
       }
     }
-    I.push(`${run.label}: ${reqs.length} WebGL request(s) (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s), ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${found.length ? `; renderer ${found.join(", ")}` : ", no renderer chunk"}`);
+    /* THE POSITIVE CASE (2026-09-16): where WebGL is allowed, the scene runs —
+       a context the browser grants, its canvas inside [data-hero-field], and
+       the field marked data-scene-ready once it has drawn. Every "never" rule
+       above passes on a scene that is silently dead; this is the one that
+       fails it. */
+    if (allowed) {
+      if (!reqs.length) F.push(`${run.label}: no WebGL context was created — at >=1025px with a fine pointer the hero's scene runs, and one that never starts is silently dead`);
+      else if (!reqs.some((g) => g.granted)) F.push(`${run.label}: ${reqs.length} WebGL context request(s), none granted by the browser — the scene could not be tested; unsure is a failure`);
+      if (!run.field) F.push(`${run.label}: there is no [data-hero-field] on / — the scene has nowhere to draw`);
+      else {
+        if (!run.fieldCanvases) F.push(`${run.label}: no canvas inside [data-hero-field] — the scene draws in the field, over the poster`);
+        if (!run.sceneReady) F.push(`${run.label}: [data-hero-field] never got data-scene-ready — the scene did not draw its first frame`);
+      }
+    }
+    I.push(
+      `${run.label}: ${reqs.length} WebGL request(s)${reqs.length ? ` (${reqs.filter((g) => g.granted).length} granted)` : ""} (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s)${run.fieldCanvases ? `, ${run.fieldCanvases} in the field` : ""}${run.sceneReady ? ", data-scene-ready" : ""}, ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${allowed ? " — the allowed profile" : ""}${found.length ? `; scene ${found.join(", ")}` : ", no scene chunk"}`,
+    );
+  }
+  if (!allowedRuns) F.push("no run of / at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion was made — the scene's positive case went untested; unsure is a failure");
+  /* the scene chunk's weight: every scene script the allowed profile requested, once each */
+  if (sceneUrls.size) {
+    let total = 0;
+    const parts = [];
+    for (const u of sceneUrls) {
+      const k = await kind(u);
+      total += k.gz;
+      parts.push(`${short(u)} ${kb(k.gz)}`);
+    }
+    if (total > SCENE_MAX_GZ) F.push(`the scene chunk is ${kb(total)} gzipped (${parts.join(", ")}) — the budget is ${kb(SCENE_MAX_GZ)} for the script that asks for the context and the three.js code it imports`);
+    I.push(`the scene chunk: ${kb(total)} gzipped in ${sceneUrls.size} file(s) — ${parts.join(", ")}; the budget is ${kb(SCENE_MAX_GZ)}`);
   }
   /* Every font a page preloads is one THAT page renders — read per route, from
      the preload links present once the page has settled (a prefetched route's
@@ -3857,8 +4198,8 @@ await (async () => {
   }
   results.push({
     id: 25,
-    title: "No WebGL at 390 or 768 or under reduced motion — and in step 3 none on / at all; no three.js; every preloaded font is one its page renders",
-    catches: "a canvas mounted on a phone, a tablet or under reduced motion; the 3D bundle coming back; a renderer chunk over 15KB or in the initial JavaScript; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
+    title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load; every preloaded font is one its page renders",
+    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440; a scene chunk over 180KB, or requested before the load event; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: I,
@@ -3919,63 +4260,175 @@ check(26, "Headings step down one level at a time; title, description, canonical
   }
 });
 
-/* 30 — content parity: the inventory is a test, not a document */
+/* 30 — content parity: the inventory is a test, not a document.
+   scripts/content-inventory.json, per route, a list of items; each item's
+   needles are matched against the page's SERVED HTML (scripts stripped,
+   entities decoded, whitespace ignored). An item is
+     required  every needle is there;
+     cut       no needle is there (with its reason, `cut`);
+     retired   no longer checked either way (with its reason, `retired`) —
+               printed, so the decision stays visible.
+   Options on an item (2026-09-16): `scope` — "header", "footer" or "main"
+   matches only inside that part of the page (a link cut from the navigation
+   may still be a word in the page); `match: "word"` matches whole words, with
+   the text's spaces kept ("Expo" is not "export"); `ignoreCase`.
+   `sets` holds item lists that routes include ({ "include": "name" }), and
+   `awaiting` holds the inventory of a page not yet published — printed, and
+   required the moment the page is in the sitemap, where it must move into
+   `routes`. Adding a route is data only. */
 await (async () => {
   if (!want(30)) return;
+  const title = "Every inventoried piece of content is on its page, and nothing cut comes back";
+  const catches =
+    "a redesign losing content silently; a cut or retired claim coming back — the old canonical line, an unconfirmed technology (Kubernetes, Kafka, RabbitMQ), a stack item the evidence dropped (Expo, Supabase, Whisper, FastAPI), an internal repository's name, \"Book a call\"";
   const F = [];
   const I = [];
   let inv;
   try {
     inv = JSON.parse(await readFile(new URL("./content-inventory.json", import.meta.url), "utf8"));
   } catch (e) {
-    results.push({ id: 30, title: "Every inventoried piece of content is on its page", catches: "a redesign losing content silently", status: "FAIL", findings: [`scripts/content-inventory.json could not be read (${e.message})`], info: [] });
+    results.push({ id: 30, title, catches, status: "FAIL", findings: [`scripts/content-inventory.json could not be read (${e.message})`], info: [] });
     return;
   }
-  const listed = Object.keys(inv.routes);
-  for (const r of ROUTES) if (!listed.includes(r)) F.push(`${r} is in the sitemap but has no inventory — every public page needs one before it ships`);
+  const SCOPES = {
+    page: null,
+    header: /<header\b[^>]*\bid="masthead"[^>]*>[\s\S]*?<\/header>/i,
+    footer: /<footer\b[^>]*>[\s\S]*?<\/footer>/i,
+    main: /<main\b[^>]*>[\s\S]*?<\/main>/i,
+  };
+  const STATUSES = new Set(["required", "cut", "retired"]);
+  const sets = inv.sets || {};
+  const expand = (rows, where) =>
+    (Array.isArray(rows) ? rows : []).flatMap((r) => {
+      if (r && typeof r === "object" && "include" in r) {
+        if (!Array.isArray(sets[r.include])) {
+          F.push(`${where}: includes the set "${r.include}", which the inventory does not define — unsure is a failure`);
+          return [];
+        }
+        return sets[r.include];
+      }
+      return [r];
+    });
+  const listed = Object.keys(inv.routes || {});
+  const awaiting = inv.awaiting || {};
+  for (const r of ROUTES) if (!listed.includes(r) && !(r in awaiting)) F.push(`${r} is in the sitemap but has no inventory — every public page needs one before it ships`);
+  for (const [r, a] of Object.entries(awaiting)) {
+    const rows = expand(a.rows, `awaiting ${r}`);
+    const needles = rows.reduce((n, row) => n + (row.needles || []).length, 0);
+    if (listed.includes(r)) F.push(`${r} is inventoried under both "routes" and "awaiting" — one page, one inventory`);
+    else if (ROUTES.includes(r)) F.push(`${r} is in the sitemap and its inventory is still under "awaiting" — move its ${rows.length} item(s) into "routes", so its content is checked`);
+    else I.push(`${r}: awaiting ${a.by || "its page"} — ${rows.length} item(s), ${needles} needle(s), required once it is published: ${rows.map((x) => x.item).join("; ")}`);
+  }
   for (const r of listed) if (!ROUTES.includes(r)) F.push(`${r} is inventoried but no longer in the sitemap — a page with content has gone`);
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
   for (const route of listed.filter((r) => ROUTES.includes(r))) {
     const res = await fetch(BASE + route).catch(() => null);
-    if (!res || res.status !== 200) { F.push(`${route}: answered ${res ? res.status : "nothing"} — cannot check its content`); continue; }
-    const text = servedSquashed(await res.text());
-    let req = 0, present = 0;
-    for (const row of inv.routes[route]) {
-      for (const needle of row.needles) {
-        const hit = text.includes(squash(needle));
-        if (row.status === "cut") { if (hit) F.push(`${route}: "${row.item}" was cut${row.cut ? ` (${row.cut})` : ""}, but "${needle.slice(0, 60)}" is back`); }
-        else { req++; if (hit) present++; else F.push(`${route}: "${row.item}" is missing — "${needle.slice(0, 70)}" is not in the served HTML`); }
+    if (!res || res.status !== 200) {
+      F.push(`${route}: answered ${res ? res.status : "nothing"} — cannot check its content`);
+      continue;
+    }
+    const html = await res.text();
+    const region = {};
+    for (const [name, re] of Object.entries(SCOPES)) {
+      const part = re ? (html.match(re) || [null])[0] : html;
+      region[name] = part == null ? null : { squashed: servedSquashed(part), words: servedWords(part) };
+    }
+    let req = 0;
+    let present = 0;
+    let cutN = 0;
+    let retiredN = 0;
+    for (const row of expand(inv.routes[route], route)) {
+      const name = row.item || "(an item with no name)";
+      if (!STATUSES.has(row.status)) {
+        F.push(`${route}: "${name}" has status "${row.status}" — an item is required, cut or retired; unsure is a failure`);
+        continue;
+      }
+      if (row.status === "retired") {
+        retiredN++;
+        if (!String(row.retired || "").trim()) F.push(`${route}: "${name}" is retired with no reason — a retirement says why`);
+        else I.push(`${route}: retired — "${name}": ${row.retired}`);
+        continue;
+      }
+      if (row.status === "cut" && !String(row.cut || "").trim()) F.push(`${route}: "${name}" is cut with no reason — a cut says why`);
+      const scope = row.scope || "page";
+      const mode = row.match || "substring";
+      if (!(scope in SCOPES) || (mode !== "substring" && mode !== "word")) {
+        F.push(`${route}: "${name}" has scope "${scope}" and match "${mode}" — the scopes are page, header, footer and main, the matches substring and word; unsure is a failure`);
+        continue;
+      }
+      const text = region[scope];
+      if (!text) {
+        F.push(`${route}: "${name}" is scoped to the ${scope}, and the served HTML has none — cannot check it; unsure is a failure`);
+        continue;
+      }
+      const within = scope === "page" ? "" : ` (in the ${scope})`;
+      for (const needle of row.needles || []) {
+        const hit =
+          mode === "word"
+            ? new RegExp(`(?<![\\p{L}\\p{N}])${esc(needle)}(?![\\p{L}\\p{N}])`, row.ignoreCase ? "iu" : "u").test(text.words)
+            : row.ignoreCase
+              ? text.squashed.toLowerCase().includes(squash(needle).toLowerCase())
+              : text.squashed.includes(squash(needle));
+        if (row.status === "cut") {
+          cutN++;
+          if (hit) F.push(`${route}: "${name}" was cut${row.cut ? ` (${row.cut})` : ""}, but "${needle.slice(0, 60)}" is back${within}`);
+        } else {
+          req++;
+          if (hit) present++;
+          else F.push(`${route}: "${name}" is missing — "${needle.slice(0, 70)}" is not in the served HTML${within}`);
+        }
       }
     }
-    I.push(`${route}: ${present}/${req} required needles present across ${inv.routes[route].length} items`);
+    I.push(`${route}: ${present}/${req} required needles present, ${cutN} cut needle(s) checked absent, ${retiredN} retired item(s)`);
   }
-  results.push({ id: 30, title: "Every inventoried piece of content is on its page", catches: "a redesign losing content silently", status: F.length ? "FAIL" : "PASS", findings: F, info: I });
+  results.push({ id: 30, title, catches, status: F.length ? "FAIL" : "PASS", findings: F, info: I });
 })();
 
 /* 28 */
 check(
   28,
-  "The hero is HTML, and the poster — never the canvas — is the LCP element",
-  "a hero that says something only after a script runs; a canvas, a headline or anything else taking LCP from the poster; a poster that is lazy, unsized or not high priority",
+  "The hero is HTML — the headline, the support line, the body and both calls to action — and the poster, never the canvas, is the LCP element, beside the headline and still showing under the scene; the proof strip in the engineering stories is content/metrics.ts",
+  "a hero that says something only after a script runs; a canvas, a headline or anything else taking LCP from the poster; a poster that is lazy, unsized or not high priority, hidden or faded once the scene is ready, or behind the headline; a proof figure whose status, label or source is not what content/metrics.ts says",
   (F, I) => {
-    /* (a) every hero role, in the served HTML with scripts stripped */
+    /* (a) every hero role, in the served HTML with scripts stripped — and the
+       owner's words for the headline, the support line and both calls to action */
     const h = heroRun;
     if (!h || h.error) F.push(`/: the hero could not be read${h?.error ? ` (${h.error})` : ""} — unsure is a failure`);
     else {
       if (!h.servedHero) F.push(`/: the served HTML has no hero section${h.heroId ? ` #${h.heroId}` : ""} — it is built by script`);
-      const role = (r) => h.roles.find((x) => x.role === r);
-      if (!role("subtext")) F.push("/: no subtext paragraph follows the headline in the hero");
-      if (!role("call to action")) F.push("/: no call to action follows the subtext in the hero");
+      const role = (r) => h.roles.filter((x) => x.role === r);
+      const headline = role("headline")[0];
+      if (headline && headline.text !== HERO.headline) F.push(`/: the headline reads "${headline.text}" — the owner's is "${HERO.headline}"`);
+      const support = role("support line")[0];
+      if (!support) F.push("/: no support line follows the headline in the hero");
+      else if (support.text !== HERO.support) F.push(`/: the support line reads "${support.text}" — the owner's is "${HERO.support}"`);
+      if (!role("body").length) F.push("/: no body paragraph follows the support line in the hero");
+      const links = role("call to action");
+      for (const want of HERO.ctas) {
+        const hit = links.find((l) => l.text === want.text);
+        if (!hit) {
+          F.push(`/: the hero has no call to action reading "${want.text}" after its body — it has ${links.map((l) => `"${l.text}"`).join(", ") || "none"}`);
+          continue;
+        }
+        const u = new URL(hit.href, BASE);
+        if (u.pathname !== want.path || u.hash !== want.hash) F.push(`/: the hero's "${want.text}" goes to ${hit.href} — it goes to ${want.path}${want.hash}`);
+      }
       for (const r of h.roles) {
         if (!h.sText.includes(r.text)) F.push(`/: the ${r.role} "${r.text.slice(0, 70)}" is not in the served HTML's hero — it arrives by script`);
-        else if (r.href && !h.sLinks.some((l) => l.href === r.href && l.text === r.text)) F.push(`/: the ${r.role} is not a link to ${r.href} in the served HTML`);
+        else if (r.href && !h.sLinks.some((l) => l.href === r.href && l.text === r.text)) F.push(`/: the ${r.role} "${r.text}" is not a link to ${r.href} in the served HTML`);
         else I.push(`/: served — ${r.role}: "${r.text.slice(0, 80)}"${r.href ? ` -> ${r.href}` : ""}`);
       }
-      if (!h.proof.length) F.push("/: the hero has no proof-strip figures");
+      /* the proof strip, in the engineering stories (#recent-work) since
+         2026-09-16: every row's figure, label, status and source link, served */
+      if (!h.work) F.push("/: there is no #recent-work section — the proof strip lives in the engineering stories (SPEC §5)");
+      else if (!h.servedWork) F.push("/: the served HTML has no #recent-work section — it is built by script");
+      if (h.work && !h.proofList) F.push("/: #recent-work holds no list of [data-metric] rows — the proof strip is missing");
+      if (h.proofList && !h.proof.length) F.push("/: the proof strip in #recent-work has no figures");
       for (const p of h.proof) {
         const miss = [!p.figure && "figure", !p.label && "label", !p.status && "shipped/target status", !p.link && "source link"].filter(Boolean);
         if (miss.length) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") has no ${miss.join(", no ")}`);
         if (!h.sItems.includes(p.text)) F.push(`/: proof figure ${p.i} ("${p.text.slice(0, 60)}") is not in the served HTML as the page shows it — it arrives or changes by script`);
-        else if (p.link && !h.sLinks.some((l) => l.href === p.link.href && l.text === p.link.text)) F.push(`/: proof figure ${p.i}'s source link (${p.link.href}) is not in the served HTML`);
+        else if (p.link && !h.sProofLinks.some((l) => l.href === p.link.href && l.text === p.link.text)) F.push(`/: proof figure ${p.i}'s source link (${p.link.href}) is not in the served HTML`);
         else I.push(`/: served — proof ${p.i}${p.metric ? ` [${p.metric}]` : ""}: ${p.figure} · "${p.label}" · ${p.status} · "${p.link?.text}" -> ${p.link?.href}`);
       }
       /* K1: each proof card says what content/metrics.ts says — its figure,
@@ -4007,8 +4460,8 @@ check(
           if (m.source && (p.link?.text ?? "") !== m.source) diffs.push(`the source reads "${p.link?.text ?? ""}", metrics.ts "${m.source}"`);
           if (diffs.length) F.push(`/: proof figure ${p.i} (${m.id}) disagrees with content/metrics.ts — ${diffs.join("; ")}`);
         }
-        for (const m of metricsTs) if (!h.proof.some((p) => p.metric === m.id || p.figure === m.value)) F.push(`/: content/metrics.ts "${m.id}" (${m.value}) is not in the hero's proof strip`);
-        I.push(`/: the proof strip compared with content/metrics.ts — ${metricsTs.length} metric(s)`);
+        for (const m of metricsTs) if (!h.proof.some((p) => p.metric === m.id || p.figure === m.value)) F.push(`/: content/metrics.ts "${m.id}" (${m.value}) is not in the proof strip in #recent-work`);
+        I.push(`/: the proof strip (#recent-work) compared with content/metrics.ts — ${metricsTs.length} metric(s)`);
       }
       /* (c) the poster's own attributes, as served */
       if (h.posters.length !== 1) F.push(`/: the served HTML has ${h.posters.length} img[data-hero-poster] — there is exactly one poster`);
@@ -4035,7 +4488,9 @@ check(
       const line = `/ ${r.label}: ${last.desc}${file ? ` (${file})` : ""}, entry size ${last.size}px², at ${last.t}ms${r.posterBox ? `; the poster renders ${r.posterBox}` : ""}; ${r.entries.length} entr${r.entries.length === 1 ? "y" : "ies"}`;
       if (isPoster) I.push(line);
       else F.push(`${line} — the final LCP element must be the poster img[data-hero-poster]${last.tag === "canvas" ? ", never the canvas" : ""}`);
-      /* (d) H2/K6: the poster after the settle — see visitLcp */
+      /* (d) H2/K6: the poster after the settle — see visitLcp. Where the scene
+         runs, it is read once the scene has drawn: the canvas fades in over the
+         poster, and the poster stays rendered, opaque and the field's box. */
       const st = r.state;
       if (!st) {
         F.push(`/ ${r.label}: there is no img[data-hero-poster] on the settled page`);
@@ -4046,8 +4501,13 @@ check(
       if (!st.boxEqual) F.push(`/ ${r.label}: the poster's box (${st.pBox}) is not the field's (${st.fBox}) — the poster fills [data-hero-field]`);
       if (st.coveredBy) F.push(`/ ${r.label}: after the settle ${st.coveredBy} sits on top of the poster — only a canvas with the field's box may`);
       if (st.h1Overlap) F.push(`/ ${r.label}: the poster sits behind the headline — ${st.h1Overlap}px² of it under the h1; the field is beside the headline, never behind it`);
+      /* SPEC §7: beside the text at >=1025px, above it below that */
+      if (r.width >= 1025 && st.beside === false) F.push(`/ ${r.label}: the poster is not beside the headline — at >=1025px the field is the column to the right of the text (${st.where})`);
+      if (r.width < 1025 && st.above === false) F.push(`/ ${r.label}: the poster is not above the headline — below 1025px the field sits above the text (${st.where})`);
       for (const c of st.badCanvases) F.push(`/ ${r.label}: a canvas ${c} — any canvas sits inside [data-hero-field] with the field's box`);
-      I.push(`/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to cover the field`);
+      I.push(
+        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to cover the field`,
+      );
     }
   },
 );
@@ -4055,8 +4515,8 @@ check(
 /* 29 */
 check(
   29,
-  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005, initial JavaScript at most 260KB gzipped",
-  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift",
+  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005, initial JavaScript at most 260KB gzipped — the hero's scene loads after load and is not initial JavaScript",
+  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift; the 3D scene imported statically, so three.js lands in the initial JavaScript",
   (F, I) => {
     const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
     I.push(`machine load average (1 min): ${perfLoad.before.toFixed(2)} before the runs, ${perfLoad.after.toFixed(2)} after — the timings need a quiet machine`);
@@ -4085,19 +4545,41 @@ check(
       if (name === "mobile" && tbt > BUDGET.mobileTbt) F.push(`${prof.label}: blocking time ${ms(tbt)}ms, over the ${BUDGET.mobileTbt}ms budget (runs ${each("tbt", ms)})`);
       if (cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(cls)} — the budget is 0.00, and ${BUDGET.cls} or more fails (runs ${each("cls", c3)})`);
       if (js > BUDGET.initialJs) F.push(`${prof.label}: initial JavaScript ${k1(js)}KB gzipped transferred, over the ${BUDGET.initialJs / 1024}KB budget (runs ${each("jsInitial", k1)})`);
+      /* THE SCENE AND THE BUDGET (2026-09-16). Initial JavaScript is what is
+         requested by the end of the load event (perfRun); the hero's scene
+         chunk — three.js, or a script that asks for a WebGL context — is
+         imported after load, so it is NOT counted, and that exclusion is
+         allowed only because it holds: a scene chunk requested before the load
+         event ended is a failure here (and in check 25), whatever the total. */
+      const early = new Map();
+      const late = new Map();
+      for (const r of runs)
+        for (const s of r.scripts || []) {
+          const k = perfKinds.get(s.url);
+          if (!k?.scene) continue;
+          (s.start <= r.load ? early : late).set(s.url, { ...k, start: s.start, load: r.load });
+        }
+      for (const [u, k] of early) F.push(`${prof.label}: the scene chunk ${short(u)} (${k1(k.gz)}KB gzipped) is requested at ${ms(k.start)}ms, before the load event ended (${ms(k.load)}ms) — it would be initial JavaScript; the scene is imported after load (check 25)`);
+      I.push(
+        late.size
+          ? `${prof.label}: scene chunk(s) requested after load, so not initial JavaScript: ${[...late].map(([u, k]) => `${short(u)} ${k1(k.gz)}KB gzipped at ${ms(k.start)}ms (load ${ms(k.load)}ms)`).join(", ")}`
+          : `${prof.label}: no scene chunk requested in the ${ms(4000)}ms after load — the scene runs only at >=1025px with a fine pointer, after load`,
+      );
     }
   },
 );
 
 /* 31 — one design. It guarded the split while two designs coexisted; the owner
-   retired the site's old dark design on 2026-09-15, and it now guards the one:
-   every page, the 404 included, is app/techwix.css in Barlow and Jost, and
-   nothing of the retired design comes back — not its stylesheet, its faces,
-   its classes, its reveal attribute, Tailwind or its packages. */
+   retired the site's old dark design on 2026-09-15, and on 2026-09-16 the
+   Techwix clone's design with it: the one design is now the engineering
+   redesign, app/site.css (its `bf-` rules), in Barlow and Jost, on every page
+   and the 404. Nothing of either retired design comes back — not their
+   stylesheets, faces, classes or packages, nor Tailwind. three.js returns for
+   the hero's scene alone: under components/field/, imported dynamically. */
 check(
   31,
-  "One design: every page and the 404 load the site's stylesheet and only Barlow and Jost; no Inter, Satoshi or Commit Mono, and no stylesheet, class, attribute or package of the retired design anywhere",
-  "the retired dark design coming back on any page or in the source — its stylesheet, its faces, its classes, [data-reveal], Tailwind, framer-motion or three.js — or a second design growing beside the one; a 404 that falls out of the site's layout or answers 200",
+  "One design: every page and the 404 load app/site.css's design and only Barlow and Jost; nothing of the retired designs — the Techwix clone's stylesheet, tw- classes and components, the dark design's stylesheet, faces, classes and packages — and three.js only in the hero's scene",
+  "a retired design coming back on any page or in the source — the Techwix stylesheet, a tw- class or a components/techwix import; the dark design's stylesheet, its faces, its classes, [data-reveal], Tailwind or framer-motion — or a second design growing beside the one; three.js outside components/field/ or imported statically, so it lands in the initial JavaScript; a 404 that falls out of the site's layout or answers 200",
   (F, I) => {
     const OURS = /^(barlow|jost)$/i;
     const RETIRED_FACES = /^(inter|satoshi|commit\s*mono)$/i;
@@ -4107,12 +4589,15 @@ check(
     const familyOf = new Map();
     for (const v of Object.values(visits)) for (const r of v.fontFaceRules) for (const m of r.src.matchAll(/url\(["']?([^"')]+)/g)) familyOf.set(m[1].split("/").pop(), face(r.family));
     for (const [k, v] of Object.entries(visits)) {
-      const ours = v.design.sheets.filter((x) => x.techwix);
+      const ours = v.design.sheets.filter((x) => x.design);
+      const retiredTw = v.design.sheets.filter((x) => x.retiredTw);
       const retired = v.design.sheets.filter((x) => x.retired);
       const tw = v.design.sheets.filter((x) => x.tailwind);
-      if (!ours.length) F.push(`${at(k)}: loads no stylesheet of the site's design (no .tw-root / .tw-hero / .tw-header rules) — every page is in the one design`);
+      if (!ours.length) F.push(`${at(k)}: loads no stylesheet of the site's design (no .bf-header / .bf-wrap / .bf-hero / .bf-main rules — app/site.css) — every page is in the one design`);
+      if (retiredTw.length) F.push(`${at(k)}: loads a stylesheet of the retired Techwix design (.tw-root / .tw-hero / .tw-header rules) — ${retiredTw.map((x) => x.href).join(", ")}; the owner's redesign retires app/techwix.css`);
+      if (v.design.techwix?.length) F.push(`${at(k)}: ${v.design.techwix.length} element(s) carry the retired Techwix design's tw- classes — e.g. ${[...new Set(v.design.techwix)].slice(0, 4).join("; ")}`);
       if (retired.length) F.push(`${at(k)}: loads a stylesheet of the retired design — ${retired.map((x) => x.href).join(", ")}`);
-      if (tw.length) F.push(`${at(k)}: loads Tailwind's output — ${tw.map((x) => x.href).join(", ")}; the design is plain CSS in app/techwix.css`);
+      if (tw.length) F.push(`${at(k)}: loads Tailwind's output — ${tw.map((x) => x.href).join(", ")}; the design is plain CSS in app/site.css`);
       for (const f of ["Barlow", "Jost"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the site's faces are Barlow and Jost`);
       for (const fam of new Set([...v.fontsDeclared, ...v.fontFaceRules.map((r) => r.family)].map(face)))
         if (!OURS.test(fam)) F.push(`${at(k)}: declares the face "${fam}" — ${why(fam)}`);
@@ -4120,7 +4605,7 @@ check(
       for (const x of files)
         if (!OURS.test(x.fam)) F.push(`${at(k)}: requests the font file ${x.f} (${x.fam || "no @font-face on any page names it"}) — ${x.fam ? why(x.fam) : "unsure is a failure"}`);
       if (v.design.retired.length) F.push(`${at(k)}: ${v.design.retired.length} element(s) carry the retired design's classes or attribute — e.g. ${v.design.retired.slice(0, 3).join("; ")}`);
-      I.push(`${at(k)}: stylesheets ${v.design.sheets.map((x) => `${x.href}${x.techwix ? " [design]" : ""}${x.retired ? " [retired]" : ""}${x.tailwind ? " [tailwind]" : ""}`).join(", ") || "none"}; font files: ${[...new Set(files.map((x) => x.fam || "?"))].join(", ") || "none"}`);
+      I.push(`${at(k)}: stylesheets ${v.design.sheets.map((x) => `${x.href}${x.design ? " [design]" : ""}${x.retiredTw ? " [retired: Techwix]" : ""}${x.retired ? " [retired]" : ""}${x.tailwind ? " [tailwind]" : ""}`).join(", ") || "none"}; font files: ${[...new Set(files.map((x) => x.fam || "?"))].join(", ") || "none"}`);
     }
 
     /* the 404: an unknown URL answers 404 with the site's own page */
@@ -4132,14 +4617,16 @@ check(
       if (nf.h1 !== 1) F.push(`${nf.path}: the 404 has ${nf.h1} h1`);
       if (!nf.sheets.some((s) => s.design)) F.push(`${nf.path}: the 404 loads no stylesheet of the site's design`);
       for (const s of nf.sheets) {
+        if (s.retiredTw) F.push(`${nf.path}: the 404 loads a stylesheet of the retired Techwix design — ${s.href}`);
         if (s.retired) F.push(`${nf.path}: the 404 loads a stylesheet of the retired design — ${s.href}`);
         if (s.tailwind) F.push(`${nf.path}: the 404 loads Tailwind's output — ${s.href}`);
       }
-      I.push(`${nf.path}: ${nf.status}; site header ${nf.masthead ? "present" : "missing"}; ${nf.h1} h1; stylesheets ${nf.sheets.map((s) => `${s.href}${s.design ? " [design]" : ""}`).join(", ") || "none"}`);
+      if (nf.twMarkup?.length) F.push(`${nf.path}: the 404's markup carries the retired Techwix design's tw- classes — ${nf.twMarkup.slice(0, 4).join(", ")}`);
+      I.push(`${nf.path}: ${nf.status}; site header ${nf.masthead ? "present" : "missing"}; ${nf.h1} h1; stylesheets ${nf.sheets.map((s) => `${s.href}${s.design ? " [design]" : ""}${s.retiredTw ? " [retired: Techwix]" : ""}`).join(", ") || "none"}`);
     }
 
-    /* the repository (with --repo): the retired design's files and source */
-    if (!REPO) I.push("repository: not scanned — pass --repo to check the tracked files for the retired design's faces, classes and packages");
+    /* the repository (with --repo): the retired designs' files and source, and three.js's one place */
+    if (!REPO) I.push("repository: not scanned — pass --repo to check the tracked files for the retired designs' faces, classes and packages, and where three.js is imported");
     else {
       let files = [];
       try {
@@ -4149,11 +4636,15 @@ check(
       }
       const fonts = files.filter((f) => /\.(woff2?|ttf|otf)$/i.test(f));
       for (const f of fonts) if (!/barlow|jost/i.test(path.basename(f))) F.push(`repository: tracks the font file ${f} — the site's faces are Barlow and Jost`);
+      /* the Techwix design's files: its stylesheet and its pieces (2026-09-16) */
+      const twFiles = files.filter((f) => f === "app/techwix.css" || f.startsWith("components/techwix/"));
+      if (twFiles.length) F.push(`repository: tracks ${twFiles.length} file(s) of the retired Techwix design — ${twFiles.slice(0, 4).join(", ")}${twFiles.length > 4 ? ` and ${twFiles.length - 4} more` : ""}; every page moves onto app/site.css and they are deleted`);
       /* K12 (2026-09-15): the package rule saw only `from "pkg"`. It now sees a
          dynamic import(), require(), a side-effect import and a subpath
          ("framer-motion/dom", "tailwindcss/preflight"); Tailwind by @tailwind,
-         @config and @plugin too. */
-      const PKG = String.raw`(?:framer-motion|motion|three|@react-three\/[\w.-]+|@types\/three)`;
+         @config and @plugin too. three.js left this list on 2026-09-16: it has
+         its own rule below. */
+      const PKG = String.raw`(?:framer-motion|motion|@react-three\/[\w.-]+)`;
       const TW = String.raw`(?:tailwindcss|@tailwindcss\/[\w.-]+)`;
       const IMPORTED = (pkg) => new RegExp(String.raw`(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+|\bexport\s+\*\s+from\s*)["'\`]${pkg}(?:\/[^"'\`]*)?["'\`]`);
       const RETIRED_SRC = [
@@ -4173,9 +4664,28 @@ check(
       } catch (e) {
         F.push(`repository: package.json could not be read (${String(e?.message || e).split("\n")[0]}) — unsure is a failure`);
       }
-      const RETIRED_PKG = /^(framer-motion|motion|three|@react-three\/.+|@types\/three|tailwindcss|@tailwindcss\/.+)$/;
+      const RETIRED_PKG = /^(framer-motion|motion|@react-three\/.+|tailwindcss|@tailwindcss\/.+)$/;
       for (const field of ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"])
         for (const name of Object.keys(manifest?.[field] || {})) if (RETIRED_PKG.test(name)) F.push(`repository: package.json lists "${name}" in ${field} — a package of the retired design`);
+      /* every module specifier in a file, and how it is imported: a type-only
+         import is erased; a dynamic import() is its own chunk, loaded when it
+         runs; anything else is part of the importing module */
+      const specsOf = (text) => {
+        const out = [];
+        for (const m of text.matchAll(/\bimport\s+(type\s+)?(?:[\w*{}\s,$]+?\s+from\s+)?["'`]([^"'`]+)["'`]/g)) out.push({ spec: m[2], how: m[1] ? "type" : "static" });
+        for (const m of text.matchAll(/\bexport\s+(type\s+)?(?:\*(?:\s+as\s+\w+)?|\{[^}]*\})\s+from\s+["'`]([^"'`]+)["'`]/g)) out.push({ spec: m[2], how: m[1] ? "type" : "static" });
+        for (const m of text.matchAll(/\bimport\s*\(\s*["'`]([^"'`]+)["'`]\s*\)/g)) out.push({ spec: m[1], how: "dynamic" });
+        for (const m of text.matchAll(/\brequire\s*\(\s*["'`]([^"'`]+)["'`]\s*\)/g)) out.push({ spec: m[1], how: "static" });
+        return out;
+      };
+      const tracked = new Set(files);
+      const resolve = (from, spec) => {
+        const base = spec.startsWith("@/") ? spec.slice(2) : /^\.\.?\//.test(spec) ? path.posix.join(path.posix.dirname(from), spec) : null;
+        if (base == null) return null;
+        for (const ext of ["", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".css", "/index.ts", "/index.tsx", "/index.js"]) if (tracked.has(base + ext)) return base + ext;
+        return base;
+      };
+      const texts = new Map();
       for (const f of src) {
         let text = "";
         try {
@@ -4183,6 +4693,7 @@ check(
         } catch {
           continue; /* deleted in the working tree but still in the index */
         }
+        texts.set(f, text);
         for (const [re, what] of RETIRED_SRC) {
           const m = re.exec(text);
           if (m) F.push(`repository: ${f} holds ${what} — "${m[0]}"`);
@@ -4190,8 +4701,176 @@ check(
         for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']next\/font\/google["']/g))
           for (const name of m[1].split(",").map((s) => s.trim()).filter(Boolean))
             if (!/^(Barlow|Jost)$/.test(name)) F.push(`repository: ${f} loads ${name} from next/font/google — the site's faces are Barlow and Jost`);
+        /* the Techwix pieces and stylesheet, imported from outside them */
+        if (!f.startsWith("components/techwix/"))
+          for (const s of specsOf(text)) {
+            const to = resolve(f, s.spec) || "";
+            if (s.how !== "type" && (to.startsWith("components/techwix/") || /(^|\/)techwix\.css$/.test(to) || /(^|\/)techwix\.css$/.test(s.spec)))
+              F.push(`repository: ${f} imports "${s.spec}" — a piece of the retired Techwix design`);
+          }
       }
-      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned`);
+      /* three.js: ONLY under components/field/, in a module that nothing
+         imports statically — HeroScene imports it dynamically, after load
+         (SPEC §7; CLAUDE.md, "The hero field"). A static import anywhere puts
+         three.js in the initial JavaScript of every page that renders it. */
+      const THREE_SPEC = /^(?:three|@types\/three)(?:\/|$)/;
+      const threeFiles = [...texts].filter(([, t]) => specsOf(t).some((s) => s.how !== "type" && THREE_SPEC.test(s.spec))).map(([f]) => f);
+      for (const f of threeFiles) {
+        if (!f.startsWith("components/field/")) F.push(`repository: ${f} imports three.js — it belongs to the hero's scene under components/field/ and nowhere else`);
+        for (const [g, t] of texts) {
+          if (g === f) continue;
+          for (const s of specsOf(t)) {
+            if (resolve(g, s.spec) !== f && resolve(g, s.spec) + ".ts" !== f && resolve(g, s.spec) + ".tsx" !== f) continue;
+            if (s.how === "static") F.push(`repository: ${g} imports ${f} statically ("${s.spec}") — ${f} imports three.js, so it is imported dynamically, from components/field/HeroScene.tsx, after load`);
+            else if (s.how === "dynamic" && g !== "components/field/HeroScene.tsx") F.push(`repository: ${g} imports ${f} dynamically — the scene is imported from components/field/HeroScene.tsx alone`);
+          }
+        }
+      }
+      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned; three.js imported by ${threeFiles.join(", ") || "nothing"}`);
+    }
+  },
+);
+
+/* 32 — "Schedule a Call" (owner, 2026-09-16; SPEC §1 and §8). It replaced
+   "Book a call", everywhere, title case: the header's button, and every call
+   to action the suite follows by its data-cta — schedule, explore, project —
+   reads its words exactly and goes where they say. */
+await (async () => {
+  if (!want(32)) return;
+  const F = [];
+  const I = [];
+  const said = new Set();
+  const once = (key, line) => {
+    if (said.has(key)) return;
+    said.add(key);
+    F.push(line);
+  };
+  const snip = (s, m) => s.slice(Math.max(0, m.index - 40), m.index + m[0].length + 40).replace(/\s+/g, " ").trim();
+  /* (a) "Book a call" nowhere, in any case: each page's served HTML — its
+     text, every attribute, the head, the JSON-LD and the page data — each page
+     as rendered (text hidden or not, every attribute), the 404 and the llms
+     files. "Book a similar build", "Book a strategy call" and "Book a
+     technical call" are other phrases. */
+  for (const route of ROUTES) {
+    const r = await http(toBase(route));
+    if (r.status !== 200) {
+      F.push(`${route}: answered ${r.status || r.error} — cannot check it; unsure is a failure`);
+      continue;
+    }
+    const html = decodeEntities(r.html || r.text || "");
+    const m = BOOK_A_CALL.exec(html);
+    if (m) once(`served|${route}`, `${route}: the served HTML says "${snip(html, m)}" — "Book a call" is retired everywhere (owner, 2026-09-16): the words are "Schedule a Call"`);
+  }
+  for (const [k, v] of Object.entries(visits)) for (const b of v.bookCall || []) once(`dom|${k.split("@")[0]}|${b.where}`, `${at(k)}: ${b.where} says "${b.text}" — "Book a call" is retired everywhere`);
+  if (!notFoundRun || notFoundRun.error) F.push(`the 404 probe did not run${notFoundRun?.error ? ` (${notFoundRun.error})` : ""} — unsure is a failure`);
+  else if (notFoundRun.bookCall) F.push(`${notFoundRun.path}: the 404 says "${notFoundRun.bookCall}" — "Book a call" is retired everywhere`);
+  if (!llmsRun || llmsRun.error) F.push(`the llms files could not be read${llmsRun?.error ? ` (${llmsRun.error})` : ""} — unsure is a failure`);
+  else
+    for (const f of llmsRun) {
+      if (f.status !== 200) F.push(`${f.file} answered ${f.status} — cannot check it; unsure is a failure`);
+      const m = BOOK_A_CALL.exec(f.text);
+      if (m) F.push(`${f.file} says "${snip(f.text, m)}" — "Book a call" is retired everywhere`);
+    }
+  /* where a link goes, as a path and a hash */
+  const goesTo = (abs, w) => {
+    try {
+      const u = new URL(abs, BASE);
+      return (u.pathname.replace(/\/$/, "") || "/") === w.path && u.hash === w.hash;
+    } catch {
+      return false;
+    }
+  };
+  /* (b) the header's primary button, on every page at every width: every link
+     in header#masthead that is not the navigation or the logo's link home */
+  for (const [k, v] of Object.entries(visits)) {
+    const route = k.split("@")[0];
+    if (!v.headerButtons) {
+      F.push(`${at(k)}: there is no header#masthead — the header's Schedule a Call cannot be found`);
+      continue;
+    }
+    if (!v.headerButtons.length) F.push(`${at(k)}: the header has no primary button — it carries "${CTA_WORDS.schedule.text}" on every page`);
+    for (const b of v.headerButtons) {
+      if (b.text !== CTA_WORDS.schedule.text) once(`hdr|${route}|${b.text}`, `${at(k)}: the header's primary button reads "${b.text}" — it reads exactly "${CTA_WORDS.schedule.text}"`);
+      if (!goesTo(b.abs, CTA_WORDS.schedule)) once(`hdrto|${route}|${b.href}`, `${at(k)}: the header's primary button goes to ${b.href} — it goes to /contact#schedule`);
+      if (b.cta !== "schedule") once(`hdrcta|${route}|${b.cta}`, `${at(k)}: the header's primary button is not marked data-cta="schedule" (it has ${b.cta ? `"${b.cta}"` : "none"})`);
+    }
+  }
+  /* (c) every [data-cta]: its kind's words, exactly, and its kind's destination */
+  const count = {};
+  for (const [k, v] of Object.entries(visits)) {
+    const route = k.split("@")[0];
+    for (const c of v.ctas || []) {
+      const w = CTA_WORDS[c.kind];
+      count[c.kind] = (count[c.kind] || 0) + 1;
+      if (!w) {
+        once(`kind|${route}|${c.kind}`, `${at(k)}: data-cta="${c.kind}" on "${c.text}" — the kinds are schedule, explore and project; unsure is a failure`);
+        continue;
+      }
+      if (c.text !== w.text) once(`text|${route}|${c.kind}|${c.text}`, `${at(k)}: a [data-cta="${c.kind}"] reads "${c.text}" — every one reads "${w.text}"`);
+      if (!goesTo(c.abs, w)) once(`to|${route}|${c.kind}|${c.href}`, `${at(k)}: the [data-cta="${c.kind}"] "${c.text}" goes to ${c.href} — it goes to ${w.path}${w.hash}`);
+    }
+  }
+  /* (d) on /: all three are there */
+  for (const w of WIDTHS) {
+    const v = visits[`/@${w}`];
+    if (!v) continue;
+    for (const kind of Object.keys(CTA_WORDS)) if (!(v.ctas || []).some((c) => c.kind === kind)) F.push(`/ @${w}: no [data-cta="${kind}"] — / carries "${CTA_WORDS[kind].text}"`);
+  }
+  /* (e) where they land: /contact answers 200 and holds #schedule and #project */
+  const contact = await http(toBase("/contact"));
+  if (contact.status !== 200) F.push(`/contact answers ${contact.status || contact.error} — every Schedule a Call goes nowhere`);
+  else for (const id of ["schedule", "project"]) if (!new RegExp(`\\sid="${id}"`).test(contact.html || "")) F.push(`/contact has no element with id="${id}" — /contact#${id} goes nowhere`);
+  I.push(`calls to action followed: ${Object.entries(count).map(([kind, n]) => `${kind} ×${n}`).join(", ") || "none"}; "Book a call" searched in ${ROUTES.length} served page(s), every rendered visit, the 404 and the llms files`);
+  results.push({
+    id: 32,
+    title: "\"Schedule a Call\" everywhere: no page says \"Book a call\"; the header's button and every schedule call to action read \"Schedule a Call\" and go to /contact#schedule; / carries Explore Our Capabilities and Tell Us About Your Project",
+    catches: "the retired \"Book a call\" coming back — on a button, in an attribute, in the JSON-LD or the llms files; a call to action relabelled, or pointing somewhere else; a Schedule a Call that lands on nothing",
+    status: F.length ? "FAIL" : "PASS",
+    findings: F,
+    info: I,
+  });
+})();
+
+/* 33 — the honesty contract (SPEC §0.1 and §8b.7, binding). Every capability
+   the site shows carries its evidence tier where a reader can see it; robotics
+   is Lab and says so, in the owner's words, visibly; and a tier chip is never
+   a figure's label — it carries no data-status, which check 8 reads as one. */
+check(
+  33,
+  "The honesty contract: every capability shows its evidence tier; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status",
+  "a capability shown with no evidence tier; robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label",
+  (F, I) => {
+    const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    const said = new Set();
+    const once = (key, line) => {
+      if (said.has(key)) return;
+      said.add(key);
+      F.push(line);
+    };
+    for (const [k, v] of Object.entries(visits)) {
+      const route = k.split("@")[0];
+      const caps = v.capabilities || [];
+      const robotics = caps.filter((c) => c.id === "robotics");
+      if ((route === "/" || route === "/capabilities") && !robotics.length) F.push(`${at(k)}: no [data-capability="robotics"] — ${route} shows the robotics capability, with its Lab chip and its honesty line`);
+      for (const c of caps)
+        if (!c.tiers.some((t) => t.seen)) F.push(`${at(k)}: [data-capability="${c.id}"] shows no evidence tier${c.tiers.length ? ` — its ${c.tiers.length} tier chip(s) cannot be seen` : " ([data-tier])"}`);
+      for (const c of robotics) {
+        const lab = c.tiers.filter((t) => t.tier === "lab");
+        if (!lab.length) F.push(`${at(k)}: the robotics capability has no Lab tier chip ([data-tier="lab"]) — robotics is Lab`);
+        else if (!lab.some((t) => t.seen)) F.push(`${at(k)}: the robotics capability's Lab chip cannot be seen`);
+        const other = c.tiers.filter((t) => t.tier !== "lab").map((t) => t.tier);
+        if (other.length) F.push(`${at(k)}: the robotics capability carries the tier(s) ${[...new Set(other)].join(", ")} — it has no delivery evidence, and is Lab alone`);
+        const exact = c.honesty.filter((x) => norm(x.text) === norm(ROBOTICS_HONESTY));
+        if (!c.honesty.length) F.push(`${at(k)}: the robotics capability has no honesty line ([data-honesty]) — SPEC §8b.7 requires it, verbatim`);
+        else if (!exact.length) F.push(`${at(k)}: the robotics honesty line reads "${c.honesty[0].text.slice(0, 140)}" — SPEC §8b.7's words are "${ROBOTICS_HONESTY}"`);
+        else if (!exact.some((x) => x.seen)) F.push(`${at(k)}: the robotics honesty line is in the page but a reader cannot see it — it is shown, never hidden`);
+      }
+      for (const t of v.tierChips || []) {
+        if (t.status) once(`st|${route}|${t.tier}|${t.status}`, `${at(k)}: a tier chip ([data-tier="${t.tier}"]${t.where ? ` in ${t.where}` : ""}) carries data-status (${t.status}) — a tier is never a figure's label, and check 8 reads data-status as one`);
+        if (!(t.tier in TIER_LABELS)) once(`tier|${route}|${t.tier}`, `${at(k)}: a tier chip says data-tier="${t.tier}" — the tiers are proven, core, capable and lab`);
+        else if (t.shown && !new RegExp(`(^|[^\\p{L}])${TIER_LABELS[t.tier]}([^\\p{L}]|$)`, "u").test(t.text)) once(`lbl|${route}|${t.tier}|${t.text}`, `${at(k)}: a [data-tier="${t.tier}"] chip reads "${t.text}" — it says "${TIER_LABELS[t.tier]}"`);
+      }
+      I.push(`${at(k)}: ${caps.length} capability section(s)${caps.length ? ` (${caps.map((c) => `${c.id}: ${c.tiers.filter((t) => t.seen).map((t) => t.tier).join("+") || "no tier seen"}`).join(", ")})` : ""}; ${(v.tierChips || []).length} tier chip(s)${robotics.length ? `; the robotics honesty line ${robotics.some((c) => c.honesty.some((x) => x.seen && norm(x.text) === norm(ROBOTICS_HONESTY))) ? "shown, verbatim" : "NOT shown verbatim"}` : ""}`);
     }
   },
 );

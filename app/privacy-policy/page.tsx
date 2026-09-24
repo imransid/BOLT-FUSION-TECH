@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import PageBanner from "@/components/techwix/PageBanner";
-import PageShell from "@/components/techwix/PageShell";
+import PageHead from "@/components/site/PageHead";
+import SiteShell from "@/components/site/SiteShell";
 import { getSiteUrl } from "@/lib/site-url";
+
+import { alt as ogAlt } from "../opengraph-image";
 
 const LAST_UPDATED = "3 June 2026";
 const CONTACT_EMAIL = "hello@boltfusiontech.com";
@@ -27,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: new URL("/opengraph-image", site).toString(),
           width: 1200,
           height: 630,
-          alt: "Bolt Fusion Tech — We build AI systems that are still running in six months.",
+          alt: ogAlt,
         },
       ],
     },
@@ -56,7 +58,7 @@ const sections: Section[] = [
     body: (
       <p>
         We collect only what we need: information you give us (name, email,
-        company, message details when you contact us or book a call); basic
+        company, message details when you contact us or schedule a call); basic
         anonymised usage data (pages visited, browser type, approximate region);
         and cookies that help the site function and measure traffic. We do{" "}
         <strong>not</strong> sell your personal
@@ -167,19 +169,19 @@ const sections: Section[] = [
   },
 ];
 
-/* The privacy policy, in the site's design: the navy page banner with the
-   title and the date, then the policy as legal prose (app/techwix.css, "Legal
-   prose") on a white band. The words are unchanged. */
+/* The privacy policy, in the site's one design (restyled 2026-09-16): the page
+   head with the title and the date, then the policy as legal prose
+   (app/site.css, "Prose"). The words are unchanged. */
 export default function PrivacyPolicyPage() {
   return (
-    <PageShell>
-      <PageBanner titleId="privacy-title" title="Privacy Policy — Bolt Fusion Tech">
-        <p className="tw-banner__meta">Last updated: {LAST_UPDATED}</p>
-      </PageBanner>
+    <SiteShell ground="graphite">
+      <PageHead id="privacy-title" title="Privacy Policy — Bolt Fusion Tech" size="long">
+        <p className="bf-pagehead__meta">Last updated: {LAST_UPDATED}</p>
+      </PageHead>
 
-      <div className="tw-band tw-band--white">
-        <div className="tw-band__inner">
-          <article className="tw-prose" aria-labelledby="privacy-title">
+      <div className="bf-section">
+        <div className="bf-wrap">
+          <article className="bf-prose bf-prose--legal" aria-labelledby="privacy-title">
             <p>
               Bolt Fusion Tech (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or
               &ldquo;our&rdquo;) operates{" "}
@@ -197,7 +199,7 @@ export default function PrivacyPolicyPage() {
               </section>
             ))}
 
-            <p className="tw-prose__foot">
+            <p className="bf-prose__foot">
               <Link href="/" prefetch={false}>
                 ← Back to boltfusiontech.com
               </Link>
@@ -205,6 +207,6 @@ export default function PrivacyPolicyPage() {
           </article>
         </div>
       </div>
-    </PageShell>
+    </SiteShell>
   );
 }

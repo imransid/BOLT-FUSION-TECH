@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 
-import Architecture from "@/components/techwix/Architecture";
-import { Contact, Schedule } from "@/components/techwix/Contact";
-import Faq from "@/components/techwix/Faq";
-import Footer from "@/components/techwix/Footer";
-import Header from "@/components/techwix/Header";
-import Hero from "@/components/techwix/Hero";
-import HowWeWork from "@/components/techwix/HowWeWork";
-import Proof from "@/components/techwix/Proof";
-import RevealObserver from "@/components/techwix/RevealObserver";
-import Team from "@/components/techwix/Team";
+import Capabilities from "@/components/site/home/Capabilities";
+import Faq from "@/components/site/home/Faq";
+import FinalCta from "@/components/site/home/FinalCta";
+import Hero from "@/components/site/home/Hero";
+import HowWeBuild from "@/components/site/home/HowWeBuild";
+import Industries from "@/components/site/home/Industries";
+import InsightsTeaser from "@/components/site/home/InsightsTeaser";
+import Stories from "@/components/site/home/Stories";
+import SystemMapSection from "@/components/site/home/SystemMapSection";
+import TechnicalDepth from "@/components/site/home/TechnicalDepth";
+import Team from "@/components/site/home/Team";
+import WhatWeEngineer from "@/components/site/home/WhatWeEngineer";
+import SiteShell from "@/components/site/SiteShell";
 import type { SectionId, SiteContent } from "@/content/site-schema";
 import { siteContent } from "@/content/site";
 import { getSiteUrl } from "@/lib/site-url";
@@ -57,35 +60,50 @@ function renderSection(id: SectionId, c: SiteContent) {
   switch (id) {
     case "hero":
       return <Hero hero={c.hero} />;
-    case "recent_works":
-      return <Proof work={c.recentWorks} />;
-    case "architecture":
-      return <Architecture />;
-    case "how_we_work":
-      return <HowWeWork />;
+    case "what_we_engineer":
+      return <WhatWeEngineer />;
+    case "capabilities":
+      return <Capabilities />;
+    case "system_map":
+      return <SystemMapSection />;
+    case "industries":
+      return <Industries />;
+    case "how_we_build":
+      return <HowWeBuild />;
+    case "technical_depth":
+      return <TechnicalDepth />;
+    case "stories":
+      return <Stories work={c.recentWorks} />;
     case "team":
       return <Team team={c.team} />;
     case "faq":
-      return <Faq faq={c.faq} />;
-    case "cta":
-      return <Contact cta={c.cta} />;
-    case "schedule_embed":
-      return <Schedule blurb={c.scheduleEmbed.blurb} />;
+      /* the Insights teaser sits before the FAQ (SPEC §6) */
+      return (
+        <>
+          <InsightsTeaser />
+          <Faq faq={c.faq} />
+        </>
+      );
+    case "final_cta":
+      return <FinalCta cta={c.finalCta} />;
     default:
       return null;
   }
 }
 
 /**
- * The homepage, in the Techwix clone's design (decided 2026-09-11): the six
- * sections that argue, in `site.sectionOrder` — the hero with its proof strip,
- * the two write-ups, the architecture, how we work, the team, and questions
- * and contact (the FAQ, the contact panel, the booking calendar). About and
- * Services were cut (COPY.md, "Removed from the homepage").
+ * The homepage — the owner's redesign of 2026-09-16 (SPEC §5): a broad
+ * engineering company, "Software. Intelligence. Automation. Machines." The
+ * sections, in `site.sectionOrder`: the hero; what we engineer; the six
+ * capabilities, each with its own diagram; the system map; industries; how we
+ * build; technical depth; the engineering stories with the proof strip; the
+ * team; the FAQ; the final call to action. The booking calendar and the
+ * contact panel are on /contact.
  *
- * Every section is a server component; the only script on the page is the
- * header's headroom, the mobile drawer and the reveal. No canvas and no WebGL
- * in this step.
+ * Every section is a server component. The scripts on the page: the header's
+ * headroom and drawer, the system map's highlighting, the hero's pause control
+ * and the quiet motion (components/site/SiteMotion). No canvas and no WebGL
+ * yet — the 3D wave mounts its scene in the hero's field.
  */
 export default function Home() {
   const content = siteContent;
@@ -95,8 +113,8 @@ export default function Home() {
   // FAQPage is built from the very items the FAQ section renders, and only when
   // it renders: one source, so the markup and the page cannot diverge.
   const renderedFaq = sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
-  // Person nodes likewise come from the roster the Team section renders.
-  const renderedTeam = sectionOrder.includes("team") && isVisible(sectionVisibility, "team") ? content.team.roster : [];
+  // One Service node per capability, when the capabilities render.
+  const withServices = sectionOrder.includes("capabilities") && isVisible(sectionVisibility, "capabilities");
 
   return (
     <>
@@ -106,18 +124,15 @@ export default function Home() {
           // Escape `<` so a "</script>" in any content string can't break out of
           // the JSON-LD block.
           __html: jsonLdHtml(
-            buildGraph(siteUrl, sameAs, renderedFaq, renderedTeam, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])]),
+            buildGraph(siteUrl, sameAs, renderedFaq, [breadcrumbLd(siteUrl, [{ name: "Home", path: "/" }])], withServices),
           ),
         }}
       />
-      <Header navbar={content.navbar} />
-      <main id="main">
+      <SiteShell ground="graphite">
         {sectionOrder.map((id) =>
           isVisible(sectionVisibility, id) ? <Fragment key={id}>{renderSection(id, content)}</Fragment> : null,
         )}
-      </main>
-      <Footer footer={content.footer} />
-      <RevealObserver />
+      </SiteShell>
     </>
   );
 }

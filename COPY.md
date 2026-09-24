@@ -2,6 +2,74 @@
 
 Placeholders in `{{ }}` need a decision before build. Do not invent values for them.
 
+## 0. The engineering redesign — the owner, 2026-09-16
+
+The owner repositioned the company from "AI studio" to a broad engineering company —
+"Software. Intelligence. Automation. Machines." — and ordered a full redesign. The copy
+deck is the redesign spec's §5, corrected by its §8b (binding evidence corrections: 91
+claims checked against the repos and the portfolio). The words live in the content files,
+which the build validates; this section records what was approved and where it went.
+
+**Recorded as the owner's 2026-09-16 redesign:**
+
+- **Hero** (`content/site.ts`, `hero`). H1: "Build what's next." Support: "Software.
+  Intelligence. Automation. Machines." Body: "We engineer digital systems — from web and
+  mobile platforms to AI automation, ERP, POS, robotics, and the infrastructure that makes
+  them work." Buttons: `Schedule a Call` · `Explore Our Capabilities` (→ /capabilities).
+  Supersedes §1.
+- **What we engineer** (`content/engineering.ts`). "Technology is more than software." /
+  "We design and engineer systems that connect software, intelligence, automation, data,
+  and the physical world." Then the six domains, each with a one-line job and its evidence
+  tier.
+- **Capabilities** (`content/engineering.ts`, `capabilities`): the six H2s, bodies, build
+  lists, evidence tiers and notes, exactly as SPEC §5 with §8b applied — the software body
+  without "the release process before the first release"; backend "NestJS, Django"; "AI
+  services built to plug into a larger product"; ERP "We design them as modular
+  platforms…"; POS "Restaurants today, with retail and pharmacy in development…" and its
+  evidence line; robotics' list headed "What we'd build" and its honesty line, verbatim:
+  "We engineer software for machines; we don't manufacture hardware. We haven't delivered
+  robotics work yet, and nothing here is a shipped system — ask us and we'll tell you
+  exactly what exists today."; cloud's build list per §8b.8.
+- **The system map**: "Different technologies. One engineering discipline." Three worked
+  flows: a sale at the till (syncs to the central server; reports read it), a lead arriving
+  (an agent qualifies it; the booking lands in the calendar), and a camera seeing a defect —
+  labelled "Concept".
+- **Industries**: "Technology we can build for…" — evidence linked only where it exists
+  (restaurants: the restaurant search and our POS work; retail: OPAL, with retail POS in
+  development; real estate: WarmChats and feature work for Bazzile; HR: Balanzify; salons
+  and beauty: Go Style Business). The rest are "what we'd build" only, and say "No
+  delivered work yet".
+- **How we build**: six numbered stages — Discover, Architect, Engineer ("with a demo every
+  cycle"), Integrate, Deploy ("CI/CD, containerised deployments and a runbook"), Scale.
+  Replaces §6's three steps on the homepage.
+- **Technical depth**: SPEC §8b.2's list, exactly. No Expo, Supabase, Whisper, FastAPI, AWS,
+  Render, Sentry, Kubernetes, Kafka or RabbitMQ.
+- **Engineering stories**: §4's two write-ups in the problem · system · engineering · result
+  shape, their words from the write-ups and llms-full.txt; the restaurant search's system
+  carries §3's three lanes. The proof strip (§3's metric band) moves here from the hero,
+  headed "From systems we shipped." with the note "Each figure says whether it was measured
+  (shipped) or is a target." (§8b.1; never "Measured on…").
+- **FAQ**: two answers reworded — "What kinds of projects…" (it named only web and mobile)
+  and "How do we get started?" (the contact page; "schedule a call"). No new claim.
+- **Final call to action**: "Have a complex problem?" / "Let's turn it into an engineered
+  system." / `Schedule a Call` · `Tell Us About Your Project` (→ /contact#project).
+- **Footer**: "Bolt Fusion Tech" and "Engineering intelligent systems for the real world.",
+  the navigation, the social links, contact, and `Schedule a Call`. Registered entity details
+  join when the owner supplies them.
+- **/contact**: §10's panel as the homepage showed it (status, "Tell us what you need to
+  ship", its body, "Email the team"), the booking calendar ("Pick a time (30 min)", "Or grab
+  an open slot below — same 30‑minute intro call."), and a three-field project form that
+  opens the visitor's email app: "Your name", "What are you building?", "Goals, timeline and
+  constraints", `Open in your email app`. No backend.
+- **"Book a call" is "Schedule a Call"**, title case, on every primary call to action
+  (SPEC §1). The write-ups' own button labels ("Book a similar build", "Book a strategy
+  call", "Book a technical call") are unchanged here; the inner-pages wave owns them.
+
+**Left the homepage:** §3's architecture heading and intro (its lanes stay, in the
+restaurant story), §6's three steps and its engagement-models table and pilot lines (the
+engagement ladder moves to /about with the next wave), §1's hero, and the contact panel and
+booking calendar (now /contact). `$SP/engineering/MOVES.md` records each item.
+
 **Restyled with no copy change, 2026-09-15.** The owner moved the whole site to
 the new design. /work, both write-ups (/work/warmchats and
 /work/restaurant-search), /privacy-policy and the 404 were restyled; not a word
@@ -39,7 +107,10 @@ policy's "← Back to boltfusiontech.com". The share image kept its words too.
 > Live in production at warmchats.com. Ten engineers across the UK, Malaysia and
 > Bangladesh.
 
-**Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
+**Amended 2026-09-24:** the site states the team as "15+ developers" and names no
+one (§5). If the trust rail is ever rendered, its headcount follows §5.
+
+*History, superseded 2026-09-24:* **Amended 2026-09-15: six → ten.** The owner restored the team to ten (§5): six
 with a verified LinkedIn, four with profiles pending. The trust rail is not
 rendered anywhere on the site today.
 
@@ -254,6 +325,22 @@ what changed is that a real team member without one is named instead of left out
 - The body above ("every profile links to a public LinkedIn") is still true: a pending
   member has no profile on the site yet.
 
+**Amended 2026-09-24 — the team is a headcount.** The owner: "we just show we have
+15+ developer team, no details". Everything above about cards, profiles, photos and
+initials is history: the section names no one, links no one and pictures no one,
+and there is no Person markup.
+
+- **Eyebrow and H2:** unchanged — "Your bench // who builds with you", "Senior
+  engineers. One delivery standard."
+- **Stat:** "15+ developers" — the owner's figure, written in content/site.ts
+  (`team.size`), with its exemption in content/figure-labels.ts: a headcount, not a
+  performance claim.
+- **Subtext:** "Named engineers are assigned before you sign. Ask on the call who
+  would work on your project." Its first half is the promise the Organization
+  description and llms.txt already make ("named engineers assigned before you sign").
+- The body above, which says every profile links to LinkedIn, is retired with the
+  cards: there are no profiles on the site to link.
+
 ---
 
 ## 6. How we work
@@ -434,11 +521,15 @@ blocks in `content/site.ts` are rendered by nothing.
 This is the single source for the organisation description. It is used verbatim
 for schema.org `Organization.description`, `llms.txt`, and the LinkedIn company
 page, so all three say the same thing. It deliberately asserts NO headcount —
-see PLAN.md §7 on entity consistency.
+see PLAN.md §7 on entity consistency. Its first line is `CANONICAL_DESCRIPTION` in
+`content/canonical.ts`; verify-site check 12 finds it everywhere else.
 
-> We build AI systems that are still running in six months.
+**Changed by the owner on 2026-09-16** with the engineering redesign (SPEC §1). It
+read "We build AI systems that are still running in six months." until then.
+
+> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.
 >
-> Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh. We build production AI, custom software and platform work for teams who need systems that hold up after launch — not demos.
+> Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh. We build web and mobile platforms, AI and automation, HR and point-of-sale systems, and the infrastructure under them; full ERP is designed but not yet delivered, and we haven't delivered robotics work yet.
 >
 > How we work: named engineers assigned before you sign, 4–8 hours of overlap with US and EU working days, IP assigned on payment, and an NDA before scoping. Your first call is with the engineer who writes the code.
 >
@@ -446,13 +537,18 @@ see PLAN.md §7 on entity consistency.
 >
 > Live work: warmchats.com
 
-The meta description is the first two sentences of the above, trimmed for length.
+The meta description is the FIRST LINE alone — the canonical line, 117
+characters — because a meta description is 50–160 characters (verify-site check
+26). The rest of the description above is the Organization node's, which has no
+length limit.
 
 ---
 
 ## Words to avoid site-wide
 elite · cutting-edge · world-class · seamless · robust · leverage · synergy ·
-best-in-class · game-changing · transform your business
+best-in-class · game-changing · transform your business · next-generation ·
+revolutionary · innovative solutions · digital transformation (the last four added
+by the redesign spec, 2026-09-16)
 
 ## Never write
 - A number without a `shipped` or `target` label

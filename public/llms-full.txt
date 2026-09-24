@@ -1,5 +1,15 @@
 # Bolt Fusion Tech — case studies
 
+> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.
+
+Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia
+and Bangladesh: software engineering, AI and automation, ERP and enterprise
+systems, point of sale and commerce, and the cloud, data and infrastructure
+under them. Robotics and machine software is a Lab capability: we haven't
+delivered robotics work yet, and nothing there is a shipped system. The site
+labels every capability with its evidence (Proven, Core, Capable, Lab); /llms.txt
+lists them.
+
 Every figure below carries a `shipped` or `target` label. `shipped` means observed
 on a running system; `target` means a number we contract to, not one we have
 measured. Nothing here is unlabelled.
@@ -164,7 +174,51 @@ Senior Software Engineer on its React Native app over GraphQL and NestJS.
 
 ---
 
+# Insights — technical articles from real work
+
+Written by Bolt Fusion Tech engineering and published on 16 September 2026.
+Every figure in them carries a `shipped` or `target` label; where a system is
+still in development, the article says so.
+
+**Routing AI so most queries never reach a model** —
+/insights/routing-ai-so-most-queries-never-reach-a-model. How a multi-tenant
+restaurant search we delivered decides, before any paid inference, whether a
+query needs a model at all, and what that does to latency and cost.
+
+**Offline-first point of sale: keeping the till selling when the network
+drops** — /insights/offline-first-point-of-sale. How a restaurant POS we built
+writes every sale locally first, queues it for the server, and makes retries
+harmless when the connection comes and goes. No merchant is named, and none is
+claimed as live.
+
+**Multi-tenant SaaS on Postgres row-level security** —
+/insights/multi-tenant-saas-on-postgres-row-level-security. Why we put tenant
+isolation in the database rather than the application, the details in the
+policy that make it fail closed, and how we test it against a real Postgres.
+Its details come from a multi-tenant point-of-sale platform we are building
+now, which is still in development.
+
+---
+
+# The rest of the site
+
+- /capabilities — the six capabilities in depth, each with its evidence tier
+  (Proven, Core, Capable, Lab), what we build, how we approach it and the work
+  behind it. Robotics is Lab: we haven't delivered robotics work yet.
+- /industries — each industry's problems and what we would build, with
+  delivered work linked only where it exists.
+- /engineering — how we build (six stages), the stack by layer, architecture
+  principles from the systems we built, and the checks this site passes before
+  every release.
+- /about — who we are, the team (15+ developers), where
+  our engineers work (the UK, Malaysia and Bangladesh), how we work with
+  clients, and what we won't do.
+
+---
+
 ## Contact
 
+Schedule a call: https://boltfusiontech.com/contact#schedule
+Tell us about your project: https://boltfusiontech.com/contact#project
+
 Two-week paid pilot, fixed price, full IP assigned on payment, NDA before scoping.
-https://boltfusiontech.com/#contact

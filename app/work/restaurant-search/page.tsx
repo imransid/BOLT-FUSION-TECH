@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import CaseStudy from "@/components/CaseStudy";
-import PageShell from "@/components/techwix/PageShell";
+import SiteShell from "@/components/site/SiteShell";
 import { siteContent } from "@/content/site";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -77,9 +77,9 @@ export default async function RestaurantSearchPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <PageShell current="/work">
+      <SiteShell ground="graphite" current="/work">
         <CaseStudy cs={siteContent.caseStudy} />
-      </PageShell>
+      </SiteShell>
     </>
   );
 }

@@ -1,44 +1,54 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow, Jost } from "next/font/google";
-import "./techwix.css";
+import "./site.css";
 
+import { CANONICAL_DESCRIPTION } from "@/content/canonical";
 import { getSiteUrl } from "@/lib/site-url";
 
-/* The site's one root layout, for every page and the 404. One design: the
-   Techwix clone's (app/techwix.css), in Barlow and Jost, and nothing else —
-   the owner retired the site's old dark design on 2026-09-15 (CLAUDE.md,
-   "Design language"). verify-site check 31 holds that line.
+/* The site's one root layout, for every page and the 404.
 
-   The weights are the ones the clone paints, counted off its rendered page:
-   Barlow 500 / 600 / 700 for headings, Jost 400 / 500 / 600 for text. All
-   normal — it paints no italic. A weight outside these would be synthesised
-   (verify-site check 3), so the stylesheet uses only these.
+   One stylesheet: app/site.css, the owner's engineering redesign of
+   2026-09-16 — the graphite ground, the type ramp, the shell (header, drawer,
+   footer) and every page. Every class is `bf-`. The Techwix design and its
+   stylesheet, app/techwix.css, were retired the same day, once the inner pages
+   had moved.
 
-   Preloaded, both: every face here is painted in the FIRST viewport of every
-   page at 390, 768 and 1440 — the header's logo sets "Bolt" in Barlow 500,
-   "Fusion" in Barlow 700 and "Tech" in Jost 500, every page's h1 is Barlow 600,
-   its text Jost 400 and its buttons Jost 600. That is four latin files, 74KB:
-   three Barlow statics at 16KB and one 26KB Jost variable file for all three
-   weights. A preload lands on every page this layout wraps, so a face that
-   stops being painted above the fold on any of them gets `preload: false`,
-   not a place in this list (verify-site check 25 reads every page's own). */
+   The faces: Barlow 500 / 600 / 700 and Jost 400 / 500 / 600 — no new family
+   (SPEC §3; verify-site checks 2 and 31). All normal, no italic. A weight
+   outside these would be synthesised (check 3), so neither stylesheet uses one.
+
+   Preloaded, both: every page paints each face — the header's wordmark sets
+   "Bolt Fusion" in Barlow 700 and "Tech" in Barlow 500, every button and the
+   footer's Schedule a Call are Barlow 600, the text is Jost. That is four latin
+   files: three Barlow statics and one Jost variable file for all three weights.
+   A preload lands on every page this layout wraps, so a face that stops being
+   painted on any of them gets `preload: false`, not a place in this list
+   (verify-site check 25 reads every page's own). */
 const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap", preload: true });
 const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap", preload: true });
 
-const DESCRIPTION =
-  "We build AI systems that are still running in six months. Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and Bangladesh.";
-const OG_TITLE = "Bolt Fusion Tech — AI systems that are still running in six months";
+/* The canonical description, alone: a meta description is 50–160 characters
+   (verify-site check 26) and the canonical line is 117 of them, so nothing
+   follows it here. COPY.md, "Company description — canonical"; the owner
+   changed the line on 2026-09-16. The fuller description — the company line,
+   what we build, how we work — is the Organization node's
+   (lib/structured-data.ts), which has no length limit. */
+const DESCRIPTION = CANONICAL_DESCRIPTION;
+const OG_TITLE = "Bolt Fusion Tech — Build what's next.";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#ffffff",
+  /* the header's graphite, on every page */
+  themeColor: "#07090d",
 };
 
-/* The site-wide metadata: the title template, the canonical description
-   (COPY.md, "Company description — canonical"), icons and robots. Pages add
-   their own title, description, canonical and share image. */
+/* The site-wide metadata: the title template, the canonical description,
+   icons and robots. Pages add their own title, description, canonical and
+   share image. The icons are generated from the Forward Monogram by
+   scripts/generate-icons.mjs; app/favicon.ico is served by Next's convention
+   beside them. */
 export const metadata: Metadata = {
   metadataBase: getSiteUrl(),
   title: {
@@ -83,18 +93,16 @@ export default function RootLayout({
          THIS element's own attributes only (one level deep, never its
          children), which is exactly the surface we do not control. */
       suppressHydrationWarning
-      /* The font variables live on <html>, which is :root, where techwix.css
-         declares the tokens that read them. On <body>, every token would
-         resolve against an undefined variable and the whole site would render
-         in the system font (verify-site checks 1 and 2). */
+      /* The font variables live on <html>, which is :root, where both
+         stylesheets declare the tokens that read them. On <body>, every token
+         would resolve against an undefined variable and the whole site would
+         render in the system font (verify-site checks 1 and 2). */
       className={`${barlow.variable} ${jost.variable}`}
     >
-      {/* .tw-root: the design's scope, kept for the rules that style shared
-          pieces such as <FigureText>'s chip. */}
-      <body className="tw-root">
-        {/* The first stop on every page (A6): past the header's nine stops to
-            the page's own content. Hidden until focused. Interface text. */}
-        <a className="tw-skip" href="#main">
+      <body>
+        {/* The first stop on every page: past the header to the page's own
+            content. Hidden until focused. Interface text. */}
+        <a className="bf-skip" href="#main">
           Skip to content
         </a>
         {children}

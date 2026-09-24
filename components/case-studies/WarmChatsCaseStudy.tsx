@@ -2,16 +2,16 @@ import Link from "next/link";
 
 import FigureText from "@/components/FigureText";
 import LogoMarkSvg from "@/components/LogoMarkSvg";
-import Button from "@/components/techwix/Button";
-import CtaPanel from "@/components/techwix/CtaPanel";
-import { ArrowUpRightIcon, CheckIcon } from "@/components/techwix/icons";
-import { KpiCard, KpiGrid } from "@/components/techwix/Kpi";
-import LaneCard from "@/components/techwix/LaneCard";
-import PageBanner from "@/components/techwix/PageBanner";
-import SectionHeading from "@/components/techwix/SectionHeading";
-import Shot from "@/components/techwix/Shot";
-import Summary from "@/components/techwix/Summary";
-import { Bullets, Tags } from "@/components/techwix/Tags";
+import Cta from "@/components/site/Cta";
+import CtaBand from "@/components/site/CtaBand";
+import { ArrowUpRightIcon, CheckIcon } from "@/components/site/icons";
+import { KpiCard, KpiGrid } from "@/components/site/Kpi";
+import LaneCard from "@/components/site/LaneCard";
+import { Bullets, Tags } from "@/components/site/Lists";
+import PageHead from "@/components/site/PageHead";
+import SectionHead from "@/components/site/SectionHead";
+import Shot from "@/components/site/Shot";
+import Summary from "@/components/site/Summary";
 
 /* -------------------------------------------------------------------------- */
 /*  Content — approved; the words and the section order are locked            */
@@ -176,76 +176,81 @@ const OUTCOMES = [
 /* -------------------------------------------------------------------------- */
 
 /**
- * The WarmChats write-up, /work/warmchats, in the site's design. Its sections,
- * in the approved order: the page header (back to all work) and hero, the
- * executive summary, the numbers, how it works, the product, architecture and
- * stack, the outcome, the call to action and the sign-off. The site's header
- * and footer come from the page (components/techwix/PageShell).
+ * The WarmChats write-up, /work/warmchats, in the site's one design (restyled
+ * 2026-09-16 with every word and the section order kept; CLAUDE.md, "Do not
+ * touch"). Its sections, in the approved order: the page head (back to all
+ * work) and hero, the executive summary, the numbers, how it works, the
+ * product, architecture and stack, the outcome, the call to action and the
+ * sign-off. The site's header and footer come from the page
+ * (components/site/SiteShell).
+ *
+ * Its buttons keep their approved labels — "Book a similar build", "Book a
+ * strategy call" — and are the ghost variant with no `data-cta`: the primary
+ * fill and `data-cta="schedule"` are Schedule a Call's (SPEC §1, §8).
  */
 export default function WarmChatsCaseStudy() {
   return (
     <>
-      {/* HERO — the page header's "All work" link sits at the top of the panel */}
-      <PageBanner
-        titleId="warmchats-title"
+      {/* HERO — the page header's "All work" link sits at the top of the head */}
+      <PageHead
+        id="warmchats-title"
         title={HERO.title}
         eyebrow={HERO.badge}
         back={{ href: "/#recent-work", label: "← All work" }}
+        size="long"
         aside={
-          <Shot src={HERO.image} alt={HERO.imageAlt} sizes="(min-width: 1025px) 560px, 100vw" priority>
-            <figcaption className="tw-shot__caption tw-shot__caption--bar">
+          <Shot src={HERO.image} alt={HERO.imageAlt} sizes="(min-width: 1025px) 520px, calc(100vw - 32px)" priority>
+            <figcaption className="bf-shot__caption bf-shot__caption--bar">
               <span>Live product</span>
               <span>warmchats.com</span>
             </figcaption>
           </Shot>
         }
       >
-        <p className="tw-banner__lead">
+        <p className="bf-lead">
           <FigureText text={HERO.subtitle} />
         </p>
-        <p className="tw-banner__meta">{HERO.accentLine}</p>
-        <p className="tw-actions">
-          <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="tw-btn tw-btn--light">
+        <p className="bf-pagehead__meta">{HERO.accentLine}</p>
+        <p className="bf-actions">
+          <a href={SITE_URL} target="_blank" rel="noopener noreferrer" className="bf-btn bf-btn--ghost bf-btn--md">
             Visit warmchats.com
-            <ArrowUpRightIcon className="tw-btn__icon" />
+            <ArrowUpRightIcon className="bf-btn__icon" />
           </a>
-          <Button href="/#schedule" variant="secondary">
+          <Cta href="/contact#schedule" variant="ghost">
             Book a similar build
-          </Button>
+          </Cta>
         </p>
-      </PageBanner>
+      </PageHead>
 
       {/* EXECUTIVE SUMMARY and KPIS */}
-      <div className="tw-band tw-band--white">
-        <div className="tw-band__inner">
+      <div className="bf-section">
+        <div className="bf-wrap">
           <Summary label="Executive summary">
             <FigureText text={HERO.summary} />
           </Summary>
 
-          <section className="tw-band__inner" aria-labelledby="warmchats-numbers">
-            <SectionHeading id="warmchats-numbers" eyebrow="By the numbers" title="Built for speed-to-lead." />
-            <div className="tw-group">
-              <KpiGrid cols={3} labelledBy="warmchats-numbers">
-                {KPIS.map((k) => (
-                  <KpiCard key={k.label} value={k.value} label={k.label} hint={k.hint} status={k.status} />
-                ))}
-              </KpiGrid>
-              <p className="tw-note">Figures reflect the WarmChats product&apos;s automation targets.</p>
-            </div>
+          <section className="bf-subsection" aria-labelledby="warmchats-numbers">
+            <SectionHead id="warmchats-numbers" eyebrow="By the numbers" title="Built for speed-to-lead." />
+            <KpiGrid cols={3} labelledBy="warmchats-numbers">
+              {KPIS.map((k) => (
+                <KpiCard key={k.label} value={k.value} label={k.label} hint={k.hint} status={k.status} />
+              ))}
+            </KpiGrid>
+            <p className="bf-note">Figures reflect the WarmChats product&apos;s automation targets.</p>
           </section>
         </div>
       </div>
 
       {/* PIPELINE */}
-      <section className="tw-band tw-band--light" aria-labelledby="warmchats-how">
-        <div className="tw-band__inner">
-          <SectionHeading
+      <section className="bf-section" aria-labelledby="warmchats-how">
+        <div className="bf-wrap">
+          <SectionHead
             id="warmchats-how"
             eyebrow="How it works"
             title="Qualify → Engage → Book, fully automated."
-            intro="Each new lead flows through three AI stages. The model handles the conversation end-to-end and only escalates to the agent when it genuinely matters."
+            lead="Each new lead flows through three AI stages. The model handles the conversation end-to-end and only escalates to the agent when it genuinely matters."
           />
-          <ul className="tw-lanes">
+          <ul className="bf-lanecards">
             {LANES.map((lane) => (
               <LaneCard
                 key={lane.step}
@@ -262,29 +267,29 @@ export default function WarmChatsCaseStudy() {
       </section>
 
       {/* PRODUCT GALLERY */}
-      <section className="tw-band tw-band--white" aria-labelledby="warmchats-product">
-        <div className="tw-band__inner">
-          <SectionHeading
+      <section className="bf-section" aria-labelledby="warmchats-product">
+        <div className="bf-wrap">
+          <SectionHead
             id="warmchats-product"
             eyebrow="The product"
             title="Inside WarmChats."
-            intro="The agent-facing product — a live operator dashboard, self-routing AI workflows, and a two-minute setup — all running on the platform we built."
+            lead="The agent-facing product — a live operator dashboard, self-routing AI workflows, and a two-minute setup — all running on the platform we built."
           />
-          <div className="tw-col">
+          <div className="bf-gallery">
             {GALLERY.filter((g) => g.featured).map((g) => (
-              <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 1300px) 1300px, 100vw" wide reveal>
-                <figcaption className="tw-shot__caption tw-shot__caption--row">
-                  <span className="tw-shot__title">{g.title}</span>
-                  <span className="tw-shot__text">{g.caption}</span>
+              <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 1300px) 1240px, calc(100vw - 32px)" wide reveal>
+                <figcaption className="bf-shot__caption bf-shot__caption--row">
+                  <span className="bf-shot__title">{g.title}</span>
+                  <span className="bf-shot__text">{g.caption}</span>
                 </figcaption>
               </Shot>
             ))}
-            <div className="tw-grid-2">
+            <div className="bf-grid-2">
               {GALLERY.filter((g) => !g.featured).map((g) => (
-                <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 768px) 50vw, 100vw" reveal>
-                  <figcaption className="tw-shot__caption">
-                    <span className="tw-shot__title">{g.title}</span>
-                    <span className="tw-shot__text">{g.caption}</span>
+                <Shot key={g.src} src={g.src} alt={g.title} sizes="(min-width: 768px) 50vw, calc(100vw - 32px)" reveal>
+                  <figcaption className="bf-shot__caption">
+                    <span className="bf-shot__title">{g.title}</span>
+                    <span className="bf-shot__text">{g.caption}</span>
                   </figcaption>
                 </Shot>
               ))}
@@ -294,58 +299,52 @@ export default function WarmChatsCaseStudy() {
       </section>
 
       {/* ARCHITECTURE + STACK */}
-      <div className="tw-band tw-band--light">
-        <div className="tw-band__inner">
-          <div className="tw-split">
-            <section className="tw-col tw-col--loose" aria-labelledby="warmchats-architecture">
-              <SectionHeading
-                id="warmchats-architecture"
-                eyebrow="Architecture"
-                title="Event-driven microservices."
-                intro="Independent services communicate over events and webhooks, so the AI workload scales separately from the API and the web app — and a slow third-party never blocks a reply."
-              />
-              <div className="tw-grid-2">
-                {SERVICES.map((svc) => (
-                  <div key={svc.name} className="tw-card" data-tw-reveal>
-                    <h3 className="tw-title-wrapper">
-                      <span className="title-small">{svc.name}</span>
-                    </h3>
-                    <p className="tw-card__tagline">{svc.tagline}</p>
-                    <Bullets items={svc.bullets} />
-                  </div>
-                ))}
-              </div>
-              <div className="tw-group" data-tw-reveal>
-                <p className="tw-card__label">Engineering patterns</p>
-                <Tags items={PATTERNS} />
-              </div>
-            </section>
+      <div className="bf-section">
+        <div className="bf-wrap bf-split">
+          <section className="bf-col" aria-labelledby="warmchats-architecture">
+            <SectionHead
+              id="warmchats-architecture"
+              eyebrow="Architecture"
+              title="Event-driven microservices."
+              lead="Independent services communicate over events and webhooks, so the AI workload scales separately from the API and the web app — and a slow third-party never blocks a reply."
+            />
+            <div className="bf-grid-2">
+              {SERVICES.map((svc) => (
+                <div key={svc.name} className="bf-card" data-bf-reveal>
+                  <h3 className="bf-card__name">{svc.name}</h3>
+                  <p className="bf-card__tagline">{svc.tagline}</p>
+                  <Bullets items={svc.bullets} />
+                </div>
+              ))}
+            </div>
+            <div className="bf-group" data-bf-reveal>
+              <p className="bf-card__label">Engineering patterns</p>
+              <Tags items={PATTERNS} />
+            </div>
+          </section>
 
-            <section className="tw-col tw-col--loose" aria-labelledby="warmchats-stack">
-              <SectionHeading id="warmchats-stack" eyebrow="Technology" title="The full stack." />
-              <div className="tw-col">
-                {STACK_GROUPS.map((g) => (
-                  <div key={g.title} className="tw-card" data-tw-reveal>
-                    <p className="tw-card__label">{g.title}</p>
-                    <Tags items={g.items} />
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
+          <section className="bf-col" aria-labelledby="warmchats-stack">
+            <SectionHead id="warmchats-stack" eyebrow="Technology" title="The full stack." />
+            <div className="bf-stackgroups">
+              {STACK_GROUPS.map((g) => (
+                <div key={g.title} className="bf-card" data-bf-reveal>
+                  <p className="bf-card__label">{g.title}</p>
+                  <Tags items={g.items} />
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </div>
 
       {/* OUTCOMES */}
-      <section className="tw-band tw-band--white" aria-labelledby="warmchats-outcome">
-        <div className="tw-band__inner">
-          <SectionHeading id="warmchats-outcome" eyebrow="Outcome" title="What the business gets." />
-          <ul className="tw-grid-2">
+      <section className="bf-section" aria-labelledby="warmchats-outcome">
+        <div className="bf-wrap">
+          <SectionHead id="warmchats-outcome" eyebrow="Outcome" title="What the business gets." />
+          <ul className="bf-outcomes">
             {OUTCOMES.map((o) => (
-              <li key={o} className="tw-card tw-card--soft tw-outcome" data-tw-reveal>
-                <span className="tw-outcome__icon" aria-hidden="true">
-                  <CheckIcon />
-                </span>
+              <li key={o} className="bf-outcome" data-bf-reveal>
+                <CheckIcon className="bf-outcome__icon" />
                 <p>{o}</p>
               </li>
             ))}
@@ -354,29 +353,29 @@ export default function WarmChatsCaseStudy() {
       </section>
 
       {/* CTA, then the sign-off that closed the page */}
-      <CtaPanel
+      <CtaBand
         titleId="warmchats-cta"
         title="Want an AI that books appointments while you sleep?"
         text="We design and ship product-grade AI systems — from lead capture to booking — on architecture built to scale. Let's talk about yours."
         after={
-          <div className="tw-signoff">
-            <Link href="/" prefetch={false} className="tw-signoff__brand">
-              <span className="tw-logo__tile" aria-hidden="true">
-                <LogoMarkSvg uid="wc-signoff-mark" />
+          <div className="bf-signoff">
+            <Link href="/" prefetch={false} className="bf-signoff__brand">
+              <span className="bf-signoff__tile" aria-hidden="true">
+                <LogoMarkSvg />
               </span>
               <span>Bolt Fusion Tech</span>
             </Link>
-            <p className="tw-signoff__line">Custom software &amp; product engineering in the UK, Malaysia and Bangladesh</p>
+            <p className="bf-signoff__line">Custom software &amp; product engineering in the UK, Malaysia and Bangladesh</p>
           </div>
         }
       >
-        <Button href="/#schedule" variant="light">
+        <Cta href="/contact#schedule" variant="ghost">
           Book a strategy call
-        </Button>
-        <Button href="/#recent-work" variant="secondary">
+        </Cta>
+        <Cta href="/#recent-work" variant="ghost">
           See more work
-        </Button>
-      </CtaPanel>
+        </Cta>
+      </CtaBand>
     </>
   );
 }

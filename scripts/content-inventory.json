@@ -3,7 +3,13 @@
     "The content inventory — what every public page must carry. verify-site check 30 reads each page's SERVED HTML",
     "(scripts stripped, entities decoded, whitespace ignored) and fails if a required needle is missing, if a cut item",
     "is back, or if a page in the sitemap has no inventory. Drafted 2026-09-11 from the pages as served, grouped under",
-    "the section heading each item sits beneath. Changing content means changing this file on purpose: that is the point."
+    "the section heading each item sits beneath. Changing content means changing this file on purpose: that is the point.",
+    "2026-09-16, the owner's redesign (MOVES.md): an item is required, cut (with `cut`, its reason) or retired (with",
+    "`retired`, its reason — printed, never checked). `scope` (header, footer, main) matches inside that part of the page;",
+    "`match: \"word\"` matches whole words (\"Expo\" is not \"export\"); `ignoreCase`. `sets` hold items a route includes",
+    "({ \"include\": name }). `awaiting` holds a page not yet published: printed until it is in the sitemap, then it must",
+    "move into `routes`. Adding a route is data only.",
+    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too."
   ],
   "excludedAsInterfaceText": [
     ", LinkedIn profile (opens in a new tab)",
@@ -19,49 +25,199 @@
     "for WarmChats",
     "to explore delivery"
   ],
+  "sets": {
+    "excluded-projects": [
+      {
+        "item": "Excluded projects",
+        "proves": "Nothing: the owner excluded them on 2026-09-15 (CLAUDE.md, \"Projects and attribution\")",
+        "status": "cut",
+        "cut": "excluded 2026-09-15 — the owner's current employer's apps, a client under US Treasury sanctions, and two the owner struck",
+        "needles": [
+          "Jumatechs",
+          "Myrep",
+          "IQ Test",
+          "Cleva",
+          "Bidesh",
+          "Bangladesh RAB",
+          "Rapid Action Battalion",
+          "rab.gov.bd",
+          "Team Pharma",
+          "JTI Sheikh"
+        ]
+      }
+    ],
+    "evidence-cuts": [
+      {
+        "item": "Stack items the evidence dropped, and technologies the owner has not confirmed",
+        "proves": "Nothing: SPEC §8b.2 (binding) — Expo, Supabase and Whisper are the owner's Jumatechs work and SaraAI, not Bolt Fusion evidence; FastAPI's evidence is weak; Kubernetes, Kafka and RabbitMQ are unconfirmed",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §8b.2, binding: only what the repositories and shipped work show",
+        "match": "word",
+        "needles": [
+          "Expo",
+          "Supabase",
+          "Whisper",
+          "FastAPI",
+          "Kubernetes",
+          "Kafka",
+          "RabbitMQ"
+        ]
+      },
+      {
+        "item": "The internal repositories' names",
+        "proves": "Nothing: SPEC §5 (POS) — the internal repositories are not named, and no live merchant is claimed",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §5: do not name the internal repos until the owner confirms",
+        "match": "word",
+        "needles": [
+          "GoRestora",
+          "nResto",
+          "B-POS"
+        ]
+      },
+      {
+        "item": "\"Book a call\"",
+        "proves": "Nothing: every primary call to action says \"Schedule a Call\" (SPEC §1); check 32 reads every page for it too",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §1: \"Schedule a Call\", everywhere, title case",
+        "match": "word",
+        "ignoreCase": true,
+        "needles": [
+          "Book a call"
+        ]
+      },
+      {
+        "item": "The robotics honesty line as SPEC §5 first worded it",
+        "proves": "Nothing: SPEC §8b.7 (binding) replaced it — \"We haven't delivered robotics work yet, and nothing here is a shipped system\"",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §8b.7, binding: the honesty line says no robotics work has been delivered",
+        "match": "word",
+        "needles": [
+          "research and prototype work today"
+        ]
+      }
+    ],
+    "team-roster-cut": [
+      {
+        "item": "Team: the named roster (ten engineers, six with a verified profile)",
+        "proves": "Nothing: the owner replaced it with a headcount on 2026-09-24",
+        "status": "cut",
+        "cut": "owner, 2026-09-24: \"we just show we have 15+ developer team, no details\"",
+        "needles": [
+          "Shourab",
+          "@shourab",
+          "Nazirul",
+          "@nazirul",
+          "@talha",
+          "Nihal",
+          "@nihal",
+          "Sabbir",
+          "@sabbir",
+          "Nadim",
+          "Joinal",
+          "Arifur Rahman",
+          "Tareq",
+          "@rafa",
+          "Profile coming soon",
+          "verified profiles",
+          "Each verified card opens the engineer's LinkedIn profile"
+        ]
+      }
+    ],
+    "team-headcount": [
+      {
+        "item": "Team: the headcount",
+        "proves": "How many developers — 15+, as the owner states it (2026-09-24) — and no one named",
+        "status": "required",
+        "needles": [
+          "Your bench",
+          "// who builds with you",
+          "Senior engineers.One delivery standard.",
+          "Named engineers are assigned before you sign. Ask on the call who would work on your project.",
+          "15+",
+          "developers"
+        ]
+      }
+    ]
+  },
   "routes": {
     "/": [
       {
         "item": "Navigation",
-        "proves": "Wayfinding to every section",
+        "proves": "Wayfinding to every page (SPEC §4: Work · Capabilities · Industries · Engineering · About · Insights, and Schedule a Call)",
         "status": "required",
+        "scope": "header",
+        "needles": [
+          "Work",
+          "Capabilities",
+          "Industries",
+          "Engineering",
+          "About",
+          "Insights",
+          "Schedule a Call"
+        ]
+      },
+      {
+        "item": "Navigation: the links the redesign removed",
+        "proves": "Nothing: the old homepage's section links (MOVES.md, Navigation). Scoped to the header: \"Services\" is still a word in a diagram, and the Team section stays on /",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §4: the navigation is Work · Capabilities · Industries · Engineering · About · Insights",
+        "scope": "header",
         "needles": [
           "Services",
           "How we work",
-          "Work",
           "Case studies",
           "Team",
-          "Contact",
           "Book a call"
         ]
       },
       {
         "item": "Navigation: the \"About\" link",
-        "proves": "Nothing: the About section it named was cut (COPY.md, \"Removed from the homepage\")",
-        "status": "cut",
-        "cut": "removed 2026-09-15 — it pointed at #team beside \"Team\"",
+        "proves": "Wayfinding: /about is a route again (SPEC §4), and \"About\" is a required needle of Navigation",
+        "status": "retired",
+        "retired": "owner's redesign 2026-09-16 — About is a route again. The cut (2026-09-15, when it pointed at #team beside \"Team\") no longer applies: the navigation links to /about",
         "needles": [
           "About"
         ]
       },
       {
-        "item": "Hero: headline, subtext, tagline, calls to action",
-        "proves": "The positioning and three checkable promises",
+        "item": "Hero: headline, support line, body, calls to action",
+        "proves": "The positioning (SPEC §5, the copy deck) — check 28 holds the same words in the served hero",
         "status": "required",
+        "needles": [
+          "Build what's next.",
+          "Software. Intelligence. Automation. Machines.",
+          "We engineer digital systems — from web and mobile platforms to AI automation, ERP, POS, robotics, and the infrastructure that makes them work.",
+          "Schedule a Call",
+          "Explore Our Capabilities"
+        ]
+      },
+      {
+        "item": "Hero: the old positioning and its calls to action",
+        "proves": "Nothing: the AI-studio hero the redesign replaced (MOVES.md, Hero)",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §1: the canonical description changed, and every primary call to action says \"Schedule a Call\"",
         "needles": [
           "We build AI systems that are still running in six months.",
           "Senior engineers, published architecture, and a named team befor",
-          "Senior-only teams, named engineers up front, 4–8 hours of overla",
-          "Start a 2-week pilot",
           "Book a technical call"
         ]
       },
       {
+        "item": "Hero: the engagement terms, moved to /about",
+        "proves": "The overlap hours and the two-week pilot — moved to /about with the engagement models (SPEC §4); required there under \"awaiting\" until it is published",
+        "status": "retired",
+        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, Hero): see awaiting /about",
+        "needles": [
+          "Senior-only teams, named engineers up front, 4–8 hours of overla",
+          "Start a 2-week pilot"
+        ]
+      },
+      {
         "item": "Architecture: three lanes and the four labelled metrics",
-        "proves": "The published architecture and shipped results",
+        "proves": "The published architecture and shipped results — the lanes in the restaurant story and the proof strip, in Engineering stories (#recent-work) since 2026-09-16; check 28 compares each figure with content/metrics.ts",
         "status": "required",
         "needles": [
-          "Type a query. Watch what it costs.",
           "Most AI products die after launch — too slow, too expensive, too",
           "Keyword lane",
           "— simple intents, no model call.",
@@ -86,8 +242,28 @@
           "<60s",
           "First reply to every inbound lead",
           "WarmChats",
+          "From systems we shipped.",
+          "Each figure says whether it was measured (shipped) or is a target."
+        ]
+      },
+      {
+        "item": "Architecture: the retired section's own words",
+        "proves": "Nothing: the architecture section is gone; its lanes stay in the restaurant story, and the restaurant story's \"Read the case study\" links to the same write-up (MOVES.md)",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — the architecture section is gone; the proof strip's note was reworded by SPEC §8b.1",
+        "needles": [
+          "Type a query. Watch what it costs.",
           "Every figure here comes from a system we shipped, and every one",
           "Read the full architecture"
+        ]
+      },
+      {
+        "item": "The proof strip never says \"Measured on…\"",
+        "proves": "Nothing: ~$0.001 is a target, so the strip cannot say its figures were all measured",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §8b.1, binding: \"From systems we shipped. Each figure says whether it was measured (shipped) or is a target.\"",
+        "needles": [
+          "Measured on"
         ]
       },
       {
@@ -114,32 +290,10 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "item": "Team: ten engineers, six with a verified profile",
-        "proves": "Named people you can check",
-        "status": "required",
-        "needles": [
-          "Senior engineers.One delivery standard.",
-          "Each verified card opens the engineer's LinkedIn profile in a new tab—so",
-          "verified profiles",
-          "Rafa",
-          "@rafa",
-          "Shourab",
-          "@shourab",
-          "Nazirul",
-          "@nazirul",
-          "Talha",
-          "@talha",
-          "Nihal",
-          "@nihal",
-          "Sabbir",
-          "@sabbir",
-          "Nadim",
-          "Joinal",
-          "Arifur Rahman",
-          "Tareq",
-          "Your bench",
-          "// who builds with you"
-        ]
+        "include": "team-headcount"
+      },
+      {
+        "include": "team-roster-cut"
       },
       {
         "item": "Proof: the two write-ups",
@@ -162,35 +316,50 @@
         ]
       },
       {
-        "item": "Excluded projects",
-        "proves": "Nothing: the owner excluded them on 2026-09-15 (CLAUDE.md, \"Projects and attribution\")",
-        "status": "cut",
-        "cut": "excluded 2026-09-15 — the owner's current employer's apps, a client under US Treasury sanctions, and two the owner struck",
+        "item": "Engineering stories: the story shape",
+        "proves": "Each write-up as the problem · the system · the engineering · the result (SPEC §5)",
+        "status": "required",
         "needles": [
-          "Jumatechs",
-          "Myrep",
-          "IQ Test",
-          "Cleva",
-          "Bidesh",
-          "Bangladesh RAB",
-          "Rapid Action Battalion",
-          "rab.gov.bd",
-          "Team Pharma",
-          "JTI Sheikh"
+          "Engineering stories",
+          "The problem",
+          "The system",
+          "The engineering",
+          "The result"
         ]
       },
       {
-        "item": "How we work: process, engagement models, pilot",
-        "proves": "What a founder buys and how it runs",
-        "status": "required",
+        "include": "excluded-projects"
+      },
+      {
+        "item": "How we work: the three steps and their section",
+        "proves": "Nothing: replaced on / by How we build, six stages (SPEC §5; MOVES.md). content/process.ts is kept for /engineering",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — the three steps are replaced by the six stages of How we build",
         "needles": [
           "How a project actually runs.",
-          "Discovery and plan",
           "We agree on users, success metrics, constraints and risks, then",
           "Build in iterations",
           "Working software every cycle, with demos, an open backlog, and e",
           "Launch and operate",
           "Release with monitoring, runbooks and a sensible cutover. We sup",
+          "See recent work"
+        ]
+      },
+      {
+        "item": "How we work: \"Discovery and plan\"",
+        "proves": "The first step's name — still on / inside an FAQ answer, which the FAQ item requires",
+        "status": "retired",
+        "retired": "owner's redesign 2026-09-16 — no longer a step heading; the words stay on / in the FAQ's third answer (MOVES.md)",
+        "needles": [
+          "Discovery and plan"
+        ]
+      },
+      {
+        "item": "How we work: the engagement models and the pilot, moved to /about",
+        "proves": "What a founder buys — PROOF, moved to /about (SPEC §4: the engagement ladder); required there under \"awaiting\" until it is published. Sources kept: content/services.ts, content/pilot.ts",
+        "status": "retired",
+        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, How we work): see awaiting /about",
+        "needles": [
           "Model",
           "Shape",
           "Timeline",
@@ -201,11 +370,30 @@
           "Roadmap delivery with your PMs",
           "Stabilise and scale",
           "Performance, reliability, maintainability",
-          "Most engagements start with the two-week pilot below. We’ll give",
-          "Two-week sprints, a demo at the end of each, a named escalation",
-          "See recent work",
           "Ongoing",
-          "As needed"
+          "As needed",
+          "Most engagements start with the two-week pilot below. We’ll give",
+          "Two-week sprints, a demo at the end of each, a named escalation"
+        ]
+      },
+      {
+        "item": "How we build: six stages",
+        "proves": "The delivery sequence and what the client gets at each stage (SPEC §5, with §8b.11)",
+        "status": "required",
+        "needles": [
+          "A sequence, not a slogan.",
+          "Discover",
+          "Architect",
+          "Engineer",
+          "Integrate",
+          "Deploy",
+          "Scale",
+          "The business, users, constraints and goals, written down and signed off.",
+          "The architecture, the system boundaries, and the latency and cost budgets.",
+          "Reliable software and infrastructure, with a demo every cycle.",
+          "Systems, services, data and automation connected and documented.",
+          "CI/CD, containerised deployments and a runbook.",
+          "Performance, reliability and capability improved against the success measures."
         ]
       },
       {
@@ -235,12 +423,11 @@
       },
       {
         "item": "FAQ: five questions and answers",
-        "proves": "Objections answered",
+        "proves": "Objections answered — FAQPage is generated from the same items (check 14)",
         "status": "required",
         "needles": [
           "Questions? Answers.",
           "What kinds of projects do you take on?",
-          "We focus on custom web and mobile products, internal tools, inte",
           "How do you estimate timeline and cost?",
           "After a short discovery, we break work into milestones with acce",
           "What does your delivery process look like?",
@@ -248,14 +435,26 @@
           "Can you work with our existing codebase?",
           "Yes. We routinely join live products: code review, refactors, te",
           "How do we get started?",
-          "Use the contact section to book a call or email us with goals, t",
-          "FAQ"
+          "FAQ",
+          "Software, AI and automation, ERP and point-of-sale systems, and t",
+          "Use the contact page to schedule a call or email us with goals, t"
         ]
       },
       {
-        "item": "Contact and booking",
-        "proves": "Routes to a conversation",
-        "status": "required",
+        "item": "FAQ: the two answers the redesign reworded",
+        "proves": "Nothing: the first contradicted the six capabilities; the last named the contact section and \"book a call\"",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — reworded (MOVES.md, FAQ): the six capabilities, and \"schedule a call\" on the contact page",
+        "needles": [
+          "We focus on custom web and mobile products, internal tools, inte",
+          "Use the contact section to book a call or email us with goals, t"
+        ]
+      },
+      {
+        "item": "Contact and booking, moved to /contact",
+        "proves": "Routes to a conversation — PROOF (the booking calendar), required on /contact",
+        "status": "retired",
+        "retired": "owner's redesign 2026-09-16 — moved to /contact (MOVES.md), where its inventory requires every needle",
         "needles": [
           "Tell us what you need to ship",
           "Share goals, timeline, and constraints—we'll reply with honest f",
@@ -266,9 +465,130 @@
         ]
       },
       {
-        "item": "Footer",
-        "proves": "Ownership and social links",
+        "item": "What we engineer",
+        "proves": "The six capabilities, none posing as the whole company (SPEC §5, §9.2)",
         "status": "required",
+        "needles": [
+          "Technology is more than software.",
+          "We design and engineer systems that connect software, intelligence, automation, data, and the physical world.",
+          "Software engineering",
+          "AI & automation",
+          "ERP & enterprise systems",
+          "POS & commerce",
+          "Robotics & intelligent systems",
+          "Cloud, data & infrastructure"
+        ]
+      },
+      {
+        "item": "Capabilities: the six, and robotics' honesty line",
+        "proves": "Each capability's claim, and robotics' Lab status in the owner's words (SPEC §8b.7) — check 33 holds the honesty line visible, beside its Lab chip",
+        "status": "required",
+        "needles": [
+          "Software that becomes infrastructure for your business.",
+          "Turn intelligence into action.",
+          "One system for complex operations.",
+          "Commerce systems built around real operations.",
+          "Bringing intelligence beyond the screen.",
+          "The systems behind the systems.",
+          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
+          "Concept — not a shipped system"
+        ]
+      },
+      {
+        "item": "The system map",
+        "proves": "How the capabilities connect, as text for a crawler and a reader without script (SPEC §5)",
+        "status": "required",
+        "needles": [
+          "Different technologies. One engineering discipline.",
+          "Parts",
+          "Connections",
+          "Worked flows",
+          "A sale at the till",
+          "A lead arrives",
+          "A camera sees a defect",
+          "Concept"
+        ]
+      },
+      {
+        "item": "Industries",
+        "proves": "Where we have built, and what we would build — no claim of past work without evidence (SPEC §8b.10)",
+        "status": "required",
+        "needles": [
+          "Technology we can build for…",
+          "Restaurants & hospitality",
+          "Retail & commerce",
+          "Real estate",
+          "HR & professional services",
+          "Salons & beauty",
+          "Healthcare",
+          "Education",
+          "Logistics",
+          "Enterprise operations",
+          "Startups & technology companies"
+        ]
+      },
+      {
+        "item": "Technical depth, by layer",
+        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding)",
+        "status": "required",
+        "needles": [
+          "The stack, by layer.",
+          "React",
+          "Next.js",
+          "React Native",
+          "Node.js",
+          "NestJS",
+          "Django",
+          "GraphQL",
+          "REST",
+          "gRPC",
+          "Socket.IO",
+          "PostgreSQL",
+          "Redis",
+          "pgvector",
+          "WatermelonDB",
+          "SQLite",
+          "Claude",
+          "GPT-4.1",
+          "Embeddings and retrieval",
+          "Agents",
+          "Docker",
+          "Docker Swarm",
+          "GitHub Actions",
+          "Vercel"
+        ]
+      },
+      {
+        "include": "evidence-cuts"
+      },
+      {
+        "item": "Platforms with weak evidence",
+        "proves": "Nothing on /: SPEC §8b.2 dropped them from the stack; scoped to / because the words may appear on other pages",
+        "status": "cut",
+        "cut": "owner's redesign 2026-09-16 — SPEC §8b.2, binding: AWS, Render and Sentry have weak evidence",
+        "match": "word",
+        "needles": [
+          "AWS",
+          "Render",
+          "Sentry"
+        ]
+      },
+      {
+        "item": "Final call to action",
+        "proves": "The close (SPEC §5)",
+        "status": "required",
+        "needles": [
+          "Have a complex problem?",
+          "Let's turn it into an engineered system.",
+          "Schedule a Call",
+          "Tell Us About Your Project"
+        ]
+      },
+      {
+        "item": "Footer",
+        "proves": "Ownership, social links and the way to contact (SPEC §5, Footer)",
+        "status": "required",
+        "scope": "footer",
         "needles": [
           "© 2026 Bolt Fusion Tech",
           "All rights reserved.",
@@ -276,8 +596,61 @@
           "Facebook",
           "X (Twitter)",
           "Privacy Policy",
-          "Back to top"
+          "Back to top",
+          "Engineering intelligent systems for the real world.",
+          "Contact",
+          "Contact page",
+          "Schedule a Call"
         ]
+      },
+      {
+        "item": "Insights: the homepage teaser",
+        "proves": "The articles, linked from the homepage (the pages wave, 2026-09-16)",
+        "status": "required",
+        "needles": [
+          "Notes from the systems we build.",
+          "All insights",
+          "Routing AI so most queries never reach a model"
+        ]
+      }
+    ],
+    "/contact": [
+      {
+        "item": "Contact panel",
+        "proves": "A route to a conversation: the status, the promise and the email (moved from / on 2026-09-16)",
+        "status": "required",
+        "needles": [
+          "Tell us what you need to ship",
+          "Taking new engagements",
+          "Share goals, timeline, and constraints—we'll reply with honest f",
+          "Schedule a Call",
+          "Email the team"
+        ]
+      },
+      {
+        "item": "The booking calendar",
+        "proves": "PROOF: the 30-minute intro call, bookable — every Schedule a Call lands here (#schedule)",
+        "status": "required",
+        "needles": [
+          "Pick a time (30 min)",
+          "Or grab an open slot below — same 30‑minute intro call."
+        ]
+      },
+      {
+        "item": "The project form",
+        "proves": "Tell Us About Your Project: three fields that open the visitor's email app (#project)",
+        "status": "required",
+        "needles": [
+          "Tell us about your project",
+          "Your name",
+          "What are you building?",
+          "Goals, timeline and constraints",
+          "Open in your email app",
+          "hello@boltfusiontech.com"
+        ]
+      },
+      {
+        "include": "evidence-cuts"
       }
     ],
     "/work": [
@@ -433,22 +806,7 @@
         ]
       },
       {
-        "item": "Excluded projects",
-        "proves": "Nothing: the owner excluded them on 2026-09-15 (CLAUDE.md, \"Projects and attribution\")",
-        "status": "cut",
-        "cut": "excluded 2026-09-15 — the owner's current employer's apps, a client under US Treasury sanctions, and two the owner struck",
-        "needles": [
-          "Jumatechs",
-          "Myrep",
-          "IQ Test",
-          "Cleva",
-          "Bidesh",
-          "Bangladesh RAB",
-          "Rapid Action Battalion",
-          "rab.gov.bd",
-          "Team Pharma",
-          "JTI Sheikh"
-        ]
+        "include": "excluded-projects"
       },
       {
         "item": "Building something with a constraint like these?",
@@ -936,6 +1294,260 @@
           "← Back to boltfusiontech.com"
         ]
       }
+    ],
+    "/about": [
+      {
+        "item": "Engagement models (moved from /, 2026-09-16)",
+        "proves": "PROOF: what a founder buys, from content/services.ts (COPY.md §6)",
+        "status": "required",
+        "needles": [
+          "Model",
+          "Shape",
+          "Timeline",
+          "MVP build",
+          "Scope, architecture, shippable v1",
+          "8–16 weeks",
+          "Embedded team",
+          "Roadmap delivery with your PMs",
+          "Stabilise and scale",
+          "Performance, reliability, maintainability",
+          "Ongoing",
+          "As needed"
+        ]
+      },
+      {
+        "item": "The pilot and the working terms (moved from /, 2026-09-16)",
+        "proves": "PROOF: the two-week pilot and how an engagement runs, from content/pilot.ts and the old hero",
+        "status": "required",
+        "needles": [
+          "Most engagements start with the two-week pilot below. We’ll give",
+          "Two-week sprints, a demo at the end of each, a named escalation",
+          "Senior-only teams, named engineers up front, 4–8 hours of overla",
+          "Start a 2-week pilot"
+        ]
+      },
+      {
+        "item": "Who we are, and where our engineers work",
+        "proves": "The page's own head and places — never an office or an address (SPEC §8b.12)",
+        "status": "required",
+        "needles": [
+          "Who we are, and how we work.",
+          "Where our engineers work.",
+          "United Kingdom",
+          "Malaysia",
+          "Bangladesh"
+        ]
+      },
+      {
+        "include": "team-headcount"
+      },
+      {
+        "include": "team-roster-cut"
+      },
+      {
+        "item": "The pilot's plan",
+        "proves": "Two weeks, fixed price, full IP (content/pilot.ts)",
+        "status": "required",
+        "needles": [
+          "Two weeks. Fixed price. Full IP. No obligation.",
+          "Week 1",
+          "Week 2",
+          "Deliverable"
+        ]
+      },
+      {
+        "item": "What we won't do",
+        "proves": "Only commitments the site already keeps",
+        "status": "required",
+        "needles": [
+          "Commitments this site already keeps.",
+          "Publish a figure without its label",
+          "Use stock photography or stock faces",
+          "Take credit for work we didn't do",
+          "Claim delivery we haven't done"
+        ]
+      }
+    ],
+    "/capabilities": [
+      {
+        "item": "The six capabilities, each headline",
+        "proves": "SPEC §8: every capability, none posing as the whole company",
+        "status": "required",
+        "needles": [
+          "Six capabilities, each with its evidence.",
+          "Software that becomes infrastructure for your business.",
+          "Turn intelligence into action.",
+          "One system for complex operations.",
+          "Commerce systems built around real operations.",
+          "Bringing intelligence beyond the screen.",
+          "The systems behind the systems."
+        ]
+      },
+      {
+        "item": "Robotics' honesty line",
+        "proves": "Lab tier: no hardware, nothing shipped (owner's brief §8)",
+        "status": "required",
+        "needles": [
+          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
+          "Concept — not a shipped system"
+        ]
+      },
+      {
+        "item": "Each capability's structure and evidence tiers",
+        "proves": "What we build, how, and the evidence behind it",
+        "status": "required",
+        "needles": [
+          "How we approach it",
+          "How we’d approach it",
+          "What we build",
+          "What we'd build",
+          "Evidence",
+          "Linked work",
+          "Written up",
+          "Proven",
+          "Core",
+          "Capable",
+          "Lab"
+        ]
+      }
+    ],
+    "/industries": [
+      {
+        "item": "Industries, split by delivered work",
+        "proves": "\"Technology we can build for…\" — past work claimed only where it exists (owner's brief §10)",
+        "status": "required",
+        "needles": [
+          "Technology we can build for…",
+          "Industries with delivered work.",
+          "No delivered work here yet.",
+          "Where we’ve built it",
+          "What we’d build",
+          "The problems",
+          "Draws on",
+          "Retail point of sale in development."
+        ]
+      },
+      {
+        "item": "The industries",
+        "proves": "Each named, none implying a client portfolio",
+        "status": "required",
+        "needles": [
+          "Restaurants & hospitality",
+          "Retail & commerce",
+          "Real estate",
+          "HR & professional services",
+          "Salons & beauty",
+          "Healthcare",
+          "Education",
+          "Logistics",
+          "Enterprise operations",
+          "Startups & technology companies"
+        ]
+      }
+    ],
+    "/engineering": [
+      {
+        "item": "How we build: six stages",
+        "proves": "The owner's brief §11, in order",
+        "status": "required",
+        "needles": [
+          "How we build, and what we build with.",
+          "A sequence, not a slogan.",
+          "Discover",
+          "Architect",
+          "Engineer",
+          "Integrate",
+          "Deploy",
+          "Scale"
+        ]
+      },
+      {
+        "item": "How a project runs, the stack and the principles",
+        "proves": "SPEC §8b.2: the stack by layer; principles linked to where they are written up",
+        "status": "required",
+        "needles": [
+          "How a project actually runs.",
+          "Discovery and plan",
+          "Build in iterations",
+          "Launch and operate",
+          "The stack, by layer.",
+          "Principles we can point to.",
+          "Route before you pay for a model",
+          "Enforce tenancy in the database",
+          "Label every figure",
+          "Written up in"
+        ]
+      },
+      {
+        "item": "The release checks",
+        "proves": "The discipline this site is held to",
+        "status": "required",
+        "needles": [
+          "Checked before every push."
+        ]
+      }
+    ],
+    "/insights": [
+      {
+        "item": "The articles",
+        "proves": "Three technical articles from real work, by the team",
+        "status": "required",
+        "needles": [
+          "Notes from the systems we build.",
+          "Routing AI so most queries never reach a model",
+          "Offline-first point of sale: keeping the till selling when the network drops",
+          "Multi-tenant SaaS on Postgres row-level security",
+          "Bolt Fusion Tech engineering",
+          "16 September 2026"
+        ]
+      }
+    ],
+    "/insights/routing-ai-so-most-queries-never-reach-a-model": [
+      {
+        "item": "The article",
+        "proves": "Its sections, its labelled figure and its related work",
+        "status": "required",
+        "needles": [
+          "Routing AI so most queries never reach a model",
+          "← All insights",
+          "The expensive part is deciding when to call a model",
+          "Classify first, pay second",
+          "keyword lane for ~80% of traffic",
+          "target",
+          "Related work",
+          "Intelligent restaurant search",
+          "TypeScript",
+          "Pseudo-code for the order of operations"
+        ]
+      }
+    ],
+    "/insights/offline-first-point-of-sale": [
+      {
+        "item": "The article",
+        "proves": "Its sections and its diagram",
+        "status": "required",
+        "needles": [
+          "Offline-first point of sale: keeping the till selling when the network drops",
+          "A till that waits for the network loses sales",
+          "SQL",
+          "Python",
+          "One sale, from the till to the server and back."
+        ]
+      }
+    ],
+    "/insights/multi-tenant-saas-on-postgres-row-level-security": [
+      {
+        "item": "The article",
+        "proves": "Its sections and its diagram",
+        "status": "required",
+        "needles": [
+          "Multi-tenant SaaS on Postgres row-level security",
+          "Tenancy is the one thing you cannot retrofit",
+          "The policy every tenant table gets",
+          "One request, one tenant, one transaction."
+        ]
+      }
     ]
-  }
+  },
+  "awaiting": {}
 }

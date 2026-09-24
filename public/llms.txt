@@ -1,10 +1,37 @@
 # Bolt Fusion Tech
 
-> We build AI systems that are still running in six months.
+> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.
 
 Bolt Fusion Tech is a senior engineering team working across the UK, Malaysia and
-Bangladesh. We build production AI, custom software and platform work for teams who
-need systems that hold up after launch — not demos.
+Bangladesh. Software. Intelligence. Automation. Machines.
+
+## What we engineer
+
+Six capabilities, each labelled with its evidence. Proven: shipped, with a case
+study or project. Core: repeated work. Capable: we can engineer it; no delivery
+yet. Lab: research or prototype only.
+
+- Software engineering (Proven): web platforms, mobile applications (React
+  Native), backend systems (NestJS, Django), APIs and integrations (REST,
+  GraphQL, gRPC), real-time platforms, and multi-tenant SaaS on Postgres
+  row-level security. Shipped: Go Style Business, Balanzify and FanLock, and
+  feature work for Bazzile and GodConnect.
+- AI & automation (Proven): AI agents with a human hand-off, LLM applications,
+  retrieval and search, intelligent workflows, and AI services built to plug
+  into a larger product. Document intelligence is Capable. Shipped: WarmChats
+  and the restaurant search.
+- ERP & enterprise systems: HR and payroll are Proven (Balanzify's
+  microservices). Full ERP is Capable: designed in our point-of-sale
+  back-office plans, not yet delivered.
+- POS & commerce (Core): we've built point-of-sale systems for restaurants,
+  including offline sync and receipt-printer integration, and we're building a
+  multi-tenant platform for retail and other verticals.
+- Robotics & intelligent systems (Lab): we engineer software for machines; we
+  don't manufacture hardware. We haven't delivered robotics work yet, and
+  nothing here is a shipped system.
+- Cloud, data & infrastructure (Core): cloud deployment (Vercel), PostgreSQL
+  and Redis, Docker and Docker Swarm, CI/CD on GitHub Actions, metrics and
+  structured logging, row-level security and JWT.
 
 How we work: named engineers assigned before you sign, 4–8 hours of overlap with US
 and EU working days, IP assigned on payment, and an NDA before scoping. Your first
@@ -17,8 +44,34 @@ Every figure published on this site carries a `shipped` or `target` label.
 
 ## Key pages
 
-- [Home](/): positioning, the three-lane retrieval architecture, work, engineers,
-  process, the two-week pilot, and answers to buyer due-diligence questions.
+- [Home](/): what we engineer, the six capabilities with their evidence, the
+  system map, industries, how we build, the stack by layer, the two engineering
+  stories with their labelled figures, the engineers, and answers to buyer
+  questions.
+- [Capabilities](/capabilities): the six capabilities in depth: what we build in
+  each, how we approach it, its evidence tier with the evidence behind it, the
+  linked work, and each capability's own diagram. Robotics is Lab and says so.
+- [Industries](/industries): each industry's problems and what we would build
+  for it. Delivered work is linked only where it exists: restaurants (the
+  restaurant search, and our point-of-sale work), retail (OPAL, our own store;
+  retail point of sale in development), real estate (WarmChats, and feature work
+  for Bazzile), HR (Balanzify) and salons (Go Style Business). Healthcare,
+  education, logistics, enterprise operations and startups are what we would
+  build, with no past work claimed.
+- [Engineering](/engineering): how we build, as six stages in order; the stack
+  by layer; architecture principles from the systems we built, each linked to
+  where it is written up; and the checks this site passes before every release.
+- [About](/about): who we are; the team, 15+ developers; where our engineers
+  work (the UK, Malaysia and Bangladesh); how we
+  work with clients: engagement models, the two-week pilot, IP and NDA; and what
+  we won't do.
+- [Insights](/insights): technical articles written from real work, by Bolt
+  Fusion Tech engineering. Every figure in them is labelled.
+  - [Routing AI so most queries never reach a model](/insights/routing-ai-so-most-queries-never-reach-a-model)
+  - [Offline-first point of sale: keeping the till selling when the network drops](/insights/offline-first-point-of-sale)
+  - [Multi-tenant SaaS on Postgres row-level security](/insights/multi-tenant-saas-on-postgres-row-level-security)
+- [Contact](/contact): schedule a call on the booking calendar, email the team,
+  or send a short project brief by email.
 - [Intelligent restaurant search](/work/restaurant-search): multi-tenant AI
   retrieval. Queries are classified before any paid inference runs; most traffic
   resolves on a sub-100ms path (`shipped`), and the architecture caps average

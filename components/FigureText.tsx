@@ -17,8 +17,11 @@ import { figureLabels, type FigureLabel } from "@/content/figure-labels";
  * per search" followed by loose text.
  *
  * No hooks and no "use client": it renders inside server and client components
- * alike. The chip, .tw-figchip, is styled in app/techwix.css with the encoding
- * of the metric chips: teal = shipped, amber = target, following the band.
+ * alike. The chip, .bf-figchip, is styled in app/site.css ("Status chips") in
+ * the two semantic colours: green = shipped, amber = target. Verify-site check 8
+ * finds a chip by its words inside the figure's `data-status` wrapper, not by
+ * its class (it was .tw-figchip until the Techwix design was retired,
+ * 2026-09-16; $SP/engineering/RENAMES.md).
  */
 export default function FigureText({ text }: { text: string }) {
   const hits: { at: number; label: FigureLabel }[] = [];
@@ -44,7 +47,7 @@ export default function FigureText({ text }: { text: string }) {
       out.push(
         <span key={`f${at}`} data-status={label.status}>
           {label.text}
-          <span className="tw-figchip">{label.status}</span>
+          <span className="bf-figchip">{label.status}</span>
         </span>,
       );
     }

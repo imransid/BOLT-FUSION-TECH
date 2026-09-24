@@ -104,7 +104,9 @@ const labels: FigureLabel[] = [
      span around part of the label would open a gap inside it. */
   { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
   { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
-  { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients the hero commits to: a contract term, not a performance claim" },
+  /* /about's how-we-work tagline and terms, and the Organization description:
+     the same term, for the same reason. */
+  { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients that we commit to: a contract term, not a performance claim" },
   { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
   { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },
   { text: "30\u2011minute intro call", exempt: "The length of the intro call offered above the booking calendar: a meeting length, not a performance claim" },
@@ -115,6 +117,8 @@ const labels: FigureLabel[] = [
 
   /* /work's track record (content/projects.ts) and the llms files. A span of
      years joined by a dash reads as a range; this one is a date. */
+  /* The Team section (homepage and /about) and the llms files. */
+  { text: "15+", exempt: "The team's size as the owner states it (2026-09-24): a headcount, not a performance claim" },
   { text: "2020–2022", exempt: "The years one of our engineers worked on Go Smart at Brain Station 23: a date range, not a performance claim" },
   /* /work's feature work (content/projects.ts) and the llms files: GodConnect
      Online's years, a span of years joined by a spaced dash. */
@@ -125,6 +129,19 @@ const labels: FigureLabel[] = [
   { text: "calendar, 24/7", status: "target", source: WARMCHATS },
   { text: "within 60 seconds", status: "target", source: WARMCHATS },
   { text: "in under 60s", status: "target", source: WARMCHATS },
+
+  /* /insights/routing-ai-so-most-queries-never-reach-a-model (content/insights.ts):
+     the restaurant search's figures, each with the status and the source the
+     site gives the same figure everywhere else. Each entry starts at or before
+     the shorter entry for the same figure above ("~80% of traffic", "~20% of
+     traffic", "~90% of AI calls"), so the article's wording wins (FigureText).
+     scripts/verify-insights.mjs checks every figure in the articles. */
+  { text: "keyword lane for ~80% of traffic", status: "target", source: TRAFFIC_SHARE },
+  { text: "AI lane for ~20% of traffic", status: "target", source: AI_SHARE },
+  { text: "requests stay on a <100ms path", status: "shipped", source: SEARCH_RESPONSE },
+  { text: "$0 marginal model cost", status: "shipped", source: ZERO_MARGINAL },
+  { text: "~$0.001 per AI query", status: "target", source: BUDGET },
+  { text: "~90% of AI calls are routed to Claude Haiku", status: "shipped", source: HAIKU_ROUTING },
 ];
 
 /* The same test verify-site check 8 applies in the browser, so a bad reason
