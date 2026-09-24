@@ -3561,10 +3561,14 @@ button.bf-map__btn[aria-pressed="true"] {
   border-top: 1px solid var(--bf-line-strong);
 }
 
+/* Pinned, so it paints its own ground, as the capability figure does: its text
+   is read against the aside, not against the article scrolling behind it
+   (verify-site check 20). The page's own ground, so nothing visible changes. */
 @media (min-width: 1025px) {
   .bf-article__aside {
     position: sticky;
     top: calc(var(--bf-header-h) + 32px);
+    background-color: var(--bf-ground);
     padding: 0 0 0 32px;
     border-top: 0;
     border-left: 1px solid var(--bf-line);
