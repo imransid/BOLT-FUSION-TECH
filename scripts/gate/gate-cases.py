@@ -160,9 +160,9 @@ def p_note_figures(s):
     s.rep("components/site/ProofStrip.tsx", NOTE,
           '      <p className="bf-proof__note">Every figure here, served in 45ms, comes from a system we shipped. {note} <span data-figure-exempt="">A pilot runs 3 weeks.</span>'
           ' <span style={{ display: "contents" }} data-figure-exempt="A reason long enough to pass every reason test">served in 41ms, 97% of the time</span>.'
-          ' <span style={{ display: "contents" }} data-status="shipped">served in 42ms, 96% of the time<span className="tw-figchip">shipped</span></span>.'
-          ' <span data-status="shipped">43ms<span className="tw-figchip" style={{ position: "absolute", left: -9999 }}>shipped</span></span>.'
-          ' <span data-status="target" style={{ position: "relative" }}>44ms<span className="tw-figchip">target</span><span style={{ position: "absolute", right: 0, top: -4, width: 70, height: 28, background: "#07090d" }} /></span>.'
+          ' <span style={{ display: "contents" }} data-status="shipped">served in 42ms, 96% of the time<span className="bf-figchip">shipped</span></span>.'
+          ' <span data-status="shipped">43ms<span className="bf-figchip" style={{ position: "absolute", left: -9999 }}>shipped</span></span>.'
+          ' <span data-status="target" style={{ position: "relative" }}>44ms<span className="bf-figchip">target</span><span style={{ position: "absolute", right: 0, top: -4, width: 70, height: 28, background: "#07090d" }} /></span>.'
           ' Latency <span style={{ display: "inline-block" }}>51</span>ms. It runs 3X faster.'
           ' <span className="vs-mid">Answered in 55ms.</span>'
           ' <span data-figure-exempt="asdf asdf asdf asdf qwer">Kickoff in 5 days</span>.</p>')
@@ -220,7 +220,11 @@ def p_k5_fixed_ground(s):
 
 
 def p_k5_fixed_box(s):
-    s.rep("app/page.tsx", "      </SiteShell>\n", '        <div style={{ position: "fixed", right: 16, bottom: 16, zIndex: 60, background: "#ffffff", padding: "8px 12px", borderRadius: 8 }}>Chat with us today</div>\n      </SiteShell>\n')
+    """20: two fixed boxes. An OPAQUE one (white) is measured against its own
+    ground since check 20's extension (2026-09-16), so its grey text fails on
+    contrast; a TRANSPARENT one fails because nothing fixed is behind it."""
+    s.rep("app/page.tsx", "      </SiteShell>\n", '        <div style={{ position: "fixed", right: 16, bottom: 16, zIndex: 60, background: "#ffffff", padding: "8px 12px", borderRadius: 8 }}>Chat with us today</div>\n'
+          '        <div style={{ position: "fixed", left: 16, bottom: 16, zIndex: 60, padding: "8px 12px", color: "#eceff4" }}>Talk to an engineer</div>\n      </SiteShell>\n')
 
 
 def p_a3(s):
@@ -305,7 +309,7 @@ def p_scene_static(s):
 
 def p_scene_hides_poster(s):
     s.rep("components/field/HeroScene.tsx", '        canvas.style.opacity = "1";\n',
-          '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster) vsPoster.style.display = "none";\n')
+          '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster && window.innerWidth >= 1280) vsPoster.style.display = "none";\n')
 
 
 def p_honesty(s):
@@ -352,7 +356,8 @@ CASES = [
     ["k5-bottom", "K5: low contrast near the page's bottom", 20, r'"Low contrast near the bottom of the page\.?" [\d.]+:1, needs 4\.5:1', p_k5_bottom, {}],
     ["k5-cap", "K5: text past the contrast cap", 20, r"^/privacy-policy @\d+: the contrast pass stopped at its \d+-element cap", p_k5_cap, {"reanchor": "pages"}],
     ["k5-fixed-ground", "K5: low contrast over a fixed ground", 20, r'"Text over a fixed ground\." [\d.]+:1, needs 4\.5:1', p_k5_fixed_ground, {}],
-    ["k5-fixed-box", "K5: text in a fixed box outside the allowlist", 20, r'"Chat with us today" sits in a fixed or sticky box .* outside the allowlist', p_k5_fixed_box, {}],
+    ["k5-fixed-box", "K5: low contrast in an opaque fixed box, measured against its own ground", 20, r'"Chat with us today" [\d.]+:1, needs 4\.5:1 — .* over rgb\(255,255,255\)', p_k5_fixed_box, {}],
+    ["k5-fixed-clear", "K5: text in a transparent fixed box", 20, r'"Talk to an engineer" sits in a fixed or sticky box \(div[^)]*\) that paints no opaque ground of its own', None, {"from": "k5-fixed-box"}],
     ["a3", "A3: the header's call to action at low contrast", 20, r":1, needs [\d.]+:1 — .*\(in header#masthead[^,]*, at the top of the page\)", p_a3, {}],
     ["k1-borrowed", "K1: a chip taken from another figure (<100ms)", 8, r'#recent-work: "<100ms" has no shipped/target label', p_k1, {}],
     ["k1-status", "K1: a proof status unlike content/metrics.ts", 28, r'proof figure 3 \(haiku-routing, ~90%\) reads its status as "target" — content/metrics\.ts says "shipped"', None, {"from": "k1-borrowed"}],

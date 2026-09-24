@@ -95,5 +95,6 @@ CONTROL=$OUT/run1.json CONTROL_SHA=$HEAD SRC="$SRC" bash $E/gate-proof.sh; prc=$
 [ $prc -eq 3 ] && die "the proof aborted — no verdict"
 
 echo "=== GATE VERDICT for $HEAD (load average $(load))"
-echo "  RUN 1 real failures: $([ $REAL = 0 ] && echo none || echo YES) · the proof (RUN 2 + RUN 3): $(case $prc in 0) echo PASSED ;; 2) echo INCOMPLETE ;; *) echo FAILED ;; esac)"
+case $prc in 0) PROOF=PASSED ;; 2) PROOF=INCOMPLETE ;; *) PROOF=FAILED ;; esac
+echo "  RUN 1 real failures: $([ $REAL = 0 ] && echo none || echo YES) · the proof (RUN 2 + RUN 3): $PROOF"
 if [ $REAL = 0 ] && [ $prc -eq 0 ]; then echo "  GATE PASSED"; exit 0; else echo "  GATE FAILED"; exit 1; fi
