@@ -1,10 +1,9 @@
-import ScreenImage from "./ScreenImage";
-
 import FigureText from "@/components/FigureText";
 import type { Project } from "@/content/schema";
 
 import { ArrowUpRightIcon } from "./icons";
-import { Tags } from "./Tags";
+import { Tags } from "./Lists";
+import ScreenImage from "./ScreenImage";
 
 /**
  * /work's cards — every project says who built it (CLAUDE.md, "Projects and
@@ -13,7 +12,8 @@ import { Tags } from "./Tags";
  * The attribution label sits directly above the project's name on every card,
  * the case-study rows included, in the same words for every card of a kind.
  * verify-site check 9 holds its own copy of these words and fails a card whose
- * label is missing, hidden, somewhere else, or not its kind's.
+ * label is missing, hidden, somewhere else, or not its kind's — so the label is
+ * a `[data-attribution]` element whose next sibling is the name.
  *
  * Feature work (a project with `scope: "features"`, decided 2026-09-16) reads
  * "features built by Bolt Fusion for ‹client›": we built features inside the
@@ -34,9 +34,10 @@ export function attribution(p: Project): string {
   }
 }
 
+/** The label, in the brand blue — never a shipped/target colour. */
 export function AttributionLabel({ p }: { p: Project }) {
   return (
-    <p className="tw-attr" data-attribution>
+    <p className="bf-attr" data-attribution>
       {attribution(p)}
     </p>
   );
@@ -45,11 +46,12 @@ export function AttributionLabel({ p }: { p: Project }) {
 const STATUS: Record<NonNullable<Project["status"]>, string> = { live: "Live", "in-production": "In production" };
 
 /** What we built (or, on a track-record card, the engineer's role), the
- *  employer, the status and the dates. Brand blue for the status: teal and
- *  amber are the shipped/target chips' alone. */
+ *  employer, the status and the dates. The status is words beside a small
+ *  brand-blue mark: green and amber are a figure's shipped/target alone.
+ *  `data-role`, `data-built-at` and `data-project-status` are check 9's. */
 export function ProjectFacts({ p }: { p: Project }) {
   return (
-    <dl className="tw-facts">
+    <dl className="bf-facts">
       <div>
         <dt>{p.kind === "track-record" ? "Our engineer’s role" : "What we built"}</dt>
         <dd data-role>
@@ -66,7 +68,7 @@ export function ProjectFacts({ p }: { p: Project }) {
         <div>
           <dt>Status</dt>
           <dd data-project-status>
-            <span className="tw-pill">{STATUS[p.status]}</span>
+            <span className="bf-pill">{STATUS[p.status]}</span>
           </dd>
         </div>
       ) : null}
@@ -86,12 +88,12 @@ export function ProjectFacts({ p }: { p: Project }) {
 export function ProjectLinks({ p }: { p: Project }) {
   if (!p.links.length) return null;
   return (
-    <ul className="tw-project__links" aria-label={`${p.name} links`}>
+    <ul className="bf-project__links" aria-label={`${p.name} links`}>
       {p.links.map((l) => (
         <li key={l.href}>
-          <a className="tw-project__link" href={l.href} target="_blank" rel="noopener noreferrer">
+          <a className="bf-project__link" href={l.href} target="_blank" rel="noopener noreferrer">
             {l.label}
-            <ArrowUpRightIcon className="tw-project__link-icon" />
+            <ArrowUpRightIcon className="bf-project__link-icon" />
             <span className="sr-only"> for {p.name} (opens in a new tab)</span>
           </a>
         </li>
@@ -103,28 +105,27 @@ export function ProjectLinks({ p }: { p: Project }) {
 /** One project that is not a case study: a real screenshot of its live site
  *  when it is ours (none for a track record, nor for features in a client's
  *  app), then the text. Its name is an h3, or an h4 on a card in a sub-group
- *  under its own h3 (/work's feature work). */
+ *  under its own h3 (/work's feature work). `data-project-kind`,
+ *  `data-project-scope` and `data-project-id` are check 9's. */
 export default function ProjectCard({ p, sizes, headingLevel = 3 }: { p: Project; sizes: string; headingLevel?: 3 | 4 }) {
   const Name = headingLevel === 4 ? "h4" : "h3";
   return (
     <li
-      className={p.image ? "tw-project tw-project--shot" : "tw-project"}
+      className={p.image ? "bf-project bf-project--shot" : "bf-project"}
       data-project-kind={p.kind}
       data-project-scope={p.kind === "project" ? p.scope : undefined}
       data-project-id={p.id}
-      data-tw-reveal
+      data-bf-reveal
     >
       {p.image ? (
-        <div className="tw-project__shot">
-          <ScreenImage src={p.image.src} alt={p.image.alt} sizes={sizes} className="tw-project__img" />
+        <div className="bf-project__shot">
+          <ScreenImage src={p.image.src} alt={p.image.alt} sizes={sizes} className="bf-project__img" />
         </div>
       ) : null}
-      <div className="tw-project__body">
+      <div className="bf-project__body">
         <AttributionLabel p={p} />
-        <Name className="tw-title-wrapper">
-          <span className="title-sub">{p.name}</span>
-        </Name>
-        <p className="tw-project__summary">
+        <Name className="bf-project__name">{p.name}</Name>
+        <p className="bf-project__summary">
           <FigureText text={p.summary} />
         </p>
         <ProjectFacts p={p} />

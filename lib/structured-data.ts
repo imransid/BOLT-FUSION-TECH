@@ -56,7 +56,9 @@ export function organizationLd(siteUrl: string, sameAs: string[]): Json {
   };
 }
 
-/** One Service per capability — what the capability sections on / render. */
+/** One Service per capability — what the capability sections on / summarise
+ *  and /capabilities renders in depth. Each points at its section on
+ *  /capabilities, the page that describes it in full, from both pages. */
 export function serviceLd(siteUrl: string): Json[] {
   return capabilities.map((c) => ({
     "@type": "Service",
@@ -64,9 +66,32 @@ export function serviceLd(siteUrl: string): Json[] {
     name: c.name,
     serviceType: c.name,
     description: c.honesty ? `${c.body} ${c.honesty}` : c.body,
-    url: new URL(`/#${c.id}`, siteUrl).toString(),
+    url: new URL(`/capabilities#${c.id}`, siteUrl).toString(),
     provider: { "@id": `${siteUrl}#organization` },
   }));
+}
+
+/** An article: an /insights page. The headline is the page's h1 and the
+ *  author the one the content names ("Bolt Fusion Tech engineering", SPEC §6);
+ *  both come from the same entry the page renders. */
+export function articleLd(
+  siteUrl: string,
+  a: { path: string; headline: string; description: string; datePublished: string; author: string; about: string[] },
+): Json {
+  const url = new URL(a.path, siteUrl).toString();
+  return {
+    "@type": "Article",
+    "@id": `${url}#article`,
+    headline: a.headline,
+    description: a.description,
+    datePublished: a.datePublished,
+    dateModified: a.datePublished,
+    author: { "@type": "Organization", name: a.author, url: siteUrl },
+    publisher: { "@id": `${siteUrl}#organization` },
+    image: new URL("/opengraph-image", siteUrl).toString(),
+    mainEntityOfPage: url,
+    ...(a.about.length ? { about: a.about.map((name) => ({ "@type": "Thing", name })) } : {}),
+  };
 }
 
 /** The FAQ the page renders, and nothing else. Pass the SAME items the FAQ

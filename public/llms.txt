@@ -48,6 +48,28 @@ Every figure published on this site carries a `shipped` or `target` label.
   system map, industries, how we build, the stack by layer, the two engineering
   stories with their labelled figures, the engineers, and answers to buyer
   questions.
+- [Capabilities](/capabilities): the six capabilities in depth: what we build in
+  each, how we approach it, its evidence tier with the evidence behind it, the
+  linked work, and each capability's own diagram. Robotics is Lab and says so.
+- [Industries](/industries): each industry's problems and what we would build
+  for it. Delivered work is linked only where it exists: restaurants (the
+  restaurant search, and our point-of-sale work), retail (OPAL, our own store;
+  retail point of sale in development), real estate (WarmChats, and feature work
+  for Bazzile), HR (Balanzify) and salons (Go Style Business). Healthcare,
+  education, logistics, enterprise operations and startups are what we would
+  build, with no past work claimed.
+- [Engineering](/engineering): how we build, as six stages in order; the stack
+  by layer; architecture principles from the systems we built, each linked to
+  where it is written up; and the checks this site passes before every release.
+- [About](/about): who we are; the ten engineers, six with a verified LinkedIn
+  profile; where our engineers work (the UK, Malaysia and Bangladesh); how we
+  work with clients: engagement models, the two-week pilot, IP and NDA; and what
+  we won't do.
+- [Insights](/insights): technical articles written from real work, by Bolt
+  Fusion Tech engineering. Every figure in them is labelled.
+  - [Routing AI so most queries never reach a model](/insights/routing-ai-so-most-queries-never-reach-a-model)
+  - [Offline-first point of sale: keeping the till selling when the network drops](/insights/offline-first-point-of-sale)
+  - [Multi-tenant SaaS on Postgres row-level security](/insights/multi-tenant-saas-on-postgres-row-level-security)
 - [Contact](/contact): schedule a call on the booking calendar, email the team,
   or send a short project brief by email.
 - [Intelligent restaurant search](/work/restaurant-search): multi-tenant AI

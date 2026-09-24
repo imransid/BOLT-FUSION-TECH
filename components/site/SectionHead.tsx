@@ -10,12 +10,15 @@ export default function SectionHead({
   eyebrow,
   title,
   lead,
+  leadId,
   className = "",
 }: {
   id: string;
   eyebrow?: ReactNode;
   title: ReactNode;
   lead?: ReactNode;
+  /** An id on the lead, for a section's aria-describedby. */
+  leadId?: string;
   className?: string;
 }) {
   return (
@@ -24,7 +27,11 @@ export default function SectionHead({
       <h2 id={id} className="bf-h2">
         {title}
       </h2>
-      {lead ? <p className="bf-lead">{lead}</p> : null}
+      {lead ? (
+        <p id={leadId} className="bf-lead">
+          {lead}
+        </p>
+      ) : null}
     </div>
   );
 }

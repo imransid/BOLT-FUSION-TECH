@@ -1,6 +1,6 @@
 // Pre-encodes every project screenshot the site renders into AVIF and WebP at
 // fixed widths, and writes lib/screenshots.json, which
-// components/techwix/ScreenImage.tsx reads. Why: CLAUDE.md, "Screenshots are
+// components/site/ScreenImage.tsx reads. Why: CLAUDE.md, "Screenshots are
 // pre-encoded" (2026-09-16).
 //
 // Usage: node scripts/encode-screenshots.mjs

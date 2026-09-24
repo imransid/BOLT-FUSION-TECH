@@ -69,14 +69,35 @@ export const insightDiagramSchema = z.strictObject({
 });
 export type InsightDiagram = z.infer<typeof insightDiagramSchema>;
 
-/** One h2 section. Paragraphs and bullets render through <FigureText>. */
-export const insightSectionSchema = z.strictObject({
-  heading: text,
-  paragraphs: z.array(text).min(1),
-  bullets: z.array(text).min(1).optional(),
-  code: insightCodeSchema.optional(),
-  diagram: insightDiagramSchema.optional(),
+/** Where a section's list, code block or diagram sits in its reading order:
+ *  after this many paragraphs ("The cases it asserts:" is followed by the
+ *  cases). Left out, each follows all the paragraphs, in that order. Reading
+ *  order is content; nothing here is a coordinate. */
+const insightPlaceSchema = z.strictObject({
+  bullets: z.number().int().min(1).optional(),
+  code: z.number().int().min(1).optional(),
+  diagram: z.number().int().min(1).optional(),
 });
+
+/** One h2 section. Paragraphs and bullets render through <FigureText>. */
+export const insightSectionSchema = z
+  .strictObject({
+    heading: text,
+    paragraphs: z.array(text).min(1),
+    bullets: z.array(text).min(1).optional(),
+    code: insightCodeSchema.optional(),
+    diagram: insightDiagramSchema.optional(),
+    place: insightPlaceSchema.optional(),
+  })
+  .superRefine((s, ctx) => {
+    for (const k of ["bullets", "code", "diagram"] as const) {
+      const after = s.place?.[k];
+      if (after === undefined) continue;
+      if (!s[k]) ctx.addIssue({ code: "custom", path: ["place", k], message: `"${s.heading}": places ${k} the section does not have` });
+      if (after > s.paragraphs.length)
+        ctx.addIssue({ code: "custom", path: ["place", k], message: `"${s.heading}": ${k} after paragraph ${after}, but the section has ${s.paragraphs.length}` });
+    }
+  });
 export type InsightSection = z.infer<typeof insightSectionSchema>;
 
 export const insightSchema = z
@@ -87,6 +108,10 @@ export const insightSchema = z
     /** One sentence: the summary under the title, the meta description and the
      *  Article description. */
     dek: text.refine((s) => /[.?]$/.test(s) && !/[.?!]\s+\p{Lu}/u.test(s), "one sentence, ending in a full stop"),
+    /** The meta description, when the dek is longer than verify-site check 26
+     *  allows (50 to 160 characters). Left out, the dek is the description. The
+     *  Article JSON-LD keeps the dek. */
+    description: text.refine((s) => /[.?]$/.test(s) && !/[.?!]\s+\p{Lu}/u.test(s), "one sentence, ending in a full stop").optional(),
     datePublished: isoDateSchema,
     /** SPEC §6: an engineer's name only if the owner assigns one. Until then,
      *  the team. Widen this deliberately, to a verified member, when he does. */
@@ -100,6 +125,13 @@ export const insightSchema = z
   .superRefine((a, ctx) => {
     const headings = a.sections.map((s) => s.heading.toLowerCase());
     if (!unique(headings)) ctx.addIssue({ code: "custom", path: ["sections"], message: `"${a.slug}": two sections share a heading` });
+    const meta = a.description ?? a.dek;
+    if (meta.length < 50 || meta.length > 160)
+      ctx.addIssue({
+        code: "custom",
+        path: [a.description ? "description" : "dek"],
+        message: `"${a.slug}": the meta description is ${meta.length} characters; verify-site check 26 wants 50 to 160 — give the article a shorter description`,
+      });
   });
 export type Insight = z.infer<typeof insightSchema>;
 
