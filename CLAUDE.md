@@ -1296,6 +1296,15 @@ better than a cloud of points, which takes weight off the LCP path. They were
 re-rendered for the dissolve on 2026-09-16 under the same v1 names, since v1
 had never been deployed. From the first deploy on, a re-render is v2.
 
+**Check 29's desktop blocking reads ~500ms since 2026-09-24 — a headless
+artefact, not the site.** Check 25's WebGL runs moved to their own browser with
+the SwiftShader flags (check 23's captures failed with them on the shared one),
+so check 29's desktop run now uses a browser without them, and its first WebGL
+context takes a slower software path. Same build, side by side at 1440: 674–1,037ms
+of blocking without the flags, 5–73ms with them, the scene drawn both ways. No
+budget reads it (desktop blocking is not budgeted); do not "fix" the scene for it.
+The table below was measured with the flags.
+
 **The scene's main-thread cost, measured 2026-09-16.** Check 29 budgets
 blocking time on the mobile profile only, and the scene never runs there, so
 no check fails on this — but its desktop line is real for the machines that do
