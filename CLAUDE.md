@@ -1335,6 +1335,20 @@ reveals, count-ups — must be measured on a fresh page scrolled at reading
 speed. Measured on a page that has already been scrolled, or never scrolled, it
 reports the absence of the behaviour as a fact about the site.
 
+**A change to the hero scene runs `scripts/probe-scene.mjs` as well** (2026-09-28).
+The suite reads the scene's contract — a granted context, the chunk, the poster
+as LCP, nothing painted over it — but never its pixels over time, so it cannot
+see the rules of *The hero field* that live there: the 16px band the ground at
+660 and 467 across t = 0–100s, the parallax extremes and the fully exploded
+stack; the t = 0 frame (and the first frame of a page hovered on Schedule a
+Call, or reloaded mid-scroll) equal to the poster file; the charge eased,
+blue, and gone after leave; Pause motion drawing nothing; the watchdog's
+steps fades. It takes over the scene's clock on fresh, unscrolled pages and
+scrolls them itself, so nothing viewport-triggered is already over. Against a
+local build: `node scripts/probe-scene.mjs --base http://localhost:<port>`
+(SwiftShader; `--gpu` for the machine's GPU, where the poster comparison prints
+the cross-rasteriser diff instead of failing). Exit 1 on any failure.
+
 **Run it against the merged result**, not a single branch or the stack: build
 `main` with every open branch merged in order, then run the whole suite. Three
 contrast failures on the featured-work cards (3.92, 3.95 and 4.1:1) existed only
