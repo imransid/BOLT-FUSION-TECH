@@ -592,7 +592,8 @@ has a pause control.
   `[data-bf-motion="gsap"].bf-flowing .dg-flow` runs two iterations. A claim is
   made at run time, not in the server HTML, so a desktop where gsap never
   arrives keeps the CSS flow, and a claim the engine gives back (its gate
-  stopped holding) flows here when next seen.
+  stopped holding) flows here when next seen. The one exception is the Lab
+  drawing, which never flows in the Signal's media, claimed or not (below).
 - **The Signal** (`components/motion/`; owner, 2026-09-28). CSS keeps the block
   reveal and the flow for everyone; gsap owns only the trace overlays, the
   trace-to-flow handoff and the `[data-bf-trace]` hooks (the delivery rail, the
@@ -656,13 +657,24 @@ has a pause control.
     (the nine spokes of the ERP ring close up to 45ms); the overlays fade over
     300ms and the flow takes over for two passes. A dashed edge is traced
     dashed, through a mask DrawSVG draws.
-  - **The Lab sketch:** a concept drawing (`.dg-node--concept`, robotics) never
-    flows — nothing flows in a system that has not shipped. A light-steel
-    pencil (`--bf-soft`, 1.5px, dashed `5 4` — lighter than the drawing's own
-    `--bf-steel`, or it would draw steel over steel and nobody would see it
-    pass; never blue, never cyan) goes round the loop over the drawing,
-    each concept box and then the edge leaving it, at one speed, 1.4s in all,
-    and fades. The evidence tier, shown in behaviour.
+  - **The Lab sketch:** a concept drawing (`.dg-node--concept`, robotics) does
+    not flow where the Signal runs — nothing flows in a system that has not
+    shipped. A light-steel pencil (`--bf-soft`, 1.5px, dashed `5 4` — lighter
+    than the drawing's own `--bf-steel`, or it would draw steel over steel and
+    nobody would see it pass; never blue, never cyan) goes round the loop over
+    the drawing, each concept box and then the edge leaving it, at one speed,
+    1.4s in all, and fades. The evidence tier, shown in behaviour. The "no
+    flow" is CSS, not the engine's claim: `[data-bf-flow]:has(.dg-node--concept)
+    .dg-flow { animation: none }` in the gate's own media (`min-width: 1025px`,
+    `pointer: fine`, no reduced motion; Save-Data is not a media query). The
+    engine claims only a diagram still ahead of the reader when it starts,
+    1–4s after load, so while the "no flow" rode on the claim, a reader who was
+    already there — a reload in place, a deep link to `#robotics`, a fast
+    reader — met SiteMotion's cyan flow (found in review: 4 of 4 flow lines
+    running at 1440 after a reload). Now 0 of 4 run on any of those paths,
+    whether gsap arrives or not. Phones and touch screens, where the Signal
+    never runs, keep the CSS flow on it (4 of 4 at 390 and 1366x1024 touch): an
+    owner question, since it is the same claim in cyan.
   - **The hooks, `[data-bf-trace="<name>"]`:** a container holding one
     `<svg class="bf-trace" aria-hidden="true" focusable="false">` of
     `.bf-trace__path` lines or paths drawn COMPLETE in the server HTML — a
@@ -1656,7 +1668,7 @@ script-written motion (*Verify before pushing*).
 | The library | gsap 3.15.0 — core, ScrollTrigger, DrawSVGPlugin — for the Signal only; the scene never imports it | `motion-hire/motion` |
 | Who gets it | >=1025px, a fine pointer, no reduced motion, no Save-Data, watched live; everyone else keeps the CSS motion, which runs until gsap arrives and wherever it never does | `motion-hire/motion` |
 | The flow after a trace | Two 1.6s passes (three without a trace), so trace + flow stays under five seconds | `motion-hire/motion` |
-| The robotics diagram | A steel 1.4s sketch and no flow: nothing flows in a system that has not shipped | `motion-hire/motion` |
+| The robotics diagram | A steel 1.4s sketch and no flow: nothing flows in a system that has not shipped. The "no flow" is CSS in the Signal's own media, so it holds however the reader arrives and whether gsap loads or not; phones and touch screens keep the CSS flow on it (an owner question) | `motion-hire/motion` |
 | Pins, smooth scroll, SplitText, count-ups | None (BRIEF §4.6–4.7) | `motion-hire/motion` |
 
 ## Decided 2026-09-16: the engineering redesign (owner)

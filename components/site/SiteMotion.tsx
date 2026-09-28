@@ -20,7 +20,9 @@ import { useEffect } from "react";
  *    the flow itself, with two passes. A claimed diagram is skipped here and
  *    stays watched, so one the engine gives back (its gate stopped holding)
  *    flows here when it is next seen. Until gsap arrives, and wherever it never
- *    does, this is the whole flow.
+ *    does, this is the whole flow — except on a concept drawing (the Lab
+ *    tier) at >=1025 with a fine pointer, where app/site.css holds its flow
+ *    still: the class lands here and nothing moves.
  *  · Focus ends a reveal: tabbing into a block below the fold never watches it
  *    fade in around the focused control.
  *
