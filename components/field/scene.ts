@@ -253,9 +253,11 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const mat = <T extends Material>(x: T): T => (materials.push(x), x);
 
   const scene = new Scene();
-  /* depth, not a cut-off: it follows the camera. Steep enough that the back
-     tier recedes and the front comes forward. */
-  scene.fog = new Fog(GROUND, CAM_DIST - 2.5, CAM_DIST + 6);
+  /* depth, not a cut-off: it follows the camera. It starts just in front of
+     the core's centre, so the core and the front tier are clear and the back
+     tier recedes. Starting at CAM_DIST - 2.5 it dimmed the core itself by
+     about 29%, the one thing that should lead the picture. */
+  scene.fog = new Fog(GROUND, CAM_DIST - 0.8, CAM_DIST + 7);
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 60);
   const target = new Vector3(0, CAM_TARGET_Y, 0);
 

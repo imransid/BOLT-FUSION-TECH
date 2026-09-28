@@ -612,7 +612,9 @@ for more than five seconds has a pause control.
     second on each seam, and exactly zero at t = 0. The camera follows the
     pointer by at most 6 degrees of yaw, eased. Nothing is fast and nothing
     flashes: over 30 seconds the core's mean luminance never moves more than
-    0.23 (of 255) in a tenth of a second.
+    0.25 (of 255) in a tenth of a second (on the GPU, sampled every 0.1s). The
+    fog starts just in front of the core's centre (`CAM_DIST - 0.8`), so the
+    core and the front tier are clear and only the back recedes.
   - **The poster** is `public/hero/scene-poster-v2-{660,1320}.{avif,webp}`, the
     scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
     It is a plain `<img>` in a `<picture>`, the LCP element, with the image
@@ -1340,7 +1342,7 @@ three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
 **Re-measured 2026-09-28, with the scene's v2** (the studio, the comets, the
-Lab robot, the fit-width camera and the watchdog's fades): **143,914 bytes,
+Lab robot, the fit-width camera and the watchdog's fades): **143,913 bytes,
 140.5KB**, gzipped at level 6 as served — the same as its `encodedBodySize`
 under `next start` — 574KB raw, requested at 1.3s against a 71ms load event.
 The same chunk before v2 measured 142,287 bytes (139.0KB; the 137.9KB above
@@ -1357,10 +1359,11 @@ JavaScript. Check 25 holds the 180KB: it gzips each scene file as served (level
 6), because its WebGL runs re-serve scripts through the worker hook and their
 resource timings are not the wire.
 
-**The posters:** `scene-poster-v2-660.avif` 6.8KB, `-1320.avif` 14.3KB,
-`-660.webp` 12.6KB, `-1320.webp` 30.6KB (AVIF 4:4:4 at quality 56, WebP 82;
+**The posters:** `scene-poster-v2-660.avif` 7.5KB, `-1320.avif` 15.6KB,
+`-660.webp` 13.8KB, `-1320.webp` 33.0KB (AVIF 4:4:4 at quality 56, WebP 82;
 2026-09-28). The v2 frame is larger and lit (about 20% of its pixels off the
-ground), so each file is about a fifth heavier than v1's:
+ground), so each file is about a third heavier than v1's — 1.8KB more on the
+phone's LCP path (the 660 AVIF), with the mobile LCP at 844ms (check 29):
 `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
 `-660.webp` 10.3KB, `-1320.webp` 24.8KB.
 The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
