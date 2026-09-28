@@ -32,19 +32,10 @@ const raw: SiteContentInput = {
     ogDescription: CANONICAL_DESCRIPTION,
   },
   site: {
-    sectionOrder: [
-      "hero",
-      "what_we_engineer",
-      "capabilities",
-      "system_map",
-      "industries",
-      "how_we_build",
-      "technical_depth",
-      "stories",
-      "team",
-      "faq",
-      "final_cta",
-    ],
+    /* The owner, 2026-09-28: "make it easy for clients to hire" — proof
+       second, then how to start, then the range (DECISIONS 2026-09-28, item 1;
+       CLAUDE.md, "Decided 2026-09-28"). */
+    sectionOrder: ["hero", "stories", "how_we_work", "what_we_engineer", "how_we_build", "industries", "faq", "final_cta"],
     sectionVisibility: {},
   },
   /* SPEC §4, in its order. Routes, not homepage anchors, on every page.
@@ -99,6 +90,15 @@ const raw: SiteContentInput = {
     body: "We engineer digital systems — from web and mobile platforms to AI automation, ERP, POS, robotics, and the infrastructure that makes them work.",
     primaryCta: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
     secondaryCta: { label: "Explore Our Capabilities", href: "/capabilities" },
+    /* 2026-09-28 (DECISIONS item 2): under the calls to action. The approved
+       /about term, word for word (content/pages.ts; the schema refuses any
+       other words), and the proof line: shipped work, read from
+       content/projects.ts with its own attribution. */
+    microcopy: "Your first call is with the engineer who writes the code.",
+    proof: {
+      label: "Built by Bolt Fusion and in production",
+      projects: ["warmchats", "balanzify", "go-style-business"],
+    },
   },
   team: {
     benchLabel: "Your bench",

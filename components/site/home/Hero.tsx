@@ -1,5 +1,7 @@
 import HeroScene from "@/components/field/HeroScene";
+import { projects } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
+import { workLink } from "@/lib/work-links";
 
 import Cta, { ctaKind } from "../Cta";
 import MotionToggle from "../MotionToggle";
@@ -22,6 +24,17 @@ function headlineLines(title: string): [string, string] {
   const words = title.trim().split(/\s+/);
   const cut = Math.max(1, Math.floor(words.length / 2));
   return [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
+}
+
+/** The proof line's items: each project's name and client from
+ *  content/projects.ts, and where it is shown (lib/work-links.ts) — its
+ *  write-up, or its card on /work, where the attribution label comes first. */
+function proofItems(ids: readonly string[]) {
+  return ids.map((id) => {
+    const p = projects.find((x) => x.id === id);
+    if (!p) throw new Error(`hero.proof names "${id}", which is not in content/projects.ts`);
+    return { id, name: p.name, client: p.client ?? null, href: workLink(id).href };
+  });
 }
 
 /**
@@ -47,6 +60,7 @@ function headlineLines(title: string): [string, string] {
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   const [first, rest] = headlineLines(hero.title);
+  const proof = proofItems(hero.proof.projects);
   return (
     <section id="hero" className="bf-hero" aria-labelledby="hero-title">
       <div className="bf-wrap bf-hero__inner">
@@ -63,6 +77,26 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
             <Cta href={hero.secondaryCta.href} variant="ghost" cta={ctaKind(hero.secondaryCta.href)}>
               {hero.secondaryCta.label}
             </Cta>
+          </div>
+          {/* Under the calls to action (2026-09-28): what the first call is, in
+              the approved /about words, and the proof line — shipped work with
+              its attribution, each a link to where it is written up or shown.
+              Server HTML, still, like everything the hero says (check 28). */}
+          <p className="bf-hero__micro">{hero.microcopy}</p>
+          <div className="bf-hero__proof">
+            <p id="hero-proof-label" className="bf-hero__proof-label">
+              {hero.proof.label}
+            </p>
+            <ul className="bf-hero__proof-list" aria-labelledby="hero-proof-label">
+              {proof.map((p) => (
+                <li key={p.id} className="bf-hero__proof-item">
+                  <a href={p.href} className="bf-hero__proof-name">
+                    {p.name}
+                  </a>
+                  {p.client ? <span className="bf-hero__proof-for">for {p.client}</span> : null}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 

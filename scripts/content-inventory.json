@@ -193,6 +193,20 @@
         ]
       },
       {
+        "item": "Hero: the first call and the proof line (2026-09-28)",
+        "proves": "What the first call is, in /about's approved words, and three shipped products under the calls to action, each with who it was built for (DECISIONS 2026-09-28, item 2)",
+        "status": "required",
+        "needles": [
+          "Your first call is with the engineer who writes the code.",
+          "Built by Bolt Fusion and in production",
+          "WarmChats",
+          "for WarmChats, Inc.",
+          "Balanzify",
+          "for Balanzify Inc.",
+          "Go Style Business"
+        ]
+      },
+      {
         "item": "Hero: the old positioning and its calls to action",
         "proves": "Nothing: the AI-studio hero the redesign replaced (MOVES.md, Hero)",
         "status": "cut",
@@ -204,10 +218,9 @@
         ]
       },
       {
-        "item": "Hero: the engagement terms, moved to /about",
-        "proves": "The overlap hours and the two-week pilot — moved to /about with the engagement models (SPEC §4); required there under \"awaiting\" until it is published",
-        "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, Hero): see awaiting /about",
+        "item": "How we work with you: the tagline and the pilot's button (back on / 2026-09-28)",
+        "proves": "The overlap hours, named engineers and IP in one line, and the way to start small — on / again in how we work with you (DECISIONS 2026-09-28, item 1); /about keeps them too",
+        "status": "required",
         "needles": [
           "Senior-only teams, named engineers up front, 4–8 hours of overla",
           "Start a 2-week pilot"
@@ -290,7 +303,16 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "include": "team-headcount"
+        "item": "Team: the section's own head, moved to /about",
+        "proves": "The Team section (its eyebrow, headline and subtext) left / and merged into how we work with you, where the headcount stays — required on /about, which includes the team-headcount set",
+        "status": "retired",
+        "retired": "moved to /about — owner request 2026-09-28 (\"make it easy for clients to hire\")",
+        "needles": [
+          "Your bench",
+          "// who builds with you",
+          "Senior engineers.One delivery standard.",
+          "Named engineers are assigned before you sign. Ask on the call who would work on your project."
+        ]
       },
       {
         "include": "team-roster-cut"
@@ -355,10 +377,9 @@
         ]
       },
       {
-        "item": "How we work: the engagement models and the pilot, moved to /about",
-        "proves": "What a founder buys — PROOF, moved to /about (SPEC §4: the engagement ladder); required there under \"awaiting\" until it is published. Sources kept: content/services.ts, content/pilot.ts",
-        "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, How we work): see awaiting /about",
+        "item": "How we work with you: the engagement models, the line under them and the operating detail (back on / 2026-09-28)",
+        "proves": "What a founder buys and how it runs — PROOF, on / again in how we work with you (DECISIONS 2026-09-28, item 1); /about keeps it too. Sources: content/services.ts, content/pages.ts",
+        "status": "required",
         "needles": [
           "Model",
           "Shape",
@@ -374,6 +395,35 @@
           "As needed",
           "Most engagements start with the two-week pilot below. We’ll give",
           "Two-week sprints, a demo at the end of each, a named escalation"
+        ]
+      },
+      {
+        "item": "How we work with you: the four terms, the pilot and the headcount (2026-09-28)",
+        "proves": "The four offshore worries answered on the homepage — who you talk to, overlap, IP, NDA — the two-week pilot's plan, and the team as a headcount with where it works (DECISIONS 2026-09-28, item 1: the Team section merged here)",
+        "status": "required",
+        "needles": [
+          "How we work with clients",
+          "Named engineers, a pilot first, and IP you own.",
+          "Named engineers",
+          "Assigned before you sign. Your first call is with the engineer who writes the code.",
+          "Overlap hours",
+          "4–8 hours of overlap with US and EU working days.",
+          "Intellectual property",
+          "Assigned to you on payment.",
+          "NDA",
+          "Signed before scoping.",
+          "Engagement models",
+          "Two weeks. Fixed price. Full IP. No obligation.",
+          "A scoped slice of your real product, not a demo. You keep everything whether you continue or not.",
+          "Week 1",
+          "architecture and a working vertical slice",
+          "Week 2",
+          "iterate, harden, and write the handover document",
+          "Deliverable",
+          "Running code in your repository, on your infrastructure, with a handover doc.",
+          "15+",
+          "developers",
+          "Our engineers work across the UK, Malaysia and Bangladesh."
         ]
       },
       {
@@ -481,23 +531,55 @@
       },
       {
         "item": "Capabilities: the six, and robotics' honesty line",
-        "proves": "Each capability's claim, and robotics' Lab status in the owner's words (SPEC §8b.7) — check 33 holds the honesty line visible, beside its Lab chip",
+        "proves": "Robotics' Lab status in the owner's words (SPEC §8b.7), in its ledger row with the diagram's concept caption — check 33 holds the honesty line visible, beside its Lab chip; the six deep dives' headlines are on /capabilities",
         "status": "required",
+        "needles": [
+          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
+          "Concept — not a shipped system"
+        ]
+      },
+      {
+        "item": "Capabilities: the six deep dives' headlines, moved to /capabilities",
+        "proves": "Each capability's claim — on /capabilities, where its inventory requires every headline; / shows one ledger row per capability instead",
+        "status": "retired",
+        "retired": "moved to /capabilities — owner request 2026-09-28 (\"make it easy for clients to hire\")",
         "needles": [
           "Software that becomes infrastructure for your business.",
           "Turn intelligence into action.",
           "One system for complex operations.",
           "Commerce systems built around real operations.",
           "Bringing intelligence beyond the screen.",
-          "The systems behind the systems.",
-          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
-          "Concept — not a shipped system"
+          "The systems behind the systems."
+        ]
+      },
+      {
+        "item": "What we engineer: the ledger (2026-09-28)",
+        "proves": "One row per capability: its job, its evidence, its linked work and the way to it in depth (DECISIONS 2026-09-28, item 1)",
+        "status": "required",
+        "needles": [
+          "Web platforms, mobile apps and the backends behind them.",
+          "Agents, retrieval and workflows that act on a model's output.",
+          "One model of the business, with each department as a module.",
+          "Point of sale that keeps selling when the network drops.",
+          "The software side of machines: vision, control and telemetry.",
+          "Databases, APIs, containers, CI/CD and observability.",
+          "Linked work",
+          "Software engineering in depth",
+          "AI & automation in depth",
+          "ERP & enterprise systems in depth",
+          "POS & commerce in depth",
+          "Robotics & intelligent systems in depth",
+          "Cloud, data & infrastructure in depth",
+          "Proven",
+          "Core",
+          "Capable",
+          "Lab"
         ]
       },
       {
         "item": "The system map",
-        "proves": "How the capabilities connect, as text for a crawler and a reader without script (SPEC §5)",
-        "status": "required",
+        "proves": "How the capabilities connect, as text for a crawler and a reader without script — on /capabilities, after the six, where its inventory requires every needle",
+        "status": "retired",
         "needles": [
           "Different technologies. One engineering discipline.",
           "Parts",
@@ -507,19 +589,32 @@
           "A lead arrives",
           "A camera sees a defect",
           "Concept"
-        ]
+        ],
+        "retired": "moved to /capabilities — owner request 2026-09-28 (\"make it easy for clients to hire\")"
       },
       {
-        "item": "Industries",
-        "proves": "Where we have built, and what we would build — no claim of past work without evidence (SPEC §8b.10)",
+        "item": "Industries with delivered work",
+        "proves": "Where we have built, each linked to what we built there — no claim of past work without evidence (SPEC §8b.10); the honest split is on /industries (DECISIONS 2026-09-28, item 1)",
         "status": "required",
         "needles": [
-          "Technology we can build for…",
+          "Industries with delivered work.",
+          "Each links to what we built there: a write-up, a project on our work page, or the capability it comes from.",
           "Restaurants & hospitality",
           "Retail & commerce",
           "Real estate",
           "HR & professional services",
           "Salons & beauty",
+          "Where we’ve built it",
+          "All industries"
+        ]
+      },
+      {
+        "item": "Industries: the heading and the industries with no delivered work, moved to /industries",
+        "proves": "What we would build where we have built nothing yet — on /industries, which says so in its own group and requires every one",
+        "status": "retired",
+        "retired": "moved to /industries — owner request 2026-09-28 (\"make it easy for clients to hire\")",
+        "needles": [
+          "Technology we can build for…",
           "Healthcare",
           "Education",
           "Logistics",
@@ -529,8 +624,8 @@
       },
       {
         "item": "Technical depth, by layer",
-        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding)",
-        "status": "required",
+        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding) — on /engineering, where its inventory requires every name",
+        "status": "retired",
         "needles": [
           "The stack, by layer.",
           "React",
@@ -556,7 +651,8 @@
           "Docker Swarm",
           "GitHub Actions",
           "Vercel"
-        ]
+        ],
+        "retired": "moved to /engineering — owner request 2026-09-28 (\"make it easy for clients to hire\")"
       },
       {
         "include": "evidence-cuts"
@@ -1433,6 +1529,21 @@
           "Capable",
           "Lab"
         ]
+      },
+      {
+        "item": "The system map (moved from /, 2026-09-28)",
+        "proves": "How the six capabilities connect, as text for a crawler and a reader without script (SPEC §5) — after the six, where the reader has chosen depth on them",
+        "status": "required",
+        "needles": [
+          "Different technologies. One engineering discipline.",
+          "Parts",
+          "Connections",
+          "Worked flows",
+          "A sale at the till",
+          "A lead arrives",
+          "A camera sees a defect",
+          "Concept"
+        ]
       }
     ],
     "/industries": [
@@ -1509,6 +1620,40 @@
         "needles": [
           "Checked before every push."
         ]
+      },
+      {
+        "item": "Technical depth, by layer (moved from /, 2026-09-28)",
+        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding) — every name on the stack",
+        "status": "required",
+        "needles": [
+          "The stack, by layer.",
+          "React",
+          "Next.js",
+          "React Native",
+          "Node.js",
+          "NestJS",
+          "Django",
+          "GraphQL",
+          "REST",
+          "gRPC",
+          "Socket.IO",
+          "PostgreSQL",
+          "Redis",
+          "pgvector",
+          "WatermelonDB",
+          "SQLite",
+          "Claude",
+          "GPT-4.1",
+          "Embeddings and retrieval",
+          "Agents",
+          "Docker",
+          "Docker Swarm",
+          "GitHub Actions",
+          "Vercel"
+        ]
+      },
+      {
+        "include": "evidence-cuts"
       }
     ],
     "/insights": [

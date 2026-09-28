@@ -95,18 +95,22 @@ const labels: FigureLabel[] = [
   { text: "$0 marginal cost", status: "shipped", source: ZERO_MARGINAL },
   { text: "books showings 24/7", status: "target", source: WARMCHATS },
 
-  /* The homepage's terms, each exempt for its own reason. Where two entries match
+  /* The terms, each exempt for its own reason. Where two entries match
      overlapping words the earlier match wins (FigureText), so "MVP in 8–16 weeks"
-     is the hero's and the bare "8–16 weeks" is the engagement table's cell. The
-     two "Start a 2-week pilot" buttons (hero, how we work) are the same words and
-     share one entry: the same term, for the same reason. A button's exemption
+     is the hero's and the bare "8–16 weeks" is the engagement table's cell — on
+     /about, and since 2026-09-28 in the homepage's how we work, the same table
+     from content/services.ts. The two "Start a 2-week pilot" buttons (/about's
+     pilot and, since 2026-09-28, the homepage's how we work) are the same words
+     starting the same pilot and share one entry: an exemption is keyed by its
+     words, and these words are one term with one reason. A button's exemption
      covers its whole label: the button lays its children out as flex items, so a
      span around part of the label would open a gap inside it. */
   { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
   { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
-  /* /about's how-we-work tagline and terms, the same four terms beside the
-     booking calendar on /contact (2026-09-28), and the Organization
-     description: the same term, in the same words, for the same reason. */
+  /* /about's how-we-work tagline and terms — shown again, from the same
+     content, in the homepage's how we work and beside the booking calendar on
+     /contact (2026-09-28) — and the Organization description: the same term,
+     in the same words, for the same reason. */
   { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients that we commit to: a contract term, not a performance claim" },
   { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
   { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },

@@ -133,9 +133,13 @@ def p_faq_client_only(s):
 
 
 def p_person_card(s):
-    """a named member's card put back in the Team section (homepage and /about)"""
+    """a named member's card put back where the team is shown — /about's Team
+    section, and the homepage's headcount, in how we work with you since
+    2026-09-28 (the Team section left / that day; re-anchored, same meaning)"""
     s.rep("components/site/home/Team.tsx", '            <p className="bf-lead">{team.subtext}</p>\n',
           '            <p className="bf-lead">{team.subtext}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
+    s.rep("components/site/home/HowWeWork.tsx", '            <p className="bf-hww__where">{where.lead}</p>\n',
+          '            <p className="bf-hww__where">{where.lead}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
 
 
 def p_admin(s):
@@ -314,7 +318,9 @@ def p_scene_hides_poster(s):
 
 
 def p_honesty(s):
-    s.rep("components/site/home/Capabilities.tsx", "          {c.honesty ? (\n", "          {false && c.honesty ? (\n")
+    # re-anchored 2026-09-28: the six capability sections became one ledger on /
+    # (components/site/home/WhatWeEngineer.tsx), which renders the honesty line
+    s.rep("components/site/home/WhatWeEngineer.tsx", "        {c.honesty ? (\n", "        {false && c.honesty ? (\n")
 
 
 def p_tier_status(s):
@@ -322,6 +328,8 @@ def p_tier_status(s):
 
 
 def p_kubernetes(s):
+    # the stack's list renders on /engineering since 2026-09-28 (it left /), and
+    # /engineering's inventory includes the evidence cuts, so check 30 still sees it
     s.rep("components/site/home/TechnicalDepth.tsx", "                  ))}\n                </ul>", '                  ))}\n                  {layer.id === "infrastructure" ? <li>Kubernetes</li> : null}\n                </ul>')
 
 
