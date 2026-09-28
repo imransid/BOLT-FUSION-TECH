@@ -2482,34 +2482,69 @@ async function visitFocusBack(browser, route, width) {
 
 /* 21 ── reduced motion requested: what is still moving.
    getAnimations() sees CSS animations and transitions only; motion a script
-   writes into inline styles — gsap's tweens, an rAF loop — is invisible to it
-   (three live gsap tweens read 0). So an init script, in place before any page
-   script, watches every element's inline style and counts the changes to the
-   properties motion is made of (2026-09-28, the Signal). */
+   writes — gsap's tweens, an rAF loop — is invisible to it (three live gsap
+   tweens read 0). So an init script, in place before any page script, counts
+   per element the changes a script makes to what motion is made of, in three
+   kinds (2026-09-28, the Signal):
+     style   an inline transform, translate, scale, rotate, opacity or stroke dash;
+     custom  any inline CSS custom property — `--x` feeding
+             `transform: translateX(var(--x))` moves what it feeds;
+     attr    an SVG motion attribute — transform, opacity, the stroke dash, a
+             position (x, y, cx, cy, r, x1…y2) or a shape (d, points): gsap's
+             attr plugin, a hand-rolled draw-on.
+   The first version watched the six inline properties alone; a custom
+   property and two attributes, each written 120 times, went unseen. */
 function scriptMotionHook() {
   const PROPS = ["transform", "translate", "scale", "rotate", "opacity", "stroke-dashoffset", "stroke-dasharray"];
+  const ATTRS = ["transform", "opacity", "stroke-dashoffset", "stroke-dasharray", "x", "y", "cx", "cy", "r", "x1", "y1", "x2", "y2", "d", "points"];
   const log = new Map();
   Object.defineProperty(window, "__vsScriptMotion", { value: log });
   const probe = document.createElement("div");
-  const snap = (style) => PROPS.map((p) => style.getPropertyValue(p)).join("|");
+  const motion = (style) => PROPS.map((p) => style.getPropertyValue(p)).join("|");
+  const custom = (style) => {
+    const o = new Map();
+    for (let i = 0; i < style.length; i++) if (style[i].startsWith("--")) o.set(style[i], style.getPropertyValue(style[i]));
+    return o;
+  };
   const last = new WeakMap();
+  const ids = new WeakMap();
+  let uid = 0;
   const name = (el) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.getAttribute("class") ? "." + el.getAttribute("class").split(" ")[0] : ""}`;
+  const count = (el, via, what) => {
+    if (!ids.has(el)) ids.set(el, ++uid);
+    const k = `${ids.get(el)}|${via}`;
+    const e = log.get(k) || { el: name(el), via, n: 0, what: [] };
+    e.n++;
+    for (const w of what) if (!e.what.includes(w)) e.what.push(w);
+    log.set(k, e);
+  };
   new MutationObserver((recs) => {
     for (const r of recs) {
       const el = r.target;
-      if (!el.style) continue;
-      if (!last.has(el)) {
-        probe.setAttribute("style", r.oldValue || "");
-        last.set(el, snap(probe.style));
+      const a = r.attributeName;
+      if (!last.has(el)) last.set(el, new Map());
+      const seen = last.get(el);
+      if (a === "style") {
+        if (!el.style) continue;
+        if (!seen.has("style")) {
+          probe.setAttribute("style", r.oldValue || "");
+          seen.set("style", { motion: motion(probe.style), custom: custom(probe.style) });
+        }
+        const was = seen.get("style");
+        const now = { motion: motion(el.style), custom: custom(el.style) };
+        seen.set("style", now);
+        if (now.motion !== was.motion) count(el, "style", []);
+        const moved = [...new Set([...was.custom.keys(), ...now.custom.keys()])].filter((k) => was.custom.get(k) !== now.custom.get(k));
+        if (moved.length) count(el, "custom", moved);
+      } else {
+        if (!seen.has(a)) seen.set(a, r.oldValue);
+        const now = el.getAttribute(a);
+        if (now === seen.get(a)) continue;
+        seen.set(a, now);
+        count(el, "attr", [a]);
       }
-      const now = snap(el.style);
-      if (now === last.get(el)) continue;
-      last.set(el, now);
-      const e = log.get(el) || { el: name(el), n: 0 };
-      e.n++;
-      log.set(el, e);
     }
-  }).observe(document, { attributes: true, attributeFilter: ["style"], attributeOldValue: true, subtree: true });
+  }).observe(document, { attributes: true, attributeFilter: ["style", ...ATTRS], attributeOldValue: true, subtree: true });
 }
 async function visitReduced(browser, route) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
@@ -4081,8 +4116,9 @@ check(
 );
 
 /* 21 — and, since the Signal (2026-09-28), nothing a script moves: an element
-   whose inline transform, opacity or stroke dash changes SCRIPT_MOTION_MAX or
-   more times under reduced motion is animated by script; and gsap is never
+   whose inline transform, opacity or stroke dash, inline custom property, or
+   SVG motion attribute changes SCRIPT_MOTION_MAX or more times under reduced
+   motion is animated by script — one finding per kind; and gsap is never
    requested there at all (MotionLoader checks the gate before any import). */
 const SCRIPT_MOTION_MAX = 5;
 const reducedKinds = new Map();
@@ -4092,7 +4128,7 @@ for (const r of Object.values(reducedRuns))
       const t = (await http(toBase(u))).text || "";
       reducedKinds.set(u, { gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], gz: gzipSync(Buffer.from(t)).length });
     }
-check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves, and no gsap requested", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (gsap, an rAF loop), which getAnimations() cannot see", (F, I) => {
+check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves, and no gsap requested", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (gsap, an rAF loop) — inline styles, custom properties, SVG attributes — which getAnimations() cannot see", (F, I) => {
   for (const [route, r] of Object.entries(reducedRuns)) {
     if (r.error) {
       F.push(`${route}: the reduced-motion run did not finish (${r.error}) — unsure is a failure`);
@@ -4103,12 +4139,18 @@ check(21, "With reduced motion requested, nothing keeps moving — no CSS animat
     if (loops.length) F.push(`${route}: ${loops.length} looping animation(s) still running — ${[...new Set(loops.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (late.length) F.push(`${route}: ${late.length} animation(s) still running 2.5s after load — ${[...new Set(late.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (r.canvasMoving) F.push(`${route}: the WebGL canvas is still animating`);
-    const moved = (r.scripted || []).filter((x) => x.n >= SCRIPT_MOTION_MAX);
-    if (moved.length) F.push(`${route}: ${moved.length} element(s) animated by script under reduced motion — e.g. ${moved.slice(0, 4).map((x) => `${x.el} (${x.n} changes)`).join(", ")} to an inline transform, opacity or stroke dash; under reduced motion nothing moves`);
+    const moved = (via) => (r.scripted || []).filter((x) => x.via === via && x.n >= SCRIPT_MOTION_MAX);
+    const eg = (xs, what) => xs.slice(0, 4).map((x) => `${x.el} (${x.n} changes${what ? ` to ${x.what.join(", ")}` : ""})`).join(", ");
+    const style = moved("style");
+    if (style.length) F.push(`${route}: ${style.length} element(s) animated by script under reduced motion — e.g. ${eg(style, false)} to an inline transform, opacity or stroke dash; under reduced motion nothing moves`);
+    const custom = moved("custom");
+    if (custom.length) F.push(`${route}: ${custom.length} element(s) animated by script through a CSS custom property under reduced motion — e.g. ${eg(custom, true)}; a custom property moves whatever reads it, and under reduced motion nothing moves`);
+    const attr = moved("attr");
+    if (attr.length) F.push(`${route}: ${attr.length} element(s) animated by script through an SVG attribute under reduced motion — e.g. ${eg(attr, true)}; under reduced motion nothing moves`);
     const g = (r.scripts || []).filter((u) => reducedKinds.get(u)?.gsap);
     if (g.length) F.push(`${route}: ${g.length} GSAP script(s) requested under reduced motion — ${g.map((u) => `${short(u)} (${reducedKinds.get(u).parts.join(", ")})`).join(", ")} — the Signal checks the gate before any import, and gsap is never requested there`);
     const few = (r.scripted || []).filter((x) => x.n < SCRIPT_MOTION_MAX);
-    I.push(`${route}: ${r.canvases} canvas element(s); ${(r.scripts || []).length} script(s), ${g.length ? `${g.length} of them gsap` : "none of them gsap"}; ${few.length ? `${few.length} element(s) with an inline motion style set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.n}x`).join(", ")})` : "no inline motion style set by any script"}`);
+    I.push(`${route}: ${r.canvases} canvas element(s); ${(r.scripts || []).length} script(s), ${g.length ? `${g.length} of them gsap` : "none of them gsap"}; ${few.length ? `${few.length} element(s) with an inline motion style, custom property or SVG motion attribute set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.via} ${x.n}x`).join(", ")})` : "no inline motion style, custom property or SVG motion attribute set by any script"}`);
   }
 });
 

@@ -1221,10 +1221,18 @@ build with the misuse fails with its own finding — and each has its misuse cas
 in the gate's RUN 2.
 - **21** — `getAnimations()` cannot see a script: three live gsap tweens read 0.
   An init script, in place before any page script, now counts per element the
-  changes to its inline transform, translate, scale, rotate, opacity and stroke
-  dash under reduced motion; 5 or more is "animated by script" and fails
-  (`script-motion`, an rAF loop writing a transform). The info line names the
-  elements set fewer times.
+  changes a script makes under reduced motion, in three kinds, each its own
+  finding: an inline transform, translate, scale, rotate, opacity or stroke
+  dash (`script-motion`, an rAF loop writing a transform); any inline CSS
+  custom property, since `--x` feeding `transform: translateX(var(--x))` moves
+  what reads it (`script-motion-var`); and an SVG motion attribute —
+  transform, opacity, the stroke dash, x, y, cx, cy, r, x1–y2, d, points —
+  gsap's attr plugin or a hand-rolled draw-on (`script-motion-attr`, an rAF
+  loop writing `stroke-dashoffset`). 5 or more changes is "animated by script"
+  and fails. The first version watched the inline properties alone: in
+  review a custom property and two attributes, each written 120 times under
+  reduced motion, went unseen. The info line names the elements set fewer
+  times, and by which kind.
 - **29** — **CLS while reading**: one fresh run per profile, throttled as the
   others, scrolled at reading speed top to bottom, at the same 0.005 line; the
   largest shifts are named with their nodes and scroll position

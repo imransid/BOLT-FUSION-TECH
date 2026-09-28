@@ -342,6 +342,28 @@ def p_script_motion(s):
         "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
 
 
+def p_script_motion_var(s):
+    """21: an rAF loop that ignores reduced motion, moving a box through a CSS
+    custom property its transform reads — no inline transform ever changes"""
+    s.mount("VsScriptMotionVar", client(
+        "export default function VsScriptMotionVar() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-var\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;transform:translateX(var(--vs-x,0px))";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.setProperty(\"--vs-x\", `${n % 2}px`);\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_script_motion_attr(s):
+    """21: an rAF loop that ignores reduced motion, drawing a line on through
+    its stroke-dashoffset ATTRIBUTE — no inline style ever changes"""
+    s.mount("VsScriptMotionAttr", client(
+        "export default function VsScriptMotionAttr() {\n  useEffect(() => {\n    const ns = \"http://www.w3.org/2000/svg\";\n    const svg = document.createElementNS(ns, \"svg\");\n"
+        '    svg.setAttribute("style", "position:fixed;left:0;top:0;width:2px;height:2px;pointer-events:none");\n    const line = document.createElementNS(ns, "line");\n'
+        '    line.setAttribute("class", "vs-draw");\n    for (const [k, v] of [["x1", "0"], ["y1", "1"], ["x2", "2"], ["y2", "1"], ["stroke", "#000"], ["stroke-dasharray", "2"]]) line.setAttribute(k, v);\n'
+        "    svg.append(line);\n    document.body.append(svg);\n"
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      line.setAttribute(\"stroke-dashoffset\", String(n % 2));\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      svg.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
 def p_scroll_shift(s):
     """29: a 120px block inserted above #faq once #faq reaches the middle of
     the viewport — a layout shift only a reader who scrolls ever meets"""
@@ -471,6 +493,8 @@ CASES = [
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
     # new with the Signal motion system (2026-09-28): script motion, CLS while reading
     ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],
+    ["script-motion-var", "an rAF loop that ignores reduced motion, through a CSS custom property its transform reads", 21, r"^/: \d+ element\(s\) animated by script through a CSS custom property under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-var \(\d+ changes to --vs-x\)", p_script_motion_var, {}],
+    ["script-motion-attr", "an rAF loop that ignores reduced motion, through an SVG stroke-dashoffset attribute", 21, r"^/: \d+ element\(s\) animated by script through an SVG attribute under reduced motion — e\.g\. (?:[^;]*, )?line\.vs-draw \(\d+ changes to stroke-dashoffset\)", p_script_motion_attr, {}],
     ["scroll-shift", "a block inserted above #faq as a reader nears it — CLS while scrolling", 29, r"CLS [\d.]+ during a reading-speed scroll", p_scroll_shift, {}],
     # new for the Signal motion system (2026-09-28), one per new rule
     ["gsap-static", "gsap imported statically by the loader — ScrollTrigger in the initial JavaScript", 29, r"the GSAP chunk .* \((?:[^)]*, )?ScrollTrigger[,)].* is requested at \d+ms, before the load event ended", p_gsap_static, {}],
