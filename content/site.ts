@@ -383,6 +383,30 @@ const raw: SiteContentInput = {
     badge: "FAQ",
     title: "Questions? Answers.",
     items: [
+      /* The four buyer objections (2026-09-28, DECISIONS item 6), first. Every
+         answer is words the site already publishes: /about's terms, the line
+         under its models table and its operating detail (content/pages.ts),
+         the team's subtext above, and the pilot (content/pilot.ts). The price
+         is answered only with the approved interim line — no figure, no new
+         promise. "4–8 hours of overlap with US and EU working days. Two-week"
+         has its own exemption for this instance (the FAQPage
+         JSON-LD carries it too, and check 8 reads that). */
+      {
+        q: "Who writes the code?",
+        a: "Named engineers are assigned before you sign. Your first call is with the engineer who writes the code.",
+      },
+      {
+        q: "How much do our working hours overlap?",
+        a: "4–8 hours of overlap with US and EU working days. Two-week sprints, a demo at the end of each, a named escalation contact, and a written weekly report.",
+      },
+      {
+        q: "Who owns the IP?",
+        a: "You own the IP: it is assigned to you on payment. An NDA is signed before scoping.",
+      },
+      {
+        q: "Can we start small?",
+        a: "Yes. Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo. Two weeks. Fixed price. Full IP. No obligation. We’ll give you a full quote for the wider build at the end of it, once we’ve seen the real codebase.",
+      },
       {
         q: "What kinds of projects do you take on?",
         // Reworded 2026-09-16 (owner's redesign): "we focus on custom web and

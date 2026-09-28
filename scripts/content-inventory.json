@@ -491,6 +491,22 @@
         ]
       },
       {
+        "item": "FAQ: the four buyer objections (2026-09-28)",
+        "proves": "Who writes the code, the overlap, who owns the IP and how to start small — answered in words the site already publishes (DECISIONS 2026-09-28, item 6); FAQPage is generated from the same items (check 14)",
+        "status": "required",
+        "needles": [
+          "Who writes the code?",
+          "Named engineers are assigned before you sign. Your first call is with the engineer who writes the code.",
+          "How much do our working hours overlap?",
+          "4–8 hours of overlap with US and EU working days. Two-week sprints, a demo at the end of each",
+          "Who owns the IP?",
+          "You own the IP: it is assigned to you on payment. An NDA is signed before scoping.",
+          "Can we start small?",
+          "Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo.",
+          "We’ll give you a full quote for the wider build at the end of it, once we’ve seen the real codebase."
+        ]
+      },
+      {
         "item": "FAQ: the two answers the redesign reworded",
         "proves": "Nothing: the first contradicted the six capabilities; the last named the contact section and \"book a call\"",
         "status": "cut",

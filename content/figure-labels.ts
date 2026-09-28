@@ -107,6 +107,16 @@ const labels: FigureLabel[] = [
      span around part of the label would open a gap inside it. */
   { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
   { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
+  /* The homepage FAQ's overlap answer (2026-09-28), and its FAQPage JSON-LD,
+     which repeats it word for word: its own instance, so its own entry. It
+     starts where the entry below does and is longer, so it wins here
+     (FigureText), and it occurs nowhere else. It ends before a space, never
+     before punctuation: verify-site check 14 reads the served answer with its
+     tags turned into spaces, and "sprints</span>," would read "sprints ,". */
+  {
+    text: "4–8 hours of overlap with US and EU working days. Two-week",
+    exempt: "The daily working-hours overlap with US and EU clients the homepage FAQ answer states, and its FAQPage answer repeats: a contract term, not a performance claim",
+  },
   /* /about's how-we-work tagline and terms — shown again, from the same
      content, in the homepage's how we work and beside the booking calendar on
      /contact (2026-09-28) — and the Organization description: the same term,

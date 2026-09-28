@@ -129,7 +129,8 @@ def p_faq_ld(s):
 def p_faq_client_only(s):
     s.write("components/site/home/VsClientOnly.tsx", '"use client";\nimport { useEffect, useState } from "react";\nexport default function VsClientOnly({ children }: { children: React.ReactNode }) {\n  const [on, setOn] = useState(false);\n  useEffect(() => setOn(true), []);\n  return on ? <>{children}</> : null;\n}\n')
     s.rep("components/site/home/Faq.tsx", 'import type { SiteContent } from "@/content/site-schema";\n', 'import type { SiteContent } from "@/content/site-schema";\nimport VsClientOnly from "./VsClientOnly";\n')
-    s.rep("components/site/home/Faq.tsx", '<p className="bf-faq__a">{item.a}</p>', '<p className="bf-faq__a"><VsClientOnly>{item.a}</VsClientOnly></p>')
+    # re-anchored 2026-09-28: the answer renders through <FigureText> (its figures are labelled where they sit)
+    s.rep("components/site/home/Faq.tsx", '                <FigureText text={item.a} />\n', '                <VsClientOnly>\n                  <FigureText text={item.a} />\n                </VsClientOnly>\n')
 
 
 def p_person_card(s):
@@ -341,6 +342,15 @@ def p_contact_form(s):
     s.append("app/site.css", "\n/* throwaway misuse CSS: the /contact project form collapsed (the .bf-project collision's shape) */\n#project > .bf-wrap { display: flex !important; flex-direction: column; align-items: flex-start; }\n")
 
 
+def p_fallback_face(s):
+    """2 (2026-09-28): text that the site's faces cannot draw, so the browser
+    paints it in a system fallback — Jost has no CJK glyphs. Check 2 reads only
+    text the browser renders since that day (an element in a closed <details>
+    is never painted); this proves it still sees the text it does render."""
+    s.rep("components/site/home/Faq.tsx", '        <div className="bf-faq__list">\n',
+          '        <p className="bf-lead">\u6f22\u5b57\u306e\u6587\u5b57\u5217\u3092\u8868\u793a\u3059\u308b</p>\n        <div className="bf-faq__list">\n')
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -410,6 +420,7 @@ CASES = [
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
     # new for the 2026-09-28 redesign, one per new rule
+    ["fallback-face", "text drawn in a system fallback face (CJK glyphs Jost does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
     ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case

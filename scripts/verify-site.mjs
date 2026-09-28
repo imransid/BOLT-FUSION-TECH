@@ -1034,12 +1034,17 @@ function collectInPage() {
   const fontPreloads = [...document.querySelectorAll('link[rel="preload"][as="font"]')].map((l) => l.getAttribute("href"));
 
   /* stamp text-bearing elements so the CDP pass can ask which platform font
-     actually rendered them — getComputedStyle only says what was asked for */
+     actually rendered them — getComputedStyle only says what was asked for.
+     Only text the browser renders: an element inside a closed <details> has a
+     box (an inline one even reports a size) but is never painted, so CDP names
+     no font for it, and "?" read as a fallback (2026-09-28: the first figure
+     wrapper inside an FAQ answer). checkVisibility() is false there. */
   let stamped = 0;
   for (const el of document.body.querySelectorAll("*")) {
     if (el.closest("script, style, noscript, template, svg")) continue;
     if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
     if (!visible(el)) continue;
+    if (typeof el.checkVisibility === "function" && !el.checkVisibility()) continue;
     el.setAttribute("data-vs-t", String(stamped));
     if (++stamped >= 1200) break;
   }
