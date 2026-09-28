@@ -4631,11 +4631,6 @@ button.bf-map__btn[aria-pressed="true"] {
   color: var(--bf-text);
 }
 
-.bf-contact__calhead .bf-lead {
-  margin-top: 6px;
-  font-size: 16px;
-}
-
 .bf-contact__next > .bf-lead {
   margin-top: 0;
 }

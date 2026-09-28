@@ -118,8 +118,10 @@ def p_vanishing_frame(s):
 
 
 def p_logotype(s):
-    # re-anchored 2026-09-28: the blurb moved into the calendar's column (the two-column /contact)
-    s.rep("app/contact/page.tsx", '<p className="bf-lead">\n                  <FigureText text={c.schedule.blurb} />', '<p data-logotype className="bf-lead">\n                  <FigureText text={c.schedule.blurb} />')
+    # re-anchored 2026-09-28: onto the panel's body, beside the calendar — the
+    # calendar's blurb it anchored on was cut that day (same meaning: a
+    # data-logotype on /contact text that is not the wordmark)
+    s.rep("app/contact/page.tsx", '              <p className="bf-lead">{c.body}</p>\n', '              <p data-logotype className="bf-lead">{c.body}</p>\n')
 
 
 def p_faq_ld(s):
@@ -362,7 +364,7 @@ def p_canonical(s):
 CASES = [
     # kept from the 2026-09-15 gate, re-anchored on the redesign's files
     ["vanishing-frame", "a WebGL context in a frame that removes itself", 25, r"WebGL context request\(s\) — (?:[^;]*; )*webgl2? in a child frame", p_vanishing_frame, {}],
-    ["logotype", "logotype on the schedule blurb (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
+    ["logotype", "logotype on the contact panel's body (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
     ["faq-drop", "FAQPage drops a question", 14, r"which FAQPage leaves out", p_faq_ld, {}],
     ["faq-answer", "FAQPage changes an answer", 14, r'FAQPage answers ".*" differently from the page', None, {"from": "faq-drop"}],
     ["faq-client", "FAQ answers rendered only in the browser", 14, r"is not in the served HTML — the markup describes", p_faq_client_only, {}],

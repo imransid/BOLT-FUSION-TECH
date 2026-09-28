@@ -444,8 +444,10 @@ const raw: SiteContentInput = {
     secondary: { label: "Tell Us About Your Project", href: "/contact#project" },
   },
   /* /contact. The panel's words (status, title, body, email) and the
-     calendar's (its heading, blurb and frame title) are the old homepage's,
-     unchanged, moved here on 2026-09-16. The project form is new: three fields
+     calendar's (its heading and frame title) are the old homepage's,
+     unchanged, moved here on 2026-09-16; the calendar's blurb, "Or grab an
+     open slot below…", was cut on 2026-09-28 (its "Or" answered the panel's
+     Schedule a Call, removed that day). The project form is new: three fields
      that open the visitor's email app, addressed to the team — the site's
      existing mechanism (mailto), with no backend and nothing stored. */
   contact: {
@@ -463,7 +465,6 @@ const raw: SiteContentInput = {
     emailAddress: "hello@boltfusiontech.com",
     schedule: {
       title: "Pick a time (30 min)",
-      blurb: "Or grab an open slot below — same 30‑minute intro call.",
       frameTitle: "Schedule a 30-minute call — Bolt Fusion Tech",
       // Calendly paints its own white interface and ignores the colour
       // parameters, so the panel is placed as a light card and says whose

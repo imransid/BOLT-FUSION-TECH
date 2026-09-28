@@ -420,8 +420,10 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   happens next and the email on the left (5 of 12), the booking calendar on
   the right (7 of 12), so the calendar is in the first viewport; one column
   below that, the calendar right after the h1 (`grid-template-areas`, with the
-  DOM in the phone's order). The project form sits under both, at least 480px
-  wide at 1440 (check 32).
+  DOM in the phone's order). The calendar's heading stands alone: its blurb,
+  "Or grab an open slot below…", answered the panel's own Schedule a Call,
+  which went that day, and was cut. The project form sits under both, at
+  least 480px wide at 1440 (check 32).
 - **One light surface, on purpose:** the booking calendar on /contact. Calendly
   paints its own white interface and ignores the colour parameters, so the embed
   is a card we place — white (`--bf-paper`), generous padding, the design's 2px
@@ -1380,7 +1382,9 @@ RUN 2 (`scripts/gate/gate-cases.py`).
   `Capabilities.tsx` is gone); `person-card` onto how we work's headcount as
   well as /about's Team section, since that is where the team is shown on `/`;
   `faq-client` onto the answer's `<FigureText>`; `logotype` onto /contact's
-  blurb. `kubernetes` still patches the stack's list, which renders on
+  blurb, and — once that blurb was cut, the same day — onto the contact
+  panel's body beside the calendar (still /contact text that is not the
+  wordmark). `kubernetes` still patches the stack's list, which renders on
   /engineering only now, so /engineering's inventory includes the evidence
   cuts and check 30 still sees a cut technology come back. `cache-lane`
   stands: the restaurant search's lanes stay on `/`, as a band in the stories.
@@ -1583,7 +1587,7 @@ the hiring terms were only on /about, and "pilot" appeared nowhere on `/`.
 | No new promises, no new figures | no reply time, no price, no call length. /about's interim quote line ("We'll give you a full quote … once we've seen the real codebase") is on `/` only where /about has it, under the engagement models in how we work. The FAQ's older "How do you estimate timeline and cost?" answers with ranges after a short discovery; the two are the owner's to reconcile, and the FAQ does not repeat the quote line beside it | `motion-hire/ia` |
 | How we work with you | the four terms, the engagement models, the line under them and the operating detail, the pilot (Week 1, Week 2, Deliverable) on the `pilot` trace hook, the headcount and where the engineers work — every word /about's; closes with Schedule a Call and the ghost "Start a 2-week pilot" | `motion-hire/ia` |
 | The FAQ | four buyer objections first — who writes the code, the overlap, who owns the IP, can we start small — in words the site already publishes; "4–8 hours of overlap … Two-week" has its own exemption, since FAQPage carries it. "Can we start small?" ends at the pilot's terms ("Two weeks. Fixed price. Full IP. No obligation.") | `motion-hire/ia` |
-| /contact | the `.bf-project` class collision fixed; two columns from 1025px with the calendar in the first viewport, after the h1 on a phone; check 32 holds the form at 480px or wider at 1440 | `motion-hire/ia` |
+| /contact | the `.bf-project` class collision fixed; two columns from 1025px with the calendar in the first viewport, after the h1 on a phone; check 32 holds the form at 480px or wider at 1440. The panel's own Schedule a Call (a jump to the calendar beside it) went, and so did the calendar's blurb, "Or grab an open slot below…", whose "Or" answered it (a cut item in the inventory) | `motion-hire/ia` |
 | Mobile | no header Schedule a Call below 520px: it does not fit at 360 (measured, *Design language*); contextual primaries after the proof and after how we work instead; no sticky bar. The proof's comes straight after the pair of write-ups, each a phone card of its outcome and result: 1,974px after the hero's at 390, where it was 4,667, and `#recent-work` 3,256px tall there (from 4,412). The ledger shows no diagram below 768px, where its labels would fall under 13px | `motion-hire/ia` |
 | Hierarchy and rhythm | three chapter heads, `clamp(48px, 4.4vw, 64px)` from 1025 — 63px at 1440, inside DECISIONS' 56–64 from 1273, and under the h1 below that, where 56 would have put them above it — every other homepage h2 at 40px, the proof's included, since it shares the first screen with the h1; the final title never above the h1; chips at 12px/600; related sections' padding 80px on a desktop (DECISIONS' 64–80), 64 on a tablet and 56 on a phone, and 128px only above a chapter; 44px hit areas on the homepage's inline links, the hero's proof line at every width; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
 | Honesty cleanup | NIdle Finishing's only proof link 301s to a bare PNG: removed, and the card held back until a working link exists (*Projects and attribution*). The rest of the brief's row 14 is the owner's | `motion-hire/ia` |

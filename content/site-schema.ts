@@ -374,7 +374,10 @@ export const siteContentSchema = z
       emailAddress: z.string().email(),
       schedule: z.strictObject({
         title: z.string().min(1),
-        blurb: z.string().min(1),
+        /* No blurb since 2026-09-28: "Or grab an open slot below — same
+           30‑minute intro call." answered the panel's own Schedule a Call,
+           which went when the calendar moved beside the h1 (its "Or" pointed
+           at nothing). */
         frameTitle: z.string().min(1),
         /** Whose calendar this is and who hosts it, on the panel itself. */
         caption: z.string().min(1),

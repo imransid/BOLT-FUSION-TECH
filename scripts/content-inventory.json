@@ -520,7 +520,7 @@
         "item": "Contact and booking, moved to /contact",
         "proves": "Routes to a conversation — PROOF (the booking calendar), required on /contact",
         "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /contact (MOVES.md), where its inventory requires every needle",
+        "retired": "owner's redesign 2026-09-16 — moved to /contact (MOVES.md), where its inventory requires every needle but one: the calendar's blurb, \"Or grab an open slot below…\", was cut there on 2026-09-28 (its \"Or\" pointed at the panel's Schedule a Call, removed that day)",
         "needles": [
           "Tell us what you need to ship",
           "Share goals, timeline, and constraints—we'll reply with honest f",
@@ -744,8 +744,16 @@
         "proves": "PROOF: the 30-minute intro call, bookable — every Schedule a Call lands here (#schedule)",
         "status": "required",
         "needles": [
-          "Pick a time (30 min)",
-          "Or grab an open slot below — same 30‑minute intro call."
+          "Pick a time (30 min)"
+        ]
+      },
+      {
+        "item": "The booking calendar's blurb",
+        "proves": "An alternative to the contact panel's Schedule a Call, a jump to this calendar",
+        "status": "cut",
+        "cut": "2026-09-28: its \"Or\" pointed at the panel's Schedule a Call, removed that day when the calendar moved beside the h1 (DECISIONS 2026-09-28, item 4; BRIEF §2 row 5, SAFE)",
+        "needles": [
+          "Or grab an open slot below"
         ]
       },
       {

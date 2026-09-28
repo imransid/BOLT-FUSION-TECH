@@ -97,9 +97,6 @@ export default function ContactPage() {
                 <h2 id="schedule-title" className="bf-contact__h2">
                   <FigureText text={c.schedule.title} />
                 </h2>
-                <p className="bf-lead">
-                  <FigureText text={c.schedule.blurb} />
-                </p>
               </div>
               {/* Calendly paints its own white interface and ignores the
                   colour parameters, so the embed is a light card we place on
