@@ -10,8 +10,9 @@
 # RUN 1  a FRESH copy of HEAD ($SP/g1-copy), installed and built, served fresh
 #        on :3465 (a long-lived `next start` once hung an optimizer request —
 #        CLAUDE.md, check 10); the load average printed; the full suite with
-#        --repo, all 33 checks. Every failing finding is real: there is no
-#        pending allowance.
+#        --repo, all 33 checks, and scripts/probe-scene.mjs (the hero scene's
+#        pixels over time, every check; 2026-09-29). Every failing finding is
+#        real: there is no pending allowance.
 # then   scripts/gate/gate-proof.sh — RUN 2 and RUN 3 on :3466, with RUN 1's
 #        report as the control for the expectation table.
 # Exit 0 GATE PASSED · 1 GATE FAILED · 3 aborted, no verdict.
@@ -65,6 +66,11 @@ echo "  suite exit $rc (load average $(load))"
 { [ $rc -eq 0 ] || [ $rc -eq 1 ]; } || { tail -20 $OUT/run1.txt; die "the suite died (exit $rc) — no verdict"; }
 [ -s $OUT/run1.json ] || die "the suite wrote no JSON report"
 node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));const ids=new Set(r.results.map(c=>c.id));const miss=[];for(let i=1;i<=Number(process.argv[2]);i++)if(!ids.has(i))miss.push(i);if(miss.length){console.log("  the report lacks checks: "+miss.join(", "));process.exit(1)}' $OUT/run1.json $CHECKS || die "the suite report does not hold all $CHECKS checks"
+rm -f $OUT/run1-probe.json
+node scripts/probe-scene.mjs --base http://localhost:$PORT --json $OUT/run1-probe.json > $OUT/run1-probe.txt 2>&1; qrc=$?
+echo "  probe-scene exit $qrc (load average $(load))"
+{ [ $qrc -eq 0 ] || [ $qrc -eq 1 ]; } || { tail -20 $OUT/run1-probe.txt; die "probe-scene died (exit $qrc) — no verdict"; }
+[ -s $OUT/run1-probe.json ] || die "probe-scene wrote no JSON report"
 echo "--- measured (checks 25, 28, 29)"
 node - $OUT/run1.json <<'JS'
 const r = JSON.parse(require("fs").readFileSync(process.argv[2], "utf8"));
@@ -75,8 +81,8 @@ for (const c of r.results) {
 }
 JS
 echo "--- RUN 1: every failing finding is real (there is no pending allowance)"
-node - $OUT/run1.json <<'JS' || REAL=1
-const r = JSON.parse(require("fs").readFileSync(process.argv[2], "utf8"));
+node - $OUT/run1.json $OUT/run1-probe.json <<'JS' || REAL=1
+const r = { results: process.argv.slice(2).flatMap((f) => JSON.parse(require("fs").readFileSync(f, "utf8")).results) };
 const real = [];
 for (const c of r.results) {
   if (c.status === "SKIP") real.push(`${c.id} SKIPPED — ${c.info.join("; ")}`);
@@ -91,7 +97,7 @@ JS
 stop
 echo "$HEAD" > $OUT/run1.sha
 
-CONTROL=$OUT/run1.json CONTROL_SHA=$HEAD SRC="$SRC" bash $E/gate-proof.sh; prc=$?
+CONTROL=$OUT/run1.json CONTROL_PROBE=$OUT/run1-probe.json CONTROL_SHA=$HEAD SRC="$SRC" bash $E/gate-proof.sh; prc=$?
 [ $prc -eq 3 ] && die "the proof aborted — no verdict"
 
 echo "=== GATE VERDICT for $HEAD (load average $(load))"

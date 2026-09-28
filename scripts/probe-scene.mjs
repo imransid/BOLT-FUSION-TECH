@@ -49,7 +49,8 @@
  *   charge      on fresh pages, hovering and then focusing the hero's
  *               Schedule a Call: the seams brighten ~40% (x1.2–1.7), eased in
  *               (at most 60% in the first 0.1s, at least 75% by 0.6s), stay
- *               blue (b > g > r), and return within 1.6s of leaving; paused,
+ *               blue (b > g > r, and the blue channel held while red and
+ *               green rise), and return within 1.6s of leaving; paused,
  *               a hover changes nothing; hovered before the scene mounts, the
  *               first frame is still the poster, and the charge follows.
  *   explode     scrolled past the span (the field held in view), the stack
@@ -68,7 +69,8 @@
  *
  * Exit 0 when every check passed, 1 otherwise. The frames it read go to
  * --shots when given; --json writes a report in the suite's shape (each check
- * `probe:<name>`, its status, findings and info).
+ * `probe:<name>`, its status, findings and info), which the gate reads
+ * (scripts/gate/gate-cases.py, PROBE_CASES).
  */
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -303,15 +305,7 @@ function seamGain(ref, img) {
   const mean = (x, y, z) => (n ? [x / n, y / n, z / n] : [0, 0, 0]);
   const c = mean(r, g, b);
   const c0 = mean(r0, g0, b0);
-  return { gain: n ? ratios[n >> 1] : 0, n, rgb: c.map(Math.round).join(","), hue: hue(c), restHue: hue(c0) };
-}
-/** The hue of an sRGB colour, in degrees. */
-function hue([r, g, b]) {
-  const mx = Math.max(r, g, b);
-  const mn = Math.min(r, g, b);
-  if (mx === mn) return 0;
-  const h = mx === r ? (g - b) / (mx - mn) : mx === g ? 2 + (b - r) / (mx - mn) : 4 + (r - g) / (mx - mn);
-  return (h * 60 + 360) % 360;
+  return { gain: n ? ratios[n >> 1] : 0, n, rgb: c.map(Math.round).join(","), restRgb: c0.map(Math.round).join(","), d: c.map((v, k) => v - c0[k]) };
 }
 /** Two frames' difference: mean per channel, the share of pixels off by more than 24 in sum, the largest channel. */
 function diff(a, b) {
@@ -581,17 +575,20 @@ try {
       const sr = series[how];
       const full = sr[sr.length - 1];
       const rise = (x) => (x.gain - 1) / Math.max(1e-6, full.gain - 1);
-      info(`${how}: the seams' linear luminance against the untouched page — ${sr.map((x) => `x${x.gain.toFixed(2)} at ${x.t}s`).join(", ")} (${full.n} seam pixels); charged, they read rgb ${full.rgb}, hue ${full.hue.toFixed(1)}° (at rest ${full.restHue.toFixed(1)}°)`);
+      info(`${how}: the seams' linear luminance against the untouched page — ${sr.map((x) => `x${x.gain.toFixed(2)} at ${x.t}s`).join(", ")} (${full.n} seam pixels); charged, they read rgb ${full.rgb} (at rest ${full.restRgb}: ${full.d.map((v) => (v >= 0 ? "+" : "") + v.toFixed(1)).join(", ")})`);
       if (full.gain < 1.3 || full.gain > 1.55) fail(`${how}: at full charge the seams are x${full.gain.toFixed(2)} as bright — the charge is +40%`);
       if (rise(sr[0]) > 0.6) fail(`${how}: ${Math.round(100 * rise(sr[0]))}% of the charge came in the first 0.1s — it eases in, it does not jump`);
       if (rise(sr[3]) < 0.75) fail(`${how}: only ${Math.round(100 * rise(sr[3]))}% of the charge after 0.6s — it eases in over about 0.6s`);
-      /* brighter BLUE, never amber: blue leads green leads red, and the hue
-         holds. The order alone cannot see it — the site's amber mixed in at
-         the charge's 24% still reads blue > green > red, but turns the hue
-         11.5 degrees; the pale blue turns it 1.4 */
+      /* brighter BLUE, never amber: blue leads green leads red, and the blue
+         holds while red and green rise. The order alone cannot see amber —
+         mixed in at the charge's 24% it still reads blue > green > red — and
+         nor can the hue, which the antialiased seams hold within 2 degrees
+         either way. The blue channel can: the brand blue is at full, the pale
+         blue keeps it there, and any warmer target lowers it (measured
+         2026-09-29: +0.2 for the pale blue, -10.1 for amber) */
       const [cr, cg, cb] = full.rgb.split(",").map(Number);
-      const turn = Math.abs(((full.hue - full.restHue + 540) % 360) - 180);
-      if (!(cb > cg && cg > cr) || turn > 5) fail(`${how}: the charged seams are rgb ${full.rgb}, their hue turned ${turn.toFixed(1)}° from the resting seams' — the charge is a brighter blue, never amber`);
+      const [dr, dg, db] = full.d;
+      if (!(cb > cg && cg > cr) || db < -3 || !(dr > 0 && dg > 0)) fail(`${how}: the charged seams are rgb ${full.rgb} against ${full.restRgb} at rest — blue ${db >= 0 ? "+" : ""}${db.toFixed(1)} as red rises ${dr.toFixed(1)} — the charge is a brighter blue, never amber`);
     }
     /* and back out: the hovered page's pointer steps off the CTA (8px below it,
        a 2px change of the pointer against 1000: the camera barely moves) */
@@ -782,8 +779,11 @@ try {
           at = i * 0.2;
         }
       info(`${label}: down ${drop.toFixed(3)} in all, at most ${worst.toFixed(3)} (${Math.round((100 * worst) / Math.max(drop, 1e-9))}%) in one 0.2s step, at ${at.toFixed(1)}s`);
+      /* two findings, not one: a drop a little short of the share still shows
+         whether it went in one step (the gate builds every misuse at once, and
+         a scene swung elsewhere shows less comet light to lose) */
       if (drop < minDrop) fail(`${label}: only ${drop.toFixed(3)} went — the watchdog never dropped it`);
-      else if (worst > 0.5 * drop) fail(`${label}: ${Math.round((100 * worst) / drop)}% of it went in one 0.2s step at ${at.toFixed(1)}s — it vanished instead of fading`);
+      if (drop >= 0.5 * minDrop && worst > 0.5 * drop) fail(`${label}: ${Math.round((100 * worst) / drop)}% of it went in one 0.2s step at ${at.toFixed(1)}s — it vanished instead of fading`);
     };
     /* the comets go (a trace of cyan elsewhere stays); the outer tier is at least 5% of what is lit */
     phase(flow, "the comets", 0.8);

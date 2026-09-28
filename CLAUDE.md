@@ -641,7 +641,11 @@ for more than five seconds has a pause control.
     on their own clock at 1.6x. All of it eases in and out at 5 per second,
     about 0.6s either way (60% of it by 0.2s, all of it by 0.6s), and back
     out on leave or blur. It is a brighter BLUE, never amber: amber means
-    target. The comets run on `pulseClock`, not on `t`, because changing the
+    target. `probe-scene` holds it by the blue channel, which the charge must
+    not lower while red and green rise (+33.9, +23.2, +0.2): the channels'
+    order and the hue could not see amber mixed in at the same 24% (it keeps
+    blue > green > red and turns the antialiased seams' hue 1.6 degrees), but
+    its blue falls by 10 (2026-09-29, the gate's `charge-amber`). The comets run on `pulseClock`, not on `t`, because changing the
     rate under `phase + t x rate` would make every comet jump. The scene
     listens to the button itself (pointerenter/leave, focus/blur) and exposes
     nothing to the page; the canvas stays `pointer-events: none`, and the
@@ -1078,12 +1082,14 @@ robots.txt must not name them, and no page may link to them.
 
 **The gate (`scripts/gate/`, moved into the repository 2026-09-24).** Nothing
 goes to `main` unless `scripts/gate/gate.sh` passes on the committed HEAD: RUN 1,
-the full suite with `--repo` on a fresh copy and a fresh server (:3465); RUN 2,
-every misuse case in `gate-cases.py` patched into one build, each of which must
-fail its own check with its own finding (and that finding must not already be on
-the clean build); RUN 3, bad content the build must refuse in the schema's own
-words. `--only` is derived from the case table, never written by hand. A case
-whose anchor stops applying aborts the gate; a rule that cannot exist any more is
+the full suite with `--repo` on a fresh copy and a fresh server (:3465), and
+`scripts/probe-scene.mjs` beside it (2026-09-29); RUN 2, every misuse case in
+`gate-cases.py` — the suite's `CASES` and the hero scene's `PROBE_CASES` —
+patched into one build, each of which must fail its own check with its own
+finding (and that finding must not already be on the clean build); RUN 3, bad
+content the build must refuse in the schema's own words. `--only` is derived
+from the case table, never written by hand. A case whose anchor stops applying
+aborts the gate; a rule that cannot exist any more is
 RETIRED with its reason, printed on every run. Scratch copies go under
 `$GATE_TMP` (default `$TMPDIR/bf-gate`). It lived in a session scratchpad until
 then, and was lost with it once.
@@ -1190,7 +1196,16 @@ and lab — and requires the schema's own refusal in the build log: a build that
 fails for another reason is unsure. The suite's `--only` list for RUN 2 is
 derived from the case table: a hand-written list once omitted check 9, and its
 case could not fail. A case whose target does not exist yet names the wave that
-brings it and holds the verdict at INCOMPLETE until it runs.
+brings it and holds the verdict at INCOMPLETE until it runs. **The hero scene's
+cases (2026-09-29)** check `probe:<name>` — `scripts/probe-scene.mjs`, whose
+`--json` report the expectation table reads beside the suite's, with its own
+derived `--only` (`gate-cases.py probe-only`). Every other case's patch is in
+the same build, so each scene patch leaves the t = 0 frame alone, and each
+finding names its cause (`cover` in the poster's, `scene-poster-v1` in the
+identity's): two of the suite's patches hide the poster outright (`h2-hidden`,
+`scene-hides-poster`), which would have let the poster and identity checks
+pass on nothing, so the probe shows a hidden poster to measure it and fails
+the hiding separately.
 
 **The inner pages (2026-09-16).** With `app/techwix.css` deleted, check 31 as
 written — it knows the site's stylesheet by `.tw-root` / `.tw-hero` /
@@ -1404,7 +1419,12 @@ viewport-triggered is already over. Against a local build: `node
 scripts/probe-scene.mjs --base http://localhost:<port> [--only a,b] [--json
 <file>]` (SwiftShader; `--gpu` for the machine's GPU, where the poster
 comparisons print the cross-rasteriser diff instead of failing); about a
-minute and a half. Exit 1 on any failure.
+minute and a half. Exit 1 on any failure. **The gate runs it** (2026-09-29):
+RUN 1 on the clean HEAD, where every probe finding is a real failure, and RUN
+2 on the misuse build, where each `PROBE_CASES` row of
+`scripts/gate/gate-cases.py` must fail its own probe check with its own
+finding — the proofs that the probe's rules can fail live in the repository,
+not in a scratch folder.
 
 **Run it against the merged result**, not a single branch or the stack: build
 `main` with every open branch merged in order, then run the whole suite. Three

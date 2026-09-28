@@ -11,8 +11,19 @@ validate-next.sh's hand-written list once omitted check 9, and its case could
 not fail.
 
   python3 gate-cases.py only                 the --only list, from the table
+  python3 gate-cases.py probe-only           scripts/probe-scene.mjs's --only
+                                             list, from PROBE_CASES
   python3 gate-cases.py apply <root> <json>  patch <root>; write the table with
                                              each case's status to <json>
+
+PROBE_CASES (2026-09-29) are the hero scene's: rules that live in pixels over
+time, which scripts/probe-scene.mjs checks and the suite cannot. Their check
+is `probe:<name>`, read from the probe's --json report, and the gate runs the
+probe on the clean HEAD (RUN 1, the control) and on the misuse build (RUN 2)
+beside the suite. Their patches go into the same misuse build as every other
+case's, so each patch leaves the scene's t = 0 frame alone (the poster and the
+first frames it is compared with stay what they are) and each finding names
+its own cause — a case must not pass on another case's damage.
 
 A case is
   applied   its patch went in;
@@ -400,6 +411,85 @@ RETIRED = [
 ]
 
 
+
+# ── the hero scene's patches (PROBE_CASES): each fails one probe-scene check ─
+
+
+def p_scene_gap(s):
+    """explode: the stack opened 0.3 a plate — the band at full open"""
+    s.rep("components/field/scene.ts", "const EXPLODE_GAP = 0.13;", "const EXPLODE_GAP = 0.3;")
+
+
+def p_scene_nohold(s):
+    """reload: the exploded view starts where the scroll is at mount, so a
+    page loaded mid-scroll draws an opened stack as its first frame"""
+    s.rep("components/field/scene.ts", "  let explode = 0; // the exploded view", "  let explode = Math.min(1, window.scrollY / 393); // THROWAWAY misuse: the exploded view")
+
+
+def p_scene_nopause(s):
+    """explode and charge: Pause motion ignored — the loop keeps running"""
+    s.rep("components/field/scene.ts", "      paused = p;\n", "      paused = p && false; // THROWAWAY misuse\n")
+
+
+def p_scene_pop(s):
+    """watchdog: the comets dropped in one frame instead of faded"""
+    s.rep("components/field/scene.ts", "      cometK = Math.max(0, cometK - dt / FADE_S);", "      cometK = 0; // THROWAWAY misuse")
+
+
+def p_charge_amber(s):
+    """charge: the seams mix toward amber — which keeps blue > green > red
+    at the charge's 24%, and lowers the blue"""
+    s.rep("components/field/scene.ts", "vec3( 0.62, 0.8, 1.0 ), uCharge );", "vec3( 0.98, 0.75, 0.14 ), uCharge ); // THROWAWAY misuse")
+
+
+def p_charge_jump(s):
+    """charge: it snaps on instead of easing"""
+    s.rep("components/field/scene.ts", "const CHARGE_EASE = 5;", "const CHARGE_EASE = 80;")
+
+
+def p_scene_cross_core(s):
+    """overlap: the inner tier sways 52 degrees — the web and the AI swing
+    in front of the core. t = 0 is the sway's centre, so the poster holds"""
+    s.rep("components/field/scene.ts", "const INNER: Tier = { radius: 1.75, y: 2.25, swing: 0.3,", "const INNER: Tier = { radius: 1.75, y: 2.25, swing: 0.9,")
+
+
+def p_scene_cross_lab(s):
+    """overlap: the outer tier sways 52 degrees against the inner — the Lab
+    robot meets the AI"""
+    s.rep("components/field/scene.ts", "const OUTER: Tier = { radius: 2.25, y: 0.36, swing: 0.22,", "const OUTER: Tier = { radius: 2.25, y: 0.36, swing: -0.9,")
+
+
+def p_poster_cover(s):
+    """poster: covering its field again — the 16:9 field at 768 cuts the
+    frame's top and bottom (the adversarial review, 2026-09-29)"""
+    s.rep("app/site.css", "  object-fit: contain;\n  object-position: 50% 50%;\n", "  object-fit: cover;\n  object-position: 50% 50%;\n")
+
+
+def p_poster_stale(s):
+    """identity: the desktop sources serve the v1 poster — a frame of
+    another scene, which the canvas no longer matches"""
+    for ext in ("avif", "webp"):
+        s.rep("components/site/home/Hero.tsx", f'srcSet="/hero/scene-poster-v2-660-1x.{ext} 660w, /hero/scene-poster-v2-1320.{ext} 1320w"', f'srcSet="/hero/scene-poster-v1-660.{ext} 660w, /hero/scene-poster-v1-1320.{ext} 1320w"')
+
+
+# the hero scene's cases (2026-09-29): the same shape, the check a
+# scripts/probe-scene.mjs check, `probe:<name>`. One per rule the probe holds
+# that the suite cannot see (CLAUDE.md, "The hero field").
+PROBE_CASES = [
+    ["scene-gap", "the exploded view opened 0.3 a plate — the stack reaches the frame's edge", "probe:explode", r"^@660 fully open, [^:]*: the edge band is \d+ off the ground", p_scene_gap, {}],
+    ["scene-nohold", "the exploded view starts from the scroll at mount — a mid-scroll reload opens before the fade", "probe:reload", r"^loaded mid-scroll, the first frame is not the poster", p_scene_nohold, {}],
+    ["scene-nopause", "Pause motion ignored by the scene — the stack follows the scroll while paused", "probe:explode", r"^paused, the stack still moved with the scroll \([1-9]\d* draw calls", p_scene_nopause, {}],
+    ["scene-nopause-charge", "Pause motion ignored by the scene — the charge answers a hover while paused", "probe:charge", r"^paused, the scene still answered the hover \([1-9]\d* draw calls", None, {"from": "scene-nopause"}],
+    ["scene-pop", "the watchdog drops the comets in one frame", "probe:watchdog", r"^the comets: \d+% of it went in one 0\.2s step at [\d.]+s — it vanished instead of fading", p_scene_pop, {}],
+    ["charge-amber", "the charge mixes toward amber (the order of the channels holds, the blue falls)", "probe:charge", r"^hover: the charged seams are rgb [\d,]+ against [\d,]+ at rest — blue -\d+\.\d as red rises [\d.]+ — the charge is a brighter blue, never amber", p_charge_amber, {}],
+    ["charge-jump", "the charge snaps on instead of easing", "probe:charge", r"^hover: \d+% of the charge came in the first 0\.1s — it eases in, it does not jump", p_charge_jump, {}],
+    ["scene-cross-core", "the inner tier sways 52° — modules swing in front of the core", "probe:overlap", r'^assembled: "(?:web|ai)" comes within -?[\d.]+px of the core, in front of it — a module crosses the core', p_scene_cross_core, {}],
+    ["scene-cross-lab", "the outer tier sways 52° against the inner — a live module crosses the Lab robot", "probe:overlap", r'^assembled: "\w+" and "\w+" come within -?[\d.]+px of each other — a live module crosses the Lab robot', p_scene_cross_lab, {}],
+    ["poster-cover", "the poster covers its field again — the frame cut at 768", "probe:poster", r"^@768, the drift's (?:from|to) end: the field's 16px band is not the ground — .*\(\S+, cover, transform", p_poster_cover, {}],
+    ["poster-stale", "the desktop sources serve the v1 poster — not this scene's first frame", "probe:identity", r"^@660 DPR 2: the canvas's t = 0 frame differs from the poster the browser draws under it \(scene-poster-v1-1320", p_poster_stale, {}],
+]
+
+
 # ── RUN 3: bad content the BUILD must refuse, each with the schema's own
 #    words in the build log (a build that fails for another reason — a font
 #    download, the disk — is unsure, and a failure) ───────────────────────────
@@ -462,11 +552,15 @@ def only():
     return ",".join(str(i) for i in ids)
 
 
+def probe_only():
+    return ",".join(sorted({c[2].split(":", 1)[1] for c in PROBE_CASES}))
+
+
 def apply(root, out):
     global ROOT
     ROOT = root
     status = {}
-    for key, name, check, expect, patch, opt in CASES:
+    for key, name, check, expect, patch, opt in CASES + PROBE_CASES:
         if patch is None:
             continue
         st = Stage()
@@ -481,7 +575,7 @@ def apply(root, out):
         st.flush()
         status[key] = ("applied", ", ".join(sorted(st.files)))
     rows = []
-    for key, name, check, expect, patch, opt in CASES:
+    for key, name, check, expect, patch, opt in CASES + PROBE_CASES:
         src = key if patch else opt["from"]
         s, detail = status[src]
         rows.append({"key": key, "name": name, "check": check, "expect": expect, "status": s, "detail": detail, "reanchor": opt.get("reanchor"), "needs": opt.get("needs")})
@@ -498,6 +592,8 @@ def apply(root, out):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["only"]:
         print(only())
+    elif sys.argv[1:2] == ["probe-only"]:
+        print(probe_only())
     elif sys.argv[1:2] == ["apply"]:
         apply(sys.argv[2], sys.argv[3])
     elif sys.argv[1:2] == ["bad-list"]:
