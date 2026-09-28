@@ -12,10 +12,12 @@ import TierChip, { TierLegend } from "../TierChip";
  *  tier it carries (with its scope where it has one), the work it links, "in
  *  depth" to its section on /capabilities, and its own diagram at a compact
  *  size. Robotics is Lab: its honesty line is a visible element marked
- *  `data-honesty`, in SPEC §8b.7's words, and its diagram keeps the caption
- *  "Concept — not a shipped system" — at every width, the diagram's own plate
- *  aside. The row carries the capability's id, so `#software` … `#cloud` land
- *  on the homepage as they always have. */
+ *  `data-honesty`, in SPEC §8b.7's words, and "Concept — not a shipped system"
+ *  is visible at every width — the diagram's figcaption from 768px, and below
+ *  that, where the ledger shows no diagram, a concept tag beside the Lab chip
+ *  (one of the two is shown at any width; app/site.css). The row carries the
+ *  capability's id, so `#software` … `#cloud` land on the homepage as they
+ *  always have. */
 function Row({ c, n }: { c: Capability; n: number }) {
   const titleId = `cap-${c.id}-title`;
   const workId = `cap-${c.id}-work`;
@@ -35,6 +37,7 @@ function Row({ c, n }: { c: Capability; n: number }) {
           {c.evidence.map((e) => (
             <TierChip key={e.tier} tier={e.tier} scope={e.scope} />
           ))}
+          {c.diagram.caption ? <span className="bf-concept bf-cap6__concept">{c.diagram.caption}</span> : null}
         </div>
         {c.honesty ? (
           <p className="bf-honesty bf-cap6__honesty" data-honesty>
@@ -79,10 +82,11 @@ function Row({ c, n }: { c: Capability; n: number }) {
  * (verify-site check 33). The tier legend sits under the heading, where the
  * tiers are first used.
  *
- * The diagrams are drawn about 380px wide from 1025px (labels 12–13.5px) and
- * beside their row at 768–1024; below 768px the ledger shows none — at a
- * phone's width their labels would fall under 13px — and each row links to
- * its diagram on /capabilities. Robotics' caption stays, as text.
+ * The diagrams sit beside their row from 1025px — 440px wide from 1280
+ * (labels 12.3–15.8px), 420px below that (11.7–15.1px) — and under it at
+ * 768–1024 (up to 440px, 12.1–15.5px); below 768px the ledger shows none — at
+ * a phone's width their labels would fall under 13px — and each row links to
+ * its diagram on /capabilities. Robotics' caption stays, beside its Lab chip.
  *
  * The Service JSON-LD is tied to this section (app/page.tsx): one node per
  * capability, emitted when the ledger renders.

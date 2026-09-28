@@ -28,7 +28,10 @@ const STEPS = [
  *  the name, the outcome, then the problem, the system, the engineering and the
  *  result. Only a published project links anywhere, and it links to its
  *  write-up. The restaurant search's three lanes, its system drawn out, are a
- *  band of their own under the pair (below). */
+ *  band of their own under the pair (below).
+ *
+ *  Each step carries its key (`data-step`): on a phone the card shows only the
+ *  result of the four, and the write-up the rest (app/site.css). */
 function Story({ w }: { w: Work }) {
   const published = w.state === "published" && Boolean(w.href);
   const anchor = w.imgClass ? IMG_ANCHOR[w.imgClass] ?? "top" : "top";
@@ -53,7 +56,7 @@ function Story({ w }: { w: Work }) {
         </p>
         <dl className="bf-story__steps">
           {STEPS.map(([key, label]) => (
-            <div key={key} className="bf-story__step">
+            <div key={key} className="bf-story__step" data-step={key}>
               <dt>{label}</dt>
               <dd>
                 <FigureText text={w.story[key]} />
@@ -106,10 +109,16 @@ function LanesBand({ story, title }: { story: Work; title: string }) {
 /**
  * Engineering stories (SPEC §5), second on the homepage since 2026-09-28 — the
  * proof, straight after the hero (DECISIONS 2026-09-28, item 1): the two
- * write-ups side by side from 1025px, each with who built it; the restaurant
- * search's three lanes; the links to all work; the proof strip — "From systems we shipped." (SPEC §8b.1; never
- * "Measured on…": ~$0.001 is a target) — and then the section's own Schedule a
- * Call, the contextual primary after the proof.
+ * write-ups side by side from 1025px, each with who built it; then the
+ * section's own Schedule a Call and the link to all work — the contextual
+ * primary right after the proof, which at 390 is about 2,000px after the
+ * hero's rather than 4,700; then the restaurant search's three lanes and the
+ * proof strip — "From systems we shipped." (SPEC §8b.1; never "Measured on…":
+ * ~$0.001 is a target).
+ *
+ * Its heading is the standard h2, not a chapter head: at 1440 it shares the
+ * first screen with the h1, and two near-equal headlines there blurred which
+ * one leads.
  *
  * The section keeps `id="recent-work"`, the anchor the write-ups' "← All work"
  * link has always pointed at, and the proof strip's rows sit inside it with no
@@ -129,7 +138,7 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
             lead and the link to every case study on the right — so the first
             write-up starts inside the first screen and a half. */}
         <div className="bf-proofsec__head">
-          <SectionHead id="work-title" eyebrow={work.eyebrow} title={work.title} className="bf-head--chapter" />
+          <SectionHead id="work-title" eyebrow={work.eyebrow} title={work.title} />
           <div className="bf-proofsec__aside" data-bf-reveal>
             <p className="bf-lead">{work.subtitle}</p>
             <Cta href="/work#case-studies" variant="quiet" className="bf-proofsec__all">
@@ -142,8 +151,6 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
             <Story key={w.title} w={w} />
           ))}
         </div>
-        {laneStory ? <LanesBand story={laneStory} title={lanesTitle} /> : null}
-        <ProofStrip id="proof-title" title={work.proofTitle} note={work.proofNote} />
         <p className="bf-actions bf-proofsec__cta">
           <Cta href={SCHEDULE_HREF} cta="schedule">
             {SCHEDULE_LABEL}
@@ -152,6 +159,8 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
             See all work ({ourWork} projects)
           </Cta>
         </p>
+        {laneStory ? <LanesBand story={laneStory} title={lanesTitle} /> : null}
+        <ProofStrip id="proof-title" title={work.proofTitle} note={work.proofNote} />
       </div>
     </section>
   );

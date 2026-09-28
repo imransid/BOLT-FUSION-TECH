@@ -386,9 +386,12 @@ const raw: SiteContentInput = {
       /* The four buyer objections (2026-09-28, DECISIONS item 6), first. Every
          answer is words the site already publishes: /about's terms, the line
          under its models table and its operating detail (content/pages.ts),
-         the team's subtext above, and the pilot (content/pilot.ts). The price
-         is answered only with the approved interim line — no figure, no new
-         promise. "4–8 hours of overlap with US and EU working days. Two-week"
+         the team's subtext above, and the pilot (content/pilot.ts). No
+         figure, no new promise. "Can we start small?" ends at the pilot's
+         terms: /about's interim quote line ("a full quote for the wider build
+         at the end of it") would give this page a second answer to the cost
+         question beside "How do you estimate timeline and cost?" (ranges after
+         a short discovery) — which of the two holds is the owner's. "4–8 hours of overlap with US and EU working days. Two-week"
          has its own exemption for this instance (the FAQPage
          JSON-LD carries it too, and check 8 reads that). */
       {
@@ -405,7 +408,7 @@ const raw: SiteContentInput = {
       },
       {
         q: "Can we start small?",
-        a: "Yes. Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo. Two weeks. Fixed price. Full IP. No obligation. We’ll give you a full quote for the wider build at the end of it, once we’ve seen the real codebase.",
+        a: "Yes. Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo. Two weeks. Fixed price. Full IP. No obligation.",
       },
       {
         q: "What kinds of projects do you take on?",

@@ -4697,20 +4697,21 @@ button.bf-map__btn[aria-pressed="true"] {
 
 /* ── The homepage's rhythm (2026-09-28, DECISIONS item 7) ────────────────── *
    Every section was 128px above and below with a hairline — 17 identical
-   intervals. Now related sections sit 56 / 72 / 88px apart (phone / tablet /
-   desktop) and only a chapter — the proof, how we work, what we engineer and
-   the close — takes more air above it. Scoped to the homepage by `#hero ~`:
-   HowWeBuild and FinalCta render on inner pages too. */
+   intervals. Now a related section's padding is 80px on a desktop (DECISIONS:
+   64–80px, in place of the uniform 128), 64px on a tablet and 56px on a
+   phone, and only a chapter — how we work, what we engineer and the close —
+   takes more air above it (88 / 104 / 128px). Scoped to the homepage by
+   `#hero ~`: HowWeBuild and FinalCta render on inner pages too. */
 #hero ~ .bf-section {
   padding-block: 56px;
 }
 
 @media (min-width: 768px) {
-  #hero ~ .bf-section { padding-block: 72px; }
+  #hero ~ .bf-section { padding-block: 64px; }
 }
 
 @media (min-width: 1025px) {
-  #hero ~ .bf-section { padding-block: 88px; }
+  #hero ~ .bf-section { padding-block: 80px; }
 }
 
 #hero ~ #how-we-work,
@@ -4735,7 +4736,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 /* The proof comes straight after the hero, with no full-width hairline
    between them: that rule read as the page's floor, a "false floor" under
-   the first screen. The proof chapter's heading now crosses the fold. */
+   the first screen. The proof's heading now crosses the fold. */
 #hero + #recent-work {
   border-top: 0;
   padding-top: 8px;
@@ -4746,9 +4747,14 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 /* ── The homepage's hierarchy ───────────────────────────────────────────── *
-   Four chapter heads (the proof, how we work, what we engineer and the
-   close) at 56–60px, never above the h1; every other h2 at 40px. It was 16
-   h2s at 48px, and a final title (72px) larger than the h1 (66px). */
+   Three chapter heads — how we work, what we engineer and the close — and
+   every other h2 at 40px, the proof's included: it shares the first screen
+   with the h1 at 1440, and a second headline there blurred which one leads.
+   A chapter head is 4.4vw capped at 64px (63px at 1440, 56px from 1273) and
+   never reaches the h1, which is 4.6vw capped at 68px, floor 52: under 1273
+   the chapter follows the h1 down rather than hold 56 above it (48px at
+   1025, where the h1 is 52). It was 16 h2s at 48px, and a final title (72px)
+   larger than the h1 (66px). */
 #hero ~ .bf-section .bf-h2 {
   font-size: 28px;
   line-height: 1.12;
@@ -4779,7 +4785,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 @media (min-width: 1025px) {
   #hero ~ .bf-section .bf-head--chapter .bf-h2 {
-    font-size: clamp(48px, 4.2vw, 60px);
+    font-size: clamp(48px, 4.4vw, 64px);
     line-height: 1.02;
     letter-spacing: -0.025em;
   }
@@ -4970,8 +4976,11 @@ button.bf-map__btn[aria-pressed="true"] {
 
 /* ── The engineering stories, compact (#recent-work) ────────────────────── *
    The proof, second: the head with its link to every case study, the two
-   write-ups side by side from 1025px — a pair, so each is a card — the proof
-   strip, and the section's own Schedule a Call. */
+   write-ups side by side from 1025px — a pair, so each is a card — then the
+   section's own Schedule a Call straight after them, then the restaurant
+   search's lanes and the proof strip. On a phone each write-up is its
+   outcome and its result; the problem, the system and the engineering are
+   the write-up's own, one tap away. */
 .bf-proofsec__head {
   display: grid;
   gap: 4px;
@@ -5075,6 +5084,23 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: 16px;
 }
 
+/* On a phone the story is the outcome and the result (above): the steps
+   stay in the served HTML — check 30's story shape, the architecture's
+   problem line — and are the write-up's words, which "Read the case study"
+   opens. At 390 the cards were 1,171 and 1,090px tall; now 677 and 644. */
+@media (max-width: 767px) {
+  #recent-work .bf-story__step:not([data-step="result"]) { display: none; }
+  #recent-work .bf-story__steps { margin-top: 16px; }
+}
+
+#recent-work .bf-proofsec__cta {
+  margin-top: 40px;
+}
+
+@media (min-width: 1025px) {
+  #recent-work .bf-proofsec__cta { margin-top: 48px; }
+}
+
 /* The restaurant search's lanes, as a band under the pair. */
 .bf-lanesband {
   margin-top: 56px;
@@ -5117,8 +5143,31 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: 64px;
 }
 
-.bf-proofsec__cta {
-  margin-top: 36px;
+/* The proof strip on a phone: ruled rows, not four boxed cards — 175px a
+   figure became 140. The figure's chip stays in the figure's row
+   (ProofStrip.tsx; checks 8 and 28). */
+@media (max-width: 767px) {
+  .bf-lanesband { margin-top: 48px; }
+
+  #recent-work .bf-proof {
+    margin-top: 48px;
+    padding-top: 24px;
+  }
+
+  #recent-work .bf-proof__list {
+    gap: 0;
+    border: 0;
+    border-top: 1px solid var(--bf-line-strong);
+    background-color: transparent;
+  }
+
+  #recent-work .bf-proof__item {
+    gap: 6px;
+    padding: 18px 0 8px;
+    border-bottom: 1px solid var(--bf-line);
+  }
+
+  #recent-work .bf-proof__figure { font-size: 34px; }
 }
 
 /* ── How we work with you (#how-we-work, 2026-09-28) ─────────────────────── *
@@ -5492,12 +5541,20 @@ button.bf-map__btn[aria-pressed="true"] {
   color: var(--bf-soft);
 }
 
+/* The pilot's weeks are lower-case fragments in content/pilot.ts, and the
+   deliverable a sentence; side by side they read unfinished. The words are
+   unchanged — the first letter is set in capitals by CSS. */
+.bf-hww__station-what::first-letter {
+  text-transform: uppercase;
+}
+
 /* ── What we engineer: the ledger (2026-09-28) ──────────────────────────── *
    One ruled row per capability — the number, the name, the job, the tiers,
-   the linked work and "in depth" — with its own diagram at a compact size:
-   beside the row from 1025px (about 380px wide, labels 12–13.5px), under it
-   at 768–1024 (up to 440px), and none below 768, where its labels would fall
-   under 13px; robotics' caption stays, as text. */
+   the linked work and "in depth" — with its own diagram at a compact size.
+   Measured label sizes: beside the row at 440px from 1280 (12.3–15.8px) and
+   at 420px at 1025–1279 (11.7–15.1px); under it at 768–1024, up to 440px
+   (12.1–15.5px); none below 768, where its labels would fall under 13px, and
+   robotics' "Concept — not a shipped system" moves beside its Lab chip. */
 .bf-ledger6__head {
   margin-bottom: 32px;
 }
@@ -5526,6 +5583,12 @@ button.bf-map__btn[aria-pressed="true"] {
   border-bottom: 1px solid var(--bf-line);
 }
 
+/* The last row closes on the section's own floor, the next section's
+   hairline: a rule of its own there drew two floors 80px apart. */
+.bf-cap6:last-child {
+  border-bottom: 0;
+}
+
 .bf-cap6__num {
   padding-top: 5px;
   font-family: var(--bf-font-heading);
@@ -5546,7 +5609,17 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 @media (max-width: 767px) {
-  .bf-cap6__plate { display: none; }
+  .bf-cap6__figure { display: none; }
+}
+
+/* A Lab row's caption, beside its Lab chip where the ledger shows no diagram
+   (below 768px); from 768px it is the diagram's own figcaption. */
+.bf-cap6__concept {
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__concept { display: none; }
 }
 
 @media (min-width: 768px) {
@@ -5563,8 +5636,8 @@ button.bf-map__btn[aria-pressed="true"] {
 
 @media (min-width: 1025px) {
   .bf-cap6 {
-    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 380px);
-    column-gap: 40px;
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 420px);
+    column-gap: 32px;
     align-items: start;
     padding: 32px 0;
   }
@@ -5577,8 +5650,19 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
+@media (min-width: 1280px) {
+  .bf-cap6 {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 440px);
+    column-gap: 48px;
+  }
+}
+
 .bf-cap6__plate {
   padding: 12px;
+}
+
+@media (min-width: 1025px) {
+  .bf-cap6__plate { padding: 8px; }
 }
 
 .bf-cap6__name {
@@ -5614,6 +5698,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-cap6__tiers {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 16px;
 }
@@ -5659,6 +5744,14 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-cap6__work a:hover,
 .bf-inds__links a:hover {
   color: var(--bf-brand-hi);
+}
+
+/* A cell's link that wraps (OPAL's) starts on the same line as its
+   neighbours': its 44px box grows down, from a fixed top, instead of
+   centring two lines where the others centre one. */
+.bf-inds__links a {
+  align-items: flex-start;
+  padding-block: 11px;
 }
 
 .bf-cap6 .bf-cap6__more {
@@ -5713,14 +5806,31 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
+/* The last row closes on the next section's hairline, as the ledger does. */
+.bf-inds__cell:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .bf-inds__cell:nth-child(odd):nth-last-child(2) { border-bottom: 0; }
+}
+
+/* One row of five from 1025px, on shared rows (subgrid): a name that wraps
+   ("HR & professional services") pushes every cell's "Where we've built it"
+   down with it, so the labels stay on one line across the row. */
 @media (min-width: 1025px) {
   .bf-inds {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(4, auto);
     column-gap: 0;
-    border-bottom: 1px solid var(--bf-line);
   }
 
   .bf-inds__cell {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    align-content: start;
+    row-gap: 0;
     padding: 22px 22px 16px;
     border-bottom: 0;
     border-left: 1px solid var(--bf-line);

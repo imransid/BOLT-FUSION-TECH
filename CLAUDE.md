@@ -57,7 +57,7 @@ returns as plain three.js, with no React Three Fiber.
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`: the two write-ups side by side, the restaurant search's three lanes, the proof strip, a Schedule a Call); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`: the two write-ups side by side — on a phone each its outcome and its result — then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
@@ -332,10 +332,14 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   primaries are in the page instead: after the proof, and after how we work.
 - **Sections** (`.bf-section`): full bleed, a hairline on top, 72px of padding on
   phones, 96 from 768, 128 from 1025. **The homepage's rhythm (2026-09-28)** is
-  its own (`#hero ~ .bf-section`): 56 / 72 / 88px, with more air — 88 / 104 /
-  128px — only above a chapter (how we work, what we engineer, the close); the
-  proof follows the hero with no hairline between them (that full-width rule
-  read as the first screen's floor), so its heading crosses the 900px fold.
+  its own (`#hero ~ .bf-section`): 56 / 64 / 80px of padding (phone / tablet /
+  desktop; DECISIONS' 64–80px is the desktop's, in place of its uniform 128),
+  with more air — 88 / 104 / 128px — only above a chapter (how we work, what
+  we engineer, the close); the proof follows the hero with no hairline between
+  them (that full-width rule read as the first screen's floor), so its heading
+  crosses the 900px fold. A ruled block that ends a section (the ledger, the
+  industries row) draws no bottom rule: the next section's hairline is its
+  floor, where a rule of its own drew two floors 80px apart.
 - **The hero's first screen (2026-09-28), measured.** At 1440x900 the proof
   line is at 585–677px and the first write-up at 913. Below 1025px the field
   sits above the text (SPEC §7) as a band, still `cover` and filled by width
@@ -380,10 +384,12 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   named by its `<title>` and described by its `<desc>`; colours by class; the cyan
   on `.dg-flow` only. Labels are 15–17 units on a 480-unit drawing, legible at a
   phone's width at full size. **In the homepage's ledger (2026-09-28)** each is
-  drawn at a compact size — about 380px wide beside its row from 1025px (labels
-  12–13.5px), up to 440px under it at 768–1024 — and not at all below 768px,
-  where its labels would fall under 13px: each row links to its diagram on
-  /capabilities, and robotics keeps its caption as text.
+  drawn at a compact size, measured: beside its row in a 440px column from
+  1280px (the drawing 422px wide, labels 12.3–15.8px) and 420px at 1025–1279
+  (402px, 11.7–15.1px), up to 440px under it at 768–1024 (414px,
+  12.1–15.5px) — and not at all below 768px, where its labels would fall under
+  13px: each row links to its diagram on /capabilities, and robotics'
+  "Concept — not a shipped system" becomes a concept tag beside its Lab chip.
 - **The homepage's ledgers (2026-09-28).** *What we engineer* is one ruled row
   per capability (`.bf-cap6`: the number, the name, the job, every tier with
   its scope, robotics' honesty line, the linked work, "in depth", the diagram).
@@ -394,7 +400,15 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   `.bf-trace__path` drawn complete in a steel hairline from the first
   station's marker to the last's, and the stations `[data-bf-trace-stop]`; the
   motion stream traces it; below 768px the stations stack down the list's own
-  rule). The *industries* are one ruled row of five cells.
+  rule; each station's words start with a capital, set by CSS — the weeks are
+  lower-case fragments in `content/pilot.ts`). The *industries* are one ruled
+  row of five cells on shared rows (`grid-template-rows: subgrid`), so a name
+  that wraps moves every cell's "Where we've built it" with it. *The
+  engineering stories* (`#recent-work`) are the pair of write-ups — on a phone
+  each is its outcome and its result, the problem, the system and the
+  engineering staying in the served HTML for the write-up to tell — then the
+  section's Schedule a Call, then the lanes band and the proof strip, whose
+  four figures are ruled rows on a phone, not boxed cards.
 - **The system map** (`components/site/SystemMap.tsx`, a client component; on
   /capabilities after the six since 2026-09-28, the homepage's until then): the
   SVG is the picture for a pointer and is `aria-hidden`; the lists beside it
@@ -601,12 +615,17 @@ are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3
 - H2s are 48px from 768 and 32 below; Barlow 600 for H3 and H4 (22 and 18);
   buttons in Barlow 600.
 - **The homepage's hierarchy (2026-09-28).** It had 16 h2s at 48px and a final
-  title (72px) larger than the h1 (66px). Now four **chapter heads** — the
-  proof, how we work, what we engineer and the close (`.bf-head--chapter`,
-  and `.bf-final__title`) — are 36 / 48 / 48–60px (phone / tablet /
-  `clamp(48px, 4.2vw, 60px)` from 1025), and every other h2 on the homepage is
-  28 / 34 / 40px. The final call to action's title is `clamp(40px, 4.4vw,
-  60px)` on every page, never above that page's h1. Inner pages keep 48px h2s.
+  title (72px) larger than the h1 (66px). Now three **chapter heads** — how
+  we work, what we engineer and the close (`.bf-head--chapter`, and
+  `.bf-final__title`) — are 36 / 48px on a phone and a tablet and
+  `clamp(48px, 4.4vw, 64px)` from 1025: 63px at 1440, 56 from 1273, and always
+  under the h1 (`clamp(52px, 4.6vw, 68px)`), so below 1273px they follow it
+  down rather than hold DECISIONS' 56 above it (48px at 1025, where the h1 is
+  52). Every other h2 on the homepage is 28 / 34 / 40px — the proof's too
+  ("Two products, two write-ups."): it shares the first screen with the h1 at
+  1440, and as a 60px chapter head it read as a second headline. The final
+  call to action's title is `clamp(40px, 4.4vw, 60px)` on every page, never
+  above that page's h1. Inner pages keep 48px h2s.
 - Jost for text: 16px on 1.65, leads 18 on 1.6, lines at most 62–68ch.
 - Machine values — figures, stack names, stage numbers — in Barlow 500 with
   `tabular-nums`.
@@ -1557,16 +1576,16 @@ the hiring terms were only on /about, and "pilot" appeared nowhere on `/`.
 
 | question | decision | where |
 |---|---|---|
-| The order (`site.sectionOrder`) | hero → engineering stories (`#recent-work`, compact) → how we work with you (new) → what we engineer (one ledger that absorbed the six capability sections) → how we build → industries with delivered work → Insights → FAQ → final call to action. Measured: 10,409px at 1440 (from 19,526) and 16,317px at 390 (from 27,544); `#recent-work` at 755px and its first write-up at 913px at 1440 (from 13,847) | `motion-hire/ia` |
+| The order (`site.sectionOrder`) | hero → engineering stories (`#recent-work`, compact) → how we work with you (new) → what we engineer (one ledger that absorbed the six capability sections) → how we build → industries with delivered work → Insights → FAQ → final call to action. Measured: 10,672px at 1440 (from 19,526) and 14,839px at 390 (from 27,544); at 1440 the hero's proof line at 585–677px, `#recent-work` at 755 and its first write-up at 913 (from 13,847) | `motion-hire/ia` |
 | Off the homepage, each still on its route | the six capability deep dives and the system map (/capabilities, the map after the six: its parts are the six); the stack by layer (/engineering); the industries with no delivered work (/industries); the Team section (/about — its headcount stays on `/`, in how we work). Check 30 retires each on `/` with "moved to /<route> — owner request 2026-09-28 ("make it easy for clients to hire")", and its destination's inventory requires the same needles | `motion-hire/ia` |
 | Kept on `/` | every `[data-capability]` with its tier chip; robotics, its Lab chip, its honesty line verbatim and "Concept — not a shipped system"; `#recent-work` holding the proof strip; `/#contact`; the anchors `#software` … `#cloud` (the ledger's rows); the Service JSON-LD, now tied to the ledger's section | `motion-hire/ia` |
 | The hero | its contract words unchanged (check 28's `HERO`). Under the calls to action: "Your first call is with the engineer who writes the code." (/about's term, word for word — the schema refuses anything but one whole sentence of those terms, RUN 3 case f) and a proof line — "Built by Bolt Fusion and in production": WarmChats (for WarmChats, Inc.), Balanzify (for Balanzify Inc.), Go Style Business — read from `content/projects.ts` through a strict `hero.proof` (feature work refused, case g), each linked as the data links it: WarmChats to its write-up, Balanzify and Go Style Business to the live products. Proof at the fold below 1025px as well: the field is a band there and the line one row (*Design language*, "The hero's first screen"). Robotics stays in the hero's body: those are the owner's words, and his call | `motion-hire/ia` |
-| No new promises, no new figures | no reply time, no price, no call length. The price question is answered only with /about's interim line ("We'll give you a full quote … once we've seen the real codebase") | `motion-hire/ia` |
+| No new promises, no new figures | no reply time, no price, no call length. /about's interim quote line ("We'll give you a full quote … once we've seen the real codebase") is on `/` only where /about has it, under the engagement models in how we work. The FAQ's older "How do you estimate timeline and cost?" answers with ranges after a short discovery; the two are the owner's to reconcile, and the FAQ does not repeat the quote line beside it | `motion-hire/ia` |
 | How we work with you | the four terms, the engagement models, the line under them and the operating detail, the pilot (Week 1, Week 2, Deliverable) on the `pilot` trace hook, the headcount and where the engineers work — every word /about's; closes with Schedule a Call and the ghost "Start a 2-week pilot" | `motion-hire/ia` |
-| The FAQ | four buyer objections first — who writes the code, the overlap, who owns the IP, can we start small — in words the site already publishes; "4–8 hours of overlap … Two-week" has its own exemption, since FAQPage carries it | `motion-hire/ia` |
+| The FAQ | four buyer objections first — who writes the code, the overlap, who owns the IP, can we start small — in words the site already publishes; "4–8 hours of overlap … Two-week" has its own exemption, since FAQPage carries it. "Can we start small?" ends at the pilot's terms ("Two weeks. Fixed price. Full IP. No obligation.") | `motion-hire/ia` |
 | /contact | the `.bf-project` class collision fixed; two columns from 1025px with the calendar in the first viewport, after the h1 on a phone; check 32 holds the form at 480px or wider at 1440 | `motion-hire/ia` |
-| Mobile | no header Schedule a Call below 520px: it does not fit at 360 (measured, *Design language*); contextual primaries after the proof and after how we work instead; no sticky bar. The ledger shows no diagram below 768px, where its labels would fall under 13px | `motion-hire/ia` |
-| Hierarchy and rhythm | four chapter heads at 48–60px, every other homepage h2 at 40px, the final title never above the h1; chips at 12px/600; 56–88px between related sections, 128px only above a chapter; 44px hit areas on the homepage's inline links; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
+| Mobile | no header Schedule a Call below 520px: it does not fit at 360 (measured, *Design language*); contextual primaries after the proof and after how we work instead; no sticky bar. The proof's comes straight after the pair of write-ups, each a phone card of its outcome and result: 1,974px after the hero's at 390, where it was 4,667, and `#recent-work` 3,256px tall there (from 4,412). The ledger shows no diagram below 768px, where its labels would fall under 13px | `motion-hire/ia` |
+| Hierarchy and rhythm | three chapter heads, `clamp(48px, 4.4vw, 64px)` from 1025 — 63px at 1440, inside DECISIONS' 56–64 from 1273, and under the h1 below that, where 56 would have put them above it — every other homepage h2 at 40px, the proof's included, since it shares the first screen with the h1; the final title never above the h1; chips at 12px/600; related sections' padding 80px on a desktop (DECISIONS' 64–80), 64 on a tablet and 56 on a phone, and 128px only above a chapter; 44px hit areas on the homepage's inline links, the hero's proof line at every width; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
 | Honesty cleanup | NIdle Finishing's only proof link 301s to a bare PNG: removed, and the card held back until a working link exists (*Projects and attribution*). The rest of the brief's row 14 is the owner's | `motion-hire/ia` |
 
 ## Decided 2026-09-16: the engineering redesign (owner)
