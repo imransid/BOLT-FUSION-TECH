@@ -4,16 +4,22 @@ import type { SiteContent } from "@/content/site-schema";
 import Cta, { ctaKind } from "../Cta";
 import MotionToggle from "../MotionToggle";
 
-/* The width the poster is DRAWN at, which is what `sizes` must say. At
-   >=1025px the frame is 560px tall (app/site.css) and never wider than 660px,
-   and the poster is CONTAINED in it (2026-09-28, as the scene draws a narrower
-   field): it is drawn at the frame's width, 660px from 1280px up and 467–660px
-   between 1025 and 1279 — at most 660, so the 660 file at DPR 1 and the 1320
-   file at DPR 2 are never stretched (H4). Below 1025px the image covers its
-   frame, filled by width: the content column, the viewport less the side
-   gutters (16px each at phone widths). Phones take the 660 file at every
-   density through the first two sources. */
-const SIZES = "(min-width: 1025px) 660px, calc(100vw - 32px)";
+/* The width the poster is DRAWN at, which is what `sizes` must say. The
+   poster is CONTAINED in its frame at every width (app/site.css, 2026-09-29),
+   so it is drawn at the smaller of the frame's width and its height x 1.18:
+   at >=1025px the frame is 560px tall and at most 660 wide, so 467-660px (660
+   from 1280 up); at 768-1024 the frame is 16:9, so 468-638px. Never more than
+   660 from 768px up: the 660 file at DPR 1 and the 1320 file at DPR 2 are
+   never stretched (H4). Phones take the 660 file at every density through
+   the first two sources (drawn 316px wide at 390).
+
+   The two 660 files are not the same picture. `-660-1x` is the scene's frame
+   rendered at DPR 1, what a DPR-1 desktop canvas draws, line for line, so its
+   crossfade shows no jump; `-660` is the DPR-2 frame downsampled, which
+   draws the one-pixel lines at about half strength and so brightened them as
+   the canvas faded in (the adversarial review), but resamples better on a
+   phone, where it is drawn at under half its size. */
+const SIZES = "660px";
 
 /** The headline as two lines that never break inside: "Build" / "what's next."
  *  A line of one word is fine at the top; verify-site check 7 fails a headline
@@ -72,8 +78,8 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
               <picture>
                 <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/scene-poster-v2-660.avif" />
                 <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/scene-poster-v2-660.webp" />
-                <source type="image/avif" srcSet="/hero/scene-poster-v2-660.avif 660w, /hero/scene-poster-v2-1320.avif 1320w" sizes={SIZES} />
-                <source type="image/webp" srcSet="/hero/scene-poster-v2-660.webp 660w, /hero/scene-poster-v2-1320.webp 1320w" sizes={SIZES} />
+                <source type="image/avif" srcSet="/hero/scene-poster-v2-660-1x.avif 660w, /hero/scene-poster-v2-1320.avif 1320w" sizes={SIZES} />
+                <source type="image/webp" srcSet="/hero/scene-poster-v2-660-1x.webp 660w, /hero/scene-poster-v2-1320.webp 1320w" sizes={SIZES} />
                 {/* The LCP poster: a plain <img> in a <picture>, never next/image, so its fetch priority, size and formats are exactly what the served HTML says, with no optimizer round trip. */}
                 <img
                   data-hero-poster

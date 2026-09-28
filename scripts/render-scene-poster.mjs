@@ -6,8 +6,9 @@
  *   yarn build && yarn next start -p 3462        (in another shell)
  *   node scripts/render-scene-poster.mjs [--base http://localhost:3462] [--gpu] [--png out.png]
  *
- * It opens `/` in Playwright Chromium at 1440x1000, DPR 2, a fine pointer and
- * motion allowed, which is a profile where HeroScene mounts the scene. Headless
+ * It opens `/` in Playwright Chromium at 1440x1000, a fine pointer and motion
+ * allowed, which is a profile where HeroScene mounts the scene — twice, at
+ * DPR 2 and at DPR 1. Headless
  * Chromium has no GPU by default, so WebGL runs on SwiftShader
  * (`--use-angle=swiftshader --enable-unsafe-swiftshader`); `--gpu` uses the
  * machine's GPU through ANGLE/Metal instead.
@@ -25,14 +26,21 @@
  * field of view (the 660x560 frame's), so a narrower canvas draws the same
  * frame smaller, just as `object-fit: contain` draws the poster in a narrower
  * field at >=1025px. For the capture, injected CSS makes the field exactly
- * 660x560 with square corners and no fade. The canvas renders at the scene's
- * DPR cap, 1.75, and the browser composites it at DPR 2: the poster is what a
- * DPR-2 visitor's canvas shows, pixel for pixel, so the crossfade is seamless.
+ * 660x560 with square corners and no fade. At DPR 2 the canvas renders at the
+ * scene's DPR cap, 1.75, and the browser composites it at DPR 2: that capture
+ * is what a DPR-2 visitor's canvas shows. At DPR 1 it is what a DPR-1
+ * visitor's canvas shows, one-pixel lines at full strength — which a
+ * downsample of the DPR-2 capture draws at about half (2026-09-29).
  *
- * It then encodes public/hero/scene-poster-v2-{1320,660}.{avif,webp} with sharp.
+ * It then encodes, with sharp, into public/hero/:
+ *   scene-poster-v2-1320.{avif,webp}    the DPR-2 capture (1320x1120)
+ *   scene-poster-v2-660-1x.{avif,webp}  the DPR-1 capture: >=768px at DPR 1
+ *   scene-poster-v2-660.{avif,webp}     the DPR-2 capture downsampled: phones
  * A re-rendered poster needs a NEW name (v3, ...): /hero/* is served immutable,
- * and v1 (2026-09-16) stays as it was deployed. `scripts/probe-scene.mjs`
- * checks the frames the poster cannot: t = 0-100s, at 660 and 467.
+ * and v1 (2026-09-16) stays as it was deployed. (v2 was re-rendered in its own
+ * branch on 2026-09-29, before it had ever been served.) `scripts/probe-scene.mjs`
+ * checks the frames the poster cannot: t = 0-100s, at 660 and 467, and the
+ * poster as the browser draws it, drifting, below 1025px.
  */
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -52,8 +60,12 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(REPO, "public", "hero");
 const NAME = "scene-poster-v2";
 
-/* Encoder settings. 4:4:4 keeps the thin blue and cyan lines their colour. */
+/* Encoder settings. 4:4:4 keeps the thin blue and cyan lines their colour.
+   The DPR-1 file carries one-pixel lines at full strength, which AVIF softens
+   most: at 56 it was 0.91% of pixels off the canvas it must match, at 64
+   0.36%, for 2.5KB more (8.7 -> 11.2KB), measured 2026-09-29. */
 const AVIF = { quality: 56, effort: 9, chromaSubsampling: "4:4:4" };
+const AVIF_1X = { ...AVIF, quality: 64 };
 const WEBP = { quality: 82, effort: 6, smartSubsample: true };
 
 const browser = await chromium.launch({
@@ -61,10 +73,11 @@ const browser = await chromium.launch({
     ? ["--use-angle=metal", "--ignore-gpu-blocklist"]
     : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
-try {
+/** One capture of the field at t = 0, at this DPR: the PNG and what it was. */
+async function capture(dpr) {
   const ctx = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: dpr,
     isMobile: false,
     hasTouch: false,
     reducedMotion: "no-preference",
@@ -114,38 +127,49 @@ try {
   if (info.field !== "660x560" || info.at !== "0,200") throw new Error(`the field is ${info.field} at ${info.at}, not 660x560 at 0,200`);
 
   const png = await page.screenshot({ type: "png", clip: { x: 0, y: 200, width: 660, height: 560 } });
-  if (PNG_OUT) await writeFile(PNG_OUT, png);
+  await ctx.close();
 
   /* the canvas must have drawn: most pixels are the ground, but not all */
   const { data, info: px } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
-  if (px.width !== 1320 || px.height !== 1120) throw new Error(`the capture is ${px.width}x${px.height}, not 1320x1120`);
+  if (px.width !== 660 * dpr || px.height !== 560 * dpr) throw new Error(`the capture is ${px.width}x${px.height}, not ${660 * dpr}x${560 * dpr}`);
   let lit = 0;
   for (let i = 0; i < data.length; i += px.channels) if (Math.abs(data[i] - 7) + Math.abs(data[i + 1] - 9) + Math.abs(data[i + 2] - 13) > 12) lit++;
   const litPct = (100 * lit) / (px.width * px.height);
-  if (litPct < 3) throw new Error(`only ${litPct.toFixed(1)}% of the capture differs from the ground; the scene did not draw`);
-  /* the scene dissolves into the page: a 16px band (32 device px) around the
-     poster is exactly the ground, #07090D, with nothing reaching an edge */
+  if (litPct < 3) throw new Error(`only ${litPct.toFixed(1)}% of the DPR-${dpr} capture differs from the ground; the scene did not draw`);
+  /* the scene dissolves into the page: a 16px band around the poster is
+     exactly the ground, #07090D, with nothing reaching an edge */
+  const band = 16 * dpr;
   let edgeDev = 0;
   for (let y = 0; y < px.height; y++)
     for (let x = 0; x < px.width; x++) {
-      if (x >= 32 && x < px.width - 32 && y >= 32 && y < px.height - 32) continue;
+      if (x >= band && x < px.width - band && y >= band && y < px.height - band) continue;
       const i = (y * px.width + x) * px.channels;
       edgeDev = Math.max(edgeDev, Math.abs(data[i] - 7), Math.abs(data[i + 1] - 9), Math.abs(data[i + 2] - 13));
     }
-  if (edgeDev > 1) throw new Error(`the poster's edge band is not the ground: a channel is ${edgeDev} off #07090D; something reaches the edge`);
+  if (edgeDev > 1) throw new Error(`the DPR-${dpr} capture's edge band is not the ground: a channel is ${edgeDev} off #07090D; something reaches the edge`);
+  return { png, info, env, litPct, edgeDev, errors };
+}
 
-  const small = await sharp(png).resize(660, 560, { kernel: "lanczos3" }).png().toBuffer();
+try {
+  const two = await capture(2);
+  const one = await capture(1);
+  if (PNG_OUT) await writeFile(PNG_OUT, two.png);
+  const small = await sharp(two.png).resize(660, 560, { kernel: "lanczos3" }).png().toBuffer();
   const files = [
-    [`${NAME}-1320.avif`, sharp(png).avif(AVIF)],
-    [`${NAME}-1320.webp`, sharp(png).webp(WEBP)],
+    [`${NAME}-1320.avif`, sharp(two.png).avif(AVIF)],
+    [`${NAME}-1320.webp`, sharp(two.png).webp(WEBP)],
+    [`${NAME}-660-1x.avif`, sharp(one.png).avif(AVIF_1X)],
+    [`${NAME}-660-1x.webp`, sharp(one.png).webp(WEBP)],
     [`${NAME}-660.avif`, sharp(small).avif(AVIF)],
     [`${NAME}-660.webp`, sharp(small).webp(WEBP)],
   ];
   for (const [name, pipeline] of files) {
     const r = await pipeline.toFile(path.join(OUT, name));
-    console.log(`${name.padEnd(28)} ${r.width}x${r.height}  ${(r.size / 1024).toFixed(1)}KB`);
+    console.log(`${name.padEnd(30)} ${r.width}x${r.height}  ${(r.size / 1024).toFixed(1)}KB`);
   }
-  console.log(`captured at t = 0: field ${info.field}, canvas buffer ${info.buffer}, DPR ${env.dpr}, ${litPct.toFixed(1)}% of pixels off the ground, edge band within ${edgeDev} of #07090D, ${GPU ? "GPU" : "SwiftShader"}`);
+  for (const c of [two, one])
+    console.log(`captured at t = 0, DPR ${c.env.dpr}: field ${c.info.field}, canvas buffer ${c.info.buffer}, ${c.litPct.toFixed(1)}% of pixels off the ground, edge band within ${c.edgeDev} of #07090D, ${GPU ? "GPU" : "SwiftShader"}`);
+  const errors = [...two.errors, ...one.errors];
   if (errors.length) console.log(`console errors during the capture:\n  ${errors.join("\n  ")}`);
 } finally {
   await browser.close();

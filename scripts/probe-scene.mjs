@@ -4,7 +4,7 @@
  * the poster script checks only at t = 0 (CLAUDE.md, "The hero field").
  *
  *   yarn build && yarn start -p 3462                     (in another shell)
- *   node scripts/probe-scene.mjs [--base http://localhost:3462] [--gpu] [--shots <dir>] [--only a,b]
+ *   node scripts/probe-scene.mjs [--base http://localhost:3462] [--gpu] [--shots <dir>] [--only a,b] [--json <file>]
  *
  * It opens `/` at 1440x1000 with a fine pointer and motion allowed (a profile
  * where HeroScene mounts the scene), lets the scene build and draw its t = 0
@@ -24,12 +24,28 @@
  *               extremes: the 16px band around the frame is the ground (every
  *               channel within 1 of #07090D), and it prints how close the lit
  *               content comes to each edge.
- *   identity    the t = 0 frame at 660x560, DPR 2, against the poster file
- *               (public/hero/<NAME>-1320.webp): its mean difference, to show
- *               the canvas fades in over the same picture. With --gpu the
- *               canvas is the machine's GPU and the poster is SwiftShader's,
- *               so this is the cross-rasteriser diff; it prints, it does not
- *               fail on a GPU.
+ *   overlap     the LAYOUT over time, from the scene's own objects
+ *               (scripts/lib/scene-layout.mjs): every part of the core and of
+ *               each module projected through the camera, at rest and at the
+ *               four parallax extremes, every 0.25s over seven of the tiers'
+ *               48s sways, assembled and fully open. It fails a module in
+ *               front of the core within 12px of it, anything within 12px of
+ *               the Lab robot, and any two modules within 8px (in the 660
+ *               frame).
+ *   poster      the poster as the browser draws it where no scene mounts —
+ *               390 (a phone), 768, 1024 and a touch tablet at 1180x820 — at
+ *               both ends of its drift: the 16px band of the field is the
+ *               ground (no pixel lit, every channel within 3 of #07090D, the
+ *               encoder's noise).
+ *   identity    the t = 0 frame against the poster the browser draws under
+ *               it (the canvas hidden, its currentSrc): at 660 at DPR 1 (the
+ *               -660-1x file) and DPR 2 (the 1320 file) within 1.5 on average
+ *               and 1% of pixels, and at 536 and 467 (1025-1100px, where both
+ *               draw the frame smaller) within 1.5 and 3%: the canvas draws a
+ *               one-pixel line at full strength at every size, the resampled
+ *               poster thinner and dimmer. With --gpu the canvas is the
+ *               machine's GPU and the poster SwiftShader's, so it prints and
+ *               does not fail.
  *   charge      on fresh pages, hovering and then focusing the hero's
  *               Schedule a Call: the seams brighten ~40% (x1.2–1.7), eased in
  *               (at most 60% in the first 0.1s, at least 75% by 0.6s), stay
@@ -51,7 +67,8 @@
  *               than half of what it drops in one 0.2s step.
  *
  * Exit 0 when every check passed, 1 otherwise. The frames it read go to
- * --shots when given.
+ * --shots when given; --json writes a report in the suite's shape (each check
+ * `probe:<name>`, its status, findings and info).
  */
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -59,6 +76,7 @@ import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { cameraPose, captureHook, layoutRun } from "./lib/scene-layout.mjs";
 
 const argv = process.argv.slice(2);
 const opt = (name, fallback) => {
@@ -70,17 +88,32 @@ const URL_ = opt("--url", `${BASE}/`);
 const GPU = argv.includes("--gpu");
 const SHOTS = opt("--shots", null);
 const ONLY = opt("--only", null)?.split(",");
+const JSON_OUT = opt("--json", null);
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const POSTER = path.join(REPO, "public", "hero", `${opt("--poster", "scene-poster-v2")}-1320.webp`);
 const GROUND = [7, 9, 13];
 const want = (k) => !ONLY || ONLY.includes(k);
 
 const failures = [];
+const report = []; // one entry per check, in the suite's report shape
+let current = null;
+const begin = (id, title) => {
+  current = { id: `probe:${id}`, status: "PASS", findings: [], info: [] };
+  report.push(current);
+  console.log(title);
+};
 const fail = (s) => {
   failures.push(s);
+  if (current) {
+    current.status = "FAIL";
+    current.findings.push(s);
+  }
   console.log(`  FAIL  ${s}`);
 };
-const info = (s) => console.log(`  ${s}`);
+const info = (s) => {
+  current?.info.push(s);
+  console.log(`  ${s}`);
+};
 
 /* The clock and the draw calls, taken over once the scene has drawn t = 0. */
 function clockHook() {
@@ -138,11 +171,11 @@ function clockHook() {
     }
     return ctx;
   };
-  /* run the queued frames: `frames` of them, `dtMs` apart; only the last is drawn */
-  window.__bfStep = (frames, dtMs = 1000 / 60) => {
+  /* run the queued frames: `frames` of them, `dtMs` apart; only the last is drawn (none, with drawLast false) */
+  window.__bfStep = (frames, dtMs = 1000 / 60, drawLast = true) => {
     let ran = 0;
     for (let f = 0; f < frames; f++) {
-      window.__bfSkipDraw = f < frames - 1;
+      window.__bfSkipDraw = !drawLast || f < frames - 1;
       const ids = queue.splice(0);
       now += dtMs;
       for (const id of ids) {
@@ -175,6 +208,7 @@ const browser = await chromium.launch({
 async function open({ dpr = 1, width = 660, left = 0, css = "", before } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr, reducedMotion: "no-preference" });
   await ctx.addInitScript(clockHook);
+  await ctx.addInitScript(captureHook);
   await ctx.addInitScript((css) => {
     document.addEventListener("DOMContentLoaded", () => {
       const s = document.createElement("style");
@@ -246,6 +280,9 @@ function seamGain(ref, img) {
   let r = 0;
   let g = 0;
   let b = 0;
+  let r0 = 0;
+  let g0 = 0;
+  let b0 = 0;
   for (let i = 0; i < ref.data.length; i += 3) {
     const R = ref.data[i];
     const G = ref.data[i + 1];
@@ -257,10 +294,24 @@ function seamGain(ref, img) {
     r += img.data[i];
     g += img.data[i + 1];
     b += img.data[i + 2];
+    r0 += R;
+    g0 += G;
+    b0 += B;
   }
   ratios.sort((x, y) => x - y);
   const n = ratios.length;
-  return { gain: n ? ratios[n >> 1] : 0, n, rgb: n ? `${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)}` : "0,0,0" };
+  const mean = (x, y, z) => (n ? [x / n, y / n, z / n] : [0, 0, 0]);
+  const c = mean(r, g, b);
+  const c0 = mean(r0, g0, b0);
+  return { gain: n ? ratios[n >> 1] : 0, n, rgb: c.map(Math.round).join(","), hue: hue(c), restHue: hue(c0) };
+}
+/** The hue of an sRGB colour, in degrees. */
+function hue([r, g, b]) {
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  if (mx === mn) return 0;
+  const h = mx === r ? (g - b) / (mx - mn) : mx === g ? 2 + (b - r) / (mx - mn) : 4 + (r - g) / (mx - mn);
+  return (h * 60 + 360) % 360;
 }
 /** Two frames' difference: mean per channel, the share of pixels off by more than 24 in sum, the largest channel. */
 function diff(a, b) {
@@ -287,7 +338,7 @@ try {
 
   /* ── clearance: 660 and 467, t = 0–100s, the pointer at rest and at its extremes ── */
   if (want("clearance")) {
-    console.log("clearance — the 16px band is the ground at every frame");
+    begin("clearance", "clearance — the 16px band is the ground at every frame");
     for (const width of [660, 467]) {
       const p = await open({ width });
       const worst = { dev: 0, L: 1e9, R: 1e9, T: 1e9, B: 1e9, at: {} };
@@ -318,39 +369,177 @@ try {
     }
   }
 
-  /* ── identity: the t = 0 frame against the poster file ── */
+  /* ── identity: the t = 0 frame against the poster the browser draws under it ── */
   if (want("identity")) {
-    console.log("identity — the canvas's t = 0 frame against the poster");
-    const p = await open({ dpr: 2, width: 660 });
-    const img = await grab(p, "identity-t0");
-    const m = measure(img);
-    info(`t = 0 @660 DPR 2: ${fmt(m)}`);
-    if (m.dev > 1) fail(`t = 0: the edge band is ${m.dev} off the ground`);
-    /* the control: the same scene two seconds on, which the comparison must tell apart */
-    await advance(p, 2);
-    const later = await grab(p, "identity-t2");
-    if (!existsSync(POSTER)) fail(`no poster at ${path.relative(REPO, POSTER)}`);
-    else {
-      const ref = await sharp(POSTER).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-      if (ref.info.width !== img.w || ref.info.height !== img.h) fail(`the poster is ${ref.info.width}x${ref.info.height}, the frame ${img.w}x${img.h}`);
-      else {
-        const t0 = diff(img, ref);
-        const t2 = diff(later, ref);
-        info(`t = 0 against ${path.basename(POSTER)}: ${t0.line}${GPU ? " (the GPU's canvas against SwiftShader's poster)" : ""}`);
-        info(`control, t = 2s against it: ${t2.line}`);
-        /* the poster is the first frame, less its WebP encoding; a frame two
-           seconds later must read as clearly further away, or the comparison
-           tells nothing apart */
-        if (t2.bigPct < 3 * t0.bigPct || t2.bigPct < 1) fail(`the comparison cannot tell t = 0 from t = 2s (${t0.bigPct.toFixed(2)}% against ${t2.bigPct.toFixed(2)}%) — it proves nothing`);
-        if (!GPU && (t0.mean > 1.5 || t0.bigPct > 1)) fail(`t = 0 differs from the poster (${t0.line}) — the poster is not this scene's first frame; re-render it`);
+    begin("identity", "identity — the canvas's t = 0 frame against the poster the browser draws under it");
+    /* [DPR, field width, strict]: 660 is the frame itself, drawn 1:1 by both; at 536
+       and 467 (1025-1100px) both draw it smaller, the poster resampled */
+    for (const [dpr, width, strict] of [[1, 660, true], [2, 660, true], [1, 536, false], [2, 536, false], [1, 467, false], [2, 467, false]]) {
+      const p = await open({ dpr, width });
+      const img = await grab(p, `identity-${width}-dpr${dpr}-canvas`);
+      const m = measure(img);
+      if (m.dev > 1) fail(`@${width} DPR ${dpr}, t = 0: the edge band is ${m.dev} off the ground`);
+      /* the poster under it, as the browser draws it: the canvas hidden for one
+         capture. A poster hidden in the page is check 28's finding and this
+         one's too, but it is SHOWN for the comparison, so that the file the
+         browser picks is still compared (the gate builds every misuse at once) */
+      const under = await p.page.evaluate(() => {
+        const c = document.querySelector("[data-hero-field] canvas");
+        const im = document.querySelector("img[data-hero-poster]");
+        c.style.visibility = "hidden";
+        const st = getComputedStyle(im);
+        const was = { display: st.display, visibility: st.visibility, opacity: +st.opacity };
+        for (const [k, v] of [["display", "block"], ["visibility", "visible"], ["opacity", "1"]]) im.style.setProperty(k, v, "important");
+        return { src: im.currentSrc.split("/").pop(), ...was, fit: getComputedStyle(im).objectFit, decoded: im.complete && im.naturalWidth > 0 };
+      });
+      if (under.display === "none" || under.visibility !== "visible" || under.opacity < 0.99) fail(`@${width} DPR ${dpr}: the poster under the canvas is hidden (display ${under.display}, visibility ${under.visibility}, opacity ${under.opacity}) — the canvas fades in over nothing; compared as if shown`);
+      if (!under.decoded) {
+        fail(`@${width} DPR ${dpr}: the poster under the canvas never decoded (${under.src || "no source"})`);
+        await p.ctx.close();
+        continue;
+      }
+      await p.page.waitForTimeout(60);
+      const poster = await grab(p, `identity-${width}-dpr${dpr}-poster`);
+      await p.page.evaluate(() => (document.querySelector("[data-hero-field] canvas").style.visibility = ""));
+      /* the file for this density: sizes says 660px, so DPR 1 takes the 660w file, DPR 2 the 1320w */
+      const file = dpr === 1 ? /-660-1x\.(avif|webp)$/ : /-1320\.(avif|webp)$/;
+      if (!file.test(under.src)) fail(`@${width} DPR ${dpr}: the browser draws ${under.src} — at DPR ${dpr} it takes the ${dpr === 1 ? "-660-1x" : "-1320"} file, the frame rendered at that density`);
+      /* the control: the same scene two seconds on, which the comparison must tell apart */
+      await advance(p, 2);
+      const later = await grab(p);
+      const d0 = diff(img, poster);
+      const d2 = diff(later, poster);
+      info(`@${width} DPR ${dpr}: t = 0 against ${under.src} as drawn (${under.fit}) — ${d0.line}; control, t = 2s: ${d2.bigPct.toFixed(2)}% off${GPU ? " (the GPU's canvas against SwiftShader's poster)" : ""}`);
+      if (d2.bigPct < 3 * d0.bigPct || d2.bigPct < 1) fail(`@${width} DPR ${dpr}: the comparison cannot tell t = 0 from t = 2s (${d0.bigPct.toFixed(2)}% against ${d2.bigPct.toFixed(2)}%) — it proves nothing`);
+      const cap = strict ? 1 : 3;
+      if (!GPU && (d0.mean > 1.5 || d0.bigPct > cap)) fail(`@${width} DPR ${dpr}: the canvas's t = 0 frame differs from the poster the browser draws under it (${under.src}: ${d0.line}; at most 1.5 and ${cap}%) — the crossfade jumps`);
+      await p.ctx.close();
+    }
+  }
+
+  /* ── overlap: no module crosses the core, the Lab robot or another module ── */
+  if (want("overlap")) {
+    begin("overlap", "overlap — the layout over the sway, from the scene's own objects, assembled and fully open");
+    const LIMITS = { core: 12, lab: 12, module: 8 };
+    const p = await open({ width: 660 });
+    /* the parallax extremes as the scene reaches them: the pointer held at each corner until the camera has eased there */
+    const rest = await p.page.evaluate(cameraPose);
+    const variants = [{ daz: 0, del: 0, label: "the pointer at rest" }];
+    for (const [fx, fy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+      await pointerAt(p, fx ? 0.999 : 0.001, fy ? 0.999 : 0.001);
+      await advance(p, 12);
+      const at = await p.page.evaluate(cameraPose);
+      variants.push({ daz: at.az - rest.az, del: at.el - rest.el, label: `the pointer ${fx ? "right" : "left"}-${fy ? "bottom" : "top"}` });
+    }
+    info(`the parallax extremes: ${variants.slice(1).map((v) => `${(v.daz * 57.3).toFixed(1)}° yaw ${(v.del * 57.3).toFixed(1)}° pitch`).join(", ")}`);
+    if (!variants.slice(1).every((v) => Math.abs(v.daz) > 0.05)) fail("the pointer did not move the camera — the parallax extremes were not measured, and the check would test the camera at rest only");
+    await p.page.mouse.move(720, 500); // the viewport's centre: the pointer at rest
+    await advance(p, 12);
+    const runs = [
+      ["assembled", 336],
+      ["fully open", 96],
+    ];
+    for (const [state, secs] of runs) {
+      if (state === "fully open") {
+        await p.page.evaluate(() => window.scrollTo(0, document.querySelector("#hero").offsetHeight * 1.2));
+        await p.page.waitForTimeout(150);
+        await advance(p, 3);
+      }
+      const t0 = Date.now();
+      const r = await p.page.evaluate(layoutRun, { samples: Math.round(secs / 0.25), frames: 15, dtMs: 1000 / 60, variants, W: 660, H: 560, limits: LIMITS });
+      if (r.error) {
+        fail(`${state}: ${r.error}`);
+        continue;
+      }
+      const expect = ["core", "web", "ai", "cloud", "mobile", "robot:lab", "erp", "pos"];
+      if (r.objects.map((o) => o.replace(/^module:/, "")).sort().join() !== [...expect].sort().join()) fail(`${state}: the scene's objects are ${r.objects.join(", ")} — the check reads the core and seven modules by name (scene.ts), and would test the wrong things`);
+      const rows = Object.entries(r.pairs).filter(([, x]) => x.limit !== null);
+      rows.sort((a, b) => a[1].min - a[1].limit - (b[1].min - b[1].limit));
+      const closest = rows.slice(0, 4).map(([k, x]) => `${k} ${x.min}px (limit ${x.limit})`).join(", ");
+      info(`${state}, ${r.seconds}s of the sway every 0.25s, ${variants.length} camera poses (${((Date.now() - t0) / 1000).toFixed(0)}s): the closest pairs ${closest}; the parts' hulls clear the frame by L ${r.bounds.L} R ${r.bounds.R} T ${r.bounds.T} B ${r.bounds.B}px`);
+      for (const [k, x] of rows) {
+        if (x.min >= x.limit) continue;
+        const [a, b] = k.split(" / ");
+        const what = b.startsWith("core") ? `"${a}" comes within ${x.min}px of the core, in front of it — a module crosses the core` : x.limit === LIMITS.lab ? `"${a}" and "${b}" come within ${x.min}px of each other — a live module crosses the Lab robot` : `"${a}" and "${b}" come within ${x.min}px of each other — two modules cross`;
+        fail(`${state}: ${what} (it must stay ${x.limit}px clear) at t = ${x.at.t.toFixed(1)}s, ${variants[x.at.variant].label}; ${x.underS}s of ${r.seconds}s under the limit`);
       }
     }
+    if (p.errors.length) fail(`page errors — ${p.errors.slice(0, 3).join(" | ")}`);
     await p.ctx.close();
+  }
+
+  /* ── poster: where no scene mounts, the drifting poster never reaches the field's edge ── */
+  if (want("poster")) {
+    begin("poster", "poster — as the browser draws it where no scene mounts, at both ends of its drift");
+    const profiles = [
+      { label: "390 (a phone)", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 },
+      { label: "768", viewport: { width: 768, height: 1024 }, deviceScaleFactor: 2 },
+      { label: "1024", viewport: { width: 1024, height: 768 }, deviceScaleFactor: 1 },
+      { label: "1180x820 tablet (touch, coarse pointer)", viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+    ];
+    for (const { label, ...o } of profiles) {
+      const ctx = await browser.newContext({ ...o, reducedMotion: "no-preference" });
+      const page = await ctx.newPage();
+      await page.goto(URL_, { waitUntil: "load", timeout: 120000 });
+      const ready = await page.waitForSelector(".bf-motion-toggle[data-ready]", { timeout: 30000 }).then(() => true, () => false);
+      await page.waitForFunction(() => {
+        const im = document.querySelector("img[data-hero-poster]");
+        return im && im.complete && im.naturalWidth > 0;
+      });
+      if (!ready) fail(`@${label}: the pause control never became ready — the drift never starts, so this read its first frame only`);
+      const worst = { dev: 0, lit: 0, T: 1e9, B: 1e9, L: 1e9, R: 1e9 };
+      let st = null;
+      for (const [end, ms] of [["from", 0], ["to", 25999]]) {
+        st = await page.evaluate((t) => {
+          const im = document.querySelector("img[data-hero-poster]");
+          /* hidden or faded is check 28's finding and this one's; shown here, so its geometry is still read */
+          const cs = getComputedStyle(im);
+          const hidden = cs.display === "none" || cs.visibility !== "visible" || +cs.opacity < 0.99 ? `display ${cs.display}, visibility ${cs.visibility}, opacity ${cs.opacity}` : "";
+          for (const [k, v] of [["display", "block"], ["visibility", "visible"], ["opacity", "1"]]) im.style.setProperty(k, v, "important");
+          const a = im.getAnimations().find((x) => x.animationName === "bf-field-drift");
+          if (a) {
+            a.pause();
+            a.currentTime = t;
+          }
+          const f = im.closest("[data-hero-field]");
+          f.scrollIntoView({ block: "center" });
+          const b = f.getBoundingClientRect();
+          return { hidden, drift: !!a, tf: getComputedStyle(im).transform, fit: getComputedStyle(im).objectFit, src: im.currentSrc.split("/").pop(), canvas: f.querySelectorAll("canvas").length, x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
+        }, ms);
+        if (st.hidden && end === "from") fail(`@${label}: the poster is hidden (${st.hidden}) — read as if shown`);
+        await page.waitForTimeout(120);
+        const png = await page.screenshot({ type: "png", clip: { x: st.x, y: st.y, width: st.w, height: st.h } });
+        if (SHOTS) await writeFile(path.join(SHOTS, `poster-${o.viewport.width}-${end}.png`), png);
+        const { data, info: px } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+        const scale = px.width / st.w;
+        const band = Math.round(16 * scale);
+        let dev = 0;
+        let lit = 0;
+        const m = measure({ data, w: px.width, h: px.height, scale });
+        for (let y = 0; y < px.height; y++)
+          for (let x = 0; x < px.width; x++) {
+            if (x >= band && x < px.width - band && y >= band && y < px.height - band) continue;
+            const i = (y * px.width + x) * 3;
+            const dr = Math.abs(data[i] - GROUND[0]);
+            const dg = Math.abs(data[i + 1] - GROUND[1]);
+            const db = Math.abs(data[i + 2] - GROUND[2]);
+            dev = Math.max(dev, dr, dg, db);
+            if (dr + dg + db > 12) lit++;
+          }
+        worst.dev = Math.max(worst.dev, dev);
+        worst.lit += lit;
+        for (const k of ["T", "B", "L", "R"]) worst[k] = Math.min(worst[k], m[k]);
+        if (lit || dev > 3) fail(`@${label}, the drift's ${end} end: the field's 16px band is not the ground — ${lit} lit pixel(s), a channel ${dev} off #07090D (${st.src}, ${st.fit}, transform ${st.tf}); the poster reaches the field's edge`);
+      }
+      info(`@${label}: field ${st.w}x${st.h}, ${st.src} ${st.fit}, drift ${st.drift ? "running" : "absent"}${st.canvas ? `, ${st.canvas} canvas` : ""}; across both ends the band is within ${worst.dev} of the ground and the closest lit pixel is T ${worst.T} B ${worst.B} L ${worst.L} R ${worst.R}px from the field's edges`);
+      if (!st.drift && ready) fail(`@${label}: no drift is running on the poster — the check read one position only`);
+      await ctx.close();
+    }
   }
 
   /* ── charge: hovering or focusing the hero's Schedule a Call charges the system ── */
   if (want("charge")) {
-    console.log('charge — hover and focus on #hero [data-cta="schedule"], each page against an untouched one at the same moment');
+    begin("charge", 'charge — hover and focus on #hero [data-cta="schedule"], each page against an untouched one at the same moment');
     const CTA = '#hero [data-cta="schedule"]';
     /* Five fresh pages on one clock, every pointer at the CTA's centre (the
        pointer drives the camera's parallax, so the frames compare only if
@@ -392,13 +581,17 @@ try {
       const sr = series[how];
       const full = sr[sr.length - 1];
       const rise = (x) => (x.gain - 1) / Math.max(1e-6, full.gain - 1);
-      info(`${how}: the seams' linear luminance against the untouched page — ${sr.map((x) => `x${x.gain.toFixed(2)} at ${x.t}s`).join(", ")} (${full.n} seam pixels); charged, they read rgb ${full.rgb}`);
+      info(`${how}: the seams' linear luminance against the untouched page — ${sr.map((x) => `x${x.gain.toFixed(2)} at ${x.t}s`).join(", ")} (${full.n} seam pixels); charged, they read rgb ${full.rgb}, hue ${full.hue.toFixed(1)}° (at rest ${full.restHue.toFixed(1)}°)`);
       if (full.gain < 1.3 || full.gain > 1.55) fail(`${how}: at full charge the seams are x${full.gain.toFixed(2)} as bright — the charge is +40%`);
       if (rise(sr[0]) > 0.6) fail(`${how}: ${Math.round(100 * rise(sr[0]))}% of the charge came in the first 0.1s — it eases in, it does not jump`);
       if (rise(sr[3]) < 0.75) fail(`${how}: only ${Math.round(100 * rise(sr[3]))}% of the charge after 0.6s — it eases in over about 0.6s`);
-      /* brighter BLUE, never amber: blue leads green leads red */
+      /* brighter BLUE, never amber: blue leads green leads red, and the hue
+         holds. The order alone cannot see it — the site's amber mixed in at
+         the charge's 24% still reads blue > green > red, but turns the hue
+         11.5 degrees; the pale blue turns it 1.4 */
       const [cr, cg, cb] = full.rgb.split(",").map(Number);
-      if (!(cb > cg && cg > cr)) fail(`${how}: the charged seams are rgb ${full.rgb} — the charge is a brighter blue, never amber`);
+      const turn = Math.abs(((full.hue - full.restHue + 540) % 360) - 180);
+      if (!(cb > cg && cg > cr) || turn > 5) fail(`${how}: the charged seams are rgb ${full.rgb}, their hue turned ${turn.toFixed(1)}° from the resting seams' — the charge is a brighter blue, never amber`);
     }
     /* and back out: the hovered page's pointer steps off the CTA (8px below it,
        a 2px change of the pointer against 1000: the camera barely moves) */
@@ -444,7 +637,7 @@ try {
 
   /* ── explode: the hero scrolled away opens the stack; the band stays the ground ── */
   if (want("explode")) {
-    console.log("explode — scrolled past the span: the stack fully open, at 660 and 467");
+    begin("explode", "explode — scrolled past the span: the stack fully open, at 660 and 467");
     for (const width of [660, 467]) {
       const p = await open({ width });
       /* past the span, whatever the hero's height: the field is fixed here, so it stays in view */
@@ -521,7 +714,7 @@ try {
 
   /* ── reload: a page loaded mid-scroll still draws the poster first ── */
   if (want("reload")) {
-    console.log("reload — loaded mid-scroll, the first frame is still the poster");
+    begin("reload", "reload — loaded mid-scroll, the first frame is still the poster");
     const p = await open({
       dpr: 2,
       width: 660,
@@ -554,7 +747,7 @@ try {
 
   /* ── watchdog: slow frames degrade by fades, never in one frame ── */
   if (want("watchdog")) {
-    console.log("watchdog — 40ms frames: each step a fade");
+    begin("watchdog", "watchdog — 40ms frames: each step a fade");
     const p = await open({ dpr: 2, width: 660 });
     const first = measure(await grab(p));
     const flow = [first.flow];
@@ -600,5 +793,6 @@ try {
 } finally {
   await browser.close();
 }
+if (JSON_OUT) await writeFile(JSON_OUT, JSON.stringify({ tool: "probe-scene", base: URL_, gpu: GPU, results: report }, null, 1));
 console.log(failures.length ? `probe-scene: ${failures.length} failure(s)` : "probe-scene: every check passed");
 process.exit(failures.length ? 1 : 0);

@@ -744,9 +744,8 @@ html {
 /* The field is the poster's own 660 x 560 from 1280px up — the width `sizes`
    declares and the scene is composed for — and as close to it as the grid
    allows below that (467px at 1025), where the poster is contained, as the
-   scene draws it (the scene's block at the end of this file). The text
-   column keeps at least 420px, so the headline holds its two lines and the
-   body stays inside 68ch. */
+   scene draws it (.bf-hero__poster below). The text column keeps at least
+   420px, so the headline holds its two lines and the body stays inside 68ch. */
 @media (min-width: 1025px) {
   .bf-hero__inner {
     grid-template-columns: minmax(420px, 1fr) minmax(0, 660px);
@@ -856,9 +855,9 @@ html {
   .bf-hero__field { aspect-ratio: 16 / 9; }
 }
 
-/* 560px tall beside the text, never wider than the poster is drawn (660px),
-   so the poster is drawn exactly 660px wide at every desktop width — what
-   `sizes` in components/site/home/Hero.tsx says (H4). */
+/* 560px tall beside the text, never wider than the poster's 660px, so the
+   contained poster is drawn at most 660px wide (467px at 1025, exactly 660
+   from 1280) — what `sizes` in components/site/home/Hero.tsx says (H4). */
 @media (min-width: 1025px) {
   .bf-hero__field {
     aspect-ratio: auto;
@@ -880,26 +879,37 @@ html {
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: cover;
+  object-fit: contain;
   object-position: 50% 50%;
 }
 
+/* The poster is CONTAINED at every width (2026-09-29): the whole 660x560
+   frame is drawn, and the field's ground fills the rest, which is the
+   poster's own edge colour, so the field shows no box. Covering a 4:3 or
+   16:9 field with the 660:560 frame cut the scene's top and bottom off at
+   768-1024px, the Lab robot included, and brought it 4.5px from the edge at
+   390 (the adversarial review). */
+
 /* The drift: below 1025px, or on a coarse pointer, where the 3D scene never
-   mounts. Transform only — the frame's size never changes, so no layout shift
-   — none under reduced motion, and paused by the hero's pause control. It
-   runs only once that control is ready (`data-ready`, set after hydration):
-   without JavaScript there is no pause control, so nothing moves (WCAG 2.2.2).
-   The poster holds the drift's first frame until then, so starting it moves
+   mounts. A pure translate, no scale — a scaled poster pushes the frame's
+   edges past the field's, which is what cut it — small enough that the
+   frame's ground margin keeps the 16px band ground at both ends of it, at
+   390, 768 and 1024 (scripts/probe-scene.mjs, the `poster` check). Transform
+   only — the frame's size never changes, so no layout shift — none under
+   reduced motion, and paused by the hero's pause control. It runs only once
+   that control is ready (`data-ready`, set after hydration): without
+   JavaScript there is no pause control, so nothing moves (WCAG 2.2.2). The
+   poster holds the drift's first frame until then, so starting it moves
    nothing. */
 @keyframes bf-field-drift {
-  from { transform: scale(1.1) translate3d(-2.5%, -1.5%, 0); }
-  to   { transform: scale(1.1) translate3d(2.5%, 1.5%, 0); }
+  from { transform: translate3d(-2.5%, -1.2%, 0); }
+  to   { transform: translate3d(2.5%, 1.2%, 0); }
 }
 
 @media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
   (prefers-reduced-motion: no-preference) and (pointer: coarse) {
   .bf-hero__poster {
-    transform: scale(1.1) translate3d(-2.5%, -1.5%, 0);
+    transform: translate3d(-2.5%, -1.2%, 0);
   }
 
   .bf-hero:has(.bf-motion-toggle[data-ready]) .bf-hero__poster {
@@ -4701,14 +4711,6 @@ button.bf-map__btn[aria-pressed="true"] {
 
 /* ── motion-hire: scene ── */
 
-/* The poster at >=1025px: CONTAINED, not covered (2026-09-28). The scene
-   keeps its horizontal field of view fixed, so a field narrower than 660
-   (467px at 1025, 536 at 1100) draws the whole 660x560 frame smaller rather
-   than cropping it; the poster does exactly the same, and both fill the room
-   above and below with the ground, which is the field's own colour and the
-   poster's edge. So the crossfade is pixel-for-pixel at every width. Below
-   1025px the poster still covers its frame (and drifts); a coarse pointer at
-   >=1025px, where no scene mounts either, gets it contained, with the drift. */
-@media (min-width: 1025px) {
-  .bf-hero__poster { object-fit: contain; }
-}
+/* No rules of its own: the scene stream's CSS changes are edits in place to
+   the hero's poster rules (.bf-hero__poster, contained at every width, and
+   its drift, a pure translate), where a second rule would contradict them. */

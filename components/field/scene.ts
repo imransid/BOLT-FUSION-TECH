@@ -3,7 +3,7 @@
  * (engineering SPEC §7, the owner's brief of 2026-09-16; v2, 2026-09-28).
  *
  * An engineering core of stacked, chamfered octagonal plates in machined
- * graphite, turning slowly, with seven modules on two orbital tiers around it.
+ * graphite, turning slowly, with seven modules on two swaying tiers around it.
  * Thin curves run from the core to each module, and cyan comets carry data
  * along them. Everything stands on an architectural grid that fades into the
  * ground.
@@ -46,8 +46,9 @@
  * IT OPENS AS THE HERO SCROLLS AWAY: an exploded view, the engineering
  * drawing's own gesture. Over the first 55% of the hero's height each plate
  * lifts by its index x 0.13, the inner tier rises with the plate its links
- * leave from, the seams brighten in the opened gaps, and the camera tilts a
- * little to follow; scrolling back reassembles it. It is damped, driven by
+ * leave from, the seams brighten in the opened gaps, and the camera lifts
+ * its target and steps back a little to take it in; scrolling back
+ * reassembles it. It is damped, driven by
  * the scene's own passive scroll listener (scrollY only — no layout read),
  * and identity at scroll 0; like everything else here it stops with the loop,
  * so Pause motion freezes it. No GSAP, no pinning.
@@ -139,7 +140,7 @@ const SLOW_DPR = 1.25; // the watchdog's one step down, before anything is dropp
 const SLOW_FRAME_MS = 20;
 const SLOW_FOR_MS = 2000;
 const FADE_S = 0.8; // the comets fade out over this long
-const SINK_S = 2.4; // the outer tier sinks into the floor over this long
+const SINK_S = 3.6; // the outer tier sinks into the floor over this long (at 2.4, the smaller outer modules of 2026-09-29 lost 48% of their light in one 0.2s)
 const SINK = 1.7; // world units: deep enough that the floor hides the whole tier
 const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
 const HOLD_S = 0.75; // scene seconds after the first frame before the visitor's state moves it (the canvas fades in over 0.7s)
@@ -148,8 +149,7 @@ const HOLD_S = 0.75; // scene seconds after the first frame before the visitor's
 const EXPLODE_GAP = 0.13; // world units each plate lifts, per index, when fully open (0.24 put the mobile in the edge band)
 const EXPLODE_SPAN = 0.55; // of the hero's height: the scroll over which it opens
 const EXPLODE_EASE = 6; // per second: damped, about half a second behind the scroll
-const EXPLODE_TARGET = 0.25; // the camera's target rises this far with it
-const EXPLODE_TILT = 0.1; // radians the camera lowers, to look into the gaps
+const EXPLODE_TARGET = 0.25; // the camera's target rises this far with it (it does not tilt: lowering it 0.1 rad flattened the tiers into each other)
 const EXPLODE_BACK = 0.05; // and it steps back by this share of its distance: the opened stack is taller
 const EXPLODE_SEAM = 0.3; // the seams' mix toward pale blue, fully open
 const INNER_PLATE = 4; // the plate the inner tier's links leave from (its centre is INNER.from.y): the tier rises with it
@@ -197,22 +197,35 @@ const GAP = 0.036; // the seam between plates, where the thin blue edge light si
 type Tier = {
   radius: number;
   y: number; // module height
-  speed: number; // radians per second
-  phase: number;
+  swing: number; // radians the tier turns either way of its slots, with the scene's one sway
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
-  rise: number; // how far a module rises as it passes the front (world units, x cos² of its azimuth; 0 across the back)
 };
-/* The inner tier RISES as a module comes round to the front: 1.25 at the
-   front (x cos² of its azimuth, 0 across the back half), so it passes over
-   the top of the core instead of across the seams. At a flat 2.25 every inner
-   module crossed the core's face for about 20s of each 90s turn (probe
-   frames, 2026-09-28); a tilted orbit (front up, back down) and a 0.4 rise
-   both still did. Its link bends with it (the rise shader below), its comets
-   follow the bent link, and its orbit ring fades into the ground where it
-   rises. */
-const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65, rise: 1.25 };
-const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05, rise: 0 };
+/* The tiers SWAY; they do not orbit (2026-09-29). Both turn together, one
+   sway every 48 seconds (SWAY_RATE), the inner tier 17 degrees either way of
+   its slots and the outer 12.6 — the heavier ring moves less — so every
+   module stays in its own part of the frame: the inner tier across the back
+   and the sides, above the core, and the outer tier around the front of the
+   floor, below it. No module ever crosses the core, and none crosses
+   another: `scripts/probe-scene.mjs` (overlap) projects every part of every
+   module over the sway at rest and fully opened, at the four parallax
+   extremes, and fails any front module within 12px of the core, anything
+   within 12px of the Lab robot and any two modules within 8px (CLAUDE.md,
+   "The hero field").
+
+   Full orbits could not do that from this camera, whatever the tuning. The
+   outer ring's back arc projects onto the core's top edge, so ERP, POS and
+   the robot rose out of the core into the inner tier; and an inner module at
+   the front sits over the core unless it rises about 1.7 units, which puts
+   it into the frame's top band and on top of whichever module is behind it.
+   Orbiting at 90 and 140 seconds a turn, a front module overlapped the
+   core for 250-330s of every 1257s and the robot was crossed for about
+   130s by each of three modules (probe-scene's overlap check, 2026-09-29);
+   a taller, narrower rise (2.0) still left 70-110s. Swaying tiers were
+   tried in opposite phase too: the AI and the ERP met on the right. */
+const SWAY_RATE = (2 * Math.PI) / 48; // one sway every 48 seconds, at its fastest through t = 0
+const INNER: Tier = { radius: 1.75, y: 2.25, swing: 0.3, from: { r: 0.77, y: 1.26 }, lift: 2.65 };
+const OUTER: Tier = { radius: 2.25, y: 0.36, swing: 0.22, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
 
 /* Pulses: two comets per connection, one outward and one back. */
 const PULSE_LEN = 0.07;
@@ -357,41 +370,27 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   };
   seamMat.customProgramCacheKey = () => "bf-seam-1";
 
-  /* The inner tier's links bend up with their module as it rises past the
-     front (Tier.rise): the lift is 0 where a link leaves the core and the
-     module's own at its end, from each vertex's own azimuth, so the tube stays
-     attached with no per-frame geometry. */
-  const riseMat = (color: number, from: number, to: number, fade: number) => {
-    const m = mat(new MeshBasicMaterial({ color }));
-    const u = { uRise: { value: INNER.rise }, uFrom: { value: from }, uTo: { value: to }, uFade: { value: fade }, uGround: { value: new Color(GROUND) } };
-    m.onBeforeCompile = (sh) => {
-      Object.assign(sh.uniforms, u);
-      sh.fragmentShader =
-        "uniform float uFade;\nuniform vec3 uGround;\nvarying float vBfUp;\n" +
-        sh.fragmentShader.replace("#include <color_fragment>", "#include <color_fragment>\n  diffuseColor.rgb = mix( diffuseColor.rgb, uGround, uFade * vBfUp );");
-      sh.vertexShader =
-        "uniform float uRise;\nuniform float uFrom;\nuniform float uTo;\nvarying float vBfUp;\n" +
-        sh.vertexShader.replace(
-          "#include <begin_vertex>",
-          /* glsl */ `#include <begin_vertex>
-  {
-    vec4 bfW = modelMatrix * vec4( transformed, 1.0 );
-    float bfC = bfW.z / max( length( bfW.xz ), 1e-4 );
-    vBfUp = max( 0.0, bfC ) * max( 0.0, bfC );
-    float bfLift = uRise * vBfUp * smoothstep( uFrom, uTo, length( bfW.xz ) );
-    /* world up, in this object's own space */
-    vec3 bfUp = vec3( modelMatrix[ 0 ][ 1 ], modelMatrix[ 1 ][ 1 ], modelMatrix[ 2 ][ 1 ] );
-    transformed += bfUp * ( bfLift / dot( bfUp, bfUp ) );
-  }`,
-        );
-    };
-    m.customProgramCacheKey = () => "bf-rise-1";
-    return m;
+  /* The inner orbit's ring is drawn only across the back and the sides, where
+     the tier sways: in front, 2.25 units up, it would draw a line across the
+     core's face. It fades into the ground over 45-63 degrees from the front
+     (the camera's parallax is 6) and is not drawn in front of that. */
+  const ringFront = mat(new MeshBasicMaterial({ color: 0x1c2533 }));
+  ringFront.onBeforeCompile = (sh) => {
+    sh.uniforms.uGround = { value: new Color(GROUND) };
+    sh.vertexShader =
+      "varying float vBfFront;\n" +
+      sh.vertexShader.replace(
+        "#include <project_vertex>",
+        "#include <project_vertex>\n  vec4 bfW = modelMatrix * vec4( transformed, 1.0 );\n  vBfFront = bfW.z / max( length( bfW.xz ), 1e-4 );",
+      );
+    sh.fragmentShader =
+      "uniform vec3 uGround;\nvarying float vBfFront;\n" +
+      sh.fragmentShader.replace(
+        "#include <color_fragment>",
+        "#include <color_fragment>\n  if ( vBfFront > 0.71 ) discard;\n  diffuseColor.rgb = mix( diffuseColor.rgb, uGround, smoothstep( 0.45, 0.71, vBfFront ) );",
+      );
   };
-  const connRise = riseMat(0x31435f, INNER.from.r, INNER.radius - 0.3, 0);
-  /* the inner orbit's ring rises with its modules, and fades into the ground
-     where it rises, so it never draws a line across the core */
-  const orbitRise = riseMat(0x1c2533, -2, -1, 1);
+  ringFront.customProgramCacheKey = () => "bf-ring-1";
 
   /* ── Geometry helpers ── */
   /** A chamfered octagonal plate: a lathe of 8 segments, a flat face toward +z. */
@@ -495,6 +494,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const plateBase: number[] = []; // each plate's height when assembled
   const buildCore = () => {
     const core = new Group();
+    core.name = "core"; // names are for scripts/probe-scene.mjs, which reads the scene's layout
     scene.add(core);
     add(core, plate(PLINTH.r, PLINTH.h, 0.03), graphite, 0, PLINTH.h / 2, 0);
     let y = PLINTH.h + GAP;
@@ -634,29 +634,33 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   };
 
   /* Which module sits where (degrees from the front, +z), and which way it
-     faces the viewer (world yaw). Placed for t = 0, the poster: no two modules
-     overlap on screen and none hides the core. The spacing is deliberately
-     uneven, so the composition never reads as a mirrored diagram. `lab`: a
-     dashed steel link, and no comets on it. */
-  type Slot = { build: () => Group; angle: number; yaw: number; scale: number; lab?: boolean };
+     faces the viewer (world yaw). The slots are the poster's layout (t = 0)
+     and the centre of each tier's sway: the inner tier across the back and
+     the sides, the outer around the front of the floor, the front of the
+     inner orbit left open, since a module there would stand over the core.
+     The spacing is uneven, so the picture never reads as a mirrored diagram.
+     The modules are a little smaller than the core's top plates (1.2 and
+     1.3; they were 1.3 and 1.4 when they orbited), so the core leads and the
+     sway has room. `lab`: a dashed steel link, and no comets on it. */
+  type Slot = { id: string; build: () => Group; angle: number; yaw: number; scale: number; lab?: boolean };
   const deg = (d: number) => (d * Math.PI) / 180;
   const innerSlots: Slot[] = [
-    { build: buildWeb, angle: deg(325), yaw: 0.38, scale: 1.3 },
-    { build: buildAi, angle: deg(35), yaw: 0, scale: 1.3 },
-    { build: buildCloud, angle: deg(145), yaw: 0, scale: 1.3 },
-    { build: buildMobile, angle: deg(215), yaw: -0.35, scale: 1.3 },
+    { id: "web", build: buildWeb, angle: deg(280), yaw: 0.38, scale: 1.2 },
+    { id: "ai", build: buildAi, angle: deg(85), yaw: 0, scale: 1.2 },
+    { id: "cloud", build: buildCloud, angle: deg(140), yaw: 0, scale: 1.2 },
+    { id: "mobile", build: buildMobile, angle: deg(220), yaw: -0.35, scale: 1.2 },
   ];
   const outerSlots: Slot[] = [
-    { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55, lab: true },
-    { build: buildErp, angle: deg(115), yaw: -0.5, scale: 1.4 },
-    { build: buildPos, angle: deg(265), yaw: 0.5, scale: 1.4 },
+    { id: "robot", build: buildRobot, angle: deg(45), yaw: -0.65, scale: 1.45, lab: true },
+    { id: "erp", build: buildErp, angle: deg(100), yaw: -0.5, scale: 1.3 },
+    { id: "pos", build: buildPos, angle: deg(290), yaw: 0.5, scale: 1.3 },
   ];
 
   type BuiltTier = {
     tier: Tier;
     group: Group;
     ring: Mesh;
-    modules: { obj: Group; angle: number; yaw: number; wobble: number; port: Mesh | null }[];
+    modules: { obj: Group; yaw: number; wobble: number }[];
     curves: Float32Array; // 9 floats per connection: P0, P1, P2
     pulses: InstancedMesh; // the comets' heads
     halos: InstancedMesh; // their glow: TRAIL instances per comet
@@ -675,14 +679,14 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
 
   const tiers: BuiltTier[] = [];
 
-  /** A tier's cheap parts: its group, its orbit ring, and the comet instances
+  /** A tier's cheap parts: its group, its ring, and the comet instances
    *  (the instances themselves cost nothing; the modules and tubes are what
    *  take the time, and each of those is its own slice). Lab links carry no
    *  comets, so they get none. */
   const startTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
     const group = new Group();
     scene.add(group);
-    const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), tier === INNER ? orbitRise : orbitMat, 0, tier.y, 0);
+    const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), tier === INNER ? ringFront : orbitMat, 0, tier.y, 0);
     ring.rotation.x = Math.PI / 2;
 
     const live: number[] = [];
@@ -733,6 +737,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const dx = Math.sin(s.angle);
     const dz = Math.cos(s.angle);
     const holder = new Group();
+    holder.name = `module:${s.id}${s.lab ? ":lab" : ""}`;
     holder.position.set(dx * tier.radius, tier.y, dz * tier.radius);
     holder.scale.setScalar(s.scale);
     holder.add(s.build());
@@ -746,7 +751,6 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     tmpB.set(dx * midR, tier.lift, dz * midR);
     curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
     const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
-    let port: Mesh;
     if (s.lab) {
       /* Lab: a dashed steel line — 24 dashes along the same curve — with steel ports */
       const pts = curve.getPoints(48);
@@ -759,13 +763,13 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       g.setAttribute("position", new BufferAttribute(dash, 3));
       group.add(new LineSegments(g, steel));
       add(group, portGeo, steelFill, tmpA.x, tmpA.y, tmpA.z);
-      port = add(group, portGeo, steelFill, tmpC.x, tmpC.y, tmpC.z);
+      add(group, portGeo, steelFill, tmpC.x, tmpC.y, tmpC.z);
     } else {
-      add(group, geo(new TubeGeometry(curve, 48, 0.011, 4, false)), tier === INNER ? connRise : connMat);
+      add(group, geo(new TubeGeometry(curve, 48, 0.011, 4, false)), connMat);
       add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
-      port = add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
+      add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
     }
-    bt.modules.push({ obj: holder, angle: s.angle, yaw: s.yaw, wobble: seed + i * 1.7, port: tier === INNER ? port : null });
+    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
   };
 
   /* ── Per-frame state (allocated once) ── */
@@ -799,13 +803,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
     return t * t * (3 - 2 * t);
   };
-  /** How far a module at this world azimuth has risen (Tier.rise): the link shader's own curve. */
-  const frontRise = (tier: Tier, az: number) => {
-    const f = Math.max(0, Math.cos(az));
-    return tier.rise * f * f;
-  };
 
-  const writePulses = (bt: BuiltTier, t: number, ang: number) => {
+  const writePulses = (bt: BuiltTier, t: number) => {
     const C = bt.curves;
     const P = bt.pulses.instanceMatrix.array as Float32Array;
     const H = bt.halos.instanceMatrix.array as Float32Array;
@@ -815,7 +814,6 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       const j = bt.pulseCurve[i];
       const o = j * 9;
       const dir = bt.pulseDir[i];
-      const rise = bt.tier === INNER ? frontRise(bt.tier, bt.modules[j].angle + ang) : 0;
       const head = (bt.pulsePhase[i] + t * bt.pulseRate[i]) % 1;
       /* grow in from the start and shrink out at the end: nothing pops */
       const s = smooth(0, 0.12, head) * (1 - smooth(0.86, 1, head)) * fadeK;
@@ -824,14 +822,12 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
         const travel = Math.max(0, head - k * TRAIL_STEP);
         const u = dir > 0 ? travel : 1 - travel;
         const a = 1 - u;
-        /* the point on the quadratic curve, bent up by the module's rise
-           (smoothstep in u, as the link shader bends it), and its tangent in
-           the direction of travel */
+        /* the point on the quadratic curve, and its tangent in the direction of travel */
         const px = a * a * C[o] + 2 * a * u * C[o + 3] + u * u * C[o + 6];
-        const py = a * a * C[o + 1] + 2 * a * u * C[o + 4] + u * u * C[o + 7] + rise * u * u * (3 - 2 * u);
+        const py = a * a * C[o + 1] + 2 * a * u * C[o + 4] + u * u * C[o + 7];
         const pz = a * a * C[o + 2] + 2 * a * u * C[o + 5] + u * u * C[o + 8];
         let tx = (a * (C[o + 3] - C[o]) + u * (C[o + 6] - C[o + 3])) * dir;
-        let ty = (a * (C[o + 4] - C[o + 1]) + u * (C[o + 7] - C[o + 4]) + 3 * rise * u * a) * dir;
+        let ty = (a * (C[o + 4] - C[o + 1]) + u * (C[o + 7] - C[o + 4])) * dir;
         let tz = (a * (C[o + 5] - C[o + 2]) + u * (C[o + 8] - C[o + 5])) * dir;
         const tl = Math.hypot(tx, ty, tz) || 1;
         tx /= tl;
@@ -866,22 +862,19 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     seamU.uT.value = pulseClock;
     seamU.uCharge.value = Math.min(1, CHARGE_SEAM * energy + EXPLODE_SEAM * explode);
     rimBoost.value = 1 + CHARGE_RIM * energy;
+    /* the tiers' one sway: zero at t = 0, so the slots are the poster's layout */
+    const sway = Math.sin(t * SWAY_RATE);
     for (let b = 0; b < tiers.length; b++) {
       const bt = tiers[b];
-      const ang = bt.tier.phase + t * bt.tier.speed;
+      const ang = bt.tier.swing * sway;
       bt.group.rotation.y = ang;
-      /* each module keeps its own world-facing yaw while it orbits, with a slow sway */
+      /* each module keeps its own world-facing yaw while its tier sways, and turns a little on its own */
       for (let i = 0; i < bt.modules.length; i++) {
         const m = bt.modules[i];
         m.obj.rotation.y = m.yaw - ang + 0.2 * Math.sin(t * 0.3 + m.wobble);
-        if (m.port) {
-          const r = frontRise(bt.tier, m.angle + ang);
-          m.obj.position.y = bt.tier.y + r;
-          m.port.position.y = bt.tier.y - 0.02 + r;
-        }
       }
       /* the comets run on their own clock: changing a rate under `phase + t * rate` would make them jump */
-      if (degrade < 2 || cometK > 0) writePulses(bt, pulseClock, ang);
+      if (degrade < 2 || cometK > 0) writePulses(bt, pulseClock);
     }
     for (let i = 0; i < spinners.length; i++) spinners[i].obj.rotation.y = t * spinners[i].rate;
     shoulder.rotation.z = 0.42 + 0.2 * Math.sin(t * 0.42);
@@ -903,7 +896,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     }
 
     const az = cam.az;
-    const el = CAM_ELEV + cam.el - explode * EXPLODE_TILT;
+    const el = CAM_ELEV + cam.el;
     target.y = CAM_TARGET_Y + explode * EXPLODE_TARGET;
     const d = CAM_DIST * (1 + EXPLODE_BACK * explode);
     camera.position.set(d * Math.cos(el) * Math.sin(az), target.y + d * Math.sin(el), d * Math.cos(el) * Math.cos(az));

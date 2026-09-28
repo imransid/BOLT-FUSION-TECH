@@ -572,11 +572,12 @@ for more than five seconds has a pause control.
   the owner's brief; engineering SPEC §7, "Many technologies. One engineering
   system."; its v2, 2026-09-28, *Decided 2026-09-28*). An engineering core of
   stacked, chamfered octagonal plates in machined graphite, each lit by a thin
-  brand-blue seam, turning slowly. Seven modules sit on two orbital tiers, each
+  brand-blue seam, turning slowly. Seven modules sit on two swaying tiers, each
   a distinct form with no text: on the inner tier web (a thin panel), mobile (a
-  slim slab), AI (a wireframe icosahedron) and cloud (a torus ring); on the
-  outer tier ERP (stacked blocks), POS (a terminal block) and robotics (an
-  articulated two-segment arm). Thin links, about 1.75px, run from the core to
+  slim slab), AI (a wireframe icosahedron) and cloud (a torus ring), across the
+  back and the sides above the core; on the outer tier ERP (stacked blocks),
+  POS (a terminal block) and robotics (an articulated two-segment arm), around
+  the front of the floor. Thin links, about 1.75px, run from the core to
   each module, with cyan comets carrying data along them, over an
   architectural grid floor that fades into the ground. **Robotics is Lab work
   and is drawn as Lab:** the same arm as a steel (`#6b7385`) wireframe, on a
@@ -594,17 +595,34 @@ for more than five seconds has a pause control.
   the data flow, steel only on Lab work.
   - `components/field/scene.ts` is the scene; `components/field/HeroScene.tsx`
     loads it (*The hero field*, under Hard rules, for when and how).
-  - **Motion:** the plates and the two tiers turn slowly, the tiers in opposite
-    directions (one turn in about 90 and 140 seconds). An inner-tier module
-    RISES as it comes round to the front — 1.25 units at the front, cos² of
-    its azimuth, nothing across the back half — so it passes over the top of
-    the core instead of across its seams. Its link bends up with it in the
-    vertex shader, from each vertex's own azimuth (no geometry is rebuilt), its
-    comets follow the bent link, and its orbit ring fades into the ground where
-    it rises. On a flat orbit every inner module crossed the core's face for
-    about 20 of every 90 seconds, and a tilted orbit or a 0.4 rise still did
-    (probe frames, 2026-09-28). Each module keeps its face toward the viewer
-    with a slow sway, and the robot arm flexes. A comet — a head and a glow of
+  - **Motion:** the plates turn slowly, and the two tiers SWAY together
+    (2026-09-29): one sway every 48 seconds, the inner tier 17 degrees either
+    way of its slots and the outer 12.6, at its fastest through t = 0, so the
+    scene moves from its first frame. The slots are the poster's layout and
+    the centre of the sway, and the front of the inner orbit is left open. So
+    every module keeps its own part of the frame and nothing ever crosses the
+    core, the Lab robot or another module: `scripts/probe-scene.mjs` (overlap)
+    projects every part of every object through the camera every 0.25s over
+    seven sways, at rest and at the four parallax extremes, assembled and
+    fully open, and fails a module in front of the core within 12px of it,
+    anything within 12px of the robot and two modules within 8px (measured:
+    15.0px robot to core, 14.8px AI to cloud, 22.8px web to mobile). **The
+    tiers orbited until 2026-09-29, and from this camera an orbit cannot stay
+    clear**: the outer ring's back arc projects onto the core's top edge, so
+    ERP, POS and the robot rose out of the core into the inner tier; and an
+    inner module at the front sits on the core unless it rises about 1.7
+    units, which puts it in the frame's top band and on the module behind it.
+    Orbiting (90 and 140s a turn, a 1.25 rise at the front), a front module
+    overlapped the core for 250-330s of every 1257s and three modules crossed
+    the robot for about 130s each; a 2.0 rise still left 70-110s; the tiers
+    swaying in opposite phase made the AI and the ERP meet (the adversarial
+    review, and probe-scene's overlap check, 2026-09-29). The inner orbit's
+    ring is drawn only across the back and the sides, fading into the ground
+    by 45 degrees from the front, where it would cross the core's face. The
+    modules are a little smaller than they were (1.2 and 1.3, the robot 1.45)
+    so the core leads and the sway has room. Each module keeps its face
+    toward the viewer with a slow turn of its own, and the robot arm flexes.
+    A comet — a head and a glow of
     four segments, each longer, thinner and dimmer than the one before —
     takes about four seconds to cross a link, and grows and shrinks at its
     ends, so nothing pops. Every 7 seconds a soft band of light climbs the
@@ -618,7 +636,7 @@ for more than five seconds has a pause control.
   - **It answers Schedule a Call** (2026-09-28). Hovering or focusing the
     hero's own primary (`#hero [data-cta="schedule"]`, not the header's)
     charges the system: every seam, the top inlay included, mixes 24% toward
-    pale blue — about 40% brighter, measured x1.39–1.41 in linear luminance —
+    pale blue — about 40% brighter, measured x1.42–1.45 in linear luminance (x1.39–1.41 with the orbiting tiers) —
     the graphite's fresnel rim rises 30%, and the comets and the seam band run
     on their own clock at 1.6x. All of it eases in and out at 5 per second,
     about 0.6s either way (60% of it by 0.2s, all of it by 0.6s), and back
@@ -637,9 +655,10 @@ for more than five seconds has a pause control.
     into; the inner tier rises with the plate its links leave from (plate 4,
     by 0.65), so no link detaches; the plinth, and the outer tier's links
     that leave from it, never move. The seams mix 30% toward pale blue in the
-    opened gaps, and the camera lowers 0.1 rad, lifts its target 0.25 and
-    steps back 5% to take in the taller stack. Scrolling back reassembles
-    it. It follows the scroll damped (6 per second, about half a second
+    opened gaps, and the camera lifts its target 0.25 and steps back 5% to
+    take in the taller stack; it no longer lowers (it did by 0.1 rad until
+    2026-09-29, which flattened the swaying tiers into each other: the AI and
+    the cloud touched). Scrolling back reassembles it. It follows the scroll damped (6 per second, about half a second
     behind), from the scene's own passive scroll listener, which reads only
     `scrollY` — the hero's height is measured at mount and by the
     ResizeObserver, never per frame or per scroll. No GSAP, no pin, no scroll
@@ -650,13 +669,24 @@ for more than five seconds has a pause control.
     while the field is offscreen, like everything else. A gap of 0.24 per
     plate (the research's first prototype) pushed the mobile module into the
     top edge band; at 0.13 the fully open stack keeps it (*The hero field*).
-  - **The poster** is `public/hero/scene-poster-v2-{660,1320}.{avif,webp}`, the
-    scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
-    It is a plain `<img>` in a `<picture>`, the LCP element, with the image
-    optimizer off that path. At >=1025px it is contained in the field, as the
-    scene draws a narrower field (*The hero field*); below 1025px it covers
-    it. Below 1025px or on a coarse pointer it drifts slowly — a CSS
-    transform, so no layout shift; under reduced motion it is still. The v1
+  - **The poster** is the scene's first frame (t = 0), rendered by
+    `scripts/render-scene-poster.mjs` in three files, each as AVIF and WebP:
+    `public/hero/scene-poster-v2-1320.*` (rendered at DPR 2),
+    `-660-1x.*` (rendered at DPR 1: what a DPR-1 canvas draws, one-pixel lines
+    at full strength; the 660w file from 768px up) and `-660.*` (the DPR-2
+    frame downsampled, phones' file). It is a plain `<img>` in a `<picture>`,
+    the LCP element, with the image optimizer off that path. It is CONTAINED
+    in the field at every width (2026-09-29): the whole frame is drawn and the
+    field's ground, the poster's own edge colour, fills the rest. Covering the
+    4:3 and 16:9 fields below 1025px cut the frame's top and bottom off at
+    768-1024, the Lab robot included, and brought the scene 4.5px from the
+    edge at 390 (the adversarial review). Below 1025px or on a coarse pointer
+    it drifts slowly — a pure CSS translate, 2.5% across and 1.2% down, no
+    scale (a scaled poster pushed the frame past the field's edges); so no
+    layout shift, and under reduced motion it is still. `probe-scene`
+    (poster) reads it as the browser draws it at 390, 768, 1024 and a touch
+    tablet at both ends of the drift: the 16px band stays ground, the nearest
+    lit pixel 34px from an edge at 390 and 48 at 768. The v1
     files (2026-09-16) stay in `public/hero/`, unreferenced and unchanged: a
     page served before v2 still asks for them. The step-3 files,
     `field-poster-{660,1320}.*`, were deleted at the integration (2026-09-24):
@@ -788,7 +818,8 @@ at the end, which means nobody has decided yet.
   the poster frame the scene identically — and as wide as the grid allows below
   that (536px at 1100, 467px at 1025), where both draw the same 660x560 frame
   smaller: the poster contained, the canvas at a fixed horizontal field of
-  view (2026-09-28; until then `cover` cropped it). It has NO border
+  view (2026-09-28; until then `cover` cropped it). Below 1025px the poster is
+  contained too (2026-09-29), so no width crops the frame. It has NO border
   and NO radius, only the ground colour, so the scene reads as part of the page
   and not a card (the coordinator's review, 2026-09-16); nothing is painted over
   the poster. The
@@ -804,15 +835,21 @@ at the end, which means nobody has decided yet.
   1280px), and the poster is contained in it, so it is drawn at most 660px
   wide — exactly 660 from 1280 up — and `sizes` says 660px (H4: at the
   column's full height, 832px at 1025, the browser once fetched a file about
-  1.5x too small at every DPR); below that it sits above the text. Contained,
-  the poster's box is still the field's, which is all check 28 reads, and at
-  1025 it paints 467x396 against the h1's 420x98.
+  1.5x too small at every DPR); below that it sits above the text, contained
+  in a 16:9 field at 768-1024 (drawn 468-638px wide, so `sizes` is 660px from
+  768 up) and a 4:3 field on phones (316px wide at 390). Contained, the
+  poster's box is still the field's, which is all check 28 reads, and at 1025
+  it paints 467x396 against the h1's 420x98.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
     `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
     assets): a browser that has the old file never asks again. The scene's
     poster shipped as `scene-poster-v1-*` (2026-09-16); its v2 (2026-09-28)
     is `scene-poster-v2-*`, and the next render is `v3`, never over an old
     name. The old files stay: a page served before the new one asks for them.
+    (v2 was re-rendered under its own names on 2026-09-29 — the swaying
+    tiers, and the new `-660-1x` file — because it had never been served:
+    the branch was not yet merged or deployed. From its first deploy on, the
+    rule holds for it too.)
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
@@ -841,13 +878,13 @@ at the end, which means nobody has decided yet.
     down ONCE, from DPR 1.75 to 1.25 — one reallocation, before anything is
     dropped (a display at or under 1.25 skips the step). After two more slow
     seconds the comets fade out over 0.8s (by area, so evenly); after two
-    more the outer tier sinks into the floor over 2.4s — the floor's depth
+    more the outer tier sinks into the floor over 3.6s — the floor's depth
     hides it — and is then hidden. Before, the pulses and then the outer tier
     went `visible = false`: on SwiftShader POS, ERP and the robot vanished in
     one frame, and a slow integrated GPU saw the same pop.
     `scripts/probe-scene.mjs` feeds 40ms frames and fails a phase that loses
     more than half of what it drops in one 0.2s step (the old watchdog: 84% of
-    the comets and 69% of the outer tier; now 25% and 38%). Testing each frame
+    the comets and 69% of the outer tier; now 29% and 31%). Testing each frame
     alone reset the count on every fast frame, and a slow device's uneven
     frames kept resetting it, so it never fired (probe 6e, 2026-09-16), which
     is why it reads the running average. Paused offscreen (IntersectionObserver) and
@@ -884,8 +921,18 @@ at the end, which means nobody has decided yet.
     view** (2026-09-28): the 660x560 frame's, 30° vertical at 660x560, so a
     field narrower than 660 (between 1025 and 1280px, 467px at the narrowest)
     draws the whole frame smaller and gains ground above and below, exactly
-    as `object-fit: contain` draws the poster (`app/site.css`, the scene's
-    block). The crossfade is pixel-for-pixel at every width. Until then the
+    as `object-fit: contain` draws the poster (`.bf-hero__poster`). **What
+    the crossfade matches, measured** (`probe-scene`, identity, 2026-09-29, the
+    canvas's t = 0 frame against the poster the browser draws under it): at
+    660 it is the same frame 1:1 — 0.36% of pixels off by more than 24 at DPR
+    1 (the `-660-1x` file) and 0.42% at DPR 2 (the 1320 file), the rest
+    encoding. At 536 and 467 both draw the frame smaller, and the canvas
+    still draws a one-pixel line at full strength where the resampled poster
+    draws it thinner and dimmer: 0.9-1.9% of pixels (1.86% at 536 and DPR 1), the lines only, so thin
+    lines firm up a little as the canvas fades in. At DPR 1 the poster was the
+    DPR-2 frame downsampled until 2026-09-29, which put every GL line at about
+    half strength: 2.28% at 660, the lines visibly brightening in the fade
+    (the adversarial review). Until then the
     vertical field of view was fixed and `cover` cropped the frame, so the
     scene had to be small enough for a 480 crop: at 660, the frame most
     desktops get, it floated in 100px or more of empty ground on each side.
@@ -895,7 +942,7 @@ at the end, which means nobody has decided yet.
     `scripts/render-scene-poster.mjs` renders it from the built site at 1440.
     It freezes requestAnimationFrame when `data-scene-ready` appears, so the
     canvas holds t = 0, and captures the field at 660x560 (its 1px border
-    removed for the capture) at DPR 2.
+    removed for the capture) twice, at DPR 2 and at DPR 1.
   - **It dissolves into the page; it never stops at a box** (coordinator's
     review, 2026-09-16). The field has no border, and its background is the
     ground, `#07090D`, which is also the canvas's clear colour. The grid floor
@@ -903,15 +950,16 @@ at the end, which means nobody has decided yet.
     (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for,
     and the safe area**: since the field of view is fixed horizontally, a
     narrower field is the same frame smaller, never a crop of it. Measured on
-    rendered frames by `scripts/probe-scene.mjs` (2026-09-28, t = 0–100s every
-    5s, and the pointer held at each of the four parallax extremes): at 660
-    the closest lit pixel is 86px from the left edge, 88 from the right, 48
-    from the top and 34 from the bottom; at 467, 60, 62, 116 and 106; the 16px
-    band is the ground in every frame (within 0 of #07090D). Fully exploded
-    (the hero scrolled past the span, t = 3–103s every 10s and the four
-    parallax extremes) the stack is taller and the margins move to 100, 103,
-    41 and 42 at 660, and 71, 73, 111 and 111 at 467 — the band still the
-    ground in every frame. The poster script
+    rendered frames by `scripts/probe-scene.mjs` (2026-09-29, the swaying
+    tiers; t = 0–100s every 5s, and the pointer held at each of the four
+    parallax extremes): at 660 the closest lit pixel is 97px from the left
+    edge, 90 from the right, 54 from the top and 61 from the bottom; at 467,
+    68, 63, 120 and 126; the 16px band is the ground in every frame (within 0
+    of #07090D). Fully exploded (the hero scrolled past the span, t = 3–103s
+    every 10s and the four parallax extremes) the stack is taller and the
+    margins move to 111, 103, 36 and 61 at 660, and 79, 73, 107 and 123 at
+    467 — the band still the ground in every frame. Below 1025px the drifting
+    poster keeps the band too (*Motion, as built*, the poster). The poster script
     refuses a capture whose 16px edge band is not the ground, and
     `scripts/probe-scene.mjs` fails any frame whose band is not. It is done in the scene itself:
     no overlay and no post-processing, since anything painted over the poster
@@ -1327,8 +1375,8 @@ used to pass now fails, and the site still passes. Every rule has a misuse case 
   then reads the settled poster (see *The hero field*); every proof card's figure, label, status and
   source must be what `content/metrics.ts` says, its chip in its `[data-metric]` row. It prints how
   far the chosen file is stretched to fill the frame (H4), without failing on it — by the poster's
-  own `object-fit` since 2026-09-28: the larger axis for `cover` (below 1025), the smaller for
-  `contain` (>=1025).
+  own `object-fit` since 2026-09-28: the larger axis for `cover`, the smaller for `contain` (every
+  width since 2026-09-29).
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
@@ -1338,16 +1386,25 @@ reports the absence of the behaviour as a fact about the site.
 **A change to the hero scene runs `scripts/probe-scene.mjs` as well** (2026-09-28).
 The suite reads the scene's contract — a granted context, the chunk, the poster
 as LCP, nothing painted over it — but never its pixels over time, so it cannot
-see the rules of *The hero field* that live there: the 16px band the ground at
-660 and 467 across t = 0–100s, the parallax extremes and the fully exploded
-stack; the t = 0 frame (and the first frame of a page hovered on Schedule a
-Call, or reloaded mid-scroll) equal to the poster file; the charge eased,
-blue, and gone after leave; Pause motion drawing nothing; the watchdog's
-steps fades. It takes over the scene's clock on fresh, unscrolled pages and
-scrolls them itself, so nothing viewport-triggered is already over. Against a
-local build: `node scripts/probe-scene.mjs --base http://localhost:<port>`
-(SwiftShader; `--gpu` for the machine's GPU, where the poster comparison prints
-the cross-rasteriser diff instead of failing). Exit 1 on any failure.
+see the rules of *The hero field* that live there. The probe's checks:
+`clearance` (the 16px band the ground at 660 and 467 across t = 0–100s and the
+parallax extremes), `overlap` (no module within 12px of the core in front of
+it, nothing within 12px of the Lab robot, no two modules within 8px, read from
+the scene's own objects over seven sways, assembled and fully open —
+`scripts/lib/scene-layout.mjs`), `poster` (the drifting poster below 1025px
+and on a touch tablet keeps the band), `identity` (the t = 0 frame against the
+poster the browser draws under it, at 660, 536 and 467, DPR 1 and 2),
+`charge` (eased, blue, gone after leave, dead while paused, and a page hovered
+before mount still starts on the poster), `explode` (the band fully open;
+identity at scroll 0, opening with the scroll, frozen by Pause motion,
+reassembled at the top), `reload` (a page loaded mid-scroll starts on the
+poster, then opens) and `watchdog` (each step a fade). It takes over the
+scene's clock on fresh, unscrolled pages and scrolls them itself, so nothing
+viewport-triggered is already over. Against a local build: `node
+scripts/probe-scene.mjs --base http://localhost:<port> [--only a,b] [--json
+<file>]` (SwiftShader; `--gpu` for the machine's GPU, where the poster
+comparisons print the cross-rasteriser diff instead of failing); about a
+minute and a half. Exit 1 on any failure.
 
 **Run it against the merged result**, not a single branch or the stack: build
 `main` with every open branch merged in order, then run the whole suite. Three
@@ -1401,6 +1458,11 @@ imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
+**Re-measured 2026-09-29, with the swaying tiers: 144,153 bytes, 140.8KB**
+gzipped at level 6 as served, 575KB raw, requested at 2.4s against a 245ms
+load event: 250 bytes less than the orbiting v2, which carried the rise
+shader for the inner tier's links and ring; 39.2KB of the 180KB left.
+
 **Re-measured 2026-09-28, with the scene's v2** (the studio, the comets, the
 Lab robot, the fit-width camera and the watchdog's fades): **143,913 bytes,
 140.5KB**, gzipped at level 6 as served — the same as its `encodedBodySize`
@@ -1423,11 +1485,18 @@ JavaScript. Check 25 holds the 180KB: it gzips each scene file as served (level
 6), because its WebGL runs re-serve scripts through the worker hook and their
 resource timings are not the wire.
 
-**The posters:** `scene-poster-v2-660.avif` 7.5KB, `-1320.avif` 15.6KB,
-`-660.webp` 13.8KB, `-1320.webp` 33.0KB (AVIF 4:4:4 at quality 56, WebP 82;
-2026-09-28). The v2 frame is larger and lit (about 20% of its pixels off the
-ground), so each file is about a third heavier than v1's — 1.8KB more on the
-phone's LCP path (the 660 AVIF), with the mobile LCP at 844ms (check 29):
+**The posters** (2026-09-29, the swaying tiers): `scene-poster-v2-660.avif`
+7.4KB (phones), `-660-1x.avif` 11.2KB (DPR 1 from 768px), `-1320.avif`
+15.0KB; `-660.webp` 13.6KB, `-660-1x.webp` 15.4KB, `-1320.webp` 31.8KB (AVIF
+4:4:4 at quality 56, the 1x file at 64; WebP 82). The phone's LCP file is the
+same weight as the orbiting v2's (7.5KB); a DPR-1 desktop's is 11.2KB where
+it was 7.5KB — the frame rendered at its own density keeps one-pixel lines
+that encode heavier — and a tablet at DPR 1 now takes it (11.2KB) instead of
+the 1320 file (15.6KB), since `sizes` says 660px from 768 up. The orbiting
+v2's, 2026-09-28: `-660.avif` 7.5KB, `-1320.avif` 15.6KB, `-660.webp` 13.8KB,
+`-1320.webp` 33.0KB. The v2 frame is larger and lit (about 20% of its pixels
+off the ground), so each file is about a third heavier than v1's — 1.8KB more
+on the phone's LCP path (the 660 AVIF), with the mobile LCP at 844ms (check 29):
 `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
 `-660.webp` 10.3KB, `-1320.webp` 24.8KB.
 The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
@@ -1556,13 +1625,24 @@ as a solid, lit, connected peer with data flowing to it. So:
 1. **Lit graphite, visible flow, a Lab-honest robot and fit-width framing,
    with the watchdog's fades** — the analytic studio and fresnel rim, the
    comets and 1.75px links, the seam band, the steel wireframe on a dashed
-   link, a fixed horizontal field of view with the poster contained at
-   >=1025px, the inner tier rising past the front, and a watchdog that steps
-   the drawing buffer down before it fades anything (*Motion, as built*; *The
-   hero field*). It changes the t = 0 frame, so the poster is re-rendered as
-   `scene-poster-v2-*`. The robot's treatment changes what the picture says,
-   deliberately: it is the one scene change the evidence tiers ask for, and it
-   is the owner's to confirm.
+   link, a fixed horizontal field of view with the poster contained, and a
+   watchdog that steps the drawing buffer down before it fades anything
+   (*Motion, as built*; *The hero field*). It changes the t = 0 frame, so the
+   poster is re-rendered as `scene-poster-v2-*`. The robot's treatment
+   changes what the picture says, deliberately: it is the one scene change
+   the evidence tiers ask for, and it is the owner's to confirm.
+   **Revised 2026-09-29, after the adversarial review:** upgrade 4's aim —
+   modules that stop crossing the core — was not met by lifting the inner
+   tier past the front: over the tiers' common period a front module sat on
+   the core a quarter of the time, and the AI ran its comets into the Lab
+   robot. The tiers now SWAY about the poster's layout instead of orbiting,
+   and no module ever crosses the core, the robot or another module
+   (measured by the probe's new `overlap` check). It is a change to how the
+   scene moves, for the owner to see: the constellation keeps its designed
+   composition at every moment rather than turning through it. With it the
+   poster is contained at every width (it was cut at 768-1024), drifts
+   without scaling, and gains a DPR-1 file so a 1x desktop's crossfade no
+   longer brightens its lines.
 2. **The CTA charge** — hovering or focusing the hero's Schedule a Call
    brightens the seams about 40% and runs the comets 1.6x, eased over about
    0.6s: the one place the scene answers the page's primary action, and it
@@ -1581,7 +1661,7 @@ It stays inside every rule of *The hero field*: no textures, no
 post-processing, nothing allocated per frame, built in slices, the poster the
 t = 0 frame, the 16px band the ground, desktop and a fine pointer only, the
 canvas `pointer-events: none`, no Raycaster, three.js only in
-`components/field/scene.ts`, and the chunk 141.0KB of its 180KB.
+`components/field/scene.ts`, and the chunk 140.8KB of its 180KB.
 
 ## Decided 2026-09-16: the engineering redesign (owner)
 
