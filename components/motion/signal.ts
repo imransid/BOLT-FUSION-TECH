@@ -37,8 +37,9 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  *    so does the pause control (`html[data-motion="paused"]`, `bf:motion`); a
  *    sequence that would start in either state starts at its end;
  *  · SVG strokes and opacity only: no pins, no layout, no scroll smoothing;
- *    ScrollTrigger refreshes when fonts finish loading and on a debounced
- *    ResizeObserver of `main#main` (the FAQ's <details>).
+ *    the triggers re-measure when fonts finish loading and on a debounced
+ *    ResizeObserver of `main#main` (the FAQ's <details>) — each on its own,
+ *    never by a full refresh, which scrolls the page.
  * `<html data-bf-signal="live">` while it runs.
  */
 
@@ -456,17 +457,25 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
     };
   });
 
-  /* Layout that moves a trigger: faces swapping in, a <details> opening. A
-     refresh measures from the top of the page and puts the reader back in the
-     same task, but it cuts short a smooth scroll in progress, so there is none
-     that nothing asked for: none for fonts that had finished before the engine
-     started (they nearly always have — it starts after load), and none for the
+  /* Layout that moves a trigger: faces swapping in, a <details> opening. Each
+     trigger re-measures on its own, then they are checked against where the
+     reader is. Never ScrollTrigger.refresh(): a full refresh scrolls the page
+     to the top to measure and puts it back, which cancels a smooth scroll in
+     flight — an anchor followed while main grew 40px left the reader at
+     2473-4349 with #faq still 13-15k px below (17777 with gsap blocked, and
+     with this). None of these triggers pins or scrubs, so re-reading each
+     one's start and end is all a refresh would do. And none that nothing asked
+     for: none for fonts that had finished before the engine started (they
+     nearly always have — it starts after load), and none for the
      ResizeObserver's first report, which is the size the triggers were just
      measured at. */
   let t: ReturnType<typeof setTimeout> | undefined;
   const refresh = () => {
     clearTimeout(t);
-    t = setTimeout(() => ScrollTrigger.refresh(), 150);
+    t = setTimeout(() => {
+      for (const st of ScrollTrigger.getAll()) st.refresh();
+      ScrollTrigger.update();
+    }, 150);
   };
   const fonts = document.fonts;
   if (fonts?.status === "loading") void fonts.ready.then(refresh);

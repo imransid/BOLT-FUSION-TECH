@@ -632,11 +632,20 @@ has a pause control.
     trigger, and nothing in `#hero` is ever touched. Every tween is on an
     overlay it adds and removes: **the originals are never animated** (DrawSVG
     would overwrite their dash patterns — `.dg-flow`'s `4 12` read `120px,
-    80.1px` when measured). No pins, no scrub on text, no smooth scroll;
-    ScrollTrigger refreshes when fonts finish loading and on a 150ms-debounced
-    ResizeObserver of `main#main` (the FAQ's `<details>`), and on nothing else
-    of ours — a refresh measures from the top of the page and puts the reader
-    back in the same task, but it cuts short a smooth scroll in progress.
+    80.1px` when measured). No pins, no scrub on text, no smooth scroll.
+    The triggers re-measure when fonts finish loading and on a
+    150ms-debounced ResizeObserver of `main#main` (the FAQ's `<details>`), and
+    on nothing else of ours — **each trigger on its own**
+    (`ScrollTrigger.getAll()` → `refresh()`, then `ScrollTrigger.update()`),
+    never `ScrollTrigger.refresh()`. A full refresh scrolls the page to the top
+    to measure and puts it back, which cancels a smooth scroll in flight:
+    following `#faq` while main grew 40px, 120ms in, left the reader at
+    2473–4349 with the FAQ still 13–15k px below; `refresh(true)` reached
+    16308–16670; per trigger it lands on 17777, the same as with gsap blocked
+    (3 of 3). None of these triggers pins or scrubs, so re-reading each start
+    and end is all a refresh would do; a probe that prepends 3000px to main
+    and then scrolls to the first diagram's new place sees it trace there
+    (and not, with the ResizeObserver stubbed out).
   - **Two things ScrollTrigger does to the page, undone in the engine.** It
     forgets the page's scroll position when the last trigger on it is killed,
     and a media change then refreshes from the top: when the gate stopped
