@@ -2454,13 +2454,17 @@ button.bf-map__btn[aria-pressed="true"] {
   color: var(--bf-muted);
 }
 
-.bf-project {
+/* The project form's wrapper on /contact. It was `.bf-project` until
+   2026-09-28 — the name of /work's project card, whose rule comes later and
+   won: the form rendered 203px wide in a bordered panel (verify-site check 32
+   now holds it at 480px or wider at 1440). */
+.bf-contact-project {
   display: grid;
   gap: 16px;
 }
 
 @media (min-width: 1025px) {
-  .bf-project {
+  .bf-contact-project {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: 72px;
     align-items: start;
@@ -4696,4 +4700,136 @@ button.bf-map__btn[aria-pressed="true"] {
 
 @media (min-width: 1025px) {
   .bf-notfound .bf-pagehead { padding-block: 160px 200px; }
+}
+
+/* ── motion-hire: IA ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE 2026-09-28 REDESIGN, IA STREAM — the owner: "make it easy for clients to
+   hire". New rules only, in this block (DECISIONS 2026-09-28, "The interfaces
+   between the streams"); the motion and scene streams append their own blocks
+   after it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── /contact: the h1 and the calendar side by side ─────────────────────── *
+   From 1025px: the head and what happens next on the left, the calendar on
+   the right, in the first viewport. Below that, one column in the DOM's order
+   — the h1, the calendar straight after it, then the rest. */
+.bf-contact {
+  padding-block: 40px 72px;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact { padding-block: 56px 112px; }
+}
+
+.bf-contact__grid {
+  display: grid;
+  grid-template-areas: "head" "cal" "next";
+  gap: 40px;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact__grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "head cal"
+      "next cal";
+    column-gap: 72px;
+    row-gap: 40px;
+    align-items: start;
+  }
+}
+
+.bf-contact__head { grid-area: head; min-width: 0; }
+.bf-contact__cal { grid-area: cal; min-width: 0; }
+.bf-contact__next { grid-area: next; min-width: 0; }
+
+.bf-contact .bf-status-line {
+  margin-bottom: 4px;
+}
+
+.bf-contact__title {
+  max-width: 13ch;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact__title { font-size: clamp(44px, 4.2vw, 58px); }
+}
+
+.bf-contact__calhead {
+  margin-bottom: 20px;
+}
+
+.bf-contact__h2 {
+  font-family: var(--bf-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+.bf-contact__calhead .bf-lead {
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.bf-contact__next > .bf-lead {
+  margin-top: 0;
+}
+
+/* A label, not a headline: the h2 over the terms reads like an eyebrow. */
+.bf-contact__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  margin-bottom: 4px;
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bf-muted);
+}
+
+.bf-contact__label::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 1px;
+  background-color: var(--bf-brand);
+}
+
+.bf-contact__terms {
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-contact__term {
+  display: grid;
+  gap: 2px 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+@media (min-width: 560px) {
+  .bf-contact__term { grid-template-columns: 150px minmax(0, 1fr); }
+}
+
+.bf-contact__term dt {
+  font-family: var(--bf-font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--bf-text);
+}
+
+.bf-contact__term dd {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-contact__next .bf-actions {
+  margin-top: 28px;
 }

@@ -431,7 +431,6 @@ const raw: SiteContentInput = {
     statusLabel: "Taking new engagements",
     title: "Tell us what you need to ship",
     body: "Share goals, timeline, and constraints—we'll reply with honest fit, a suggested approach, and next steps. No pressure, no jargon wall.",
-    primaryCta: { label: SCHEDULE_LABEL, href: "#schedule" },
     emailLabel: "Email the team",
     emailHref: "mailto:hello@boltfusiontech.com",
     emailAddress: "hello@boltfusiontech.com",

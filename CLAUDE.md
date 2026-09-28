@@ -58,7 +58,7 @@ returns as plain three.js, with no React Three Fiber.
 | route | what it is | content from |
 |---|---|---|
 | `/` | homepage (`app/page.tsx`), the redesign's story in `site.sectionOrder`: hero, what we engineer, the six capabilities, the system map, industries, how we build, technical depth, engineering stories (the two write-ups and the proof strip), team, FAQ, final call to action | `content/site.ts` (hero, stories, team, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages, depth, the system map), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the restaurant story's lanes) · static |
-| `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16 | `content/site.ts`, `contact` |
+| `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
 | `/engineering` | how we build (the homepage's six stages, and the three phases of `content/process.ts`), the stack by layer (SPEC §8b.2), architecture principles each linked to where it is written up, and the verify-before-release discipline | `content/engineering.ts`, `content/process.ts`, `content/pages.ts` · static |
@@ -342,6 +342,12 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   text — the no-JS and crawler view. With script each part and flow is a button:
   focus or hover lights its links, a polite live region says what they do, a
   click pins it. Without script they are plain text, never a dead button.
+- **/contact is two columns from 1025px** (2026-09-28): the head, what
+  happens next and the email on the left (5 of 12), the booking calendar on
+  the right (7 of 12), so the calendar is in the first viewport; one column
+  below that, the calendar right after the h1 (`grid-template-areas`, with the
+  DOM in the phone's order). The project form sits under both, at least 480px
+  wide at 1440 (check 32).
 - **One light surface, on purpose:** the booking calendar on /contact. Calendly
   paints its own white interface and ignores the colour parameters, so the embed
   is a card we place — white (`--bf-paper`), generous padding, the design's 2px
@@ -1231,6 +1237,21 @@ used to pass now fails, and the site still passes. Every rule has a misuse case 
   then reads the settled poster (see *The hero field*); every proof card's figure, label, status and
   source must be what `content/metrics.ts` says, its chip in its `[data-metric]` row. It prints how
   far the chosen file is stretched to cover the frame (H4), without failing on it.
+
+**Checks changed in the 2026-09-28 redesign (IA stream).** Each rule was proven
+both ways on a served build — the site passes, the same site with one misuse
+fails with that rule's own finding — and each has its misuse case in the gate's
+RUN 2 (`scripts/gate/gate-cases.py`).
+- **32, extended — the project form is usable where it lands.** At 1440,
+  `#project .bf-form` on /contact is at least 480px wide (`PROJECT_FORM_MIN`),
+  visible, and there. It rendered 203px wide in a bordered panel whose heading
+  touched its edge: the contact wrapper was `bf-wrap bf-project`, and /work's
+  card rule `.bf-project` (display flex, a column, a border) came later in
+  `app/site.css` and won over the contact grid of the same name, whose
+  `align-items: start` then shrank the form to its button. No check measured
+  it. The misuse case `contact-form` makes the wrapper a flex column that
+  shrinks its items — the bug's shape — and reproduces it to the pixel: "the
+  project form (#project .bf-form) is 203px wide"; the clean build reads 640px.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

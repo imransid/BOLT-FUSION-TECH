@@ -300,14 +300,15 @@ export const siteContentSchema = z
     /* /contact (2026-09-16): the contact panel and the booking calendar that
        closed the old homepage, and a short project form that opens the
        visitor's email app — the site's existing mechanism, mailto, and no
-       backend. */
+       backend. Since 2026-09-28 the calendar sits beside the h1 (after it on a
+       phone), so the panel's own Schedule a Call — a jump to that calendar —
+       went: the header's is on every page. */
     contact: z.strictObject({
       meta: z.strictObject({ title: z.string().min(1), description: z.string().min(1) }),
       eyebrow: z.string().min(1),
       statusLabel: z.string(),
       title: z.string(),
       body: z.string(),
-      primaryCta: scheduleCtaSchema,
       emailLabel: z.string(),
       emailHref: safeHref,
       emailAddress: z.string().email(),

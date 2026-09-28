@@ -637,6 +637,22 @@
         ]
       },
       {
+        "item": "How we work with clients, beside the calendar",
+        "proves": "What happens once you call — /about's four terms, word for word (content/pages.ts), next to the booking calendar (2026-09-28)",
+        "status": "required",
+        "needles": [
+          "How we work with clients",
+          "Named engineers",
+          "Assigned before you sign. Your first call is with the engineer who writes the code.",
+          "Overlap hours",
+          "4–8 hours of overlap with US and EU working days.",
+          "Intellectual property",
+          "Assigned to you on payment.",
+          "NDA",
+          "Signed before scoping."
+        ]
+      },
+      {
         "item": "The project form",
         "proves": "Tell Us About Your Project: three fields that open the visitor's email app (#project)",
         "status": "required",

@@ -118,7 +118,8 @@ def p_vanishing_frame(s):
 
 
 def p_logotype(s):
-    s.rep("app/contact/page.tsx", '<p className="bf-lead">\n                <FigureText text={c.schedule.blurb} />', '<p data-logotype className="bf-lead">\n                <FigureText text={c.schedule.blurb} />')
+    # re-anchored 2026-09-28: the blurb moved into the calendar's column (the two-column /contact)
+    s.rep("app/contact/page.tsx", '<p className="bf-lead">\n                  <FigureText text={c.schedule.blurb} />', '<p data-logotype className="bf-lead">\n                  <FigureText text={c.schedule.blurb} />')
 
 
 def p_faq_ld(s):
@@ -324,6 +325,14 @@ def p_kubernetes(s):
     s.rep("components/site/home/TechnicalDepth.tsx", "                  ))}\n                </ul>", '                  ))}\n                  {layer.id === "infrastructure" ? <li>Kubernetes</li> : null}\n                </ul>')
 
 
+def p_contact_form(s):
+    """32 (2026-09-28): the /contact project form collapsed to its content's
+    width — the shape of the bug found that day, when /work's card rule
+    (.bf-project) won over the contact wrapper of the same name and the form
+    rendered 203px wide at 1440"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the /contact project form collapsed (the .bf-project collision's shape) */\n#project > .bf-wrap { display: flex !important; flex-direction: column; align-items: flex-start; }\n")
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -392,6 +401,8 @@ CASES = [
     ["tier-status", "a data-status on a tier chip", 33, r"a tier chip \(\[data-tier=\"[a-z]+\"\][^)]*\) carries data-status", p_tier_status, {}],
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
+    # new for the 2026-09-28 redesign, one per new rule
+    ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
