@@ -1,17 +1,21 @@
 /**
  * The homepage hero's 3D scene: "Many technologies. One engineering system."
- * (engineering SPEC §7, the owner's brief of 2026-09-16).
+ * (engineering SPEC §7, the owner's brief of 2026-09-16; v2, 2026-09-28).
  *
- * An engineering core of stacked, chamfered octagonal plates, turning slowly,
- * with seven modules on two orbital tiers around it. Thin curves run from the
- * core to each module, and small cyan pulses travel along them. Everything
- * stands on an architectural grid that fades into the ground.
+ * An engineering core of stacked, chamfered octagonal plates in machined
+ * graphite, turning slowly, with seven modules on two orbital tiers around it.
+ * Thin curves run from the core to each module, and cyan comets carry data
+ * along them. Everything stands on an architectural grid that fades into the
+ * ground.
  *
- *  - the core: graphite plates, each lit by a thin brand-blue seam under it;
+ *  - the core: graphite plates catching a studio strip light, each lit by a
+ *    thin brand-blue seam under it, with a slow band of energy climbing them;
  *  - the inner tier: web (a thin panel), mobile (a slim slab), AI (a wireframe
  *    icosahedron) and cloud (a torus ring);
  *  - the outer tier: ERP (stacked blocks), POS (a terminal block) and robotics
- *    (an articulated two-segment arm).
+ *    (an articulated two-segment arm). Robotics is Lab work — nothing
+ *    delivered — so it is drawn as a steel-edged wireframe on a dashed link,
+ *    and no data flows to it: "concept, not delivered", without a word.
  *
  * Only this module imports three.js, and only HeroScene imports this module,
  * dynamically, after LCP and `load`. The caller decides WHETHER to run it
@@ -20,16 +24,20 @@
  *
  * The rules it keeps (CLAUDE.md, "The hero field"):
  *  - Named imports from `three`, so the bundler keeps only what is used.
- *  - Clears to the ground, #07090D. No post-processing and no bloom.
+ *  - Clears to the ground, #07090D. No post-processing, no bloom and no
+ *    textures: the graphite's reflection is an analytic studio in the shader.
  *  - DPR capped at 1.75.
  *  - The build runs in slices of a few milliseconds, a frame apart, so it
  *    never becomes a long task. Nothing is drawn until every slice is done.
  *  - Nothing is allocated per frame. The pulses are two InstancedMeshes per
- *    tier (a core and a halo), and the loop writes their matrices straight
- *    into the instance buffers. Every other vector it uses is allocated once.
+ *    tier (the comets' heads and their tails), and the loop writes their
+ *    matrices straight into the instance buffers. Every other vector it uses
+ *    is allocated once.
  *  - The frame-time watchdog: once the running average frame (about ten
  *    frames, so jitter cannot reset it) has stayed over 20ms for 2s, the
- *    pulses go; after 2s more, the outer tier goes.
+ *    drawing buffer steps down once, from DPR 1.75 to 1.25; after 2s more the
+ *    comets fade out, and after 2s more the outer tier sinks into the floor.
+ *    Nothing vanishes in one frame.
  *  - Paused while the canvas is offscreen and while the tab is hidden.
  *  - `dispose()` frees every geometry, material and instance buffer, then the
  *    renderer, then the context itself. The scene creates no textures.
@@ -41,13 +49,15 @@
  * the camera at rest. That frame is the poster, so the canvas fades in over an
  * identical picture.
  *
- * FRAMING: the vertical field of view is fixed. A narrower canvas shows the
- * centre crop of a wider one, exactly as the poster's `object-fit: cover`
- * crops the 660x560 poster in a narrower field.
+ * FRAMING: the HORIZONTAL field of view is fixed, at the 660x560 frame's. A
+ * narrower canvas draws the whole frame smaller, exactly as the poster's
+ * `object-fit: contain` draws the 660x560 poster in a narrower field (>=1025px),
+ * and the room it gains above and below is ground on both.
  */
 import {
   AdditiveBlending,
   BoxGeometry,
+  BufferAttribute,
   BufferGeometry,
   Color,
   CylinderGeometry,
@@ -100,32 +110,34 @@ export type SceneHandle = {
 /* ── Palette (sRGB). Cyan only on data flow. ─────────────────────────────── */
 const GROUND = 0x07090d; // the site's ground, and the field's CSS background
 const BRAND = 0x4c86ff; // the one brand blue: edge light only
-const FLOW = 0x2ee6d6; // the one cyan: the pulses only
+const FLOW = 0x2ee6d6; // the one cyan: the comets only
+const STEEL = 0x6b7385; // Lab work: the site's steel, as on the dashed Lab chip
 
 const MAX_DPR = 1.75;
+const SLOW_DPR = 1.25; // the watchdog's one step down, before anything is dropped
 const SLOW_FRAME_MS = 20;
 const SLOW_FOR_MS = 2000;
+const FADE_S = 0.8; // the comets fade out over this long
+const SINK_S = 2.4; // the outer tier sinks into the floor over this long
+const SINK = 1.7; // world units: deep enough that the floor hides the whole tier
 const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
 
-/* ── Camera: a fixed vertical FOV, orbiting a target above the core ─────── */
-const FOV = 30;
-const CAM_DIST = 13.1;
+/* ── Camera: a fixed HORIZONTAL field of view, orbiting a target above the core ── */
+const FOV = 30; // vertical degrees at the 660x560 frame
+const H_TAN = Math.tan((FOV * Math.PI) / 360) * (660 / 560); // tan of the half horizontal FOV, at every width
+const CAM_DIST = 11.4;
 const CAM_ELEV = 0.72; // radians above the horizon: a raised, drawing-board view
 const CAM_TARGET_Y = 0.88;
 
 /* The scene DISSOLVES into the page; it never stops at a box. The canvas
    clears to the field's own ground, and the floor's grid and light pool fade
-   to exactly that ground by FLOOR_FADE.to. Framed with the camera above, at
-   660x560 — the primary frame — and inside 480x560, the narrowest the field
-   goes, which is the safe area nothing important may leave. At 480, with the
-   pointer at either parallax extreme, the fade circle ends >= 23px inside
-   every edge, the rings >= 63px, and every module at every orbit angle
-   >= 13px, on bounding spheres; at 660 the same objects clear the sides by
-   >= 103px and the top and bottom by >= 65px and >= 50px (a projection check
-   outside the repo, confirmed on rendered frames, 2026-09-16). The camera's
-   height spends the frame's spare vertical room: raising it does not move the
-   side margins, which only the orbits' radii set. So no line, ring or module
-   reaches a canvas edge at 480–660px wide. */
+   to exactly that ground by FLOOR_FADE.to. It is composed for the 660x560
+   frame, and because the horizontal field of view is fixed, a narrower field
+   (467px at 1025, the narrowest) draws the same frame smaller rather than
+   cropping it: the safe area is the frame itself, at every width. Measured on
+   rendered frames by scripts/probe-scene.mjs at 660 and 467, across t = 0-100s
+   with the pointer at rest and at both parallax extremes (CLAUDE.md, "The
+   hero field", has the figures). */
 const FLOOR_FADE = { from: 1.1, to: 2.8 };
 const PARALLAX_AZ = 0.11; // radians of yaw at the pointer's extreme
 const PARALLAX_EL = 0.045; // radians of pitch at the pointer's extreme
@@ -151,15 +163,27 @@ type Tier = {
   phase: number;
   from: { r: number; y: number }; // where the connections leave the core
   lift: number; // control-point height of each connection
+  rise: number; // how far a module rises as it passes the front (world units, x cos² of its azimuth; 0 across the back)
 };
-const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65 };
-const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05 };
+/* The inner tier RISES as a module comes round to the front: 1.25 at the
+   front (x cos² of its azimuth, 0 across the back half), so it passes over
+   the top of the core instead of across the seams. At a flat 2.25 every inner
+   module crossed the core's face for about 20s of each 90s turn (probe
+   frames, 2026-09-28); a tilted orbit (front up, back down) and a 0.4 rise
+   both still did. Its link bends with it (the rise shader below), its comets
+   follow the bent link, and its orbit ring fades into the ground where it
+   rises. */
+const INNER: Tier = { radius: 1.75, y: 2.25, speed: 0.07, phase: 0, from: { r: 0.77, y: 1.26 }, lift: 2.65, rise: 1.25 };
+const OUTER: Tier = { radius: 2.25, y: 0.36, speed: -0.045, phase: 0, from: { r: 1.3, y: 0.06 }, lift: 0.05, rise: 0 };
 
-/* Pulses: two per connection, one outward and one back. */
+/* Pulses: two comets per connection, one outward and one back. */
 const PULSE_LEN = 0.07;
 const PULSE_R = 0.017;
 const HALO_LEN = 1.7;
 const HALO_R = 2.6;
+const TRAIL = 4; // each comet's glow: the head's halo and three thinner, dimmer segments behind it
+const TRAIL_STEP = 0.03; // how far behind the head each segment sits, as a fraction of the link
+const TRAIL_GLOW = [1, 0.6, 0.34, 0.15]; // each segment's brightness: a steep fall-off
 
 /** Write a scaled frame (tangent x L; y and z x R) and a position into a column-major 4x4 at k. */
 function putFrame(
@@ -175,6 +199,27 @@ function putFrame(
   M[k + 8] = zx * R; M[k + 9] = 0; M[k + 10] = zz * R; M[k + 11] = 0;
   M[k + 12] = px; M[k + 13] = py; M[k + 14] = pz; M[k + 15] = 1;
 }
+
+/* The graphite's light, added after three.js's own (MeshStandardMaterial,
+   `#include <lights_fragment_end>`): an ANALYTIC studio — a dark floor, a cool
+   sky and one long softbox, as a function of the reflected direction — fed
+   through the material's own EnvironmentBRDF, so the metal has something to
+   reflect with no environment map, no PMREM and no texture. Then a thin
+   brand-blue fresnel rim that outlines each silhouette against the ground.
+   Without it the metal (metalness 0.6, which three.js scales the diffuse by
+   1 - metalness for) could only ever be dark: 95% of the field was under
+   luminance 32. */
+const STUDIO_GLSL = /* glsl */ `
+#include <lights_fragment_end>
+{
+  vec3 bfV = normalize( vViewPosition );
+  vec3 bfR = ( vec4( reflect( -bfV, normal ), 0.0 ) * viewMatrix ).xyz;
+  vec3 bfEnv = mix( vec3( 0.012, 0.013, 0.017 ), vec3( 0.1, 0.11, 0.13 ), smoothstep( -0.2, 0.7, bfR.y ) );
+  bfEnv *= 0.7 + 0.6 * smoothstep( -1.0, 1.0, bfR.x );
+  bfEnv += vec3( 0.95, 1.0, 1.08 ) * ( 1.0 - smoothstep( 0.0, 0.11, abs( bfR.y - 0.28 ) ) ) * smoothstep( -0.9, 0.1, bfR.z );
+  reflectedLight.indirectSpecular += bfEnv * EnvironmentBRDF( normal, bfV, material.specularColorBlended, material.specularF90, material.roughness );
+  totalEmissiveRadiance += uRim * uRimK * pow( 1.0 - saturate( dot( normal, bfV ) ), 4.0 );
+}`;
 
 export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}): SceneHandle | null {
   let renderer: WebGLRenderer;
@@ -198,6 +243,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let sizedPr = 0;
   let sizedW = 0;
   let sizedH = 0;
+  let maxPr = MAX_DPR; // the watchdog lowers it once, to SLOW_DPR
 
   /* Every GPU resource is registered here as it is made, and freed from here. */
   const geometries: BufferGeometry[] = [];
@@ -207,21 +253,100 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const mat = <T extends Material>(x: T): T => (materials.push(x), x);
 
   const scene = new Scene();
-  scene.fog = new Fog(GROUND, CAM_DIST - 1, CAM_DIST + 9.5); // depth, not a cut-off: it follows the camera
+  /* depth, not a cut-off: it follows the camera. Steep enough that the back
+     tier recedes and the front comes forward. */
+  scene.fog = new Fog(GROUND, CAM_DIST - 2.5, CAM_DIST + 6);
   const camera = new PerspectiveCamera(FOV, 1, 0.1, 60);
   const target = new Vector3(0, CAM_TARGET_Y, 0);
 
   /* ── Materials ── */
-  const graphite = mat(new MeshStandardMaterial({ color: 0x30363f, metalness: 0.6, roughness: 0.35, flatShading: true }));
-  const graphiteLight = mat(new MeshStandardMaterial({ color: 0x566070, metalness: 0.6, roughness: 0.36, flatShading: true }));
-  const screenMat = mat(new MeshStandardMaterial({ color: 0x0b0f16, metalness: 0.3, roughness: 0.5 }));
+  const graphite = mat(new MeshStandardMaterial({ color: 0x3a414c, metalness: 0.6, roughness: 0.3, flatShading: true }));
+  const graphiteLight = mat(new MeshStandardMaterial({ color: 0x566070, metalness: 0.6, roughness: 0.32, flatShading: true }));
+  /* the cloud's torus, smooth: flat facets turn the reflection into a checkerboard */
+  const graphiteRound = mat(new MeshStandardMaterial({ color: 0x566070, metalness: 0.6, roughness: 0.32 }));
+  const rimColor = new Color(BRAND);
+  const studio = (m: MeshStandardMaterial, rimK: number) => {
+    m.onBeforeCompile = (sh) => {
+      sh.uniforms.uRim = { value: rimColor };
+      sh.uniforms.uRimK = { value: rimK };
+      sh.fragmentShader = "uniform vec3 uRim;\nuniform float uRimK;\n" + sh.fragmentShader.replace("#include <lights_fragment_end>", STUDIO_GLSL);
+    };
+    m.customProgramCacheKey = () => "bf-studio-1"; // one program per shading mode; the uniforms are per material
+  };
+  studio(graphite, 0.34);
+  studio(graphiteLight, 0.28);
+  studio(graphiteRound, 0.28);
+  /* the screens: dark glass, catching the same studio as a faint sheen */
+  const screenMat = mat(new MeshStandardMaterial({ color: 0x0b0f16, metalness: 0.3, roughness: 0.22 }));
+  studio(screenMat, 0.12);
   const edge = mat(new MeshBasicMaterial({ color: BRAND }));
   const edgeDim = mat(new MeshBasicMaterial({ color: 0x2f5bb8 }));
-  const wire = mat(new LineBasicMaterial({ color: 0x86a3dc }));
+  /* the AI's wireframe, dimmer than the core: it once out-shone it */
+  const wire = mat(new LineBasicMaterial({ color: 0x6f86b8 }));
+  const steel = mat(new LineBasicMaterial({ color: STEEL }));
+  const steelFill = mat(new MeshBasicMaterial({ color: STEEL }));
   const connMat = mat(new MeshBasicMaterial({ color: 0x31435f }));
   const orbitMat = mat(new MeshBasicMaterial({ color: 0x1c2533 }));
   const pulseMat = mat(new MeshBasicMaterial({ color: FLOW }));
-  const haloMat = mat(new MeshBasicMaterial({ color: FLOW, transparent: true, opacity: 0.1, blending: AdditiveBlending, depthWrite: false }));
+  const haloMat = mat(new MeshBasicMaterial({ color: FLOW, transparent: true, opacity: 0.3, blending: AdditiveBlending, depthWrite: false }));
+
+  /* The seams' own material (the modules share `edge`): a soft band of light
+     climbs the stack every 7 seconds, bottom to top. EXACTLY zero at t = 0 —
+     the band starts below the plinth and its strength ramps in over 1.5s —
+     so the first frame is the poster's. It peaks at 55% of a mix toward pale
+     blue over about a second: it glows, it never flashes. */
+  const seamU = { uT: { value: 0 } };
+  const seamMat = mat(new MeshBasicMaterial({ color: BRAND }));
+  seamMat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, seamU);
+    sh.vertexShader = "varying float vWy;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n  vWy = ( modelMatrix * vec4( transformed, 1.0 ) ).y;");
+    sh.fragmentShader =
+      "uniform float uT;\nvarying float vWy;\n" +
+      sh.fragmentShader.replace(
+        "#include <color_fragment>",
+        /* glsl */ `#include <color_fragment>
+  float bfD = ( vWy - ( mod( uT, 7.0 ) / 7.0 * 3.2 - 0.6 ) ) * 4.0;
+  float bfBand = exp( -bfD * bfD ) * smoothstep( 0.0, 1.5, uT );
+  diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.62, 0.8, 1.0 ), 0.55 * bfBand );`,
+      );
+  };
+  seamMat.customProgramCacheKey = () => "bf-seam-1";
+
+  /* The inner tier's links bend up with their module as it rises past the
+     front (Tier.rise): the lift is 0 where a link leaves the core and the
+     module's own at its end, from each vertex's own azimuth, so the tube stays
+     attached with no per-frame geometry. */
+  const riseMat = (color: number, from: number, to: number, fade: number) => {
+    const m = mat(new MeshBasicMaterial({ color }));
+    const u = { uRise: { value: INNER.rise }, uFrom: { value: from }, uTo: { value: to }, uFade: { value: fade }, uGround: { value: new Color(GROUND) } };
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, u);
+      sh.fragmentShader =
+        "uniform float uFade;\nuniform vec3 uGround;\nvarying float vBfUp;\n" +
+        sh.fragmentShader.replace("#include <color_fragment>", "#include <color_fragment>\n  diffuseColor.rgb = mix( diffuseColor.rgb, uGround, uFade * vBfUp );");
+      sh.vertexShader =
+        "uniform float uRise;\nuniform float uFrom;\nuniform float uTo;\nvarying float vBfUp;\n" +
+        sh.vertexShader.replace(
+          "#include <begin_vertex>",
+          /* glsl */ `#include <begin_vertex>
+  {
+    vec4 bfW = modelMatrix * vec4( transformed, 1.0 );
+    float bfC = bfW.z / max( length( bfW.xz ), 1e-4 );
+    vBfUp = max( 0.0, bfC ) * max( 0.0, bfC );
+    float bfLift = uRise * vBfUp * smoothstep( uFrom, uTo, length( bfW.xz ) );
+    /* world up, in this object's own space */
+    vec3 bfUp = vec3( modelMatrix[ 0 ][ 1 ], modelMatrix[ 1 ][ 1 ], modelMatrix[ 2 ][ 1 ] );
+    transformed += bfUp * ( bfLift / dot( bfUp, bfUp ) );
+  }`,
+        );
+    };
+    m.customProgramCacheKey = () => "bf-rise-1";
+    return m;
+  };
+  const connRise = riseMat(0x31435f, INNER.from.r, INNER.radius - 0.3, 0);
+  /* the inner orbit's ring rises with its modules, and fades into the ground
+     where it rises, so it never draws a line across the core */
+  const orbitRise = riseMat(0x1c2533, -2, -1, 1);
 
   /* ── Geometry helpers ── */
   /** A chamfered octagonal plate: a lathe of 8 segments, a flat face toward +z. */
@@ -252,7 +377,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
 
   /* ── Lights: hemisphere, a key, and a cool rim from behind ── */
   scene.add(new HemisphereLight(0x9fb2d8, GROUND, 1.05));
-  const key = new DirectionalLight(0xf1f4f9, 2.5);
+  const key = new DirectionalLight(0xf1f4f9, 3.25);
   key.position.set(4.5, 7.5, 6);
   scene.add(key);
   const rim = new DirectionalLight(0x5a8cff, 3.4);
@@ -336,7 +461,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       core.add(pivot);
       add(pivot, plate(r, h, c), i % 2 ? graphiteLight : graphite);
       /* the seam under this plate: recessed inside both plates' chamfers */
-      add(pivot, band(Math.min(r, below) - c - 0.012, GAP + 0.006), edge, 0, -h / 2 - GAP / 2, 0);
+      add(pivot, band(Math.min(r, below) - c - 0.012, GAP + 0.006), seamMat, 0, -h / 2 - GAP / 2, 0);
       plates.push(pivot);
       below = r;
       y += h + GAP;
@@ -355,6 +480,22 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const shoulder = new Group();
   const elbow = new Group();
   const spinners: { obj: Object3D; rate: number }[] = [];
+
+  /** Lab work: every mesh under `root` becomes its steel edges (build time only). */
+  const ghost = (root: Object3D) => {
+    const meshes: Mesh[] = [];
+    root.traverse((o) => {
+      if ((o as Mesh).isMesh) meshes.push(o as Mesh);
+    });
+    for (const m of meshes) {
+      const lines = new LineSegments(geo(new EdgesGeometry(m.geometry, 20)), steel);
+      lines.position.copy(m.position);
+      lines.rotation.copy(m.rotation);
+      lines.scale.copy(m.scale);
+      m.parent?.add(lines);
+      m.removeFromParent();
+    }
+  };
 
   const buildWeb = () => {
     const g = new Group();
@@ -389,7 +530,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const g = new Group();
     const ring = new Group();
     ring.rotation.x = 0.32; // facing the viewer, tipped back a little: it reads as a ring
-    add(ring, geo(new TorusGeometry(0.25, 0.052, 12, 56)), graphiteLight);
+    add(ring, geo(new TorusGeometry(0.25, 0.052, 12, 56)), graphiteRound);
     add(ring, geo(new TorusGeometry(0.25, 0.008, 5, 56)), edge, 0, 0, 0.05);
     g.add(ring);
     spinners.push({ obj: g, rate: 0.16 });
@@ -419,11 +560,13 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     g.add(head);
     return g;
   };
+  /** Robotics: Lab tier, nothing delivered. The same articulated arm, drawn as
+   *  its steel edges only — a concept, not a solid, lit peer of the others. */
   const buildRobot = () => {
     const g = new Group();
     g.position.y = -0.2;
     add(g, geo(new CylinderGeometry(0.13, 0.16, 0.07, 8, 1, false, Math.PI / 8)), graphite, 0, 0.035, 0);
-    add(g, band(0.135, 0.012), edge, 0, 0.074, 0);
+    add(g, band(0.135, 0.012), graphite, 0, 0.074, 0);
     shoulder.position.y = 0.1;
     g.add(shoulder);
     const jointGeo = geo(new CylinderGeometry(0.045, 0.045, 0.09, 12));
@@ -438,16 +581,16 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     add(elbow, box(0.1, 0.03, 0.05), graphiteLight, 0, 0.26, 0);
     add(elbow, box(0.018, 0.06, 0.04), graphiteLight, -0.04, 0.3, 0);
     add(elbow, box(0.018, 0.06, 0.04), graphiteLight, 0.04, 0.3, 0);
-    add(elbow, box(0.012, 0.012, 0.052), edge, 0, 0.0, 0); // the elbow's lit axle
+    ghost(g);
     return g;
   };
 
   /* Which module sits where (degrees from the front, +z), and which way it
      faces the viewer (world yaw). Placed for t = 0, the poster: no two modules
-     overlap on screen, none hides the core, and all seven sit inside a
-     480px-wide centre crop. The spacing is deliberately uneven, so the
-     composition never reads as a mirrored diagram. */
-  type Slot = { build: () => Group; angle: number; yaw: number; scale: number };
+     overlap on screen and none hides the core. The spacing is deliberately
+     uneven, so the composition never reads as a mirrored diagram. `lab`: a
+     dashed steel link, and no comets on it. */
+  type Slot = { build: () => Group; angle: number; yaw: number; scale: number; lab?: boolean };
   const deg = (d: number) => (d * Math.PI) / 180;
   const innerSlots: Slot[] = [
     { build: buildWeb, angle: deg(325), yaw: 0.38, scale: 1.3 },
@@ -456,7 +599,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     { build: buildMobile, angle: deg(215), yaw: -0.35, scale: 1.3 },
   ];
   const outerSlots: Slot[] = [
-    { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55 },
+    { build: buildRobot, angle: deg(40), yaw: -0.65, scale: 1.55, lab: true },
     { build: buildErp, angle: deg(115), yaw: -0.5, scale: 1.4 },
     { build: buildPos, angle: deg(265), yaw: 0.5, scale: 1.4 },
   ];
@@ -465,10 +608,10 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     tier: Tier;
     group: Group;
     ring: Mesh;
-    modules: { obj: Group; yaw: number; wobble: number }[];
+    modules: { obj: Group; angle: number; yaw: number; wobble: number; port: Mesh | null }[];
     curves: Float32Array; // 9 floats per connection: P0, P1, P2
-    pulses: InstancedMesh;
-    halos: InstancedMesh;
+    pulses: InstancedMesh; // the comets' heads
+    halos: InstancedMesh; // their glow: TRAIL instances per comet
     pulseCurve: Uint8Array;
     pulsePhase: Float32Array;
     pulseRate: Float32Array;
@@ -480,21 +623,28 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const tmpA = new Vector3();
   const tmpB = new Vector3();
   const tmpC = new Vector3();
+  const tmpColor = new Color();
 
   const tiers: BuiltTier[] = [];
 
-  /** A tier's cheap parts: its group, its orbit ring, and the pulse instances
+  /** A tier's cheap parts: its group, its orbit ring, and the comet instances
    *  (the instances themselves cost nothing; the modules and tubes are what
-   *  take the time, and each of those is its own slice). */
+   *  take the time, and each of those is its own slice). Lab links carry no
+   *  comets, so they get none. */
   const startTier = (tier: Tier, slots: Slot[], seed: number): BuiltTier => {
     const group = new Group();
     scene.add(group);
-    const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), orbitMat, 0, tier.y, 0);
+    const ring = add(scene, geo(new TorusGeometry(tier.radius, 0.0045, 3, 220)), tier === INNER ? orbitRise : orbitMat, 0, tier.y, 0);
     ring.rotation.x = Math.PI / 2;
 
-    const n = slots.length * 2;
+    const live: number[] = [];
+    slots.forEach((s, j) => {
+      if (!s.lab) live.push(j);
+    });
+    const n = live.length * 2;
     const pulses = new InstancedMesh(pulseGeo, pulseMat, n);
-    const halos = new InstancedMesh(pulseGeo, haloMat, n);
+    const halos = new InstancedMesh(pulseGeo, haloMat, n * TRAIL);
+    for (let q = 0; q < n * TRAIL; q++) halos.setColorAt(q, tmpColor.setScalar(TRAIL_GLOW[q % TRAIL]));
     for (const im of [pulses, halos]) {
       im.instanceMatrix.setUsage(DynamicDrawUsage);
       im.frustumCulled = false; // the instances move; a stale bounding sphere would cull them
@@ -506,7 +656,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const pulseRate = new Float32Array(n);
     const pulseDir = new Int8Array(n);
     for (let i = 0; i < n; i++) {
-      const j = i >> 1;
+      const j = live[i >> 1];
       pulseCurve[i] = j;
       pulseDir[i] = i & 1 ? -1 : 1;
       pulsePhase[i] = (j * 0.381966 + (i & 1) * 0.5 + seed * 0.13) % 1;
@@ -539,7 +689,6 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     holder.scale.setScalar(s.scale);
     holder.add(s.build());
     group.add(holder);
-    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
 
     /* a connection: from the core's surface to just short of the module */
     const endR = tier.radius - 0.3;
@@ -549,9 +698,26 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     tmpB.set(dx * midR, tier.lift, dz * midR);
     curves.set([tmpA.x, tmpA.y, tmpA.z, tmpB.x, tmpB.y, tmpB.z, tmpC.x, tmpC.y, tmpC.z], i * 9);
     const curve = new QuadraticBezierCurve3(tmpA.clone(), tmpB.clone(), tmpC.clone());
-    add(group, geo(new TubeGeometry(curve, 48, 0.0068, 4, false)), connMat);
-    add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
-    add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
+    let port: Mesh;
+    if (s.lab) {
+      /* Lab: a dashed steel line — 24 dashes along the same curve — with steel ports */
+      const pts = curve.getPoints(48);
+      const dash = new Float32Array(24 * 6);
+      for (let j = 0; j < 24; j++) {
+        pts[2 * j].toArray(dash, j * 6);
+        pts[2 * j + 1].toArray(dash, j * 6 + 3);
+      }
+      const g = geo(new BufferGeometry());
+      g.setAttribute("position", new BufferAttribute(dash, 3));
+      group.add(new LineSegments(g, steel));
+      add(group, portGeo, steelFill, tmpA.x, tmpA.y, tmpA.z);
+      port = add(group, portGeo, steelFill, tmpC.x, tmpC.y, tmpC.z);
+    } else {
+      add(group, geo(new TubeGeometry(curve, 48, 0.011, 4, false)), tier === INNER ? connRise : connMat);
+      add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
+      port = add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
+    }
+    bt.modules.push({ obj: holder, angle: s.angle, yaw: s.yaw, wobble: seed + i * 1.7, port: tier === INNER ? port : null });
   };
 
   /* ── Per-frame state (allocated once) ── */
@@ -561,7 +727,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let last = 0;
   let slowFor = 0;
   let avgMs = 1000 / 60; // the running average frame time, for the watchdog
-  let degrade = 0; // 0 all, 1 no pulses, 2 no outer tier
+  let degrade = 0; // 0 all; 1 the drawing buffer stepped down; 2 no comets; 3 no outer tier
+  let cometK = 1; // the comets' scale while they fade out (degrade 2)
+  let sinkK = 0; // how far the outer tier has sunk, 0..1 (degrade 3)
   let raf = 0;
   let running = false;
   let drawn = false;
@@ -576,54 +744,71 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
     return t * t * (3 - 2 * t);
   };
+  /** How far a module at this world azimuth has risen (Tier.rise): the link shader's own curve. */
+  const frontRise = (tier: Tier, az: number) => {
+    const f = Math.max(0, Math.cos(az));
+    return tier.rise * f * f;
+  };
 
-  const writePulses = (bt: BuiltTier, t: number) => {
+  const writePulses = (bt: BuiltTier, t: number, ang: number) => {
     const C = bt.curves;
     const P = bt.pulses.instanceMatrix.array as Float32Array;
     const H = bt.halos.instanceMatrix.array as Float32Array;
-    for (let i = 0; i < bt.pulseCurve.length; i++) {
-      const o = bt.pulseCurve[i] * 9;
+    const n = bt.pulseCurve.length;
+    const fadeK = Math.sqrt(cometK); // a comet's light goes with its area: an even fade
+    for (let i = 0; i < n; i++) {
+      const j = bt.pulseCurve[i];
+      const o = j * 9;
       const dir = bt.pulseDir[i];
-      const travel = (bt.pulsePhase[i] + t * bt.pulseRate[i]) % 1;
-      const u = dir > 0 ? travel : 1 - travel;
-      const a = 1 - u;
-      /* the point on the quadratic curve, and its tangent in the direction of travel */
-      const px = a * a * C[o] + 2 * a * u * C[o + 3] + u * u * C[o + 6];
-      const py = a * a * C[o + 1] + 2 * a * u * C[o + 4] + u * u * C[o + 7];
-      const pz = a * a * C[o + 2] + 2 * a * u * C[o + 5] + u * u * C[o + 8];
-      let tx = (a * (C[o + 3] - C[o]) + u * (C[o + 6] - C[o + 3])) * dir;
-      let ty = (a * (C[o + 4] - C[o + 1]) + u * (C[o + 7] - C[o + 4])) * dir;
-      let tz = (a * (C[o + 5] - C[o + 2]) + u * (C[o + 8] - C[o + 5])) * dir;
-      const tl = Math.hypot(tx, ty, tz) || 1;
-      tx /= tl;
-      ty /= tl;
-      tz /= tl;
-      /* an orthonormal frame around the tangent: z = t x up, y = z x t */
-      let zx = -tz;
-      let zz = tx;
-      const zl = Math.hypot(zx, zz) || 1;
-      zx /= zl;
-      zz /= zl;
-      const yx = -zz * ty;
-      const yy = zz * tx - zx * tz;
-      const yz = zx * ty;
+      const rise = bt.tier === INNER ? frontRise(bt.tier, bt.modules[j].angle + ang) : 0;
+      const head = (bt.pulsePhase[i] + t * bt.pulseRate[i]) % 1;
       /* grow in from the start and shrink out at the end: nothing pops */
-      const s = smooth(0, 0.12, travel) * (1 - smooth(0.86, 1, travel));
-      const L = PULSE_LEN * s;
-      const R = PULSE_R * s;
-      putFrame(P, i * 16, tx, ty, tz, yx, yy, yz, zx, zz, L, R, px, py, pz);
-      putFrame(H, i * 16, tx, ty, tz, yx, yy, yz, zx, zz, L * HALO_LEN, R * HALO_R, px, py, pz);
+      const s = smooth(0, 0.12, head) * (1 - smooth(0.86, 1, head)) * fadeK;
+      for (let k = 0; k < TRAIL; k++) {
+        /* the head, then each tail segment a little further back along the link */
+        const travel = Math.max(0, head - k * TRAIL_STEP);
+        const u = dir > 0 ? travel : 1 - travel;
+        const a = 1 - u;
+        /* the point on the quadratic curve, bent up by the module's rise
+           (smoothstep in u, as the link shader bends it), and its tangent in
+           the direction of travel */
+        const px = a * a * C[o] + 2 * a * u * C[o + 3] + u * u * C[o + 6];
+        const py = a * a * C[o + 1] + 2 * a * u * C[o + 4] + u * u * C[o + 7] + rise * u * u * (3 - 2 * u);
+        const pz = a * a * C[o + 2] + 2 * a * u * C[o + 5] + u * u * C[o + 8];
+        let tx = (a * (C[o + 3] - C[o]) + u * (C[o + 6] - C[o + 3])) * dir;
+        let ty = (a * (C[o + 4] - C[o + 1]) + u * (C[o + 7] - C[o + 4]) + 3 * rise * u * a) * dir;
+        let tz = (a * (C[o + 5] - C[o + 2]) + u * (C[o + 8] - C[o + 5])) * dir;
+        const tl = Math.hypot(tx, ty, tz) || 1;
+        tx /= tl;
+        ty /= tl;
+        tz /= tl;
+        /* an orthonormal frame around the tangent: z = t x up, y = z x t */
+        let zx = -tz;
+        let zz = tx;
+        const zl = Math.hypot(zx, zz) || 1;
+        zx /= zl;
+        zz /= zl;
+        const yx = -zz * ty;
+        const yy = zz * tx - zx * tz;
+        const yz = zx * ty;
+        const L = PULSE_LEN * s;
+        const R = PULSE_R * s;
+        if (k === 0) putFrame(P, i * 16, tx, ty, tz, yx, yy, yz, zx, zz, L, R, px, py, pz);
+        /* each segment of the glow longer, thinner and dimmer than the one before it */
+        putFrame(H, (i * TRAIL + k) * 16, tx, ty, tz, yx, yy, yz, zx, zz, L * HALO_LEN * (1 + 0.3 * k), R * HALO_R * 0.7 * (1 - 0.2 * k), px, py, pz);
+      }
     }
     bt.pulses.instanceMatrix.needsUpdate = true;
     bt.halos.instanceMatrix.needsUpdate = true;
   };
 
-  /** Pose the whole scene at time t. Deterministic: t and the eased camera only. */
+  /** Pose the whole scene at time t. Deterministic: t, the eased camera and the watchdog's fades only. */
   const pose = (t: number) => {
     /* indexed loops only: no iterators or closures per frame */
     for (let i = 0; i < plates.length; i++) {
       plates[i].rotation.y = (i % 2 ? Math.PI / 8 : 0) + t * (0.055 + (i % 2) * 0.018);
     }
+    seamU.uT.value = t;
     for (let b = 0; b < tiers.length; b++) {
       const bt = tiers[b];
       const ang = bt.tier.phase + t * bt.tier.speed;
@@ -632,12 +817,22 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       for (let i = 0; i < bt.modules.length; i++) {
         const m = bt.modules[i];
         m.obj.rotation.y = m.yaw - ang + 0.2 * Math.sin(t * 0.3 + m.wobble);
+        if (m.port) {
+          const r = frontRise(bt.tier, m.angle + ang);
+          m.obj.position.y = bt.tier.y + r;
+          m.port.position.y = bt.tier.y - 0.02 + r;
+        }
       }
-      if (degrade < 1) writePulses(bt, t);
+      if (degrade < 2 || cometK > 0) writePulses(bt, t, ang);
     }
     for (let i = 0; i < spinners.length; i++) spinners[i].obj.rotation.y = t * spinners[i].rate;
     shoulder.rotation.z = 0.42 + 0.2 * Math.sin(t * 0.42);
     elbow.rotation.z = -1.2 + 0.28 * Math.sin(t * 0.42 + 1.3);
+    if (sinkK > 0 && tiers[1]) {
+      const d = SINK * smooth(0, 1, sinkK);
+      tiers[1].group.position.y = -d;
+      tiers[1].ring.position.y = OUTER.y - d;
+    }
 
     const az = cam.az;
     const el = CAM_ELEV + cam.el;
@@ -653,15 +848,18 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     sizeDirty = false;
     const w = Math.max(1, canvas.clientWidth);
     const h = Math.max(1, canvas.clientHeight);
-    const pr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    const pr = Math.min(window.devicePixelRatio || 1, maxPr);
     /* nothing changed — a ResizeObserver reporting the same box, say: do not
        touch the canvas, since assigning its size reallocates the buffer */
     if (w === sizedW && h === sizedH && pr === sizedPr) return;
     sizedW = w;
     sizedH = h;
-    sizedPr = pr; // a zoom, or a move to another screen, changes it
+    sizedPr = pr; // a zoom, a move to another screen, or the watchdog's step, changes it
     renderer.setDrawingBufferSize(w, h, pr);
+    /* the horizontal extent is the 660x560 frame's at every width: a narrower
+       canvas gains vertical room, and draws the frame smaller */
     camera.aspect = w / h;
+    camera.fov = (360 / Math.PI) * Math.atan(H_TAN / camera.aspect);
     camera.updateProjectionMatrix();
   };
 
@@ -671,14 +869,27 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     renderer.render(scene, camera);
   };
 
+  /** The watchdog's next step, once the frames have been slow for SLOW_FOR_MS. */
+  const degradeStep = () => {
+    degrade++;
+    if (degrade === 1) {
+      /* one step down of the drawing buffer — one reallocation, once — before
+         anything is dropped; where it is already at or under SLOW_DPR there is
+         nothing to step, and the comets are next */
+      if (Math.min(window.devicePixelRatio || 1, maxPr) > SLOW_DPR) {
+        maxPr = SLOW_DPR;
+        sizeDirty = true;
+      } else degrade = 2;
+    }
+  };
 
   const frame = (now: number) => {
     if (!running) return;
     raf = requestAnimationFrame(frame);
     const dtMs = last ? now - last : 0;
     last = now;
-    /* the watchdog: 2s of slow frames drops the pulses, 2s more the outer tier */
-    if (dtMs && degrade < 2) {
+    /* the watchdog: 2s of slow frames per step */
+    if (dtMs && degrade < 3) {
       /* judged on a running average over about ten frames: a slow device's
          frames are uneven, and testing each frame alone reset the count on
          every fast one, so it never fired (probe 6e). One long hitch is
@@ -687,16 +898,21 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       slowFor = avgMs > SLOW_FRAME_MS ? slowFor + dtMs : 0;
       if (slowFor > SLOW_FOR_MS) {
         slowFor = 0;
-        degrade++;
-        if (degrade >= 1) for (const bt of tiers) bt.pulses.visible = bt.halos.visible = false;
-        if (degrade >= 2) {
-          tiers[1].group.visible = false;
-          tiers[1].ring.visible = false;
-        }
+        degradeStep();
       }
     }
     const dt = Math.min(dtMs / 1000, 0.05);
     time += dt;
+    /* the fades: the comets shrink away, then the outer tier sinks into the
+       floor (the floor's depth hides it); each is hidden once it has gone */
+    if (degrade >= 2 && cometK > 0) {
+      cometK = Math.max(0, cometK - dt / FADE_S);
+      if (cometK === 0) for (let b = 0; b < tiers.length; b++) tiers[b].pulses.visible = tiers[b].halos.visible = false;
+    }
+    if (degrade >= 3 && sinkK < 1 && tiers[1]) {
+      sinkK = Math.min(1, sinkK + dt / SINK_S);
+      if (sinkK === 1) tiers[1].group.visible = tiers[1].ring.visible = false;
+    }
     /* ease the camera toward the pointer, frame-rate independent */
     const k = 1 - Math.exp(-dt * PARALLAX_EASE);
     cam.az += (pointer.x * PARALLAX_AZ - cam.az) * k;

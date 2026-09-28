@@ -21,16 +21,18 @@
  * callback never runs, and the canvas holds the t = 0 frame, the same on every
  * run and on every visitor's first frame.
  *
- * WHICH FRAME: the full 660x560 poster. At 1440 the field is 590 wide, and the
- * scene keeps a fixed vertical field of view, so a narrower canvas is only the
- * centre crop of a wider one, just as `object-fit: cover` crops the poster.
- * For the capture, injected CSS makes the field exactly 660x560 with square
- * corners and no fade. The canvas renders at the scene's DPR cap, 1.75, and the
- * browser composites it at DPR 2: the poster is what a DPR-2 visitor's canvas
- * shows, pixel for pixel, so the crossfade is seamless.
+ * WHICH FRAME: the full 660x560 poster. The scene keeps a fixed HORIZONTAL
+ * field of view (the 660x560 frame's), so a narrower canvas draws the same
+ * frame smaller, just as `object-fit: contain` draws the poster in a narrower
+ * field at >=1025px. For the capture, injected CSS makes the field exactly
+ * 660x560 with square corners and no fade. The canvas renders at the scene's
+ * DPR cap, 1.75, and the browser composites it at DPR 2: the poster is what a
+ * DPR-2 visitor's canvas shows, pixel for pixel, so the crossfade is seamless.
  *
- * It then encodes public/hero/scene-poster-v1-{1320,660}.{avif,webp} with sharp.
- * A re-rendered poster needs a NEW name (v2, ...): /hero/* is served immutable.
+ * It then encodes public/hero/scene-poster-v2-{1320,660}.{avif,webp} with sharp.
+ * A re-rendered poster needs a NEW name (v3, ...): /hero/* is served immutable,
+ * and v1 (2026-09-16) stays as it was deployed. `scripts/probe-scene.mjs`
+ * checks the frames the poster cannot: t = 0-100s, at 660 and 467.
  */
 import { chromium } from "playwright";
 import sharp from "sharp";
@@ -48,7 +50,7 @@ const GPU = argv.includes("--gpu");
 const PNG_OUT = opt("--png", null);
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(REPO, "public", "hero");
-const NAME = "scene-poster-v1";
+const NAME = "scene-poster-v2";
 
 /* Encoder settings. 4:4:4 keeps the thin blue and cyan lines their colour. */
 const AVIF = { quality: 56, effort: 9, chromaSubsampling: "4:4:4" };

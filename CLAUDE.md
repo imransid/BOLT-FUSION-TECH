@@ -51,7 +51,9 @@ returns as plain three.js, with no React Three Fiber.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
 - Scripts beside the suite: `scripts/generate-icons.mjs` (the icons, from the
   mark), `scripts/contrast-site.mjs` (the contrast table below),
-  `scripts/encode-screenshots.mjs`.
+  `scripts/encode-screenshots.mjs`, `scripts/render-scene-poster.mjs` (the
+  hero's poster, from the live scene) and `scripts/probe-scene.mjs` (the
+  scene's frames over time: *The hero field*).
 
 ## Routes
 
@@ -568,31 +570,60 @@ for more than five seconds has a pause control.
   the other parts dim with a 0.2s opacity change.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
   the owner's brief; engineering SPEC §7, "Many technologies. One engineering
-  system."). An engineering core of stacked, chamfered octagonal plates in
-  graphite, each lit by a thin brand-blue seam, turning slowly. Seven modules
-  sit on two orbital tiers, each a distinct form with no text: on the inner
-  tier web (a thin panel), mobile (a slim slab), AI (a wireframe icosahedron)
-  and cloud (a torus ring); on the outer tier ERP (stacked blocks), POS (a
-  terminal block) and robotics (an articulated two-segment arm). Thin curves
-  run from the core to each module, with small cyan pulses travelling along
-  them, over an architectural grid floor that fades into the ground.
-  Hemisphere, key and rim lights, MeshStandardMaterial, no post-processing and
-  no bloom. Graphite, one brand blue on edges, cyan only on the data flow.
+  system."; its v2, 2026-09-28, *Decided 2026-09-28*). An engineering core of
+  stacked, chamfered octagonal plates in machined graphite, each lit by a thin
+  brand-blue seam, turning slowly. Seven modules sit on two orbital tiers, each
+  a distinct form with no text: on the inner tier web (a thin panel), mobile (a
+  slim slab), AI (a wireframe icosahedron) and cloud (a torus ring); on the
+  outer tier ERP (stacked blocks), POS (a terminal block) and robotics (an
+  articulated two-segment arm). Thin links, about 1.75px, run from the core to
+  each module, with cyan comets carrying data along them, over an
+  architectural grid floor that fades into the ground. **Robotics is Lab work
+  and is drawn as Lab:** the same arm as a steel (`#6b7385`) wireframe, on a
+  dashed steel link, and no comet ever travels to it — "concept, not
+  delivered", in the site's own convention (the dashed Lab chip), without a
+  word. Hemisphere, key and rim lights, MeshStandardMaterial, no
+  post-processing, no bloom and no textures. **The graphite's light is an
+  analytic studio:** a dark floor, a cool sky and one long softbox, computed in
+  the fragment shader from the reflected direction (`onBeforeCompile`) and fed
+  through three.js's own EnvironmentBRDF, plus a thin brand-blue fresnel rim —
+  so the metal has something to reflect with no environment map, no PMREM and
+  no texture. Before it, metal with nothing to reflect (three.js scales a
+  metal's diffuse by 1 − metalness) could only ever be dark: about 95% of the
+  field sat under luminance 32. Graphite, one brand blue on edges, cyan only on
+  the data flow, steel only on Lab work.
   - `components/field/scene.ts` is the scene; `components/field/HeroScene.tsx`
     loads it (*The hero field*, under Hard rules, for when and how).
   - **Motion:** the plates and the two tiers turn slowly, the tiers in opposite
-    directions (one turn in about 90 and 140 seconds). Each module keeps its
-    face toward the viewer with a slow sway, and the robot arm flexes. A pulse
-    takes about four seconds to cross a connection, and grows and shrinks at
-    its ends, so nothing pops. The camera follows the pointer by at most 6
-    degrees of yaw, eased. Nothing is fast and nothing flashes.
-  - **The poster** is `public/hero/scene-poster-v1-{660,1320}.{avif,webp}`, the
+    directions (one turn in about 90 and 140 seconds). An inner-tier module
+    RISES as it comes round to the front — 1.25 units at the front, cos² of
+    its azimuth, nothing across the back half — so it passes over the top of
+    the core instead of across its seams. Its link bends up with it in the
+    vertex shader, from each vertex's own azimuth (no geometry is rebuilt), its
+    comets follow the bent link, and its orbit ring fades into the ground where
+    it rises. On a flat orbit every inner module crossed the core's face for
+    about 20 of every 90 seconds, and a tilted orbit or a 0.4 rise still did
+    (probe frames, 2026-09-28). Each module keeps its face toward the viewer
+    with a slow sway, and the robot arm flexes. A comet — a head and a glow of
+    four segments, each longer, thinner and dimmer than the one before —
+    takes about four seconds to cross a link, and grows and shrinks at its
+    ends, so nothing pops. Every 7 seconds a soft band of light climbs the
+    seams, bottom to top: at most 55% of a mix toward pale blue, about a
+    second on each seam, and exactly zero at t = 0. The camera follows the
+    pointer by at most 6 degrees of yaw, eased. Nothing is fast and nothing
+    flashes: over 30 seconds the core's mean luminance never moves more than
+    0.23 (of 255) in a tenth of a second.
+  - **The poster** is `public/hero/scene-poster-v2-{660,1320}.{avif,webp}`, the
     scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
     It is a plain `<img>` in a `<picture>`, the LCP element, with the image
-    optimizer off that path. Below 1025px or on a coarse pointer it drifts
-    slowly — a CSS transform, so no layout shift; under reduced motion it is
-    still. The step-3 files, `field-poster-{660,1320}.*`, were deleted at the
-    integration (2026-09-24): nothing referenced them.
+    optimizer off that path. At >=1025px it is contained in the field, as the
+    scene draws a narrower field (*The hero field*); below 1025px it covers
+    it. Below 1025px or on a coarse pointer it drifts slowly — a CSS
+    transform, so no layout shift; under reduced motion it is still. The v1
+    files (2026-09-16) stay in `public/hero/`, unreferenced and unchanged: a
+    page served before v2 still asks for them. The step-3 files,
+    `field-poster-{660,1320}.*`, were deleted at the integration (2026-09-24):
+    nothing referenced them.
   - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
     where the hero moves — the drift, or a hero marked `data-scene="live"` —
     and is invisible in the server HTML (`visibility: hidden` until it
@@ -718,7 +749,9 @@ at the end, which means nobody has decided yet.
   graphite hero (`components/site/home/Hero.tsx`): 660 x 560 from 1280px up —
   the width `sizes` declares and the scene is composed for, so the canvas and
   the poster frame the scene identically — and as wide as the grid allows below
-  that (536px at 1100, 467px at 1025), where `cover` crops it. It has NO border
+  that (536px at 1100, 467px at 1025), where both draw the same 660x560 frame
+  smaller: the poster contained, the canvas at a fixed horizontal field of
+  view (2026-09-28; until then `cover` cropped it). It has NO border
   and NO radius, only the ground colour, so the scene reads as part of the page
   and not a card (the coordinator's review, 2026-09-16); nothing is painted over
   the poster. The
@@ -731,14 +764,18 @@ at the end, which means nobody has decided yet.
   h1 (an LCP entry is never withdrawn, so the identity alone cannot see a
   poster hidden, faded, covered or moved after it painted). At ≥1025px the
   field is 560px tall and at most 660px wide (narrower between 1025 and
-  1280px), so the poster is drawn exactly 660px wide and `sizes` says so (H4:
-  at the column's full height, 832px at 1025, the browser once fetched a file
-  about 1.5x too small at every DPR); below that it sits above the text.
+  1280px), and the poster is contained in it, so it is drawn at most 660px
+  wide — exactly 660 from 1280 up — and `sizes` says 660px (H4: at the
+  column's full height, 832px at 1025, the browser once fetched a file about
+  1.5x too small at every DPR); below that it sits above the text. Contained,
+  the poster's box is still the field's, which is all check 28 reads, and at
+  1025 it paints 467x396 against the h1's 420x98.
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
     `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
     assets): a browser that has the old file never asks again. The scene's
-    poster ships as `scene-poster-v1-*`; the next render is `v2`, never over
-    the old name.
+    poster shipped as `scene-poster-v1-*` (2026-09-16); its v2 (2026-09-28)
+    is `scene-poster-v2-*`, and the next render is `v3`, never over an old
+    name. The old files stay: a page served before the new one asks for them.
   - The LCP element is a static poster `<img>` made from a real frame of the
     field, never the canvas. The canvas fades in over it and cannot shift layout.
   - Everything the hero says is server HTML. The field carries no information
@@ -755,15 +792,28 @@ at the end, which means nobody has decided yet.
     *Performance targets*). The raw WebGL2 particle renderer on the local
     branch `wip/field-renderer` is not used; only its gating, loading and
     pausing patterns were kept.
-  - **No per-frame allocation** still holds. The pulses are InstancedMeshes,
-    and the loop writes their matrices straight into the instance buffers.
+  - **No per-frame allocation** still holds. The comets are InstancedMeshes (a
+    head and four glow segments each, the segments' falling brightness an
+    instance colour written once at build), and the loop writes their matrices
+    straight into the instance buffers.
     Every geometry, material and vector is made once, and the hot loops use no
     iterators or closures.
-  - DPR capped at 1.75. Once the running average frame (about ten frames) has
-    stayed over 20ms for two seconds the pulses go; after two more, the outer
-    tier. Testing each frame alone reset the count on every fast frame, and a
-    slow device's uneven frames kept resetting it, so it never fired (probe 6e,
-    2026-09-16). Paused offscreen (IntersectionObserver) and
+  - DPR capped at 1.75. **The watchdog degrades by steps, and nothing vanishes
+    in one frame** (2026-09-28). Once the running average frame (about ten
+    frames) has stayed over 20ms for two seconds, the drawing buffer steps
+    down ONCE, from DPR 1.75 to 1.25 — one reallocation, before anything is
+    dropped (a display at or under 1.25 skips the step). After two more slow
+    seconds the comets fade out over 0.8s (by area, so evenly); after two
+    more the outer tier sinks into the floor over 2.4s — the floor's depth
+    hides it — and is then hidden. Before, the pulses and then the outer tier
+    went `visible = false`: on SwiftShader POS, ERP and the robot vanished in
+    one frame, and a slow integrated GPU saw the same pop.
+    `scripts/probe-scene.mjs` feeds 40ms frames and fails a phase that loses
+    more than half of what it drops in one 0.2s step (the old watchdog: 84% of
+    the comets and 69% of the outer tier; now 25% and 38%). Testing each frame
+    alone reset the count on every fast frame, and a slow device's uneven
+    frames kept resetting it, so it never fired (probe 6e, 2026-09-16), which
+    is why it reads the running average. Paused offscreen (IntersectionObserver) and
     when the tab is hidden. On teardown every geometry, material and instance
     buffer is disposed, then the renderer, and the context is released
     (`forceContextLoss`); the scene makes no textures. A lost context
@@ -786,10 +836,18 @@ at the end, which means nobody has decided yet.
     opacity 0 until that frame is drawn.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
-    so the fade shows no jump. The scene keeps a fixed vertical field of view,
-    so a field narrower than 660 (between about 1025 and 1300px) shows the
-    centre crop of the 660x560 frame, exactly as `object-fit: cover` crops the
-    poster; it is composed to read from about 480 to 660 wide.
+    so the fade shows no jump. **The scene keeps a fixed HORIZONTAL field of
+    view** (2026-09-28): the 660x560 frame's, 30° vertical at 660x560, so a
+    field narrower than 660 (between 1025 and 1280px, 467px at the narrowest)
+    draws the whole frame smaller and gains ground above and below, exactly
+    as `object-fit: contain` draws the poster (`app/site.css`, the scene's
+    block). The crossfade is pixel-for-pixel at every width. Until then the
+    vertical field of view was fixed and `cover` cropped the frame, so the
+    scene had to be small enough for a 480 crop: at 660, the frame most
+    desktops get, it floated in 100px or more of empty ground on each side.
+    Composed for the frame instead, it is 15% larger (`CAM_DIST` 11.4, was
+    13.1) and between 1025 and 1279 drawn up to 29% smaller than the frame
+    rather than cropped.
     `scripts/render-scene-poster.mjs` renders it from the built site at 1440.
     It freezes requestAnimationFrame when `data-scene-ready` appears, so the
     canvas holds t = 0, and captures the field at 660x560 (its 1px border
@@ -798,16 +856,16 @@ at the end, which means nobody has decided yet.
     review, 2026-09-16). The field has no border, and its background is the
     ground, `#07090D`, which is also the canvas's clear colour. The grid floor
     and the blue pool under the core fade to exactly that ground by r = 2.8
-    (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for**,
-    and 480x560 — the narrowest the field goes — is the safe area nothing
-    important may leave. With the pointer at either parallax extreme, at 480
-    the fade ends at least 23px inside every edge, the rings at least 63px and
-    every module, at every orbit angle, at least 13px, on bounding spheres; at
-    660 the same objects clear the sides by at least 103px and the top and
-    bottom by at least 65px and 50px. That was checked by projection and on
-    rendered frames at t = 0, 20, 30 and 45s. The poster
-    script refuses a capture whose 16px edge band is not the ground, and the
-    probe reads the live canvas's edge band. It is done in the scene itself:
+    (`FLOOR_FADE` in `scene.ts`). **660x560 is the frame it is composed for,
+    and the safe area**: since the field of view is fixed horizontally, a
+    narrower field is the same frame smaller, never a crop of it. Measured on
+    rendered frames by `scripts/probe-scene.mjs` (2026-09-28, t = 0–100s every
+    5s, and the pointer held at each of the four parallax extremes): at 660
+    the closest lit pixel is 86px from the left edge, 88 from the right, 48
+    from the top and 34 from the bottom; at 467, 60, 62, 116 and 106; the 16px
+    band is the ground in every frame (within 0 of #07090D). The poster script
+    refuses a capture whose 16px edge band is not the ground, and
+    `scripts/probe-scene.mjs` fails any frame whose band is not. It is done in the scene itself:
     no overlay and no post-processing, since anything painted over the poster
     but the canvas fails check 28.
   - Never mounted on mobile — only on `(pointer: fine) and (min-width: 1025px)`
@@ -1220,7 +1278,9 @@ used to pass now fails, and the site still passes. Every rule has a misuse case 
 - **28, extended (K1, K6, H1, H2)** — the LCP runs add 1024, 1025, 1280 and 1280 at DPR 2, and each
   then reads the settled poster (see *The hero field*); every proof card's figure, label, status and
   source must be what `content/metrics.ts` says, its chip in its `[data-metric]` row. It prints how
-  far the chosen file is stretched to cover the frame (H4), without failing on it.
+  far the chosen file is stretched to fill the frame (H4), without failing on it — by the poster's
+  own `object-fit` since 2026-09-28: the larger axis for `cover` (below 1025), the smaller for
+  `contain` (>=1025).
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
@@ -1279,6 +1339,15 @@ imports from `three` tree-shake under Turbopack with about 42KB to spare. If a
 three bump or a new import pushes it past 180KB, import from
 `three/src/...` module paths.
 
+**Re-measured 2026-09-28, with the scene's v2** (the studio, the comets, the
+Lab robot, the fit-width camera and the watchdog's fades): **143,914 bytes,
+140.5KB**, gzipped at level 6 as served — the same as its `encodedBodySize`
+under `next start` — 574KB raw, requested at 1.3s against a 71ms load event.
+The same chunk before v2 measured 142,287 bytes (139.0KB; the 137.9KB above
+was 2026-09-16's build), so v2 costs 1.6KB and leaves 39.4KB of the 180KB. It
+added one named import, `BufferAttribute` (the dashed link), which
+`BufferGeometry` already pulls in.
+
 **The scene is not initial JavaScript, and check 29 says so (2026-09-16).** The
 260KB counts what is requested by the end of the load event, and the scene chunk
 is imported after it: check 29 prints every scene chunk its runs requested, with
@@ -1288,8 +1357,12 @@ JavaScript. Check 25 holds the 180KB: it gzips each scene file as served (level
 6), because its WebGL runs re-serve scripts through the worker hook and their
 resource timings are not the wire.
 
-**The posters:** `scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
-`-660.webp` 10.3KB, `-1320.webp` 24.8KB (AVIF 4:4:4 at quality 56, WebP 82).
+**The posters:** `scene-poster-v2-660.avif` 6.8KB, `-1320.avif` 14.3KB,
+`-660.webp` 12.6KB, `-1320.webp` 30.6KB (AVIF 4:4:4 at quality 56, WebP 82;
+2026-09-28). The v2 frame is larger and lit (about 20% of its pixels off the
+ground), so each file is about a fifth heavier than v1's:
+`scene-poster-v1-660.avif` 5.7KB, `-1320.avif` 11.5KB,
+`-660.webp` 10.3KB, `-1320.webp` 24.8KB.
 The step-3 field posters they replace were 33.6KB and 87.4KB as AVIF. A dark
 frame of hard-edged shapes that dissolves into the ground compresses far
 better than a cloud of points, which takes weight off the LCP path. They were
@@ -1391,6 +1464,44 @@ a `sourceRef`, and the build fails without one. It covers every place a status
 is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
+
+## Decided 2026-09-28: easier to hire, and the motion system (owner)
+
+The owner's request, 2026-09-28, verbatim:
+
+> think as like you have 20+ experience UI and UX
+> you are one of the world best creative designer
+> now make our westive more better and do here more better threee js and GSAP cool and better animation
+>
+> research and do it more beter way that easy for me clint hire
+
+Every decision of the `redesign/motion-hire` branch is made under this
+request, and nothing of it is pushed or merged to `main` until the owner has
+reviewed it.
+
+**The hero scene, v2** (the scene stream, `motion-hire/scene`). The research
+found the scene well engineered and badly lit: about 95% of the field's pixels
+near-black, its lit pixels 3.3% of the viewport, the brightest thing in it a
+few specular slivers and the AI wireframe rather than the core, the data flow
+its least visible layer, and the robot — Lab work, nothing delivered — drawn
+as a solid, lit, connected peer with data flowing to it. So:
+
+1. **Lit graphite, visible flow, a Lab-honest robot and fit-width framing,
+   with the watchdog's fades** — the analytic studio and fresnel rim, the
+   comets and 1.75px links, the seam band, the steel wireframe on a dashed
+   link, a fixed horizontal field of view with the poster contained at
+   >=1025px, the inner tier rising past the front, and a watchdog that steps
+   the drawing buffer down before it fades anything (*Motion, as built*; *The
+   hero field*). It changes the t = 0 frame, so the poster is re-rendered as
+   `scene-poster-v2-*`. The robot's treatment changes what the picture says,
+   deliberately: it is the one scene change the evidence tiers ask for, and it
+   is the owner's to confirm.
+
+It stays inside every rule of *The hero field*: no textures, no
+post-processing, nothing allocated per frame, built in slices, the poster the
+t = 0 frame, the 16px band the ground, desktop and a fine pointer only, the
+canvas `pointer-events: none`, no Raycaster, three.js only in
+`components/field/scene.ts`, and the chunk 140.5KB of its 180KB.
 
 ## Decided 2026-09-16: the engineering redesign (owner)
 

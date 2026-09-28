@@ -743,7 +743,8 @@ html {
 
 /* The field is the poster's own 660 x 560 from 1280px up — the width `sizes`
    declares and the scene is composed for — and as close to it as the grid
-   allows below that (about 527px at 1025), where `cover` crops it. The text
+   allows below that (467px at 1025), where the poster is contained, as the
+   scene draws it (the scene's block at the end of this file). The text
    column keeps at least 420px, so the headline holds its two lines and the
    body stays inside 68ch. */
 @media (min-width: 1025px) {
@@ -4696,4 +4697,18 @@ button.bf-map__btn[aria-pressed="true"] {
 
 @media (min-width: 1025px) {
   .bf-notfound .bf-pagehead { padding-block: 160px 200px; }
+}
+
+/* ── motion-hire: scene ── */
+
+/* The poster at >=1025px: CONTAINED, not covered (2026-09-28). The scene
+   keeps its horizontal field of view fixed, so a field narrower than 660
+   (467px at 1025, 536 at 1100) draws the whole 660x560 frame smaller rather
+   than cropping it; the poster does exactly the same, and both fill the room
+   above and below with the ground, which is the field's own colour and the
+   poster's edge. So the crossfade is pixel-for-pixel at every width. Below
+   1025px the poster still covers its frame (and drifts); a coarse pointer at
+   >=1025px, where no scene mounts either, gets it contained, with the drift. */
+@media (min-width: 1025px) {
+  .bf-hero__poster { object-fit: contain; }
 }
