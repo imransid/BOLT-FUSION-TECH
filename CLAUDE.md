@@ -198,7 +198,7 @@ does not state.
 | `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
 | `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **none** — the app's UI is the client's |
 | `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
-| `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23), NIdle Finishing (Intellier) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
+| `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23); NIdle Finishing (Intellier) is held back (below) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
 
 - **Never present an employer's product as ours.** A track-record project names
   its employer (`builtAt`) and the engineer's role (`role`), and the schema
@@ -268,6 +268,16 @@ Check 30 fails if any of them appears on `/` or `/work`.
   page for "Playerzone" ("a platform for players to connect with coaches and
   other players") — not the multiplayer classic-games platform, with no
   signups, that the portfolio describes.
+- **NIdle Finishing** (track record) is `awaiting-asset` since 2026-09-28. Its
+  only proof link, "Intellier's case study" (intellier.com/nidle/), answers a
+  301 to a bare PNG, and a proof link that opens an image hurts trust, so it
+  went (the 2026-09-28 redesign's honesty cleanup). A track-record card is a
+  text card that carries its store and proof links, and the schema refuses a
+  published one without them — so the card waits for a working link. Two
+  candidates were checked and not used: nidle.intellier.com says of NIdle
+  Finishing "We are currently working on this feature", and Intellier's press
+  link names another company's group. The owner supplies the link; the card is
+  one `state` back.
 
 Bazzile and GodConnect Online were held back here until 2026-09-16, as track
 record with no employer on record. The owner placed them that day: Bolt Fusion
@@ -452,7 +462,7 @@ the write-ups — then the footer. No light bands, no navy panels.
 | `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
 | `/insights` | page head · the articles as a ledger (date, author, title, dek, capabilities) · final call to action |
 | `/insights/[slug]` | page head (back link, h1, dek, author, date) · the sections in reading order, beside related work, capabilities and more insights · final call to action |
-| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (two text cards) · the closing call to action |
+| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
 | `/work/warmchats` | page head with the screenshot · executive summary and the numbers · how it works · the product · architecture beside the full stack · outcome · call to action and the sign-off |
 | `/work/restaurant-search` | page head with the system image · executive summary and the KPIs · the three lanes · the stack beside the bounded contexts · call to action |
 | `/privacy-policy` | page head with the date · the policy as legal prose |

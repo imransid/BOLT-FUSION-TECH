@@ -168,10 +168,6 @@ our client.
 2020–2022, where our engineer was a Software Engineer on its secure backend
 services. A production system still serving live customers.
 
-**NIdle Finishing**, finishing-stage digitisation for a ready-made-garments
-factory floor. Built at Intellier, Nov 2023 – Feb 2024, where our engineer was a
-Senior Software Engineer on its React Native app over GraphQL and NestJS.
-
 ---
 
 # Insights — technical articles from real work

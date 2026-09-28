@@ -135,9 +135,6 @@ and the companies involved are not our clients.
 
 - Go Smart: Modhumoti Bank's digital banking app, built at Brain Station 23,
   2020–2022. Our engineer's role: Software Engineer, secure backend services.
-- NIdle Finishing: finishing-stage digitisation for a ready-made-garments
-  factory floor, built at Intellier, Nov 2023 – Feb 2024. Our engineer's role:
-  Senior Software Engineer.
 
 ## Full text
 

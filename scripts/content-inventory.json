@@ -781,7 +781,7 @@
         ]
       },
       {
-        "item": "Our engineers’ track record: Go Smart, NIdle Finishing",
+        "item": "Our engineers’ track record: Go Smart",
         "proves": "Work our engineers shipped at previous employers, credited to them — the employer and the engineer's role on every card, never called our client",
         "status": "required",
         "needles": [
@@ -796,7 +796,15 @@
           "Brain Station 23",
           "2020–2022",
           "The Daily Star",
-          "Google Play",
+          "Google Play"
+        ]
+      },
+      {
+        "item": "Our engineers’ track record: NIdle Finishing, held back",
+        "proves": "Nothing while it is held: its only proof link went, and a track-record text card carries a working proof link or is not published (content/schema.ts)",
+        "status": "retired",
+        "retired": "held back 2026-09-28 — its only proof link, \"Intellier's case study\" (intellier.com/nidle/), 301s to a bare PNG (DECISIONS 2026-09-28, item 8); content/projects.ts holds it as awaiting-asset until a working proof link exists",
+        "needles": [
           "NIdle Finishing",
           "Track record: built by our engineer at Intellier, not by Bolt Fusion",
           "Finishing-stage digitisation for a ready-made-garments factory floor.",
