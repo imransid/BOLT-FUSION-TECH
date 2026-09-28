@@ -870,6 +870,44 @@ async function perfRun(browser, prof) {
   return r;
 }
 
+/* 29 (2026-09-28) ── CLS WHILE READING. The runs above hold still, and a
+   layout shift a visitor meets while scrolling — a block inserted as a section
+   nears, a pin's spacer arriving with a lazy chunk, a late split — never
+   happens in them; scrolling is not recent input, so every such shift counts
+   against a real visitor (web.dev, CLS). One fresh run per profile, throttled
+   as above, scrolled at reading speed from the top to the bottom, then 1.5s to
+   settle; the shifts are summed as in perfRun, and the largest are named. */
+async function perfScrollRun(browser, prof) {
+  const ctx = await browser.newContext({ viewport: prof.viewport, ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
+  const page = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: prof.cpu });
+  if (prof.net) {
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", prof.net);
+  }
+  await page.addInitScript(() => {
+    const p = (window.__vsScrollCls = { cls: 0, shifts: [] });
+    const name = (n) => (n && n.nodeType === 1 ? `${n.tagName.toLowerCase()}${n.id ? "#" + n.id : ""}${n.getAttribute("class") ? "." + n.getAttribute("class").split(" ")[0] : ""}` : "(removed)");
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) {
+        if (e.hadRecentInput) continue;
+        p.cls += e.value;
+        p.shifts.push({ value: e.value, at: Math.round(e.startTime), y: Math.round(window.scrollY), nodes: (e.sources || []).map((x) => name(x.node)).slice(0, 3) });
+      }
+    }).observe({ type: "layout-shift", buffered: true });
+  });
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(1500);
+  const r = await page.evaluate(() => {
+    const p = window.__vsScrollCls;
+    return { cls: p.cls, shifts: [...p.shifts].sort((a, b) => b.value - a.value).slice(0, 3), height: document.documentElement.scrollHeight };
+  });
+  await ctx.close();
+  return r;
+}
+
 /* ── in-page collector (runs in the browser) ─────────────────────────────── */
 function collectInPage() {
   const visible = (el) => {
@@ -2415,9 +2453,40 @@ async function visitFocusBack(browser, route, width) {
   return stops;
 }
 
-/* 21 ── reduced motion requested: what is still moving */
+/* 21 ── reduced motion requested: what is still moving.
+   getAnimations() sees CSS animations and transitions only; motion a script
+   writes into inline styles — gsap's tweens, an rAF loop — is invisible to it
+   (three live gsap tweens read 0). So an init script, in place before any page
+   script, watches every element's inline style and counts the changes to the
+   properties motion is made of (2026-09-28, with the Signal motion system). */
+function scriptMotionHook() {
+  const PROPS = ["transform", "translate", "scale", "rotate", "opacity", "stroke-dashoffset", "stroke-dasharray"];
+  const log = new Map();
+  Object.defineProperty(window, "__vsScriptMotion", { value: log });
+  const probe = document.createElement("div");
+  const snap = (style) => PROPS.map((p) => style.getPropertyValue(p)).join("|");
+  const last = new WeakMap();
+  const name = (el) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.getAttribute("class") ? "." + el.getAttribute("class").split(" ")[0] : ""}`;
+  new MutationObserver((recs) => {
+    for (const r of recs) {
+      const el = r.target;
+      if (!el.style) continue;
+      if (!last.has(el)) {
+        probe.setAttribute("style", r.oldValue || "");
+        last.set(el, snap(probe.style));
+      }
+      const now = snap(el.style);
+      if (now === last.get(el)) continue;
+      last.set(el, now);
+      const e = log.get(el) || { el: name(el), n: 0 };
+      e.n++;
+      log.set(el, e);
+    }
+  }).observe(document, { attributes: true, attributeFilter: ["style"], attributeOldValue: true, subtree: true });
+}
 async function visitReduced(browser, route) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  await ctx.addInitScript(scriptMotionHook);
   const page = await ctx.newPage();
   await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
@@ -2446,8 +2515,10 @@ async function visitReduced(browser, route) {
     }
   }
   const n = canvases.length;
+  /* every element a script moved (check 21) */
+  const scripted = await page.evaluate(() => [...(window.__vsScriptMotion || new Map()).values()].sort((a, b) => b.n - a.n));
   await ctx.close();
-  return { anims, canvasMoving, canvases: n };
+  return { anims, canvasMoving, canvases: n, scripted };
 }
 
 /* 23 ── a full-page capture with every time-driven thing pinned */
@@ -2877,6 +2948,7 @@ const GL_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-s
 /* 29 runs first, before anything else loads the machine or the browser. One
    unthrottled load warms the server; it is not measured. */
 const perfRuns = {};
+const perfScroll = {};
 const perfLoad = { before: os.loadavg()[0], after: 0 };
 if (want(29)) {
   process.stderr.write("  performance: one unmeasured load to warm the server\n");
@@ -2889,6 +2961,10 @@ if (want(29)) {
       process.stderr.write(`  performance ${name} ${i + 1}/${PERF_RUNS}\n`);
       perfRuns[name].push(await perfRun(browser, prof).catch((e) => ({ error: String(e?.message || e).slice(0, 200) })));
     }
+  }
+  for (const [name, prof] of Object.entries(PERF_PROFILES)) {
+    process.stderr.write(`  performance ${name}: CLS during a reading-speed scroll\n`);
+    perfScroll[name] = await perfScrollRun(browser, prof).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
   }
   perfLoad.after = os.loadavg()[0];
 }
@@ -3975,8 +4051,11 @@ check(
   },
 );
 
-/* 21 */
-check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions", (F, I) => {
+/* 21 — and, since 2026-09-28, nothing a script moves: an element whose inline
+   transform, opacity or stroke dash changes SCRIPT_MOTION_MAX or more times
+   under reduced motion is animated by script. */
+const SCRIPT_MOTION_MAX = 5;
+check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (an rAF loop, a tween library), which getAnimations() cannot see", (F, I) => {
   for (const [route, r] of Object.entries(reducedRuns)) {
     if (r.error) {
       F.push(`${route}: the reduced-motion run did not finish (${r.error}) — unsure is a failure`);
@@ -3987,7 +4066,10 @@ check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: pre
     if (loops.length) F.push(`${route}: ${loops.length} looping animation(s) still running — ${[...new Set(loops.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (late.length) F.push(`${route}: ${late.length} animation(s) still running 2.5s after load — ${[...new Set(late.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (r.canvasMoving) F.push(`${route}: the WebGL canvas is still animating`);
-    I.push(`${route}: ${r.canvases} canvas element(s)`);
+    const moved = (r.scripted || []).filter((x) => x.n >= SCRIPT_MOTION_MAX);
+    if (moved.length) F.push(`${route}: ${moved.length} element(s) animated by script under reduced motion — e.g. ${moved.slice(0, 4).map((x) => `${x.el} (${x.n} changes)`).join(", ")} to an inline transform, opacity or stroke dash; under reduced motion nothing moves`);
+    const few = (r.scripted || []).filter((x) => x.n < SCRIPT_MOTION_MAX);
+    I.push(`${route}: ${r.canvases} canvas element(s); ${few.length ? `${few.length} element(s) with an inline motion style set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.n}x`).join(", ")})` : "no inline motion style set by any script"}`);
   }
 });
 
@@ -4515,8 +4597,8 @@ check(
 /* 29 */
 check(
   29,
-  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005, initial JavaScript at most 260KB gzipped — the hero's scene loads after load and is not initial JavaScript",
-  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift; the 3D scene imported statically, so three.js lands in the initial JavaScript",
+  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005 at rest and during a reading-speed scroll, initial JavaScript at most 260KB gzipped — the hero's scene loads after load and is not initial JavaScript",
+  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift at rest or while reading; the 3D scene imported statically, so three.js lands in the initial JavaScript",
   (F, I) => {
     const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
     I.push(`machine load average (1 min): ${perfLoad.before.toFixed(2)} before the runs, ${perfLoad.after.toFixed(2)} after — the timings need a quiet machine`);
@@ -4544,6 +4626,15 @@ check(
       if (lcp > lcpMax) F.push(`${prof.label}: LCP ${ms(lcp)}ms, over the ${lcpMax}ms budget (runs ${each("lcp", ms)}; ${els})`);
       if (name === "mobile" && tbt > BUDGET.mobileTbt) F.push(`${prof.label}: blocking time ${ms(tbt)}ms, over the ${BUDGET.mobileTbt}ms budget (runs ${each("tbt", ms)})`);
       if (cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(cls)} — the budget is 0.00, and ${BUDGET.cls} or more fails (runs ${each("cls", c3)})`);
+      /* the same line, while reading (perfScrollRun) */
+      const sc = perfScroll[name];
+      if (!sc) F.push(`${prof.label}: no reading-speed scroll run was made — unsure is a failure`);
+      else if (sc.error) F.push(`${prof.label}: the reading-speed scroll run failed (${sc.error}) — unsure is a failure`);
+      else {
+        const top = sc.shifts.map((x) => `${x.value.toFixed(4)} at ${x.at}ms, scrollY ${x.y}${x.nodes.length ? ` (${x.nodes.join(", ")})` : ""}`).join("; ");
+        if (sc.cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll — the budget is 0.00, and ${BUDGET.cls} or more fails; the largest: ${top}`);
+        I.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll down ${sc.height}px${top ? ` — ${top}` : ", no shift"}`);
+      }
       if (js > BUDGET.initialJs) F.push(`${prof.label}: initial JavaScript ${k1(js)}KB gzipped transferred, over the ${BUDGET.initialJs / 1024}KB budget (runs ${each("jsInitial", k1)})`);
       /* THE SCENE AND THE BUDGET (2026-09-16). Initial JavaScript is what is
          requested by the end of the load event (perfRun); the hero's scene

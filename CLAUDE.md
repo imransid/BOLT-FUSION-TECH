@@ -619,6 +619,8 @@ for more than five seconds has a pause control.
 - **Reduced motion:** nothing moves. The reveal, the diagram flow, the map's
   pulse and fade, the poster's drift, the header's slide, the drawer's slide,
   the FAQ icon and the quiet link's arrow each have a guard (verify-site checks 21 and 23).
+  Since 2026-09-28 check 21 also sees motion a script writes (*Verify before
+  pushing*).
 
 ## SEO and AI visibility
 
@@ -1025,6 +1027,24 @@ misuse fails — and every new rule has a misuse case in the gate's RUN 2.
   `bf:motion` instead would make the capture depend on the scene's own pause
   working; reduced motion keeps the scene out of the page.
 
+**Motion a script writes, and CLS while reading (2026-09-28).** Two blind spots
+the Signal motion system would have walked into, closed before it landed. Each
+rule was proven both ways on a served build — the clean build passes, the same
+build with the misuse fails with its own finding — and each has its misuse case
+in the gate's RUN 2.
+- **21** — `getAnimations()` cannot see a script: three live gsap tweens read 0.
+  An init script, in place before any page script, now counts per element the
+  changes to its inline transform, translate, scale, rotate, opacity and stroke
+  dash under reduced motion; 5 or more is "animated by script" and fails
+  (`script-motion`, an rAF loop writing a transform). The info line names the
+  elements set fewer times.
+- **29** — **CLS while reading**: one fresh run per profile, throttled as the
+  others, scrolled at reading speed top to bottom, at the same 0.005 line; the
+  largest shifts are named with their nodes and scroll position
+  (`scroll-shift`, a block inserted above `#faq` as a reader nears it). The runs
+  at rest never scroll, and scrolling is not recent input, so a shift a reader
+  meets was invisible to the check.
+
 **The gate (2026-09-16).** RUN 1 builds a fresh copy of HEAD, serves it fresh and
 runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
@@ -1248,14 +1268,16 @@ than one.
 
 The budget, from the approved rebuild plan, is measured on `/` by verify-site
 check 29, the way the Phase 1 baseline was: the median of three runs, each in a
-fresh context, with no input and no scroll.
+fresh context, with no input and no scroll — and, since 2026-09-28, one more
+run per profile scrolled top to bottom at reading speed, for the layout shifts
+a reader meets.
 
 | | budget |
 |---|---|
 | LCP, mobile lab (390 wide, 4× CPU, 150ms RTT, 1.6Mbps down) | at most 1.5s |
 | blocking time, mobile lab (each long task's time over 50ms, navigation to load + 4s) | at most 150ms |
 | LCP, desktop (1440, unthrottled) | at most 0.5s |
-| CLS | 0.00 — printed to three places, failing at 0.005 |
+| CLS | 0.00 — printed to three places, failing at 0.005; at rest, and during a reading-speed scroll (2026-09-28) |
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
 | the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
 

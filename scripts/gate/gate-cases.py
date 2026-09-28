@@ -329,6 +329,29 @@ def p_canonical(s):
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
 
 
+# ── new with the Signal motion system (2026-09-28): motion a script writes, and
+#    CLS while reading ─────────────────────────────────────────────────────────
+
+
+def p_script_motion(s):
+    """21: an rAF loop that ignores reduced motion, writing an inline transform"""
+    s.mount("VsScriptMotion", client(
+        "export default function VsScriptMotion() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-spin\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.transform = `translateX(${n % 2}px)`;\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_scroll_shift(s):
+    """29: a 120px block inserted above #faq once #faq reaches the middle of
+    the viewport — a layout shift only a reader who scrolls ever meets"""
+    s.mount("VsScrollShift", client(
+        "export default function VsScrollShift() {\n  useEffect(() => {\n    const faq = document.getElementById(\"faq\");\n    if (!faq) return;\n"
+        "    const io = new IntersectionObserver(\n      (es) => {\n        if (!es.some((e) => e.isIntersecting)) return;\n        io.disconnect();\n"
+        '        const d = document.createElement("div");\n        d.className = "vs-shift";\n        d.style.height = "120px";\n        faq.before(d);\n'
+        '      },\n      { rootMargin: "0px 0px -50% 0px" },\n    );\n    io.observe(faq);\n    return () => io.disconnect();\n  }, []);\n  return null;\n}\n'))
+
+
 # ── the table: [key, the case, its check, the finding it must print (a JS
 #    regex), its patch (None: the finding comes from the named case's patch),
 #    options] ─────────────────────────────────────────────────────────────────
@@ -392,6 +415,9 @@ CASES = [
     ["tier-status", "a data-status on a tier chip", 33, r"a tier chip \(\[data-tier=\"[a-z]+\"\][^)]*\) carries data-status", p_tier_status, {}],
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
+    # new with the Signal motion system (2026-09-28): script motion, CLS while reading
+    ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],
+    ["scroll-shift", "a block inserted above #faq as a reader nears it — CLS while scrolling", 29, r"CLS [\d.]+ during a reading-speed scroll", p_scroll_shift, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
