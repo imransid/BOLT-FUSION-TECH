@@ -1529,9 +1529,14 @@ three bump or a new import pushes it past 180KB, import from
 **The Signal's chunks, measured 2026-09-29** (`next start`, the gzip bodies as
 served, `encodedBodySize` in the browser at 1440). Turbopack splits the staged
 imports into four chunks, requested in order and each evaluated in its own
-task: gsap core 26.7KB, ScrollTrigger 17.0KB, DrawSVGPlugin 2.0KB and the
-engine (`signal.ts`) 3.3KB — **49.0KB in all**; the three gsap parts are 45.7KB
-against esbuild's estimate of 45.9KB. **Initial JavaScript went from 135.1KB to
+task: gsap core 26.7KB, ScrollTrigger 17.0KB, DrawSVGPlugin 1.9KB and the
+engine (`signal.ts`) 3.5KB — **49.2KB in all**; the three gsap parts are 45.6KB
+against esbuild's estimate of 45.9KB. (Re-measured 2026-09-29 after the review
+fixes: the three gsap chunks are byte-identical, same hashes; the engine grew
+from 3.3KB to 3.55KB — the per-trigger refresh, the stations' drift. Initial
+JavaScript unchanged at 135.9KB in the same eight files; still no long task in
+the Signal's window in three runs at 1x and three at 4x, at a load average of
+6–11.) **Initial JavaScript went from 135.1KB to
 135.9KB** as check 29 counts it, the same eight files: the +0.8KB is the loader
 itself (its gate, its staged waits and Turbopack's import stubs), and none of
 it is gsap. On an unthrottled 1440 the first gsap chunk is requested 2–3ms
