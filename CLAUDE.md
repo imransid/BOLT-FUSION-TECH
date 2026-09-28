@@ -615,6 +615,21 @@ for more than five seconds has a pause control.
     0.25 (of 255) in a tenth of a second (on the GPU, sampled every 0.1s). The
     fog starts just in front of the core's centre (`CAM_DIST - 0.8`), so the
     core and the front tier are clear and only the back recedes.
+  - **It answers Schedule a Call** (2026-09-28). Hovering or focusing the
+    hero's own primary (`#hero [data-cta="schedule"]`, not the header's)
+    charges the system: every seam, the top inlay included, mixes 24% toward
+    pale blue — about 40% brighter, measured x1.39–1.41 in linear luminance —
+    the graphite's fresnel rim rises 30%, and the comets and the seam band run
+    on their own clock at 1.6x. All of it eases in and out at 5 per second,
+    about 0.6s either way (60% of it by 0.2s, all of it by 0.6s), and back
+    out on leave or blur. It is a brighter BLUE, never amber: amber means
+    target. The comets run on `pulseClock`, not on `t`, because changing the
+    rate under `phase + t x rate` would make every comet jump. The scene
+    listens to the button itself (pointerenter/leave, focus/blur) and exposes
+    nothing to the page; the canvas stays `pointer-events: none`, and the
+    button's own hover and focus states stay the signal — the scene only
+    answers them. It is identity at rest (charge 0, the clocks equal), so the
+    poster did not change. Paused, nothing answers: the loop has stopped.
   - **The poster** is `public/hero/scene-poster-v2-{660,1320}.{avif,webp}`, the
     scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
     It is a plain `<img>` in a `<picture>`, the LCP element, with the image
@@ -838,7 +853,13 @@ at the end, which means nobody has decided yet.
     opacity 0 until that frame is drawn.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
-    so the fade shows no jump. **The scene keeps a fixed HORIZONTAL field of
+    so the fade shows no jump. **Every state the visitor drives starts at
+    rest and waits out the fade** (2026-09-28): the pointer's parallax and
+    the charge are exactly zero at mount and follow the visitor only once
+    0.75s of scene time has passed (`HOLD_S`; the canvas fades in over 0.7s),
+    so a page loaded with the pointer already on Schedule a Call still fades
+    in over the poster's own picture — `scripts/probe-scene.mjs` compares that
+    first frame with the poster file. **The scene keeps a fixed HORIZONTAL field of
     view** (2026-09-28): the 660x560 frame's, 30° vertical at 660x560, so a
     field narrower than 660 (between 1025 and 1280px, 467px at the narrowest)
     draws the whole frame smaller and gains ground above and below, exactly
@@ -1348,7 +1369,9 @@ under `next start` — 574KB raw, requested at 1.3s against a 71ms load event.
 The same chunk before v2 measured 142,287 bytes (139.0KB; the 137.9KB above
 was 2026-09-16's build), so v2 costs 1.6KB and leaves 39.4KB of the 180KB. It
 added one named import, `BufferAttribute` (the dashed link), which
-`BufferGeometry` already pulls in.
+`BufferGeometry` already pulls in. With the CTA charge: **144,211 bytes,
+140.8KB** (+298 bytes, no new import), requested at 1.6s against a 247ms load
+event; 39.2KB of the 180KB left.
 
 **The scene is not initial JavaScript, and check 29 says so (2026-09-16).** The
 260KB counts what is requested by the end of the load event, and the scene chunk
@@ -1499,12 +1522,17 @@ as a solid, lit, connected peer with data flowing to it. So:
    `scene-poster-v2-*`. The robot's treatment changes what the picture says,
    deliberately: it is the one scene change the evidence tiers ask for, and it
    is the owner's to confirm.
+2. **The CTA charge** — hovering or focusing the hero's Schedule a Call
+   brightens the seams about 40% and runs the comets 1.6x, eased over about
+   0.6s: the one place the scene answers the page's primary action, and it
+   rewards the action rather than competing with it (*Motion, as built*). A
+   brighter blue, never amber. Identity at rest, so no poster change.
 
 It stays inside every rule of *The hero field*: no textures, no
 post-processing, nothing allocated per frame, built in slices, the poster the
 t = 0 frame, the 16px band the ground, desktop and a fine pointer only, the
 canvas `pointer-events: none`, no Raycaster, three.js only in
-`components/field/scene.ts`, and the chunk 140.5KB of its 180KB.
+`components/field/scene.ts`, and the chunk 140.8KB of its 180KB.
 
 ## Decided 2026-09-16: the engineering redesign (owner)
 

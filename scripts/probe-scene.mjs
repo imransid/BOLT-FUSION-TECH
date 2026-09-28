@@ -30,9 +30,15 @@
  *               canvas is the machine's GPU and the poster is SwiftShader's,
  *               so this is the cross-rasteriser diff; it prints, it does not
  *               fail on a GPU.
+ *   charge      on fresh pages, hovering and then focusing the hero's
+ *               Schedule a Call: the seams brighten ~40% (x1.2–1.7), eased in
+ *               (at most 60% in the first 0.1s, at least 75% by 0.6s), stay
+ *               blue (b > g > r), and return within 1.6s of leaving; paused,
+ *               a hover changes nothing; hovered before the scene mounts, the
+ *               first frame is still the poster, and the charge follows.
  *   watchdog    frames fed at 40ms: the degradation steps (drawing buffer,
- *               comets, outer tier) happen as fades — no frame-to-frame
- *               change bigger than a fade step.
+ *               comets, outer tier) happen as fades — no phase loses more
+ *               than half of what it drops in one 0.2s step.
  *
  * Exit 0 when every check passed, 1 otherwise. The frames it read go to
  * --shots when given.
@@ -136,8 +142,9 @@ function clockHook() {
   window.__bfQueued = () => queue.length;
 }
 
-const fieldCss = (w) =>
-  "[data-hero-field]{position:fixed!important;left:0!important;top:200px!important;margin:0!important;z-index:9999!important;" +
+/* the field fixed at `left`,200: at the left edge, or at 760 where it leaves the hero's calls to action uncovered */
+const fieldCss = (w, left = 0) =>
+  `[data-hero-field]{position:fixed!important;left:${left}px!important;top:200px!important;margin:0!important;z-index:9999!important;` +
   `box-sizing:content-box!important;width:${w}px!important;height:560px!important;max-width:none!important;border:0!important;border-radius:0!important;flex:none!important}` +
   "[data-hero-field] canvas{transition:none!important}";
 
@@ -148,7 +155,7 @@ const browser = await chromium.launch({
 });
 
 /** A fresh page with the scene drawn at t = 0 and its clock ours; `before(page)` runs after load. */
-async function open({ dpr = 1, width = 660, before } = {}) {
+async function open({ dpr = 1, width = 660, left = 0, css = "", before } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr, reducedMotion: "no-preference" });
   await ctx.addInitScript(clockHook);
   await ctx.addInitScript((css) => {
@@ -158,7 +165,7 @@ async function open({ dpr = 1, width = 660, before } = {}) {
       s.textContent = css;
       document.head.append(s);
     });
-  }, fieldCss(width));
+  }, fieldCss(width, left) + css);
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
@@ -169,7 +176,7 @@ async function open({ dpr = 1, width = 660, before } = {}) {
   await page.waitForTimeout(150);
   /* one frame to start the loop's clock (its first frame has no delta: t stays 0) */
   await page.evaluate(() => window.__bfStep(1));
-  return { ctx, page, errors, width };
+  return { ctx, page, errors, width, left };
 }
 const advance = (p, seconds, dtMs = 1000 / 60) => p.page.evaluate(([n, d]) => window.__bfStep(n, d), [Math.max(1, Math.round((seconds * 1000) / dtMs)), dtMs]);
 const pointerAt = (p, fx, fy) => p.page.mouse.move(1440 * fx, 1000 * fy);
@@ -177,7 +184,7 @@ const pointerAt = (p, fx, fy) => p.page.mouse.move(1440 * fx, 1000 * fy);
 /** The field as pixels: RGB rows at the page's DPR. */
 async function grab(p, name) {
   await p.page.waitForTimeout(60);
-  const png = await p.page.screenshot({ type: "png", clip: { x: 0, y: 200, width: p.width, height: 560 } });
+  const png = await p.page.screenshot({ type: "png", clip: { x: p.left, y: 200, width: p.width, height: 560 } });
   if (SHOTS && name) await writeFile(path.join(SHOTS, `${name}.png`), png);
   const { data, info: px } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   return { data, w: px.width, h: px.height, scale: px.width / p.width, png };
@@ -211,6 +218,30 @@ function measure(img) {
     }
   const c = (v) => Math.round(v / scale);
   return { dev, lit: (100 * lit) / (w * h), flow: (100 * flow) / (w * h), L: c(L), R: c(R), T: c(T), B: c(B) };
+}
+/** The seams of `img` against the same moment untouched (`ref`): the median ratio of
+ *  linear luminance over the pixels that are the brand blue in `ref`, and their mean colour in `img`. */
+const lin = (v) => ((v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+function seamGain(ref, img) {
+  const ratios = [];
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  for (let i = 0; i < ref.data.length; i += 3) {
+    const R = ref.data[i];
+    const G = ref.data[i + 1];
+    const B = ref.data[i + 2];
+    if (!(B > 200 && B - R > 120 && G < 175)) continue; // the brand blue, #4C86FF, and its antialiased edge
+    const lr = 0.2126 * lin(R) + 0.7152 * lin(G) + 0.0722 * lin(B);
+    const li = 0.2126 * lin(img.data[i]) + 0.7152 * lin(img.data[i + 1]) + 0.0722 * lin(img.data[i + 2]);
+    ratios.push(li / Math.max(lr, 1e-6));
+    r += img.data[i];
+    g += img.data[i + 1];
+    b += img.data[i + 2];
+  }
+  ratios.sort((x, y) => x - y);
+  const n = ratios.length;
+  return { gain: n ? ratios[n >> 1] : 0, n, rgb: n ? `${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)}` : "0,0,0" };
 }
 /** Two frames' difference: mean per channel, the share of pixels off by more than 24 in sum, the largest channel. */
 function diff(a, b) {
@@ -295,6 +326,98 @@ try {
         if (!GPU && (t0.mean > 1.5 || t0.bigPct > 1)) fail(`t = 0 differs from the poster (${t0.line}) — the poster is not this scene's first frame; re-render it`);
       }
     }
+    await p.ctx.close();
+  }
+
+  /* ── charge: hovering or focusing the hero's Schedule a Call charges the system ── */
+  if (want("charge")) {
+    console.log('charge — hover and focus on #hero [data-cta="schedule"], each page against an untouched one at the same moment');
+    const CTA = '#hero [data-cta="schedule"]';
+    /* Five fresh pages on one clock, every pointer at the CTA's centre (the
+       pointer drives the camera's parallax, so the frames compare only if
+       every page has it in the same place). Where the CTA must NOT be hovered
+       it takes no pointer events, so the pointer rests on the same spot
+       without entering it. */
+    const deaf = `${CTA}{pointer-events:none!important}`;
+    const at = async (page) => {
+      const b = await page.evaluate((sel) => document.querySelector(sel).getBoundingClientRect().toJSON(), CTA);
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    };
+    const rest = await open({ dpr: 2, width: 660, left: 760, css: deaf }); // untouched
+    const hov = await open({ dpr: 2, width: 660, left: 760 }); // hovered at 1.5s
+    const foc = await open({ dpr: 2, width: 660, left: 760, css: deaf }); // focused at 1.5s
+    const earlyRest = await open({ dpr: 2, width: 660, left: 760, css: deaf, before: at }); // the pointer there from load, not hovering
+    const early = await open({ dpr: 2, width: 660, left: 760, before: at }); // hovering from load, before the scene mounted
+    const all = [rest, hov, foc, earlyRest, early];
+    const earlyT0 = await grab(early, "charge-early-t0");
+    const names = ["rest", "hover", "focus", "early-rest", "early"];
+    let clock = 0;
+    const step = async (sec) => {
+      for (const p of all) await advance(p, sec);
+      clock += sec;
+      return Promise.all(all.map((p, i) => grab(p, `charge-${names[i]}-${clock.toFixed(1)}`)));
+    };
+    await step(1.5); // past the hold
+    for (const p of [rest, hov, foc]) await at(p.page);
+    await foc.page.focus(CTA);
+    const series = { hover: [], focus: [], early: [] };
+    let now = 0;
+    for (const t of [0.1, 0.2, 0.4, 0.6, 1.0, 1.6]) {
+      const [r, h, f, er, e] = await step(t - now);
+      now = t;
+      series.hover.push({ t, ...seamGain(r, h) });
+      series.focus.push({ t, ...seamGain(r, f) });
+      series.early.push({ t, ...seamGain(er, e) });
+    }
+    for (const how of ["hover", "focus"]) {
+      const sr = series[how];
+      const full = sr[sr.length - 1];
+      const rise = (x) => (x.gain - 1) / Math.max(1e-6, full.gain - 1);
+      info(`${how}: the seams' linear luminance against the untouched page — ${sr.map((x) => `x${x.gain.toFixed(2)} at ${x.t}s`).join(", ")} (${full.n} seam pixels); charged, they read rgb ${full.rgb}`);
+      if (full.gain < 1.3 || full.gain > 1.55) fail(`${how}: at full charge the seams are x${full.gain.toFixed(2)} as bright — the charge is +40%`);
+      if (rise(sr[0]) > 0.6) fail(`${how}: ${Math.round(100 * rise(sr[0]))}% of the charge came in the first 0.1s — it eases in, it does not jump`);
+      if (rise(sr[3]) < 0.75) fail(`${how}: only ${Math.round(100 * rise(sr[3]))}% of the charge after 0.6s — it eases in over about 0.6s`);
+      /* brighter BLUE, never amber: blue leads green leads red */
+      const [cr, cg, cb] = full.rgb.split(",").map(Number);
+      if (!(cb > cg && cg > cr)) fail(`${how}: the charged seams are rgb ${full.rgb} — the charge is a brighter blue, never amber`);
+    }
+    /* and back out: the hovered page's pointer steps off the CTA (8px below it,
+       a 2px change of the pointer against 1000: the camera barely moves) */
+    {
+      const b = await hov.page.evaluate((sel) => document.querySelector(sel).getBoundingClientRect().toJSON(), CTA);
+      for (const p of [rest, hov]) await p.page.mouse.move(b.x + b.width / 2, b.y + b.height + 8);
+    }
+    await foc.page.evaluate(() => document.activeElement?.blur());
+    const [r2, h2, f2] = await step(1.6);
+    for (const [how, img] of [["hover", h2], ["focus", f2]]) {
+      const g = seamGain(r2, img);
+      info(`${how}: 1.6s after ${how === "hover" ? "the pointer left" : "blur"}, x${g.gain.toFixed(3)}`);
+      if (Math.abs(g.gain - 1) > 0.04) fail(`${how}: 1.6s after ${how === "hover" ? "the pointer left" : "blur"} the seams are x${g.gain.toFixed(3)} — the charge eases back out`);
+    }
+    /* hovered before the scene mounted: the first frame is the poster, and the charge follows the hold */
+    if (existsSync(POSTER)) {
+      const ref = await sharp(POSTER).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const d = diff(earlyT0, { data: ref.data, w: ref.info.width, h: ref.info.height });
+      info(`hovered before the scene mounted: its first frame against the poster, ${d.line}`);
+      if (!GPU && (d.mean > 1.5 || d.bigPct > 1)) fail(`with the pointer already on the CTA the first frame is not the poster (${d.line})`);
+    }
+    const eFull = series.early[series.early.length - 1];
+    info(`and once the hold is over it charges: x${eFull.gain.toFixed(2)} at 1.6s`);
+    if (eFull.gain < 1.3) fail(`the pointer was on the CTA when the scene mounted, and after the hold the seams are only x${eFull.gain.toFixed(2)}`);
+    for (const p of all) await p.ctx.close();
+    /* paused (the hero's Pause motion): hovering changes nothing */
+    const p = await open({ width: 660, left: 760 });
+    await advance(p, 1.5);
+    const before = await grab(p);
+    await p.page.evaluate(() => {
+      document.documentElement.dataset.motion = "paused";
+      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: true } }));
+    });
+    await p.page.hover(CTA);
+    const ran = await advance(p, 1.6);
+    const d = diff(before, await grab(p));
+    info(`paused: hovered for 1.6s, ${ran} frame(s) ran, the field changed by ${d.line}`);
+    if (ran || d.bigPct > 0) fail(`paused, the scene still answered the hover (${ran} frames ran; ${d.line}) — Pause motion freezes it`);
     await p.ctx.close();
   }
 

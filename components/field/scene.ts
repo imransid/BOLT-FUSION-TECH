@@ -43,11 +43,23 @@
  *    renderer, then the context itself. The scene creates no textures.
  *  - A lost context stops the loop and calls `onLost`; nothing throws.
  *
+ * IT ANSWERS THE PRIMARY ACTION. Hovering or focusing the hero's own
+ * "Schedule a Call" (`#hero [data-cta="schedule"]`) charges the system: the
+ * seams brighten by 40% (a brighter BLUE, never amber — amber means target),
+ * the rim by 30%, and the comets' clock runs 1.6x, all eased in over about
+ * 0.6s and back out on leave or blur. The scene owns those listeners; it
+ * exposes nothing to the page. The CTA's own hover and focus states stay the
+ * signal: this only answers them.
+ *
  * DETERMINISM, for the poster (scripts/render-scene-poster.mjs): the scene's
  * clock starts at 0 when it mounts and advances only by frame deltas while it
  * runs. The first frame, the one that resolves `ready`, is always t = 0 with
- * the camera at rest. That frame is the poster, so the canvas fades in over an
- * identical picture.
+ * the camera at rest and nothing charged. That frame is the poster, so the
+ * canvas fades in over an identical picture. Every state the visitor drives
+ * (the pointer's parallax, the charge) starts at exactly its rest value at
+ * mount and follows the visitor only once HOLD_S has passed — after the
+ * canvas's fade — so the fade is always over the poster's own picture, even
+ * on a page loaded with the pointer already on the CTA.
  *
  * FRAMING: the HORIZONTAL field of view is fixed, at the 660x560 frame's. A
  * narrower canvas draws the whole frame smaller, exactly as the poster's
@@ -121,6 +133,13 @@ const FADE_S = 0.8; // the comets fade out over this long
 const SINK_S = 2.4; // the outer tier sinks into the floor over this long
 const SINK = 1.7; // world units: deep enough that the floor hides the whole tier
 const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
+const HOLD_S = 0.75; // scene seconds after the first frame before the visitor's state moves it (the canvas fades in over 0.7s)
+
+/* ── The charge: the hero's Schedule a Call, hovered or focused ── */
+const CHARGE_EASE = 5; // per second: about 0.6s to settle, either way
+const CHARGE_SEAM = 0.24; // the seams' mix toward pale blue at full charge: about +40% luminance, as drawn
+const CHARGE_RIM = 0.3; // the graphite's rim, +30%
+const CHARGE_CLOCK = 0.6; // the comets' clock runs 1 + this, 1.6x
 
 /* ── Camera: a fixed HORIZONTAL field of view, orbiting a target above the core ── */
 const FOV = 30; // vertical degrees at the 660x560 frame
@@ -218,7 +237,7 @@ const STUDIO_GLSL = /* glsl */ `
   bfEnv *= 0.7 + 0.6 * smoothstep( -1.0, 1.0, bfR.x );
   bfEnv += vec3( 0.95, 1.0, 1.08 ) * ( 1.0 - smoothstep( 0.0, 0.11, abs( bfR.y - 0.28 ) ) ) * smoothstep( -0.9, 0.1, bfR.z );
   reflectedLight.indirectSpecular += bfEnv * EnvironmentBRDF( normal, bfV, material.specularColorBlended, material.specularF90, material.roughness );
-  totalEmissiveRadiance += uRim * uRimK * pow( 1.0 - saturate( dot( normal, bfV ) ), 4.0 );
+  totalEmissiveRadiance += uRim * uRimK * uRimB * pow( 1.0 - saturate( dot( normal, bfV ) ), 4.0 );
 }`;
 
 export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}): SceneHandle | null {
@@ -267,11 +286,13 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   /* the cloud's torus, smooth: flat facets turn the reflection into a checkerboard */
   const graphiteRound = mat(new MeshStandardMaterial({ color: 0x566070, metalness: 0.6, roughness: 0.32 }));
   const rimColor = new Color(BRAND);
+  const rimBoost = { value: 1 }; // shared by every graphite material: the charge raises it
   const studio = (m: MeshStandardMaterial, rimK: number) => {
     m.onBeforeCompile = (sh) => {
       sh.uniforms.uRim = { value: rimColor };
       sh.uniforms.uRimK = { value: rimK };
-      sh.fragmentShader = "uniform vec3 uRim;\nuniform float uRimK;\n" + sh.fragmentShader.replace("#include <lights_fragment_end>", STUDIO_GLSL);
+      sh.uniforms.uRimB = rimBoost;
+      sh.fragmentShader = "uniform vec3 uRim;\nuniform float uRimK;\nuniform float uRimB;\n" + sh.fragmentShader.replace("#include <lights_fragment_end>", STUDIO_GLSL);
     };
     m.customProgramCacheKey = () => "bf-studio-1"; // one program per shading mode; the uniforms are per material
   };
@@ -296,17 +317,20 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
      climbs the stack every 7 seconds, bottom to top. EXACTLY zero at t = 0 —
      the band starts below the plinth and its strength ramps in over 1.5s —
      so the first frame is the poster's. It peaks at 55% of a mix toward pale
-     blue over about a second: it glows, it never flashes. */
-  const seamU = { uT: { value: 0 } };
+     blue over about a second: it glows, it never flashes. It runs on the
+     comets' clock, so it quickens with them when the system is charged, and
+     the charge itself lifts every seam toward the same pale blue. */
+  const seamU = { uT: { value: 0 }, uCharge: { value: 0 } };
   const seamMat = mat(new MeshBasicMaterial({ color: BRAND }));
   seamMat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, seamU);
     sh.vertexShader = "varying float vWy;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n  vWy = ( modelMatrix * vec4( transformed, 1.0 ) ).y;");
     sh.fragmentShader =
-      "uniform float uT;\nvarying float vWy;\n" +
+      "uniform float uT;\nuniform float uCharge;\nvarying float vWy;\n" +
       sh.fragmentShader.replace(
         "#include <color_fragment>",
         /* glsl */ `#include <color_fragment>
+  diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.62, 0.8, 1.0 ), uCharge );
   float bfD = ( vWy - ( mod( uT, 7.0 ) / 7.0 * 3.2 - 0.6 ) ) * 4.0;
   float bfBand = exp( -bfD * bfD ) * smoothstep( 0.0, 1.5, uT );
   diffuseColor.rgb = mix( diffuseColor.rgb, vec3( 0.62, 0.8, 1.0 ), 0.55 * bfBand );`,
@@ -473,7 +497,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     top.position.y = y - GAP;
     core.add(top);
     add(top, plate(0.34, 0.07, 0.018), graphiteLight, 0, 0.035, 0);
-    const inlay = add(top, geo(new RingGeometry(0.45, 0.466, 8, 1, Math.PI / 8)), edge, 0, 0.002, 0);
+    const inlay = add(top, geo(new RingGeometry(0.45, 0.466, 8, 1, Math.PI / 8)), seamMat, 0, 0.002, 0); // the top seam: the band ends in it
     inlay.rotation.x = -Math.PI / 2;
     plates.push(top);
   };
@@ -726,6 +750,10 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const pointer = { x: 0, y: 0 }; // -1..1, the pointer over the viewport
   const cam = { az: 0, el: 0 }; // eased parallax offsets
   let time = 0;
+  let pulseClock = 0; // the comets' own clock: time, run faster while charged
+  let energy = 0; // the charge, eased: 0 at rest
+  let hovered = false;
+  let focused = false;
   let last = 0;
   let slowFor = 0;
   let avgMs = 1000 / 60; // the running average frame time, for the watchdog
@@ -804,13 +832,15 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     bt.halos.instanceMatrix.needsUpdate = true;
   };
 
-  /** Pose the whole scene at time t. Deterministic: t, the eased camera and the watchdog's fades only. */
+  /** Pose the whole scene at time t. Deterministic: t, the comets' clock, the eased camera and charge, and the watchdog's fades only. */
   const pose = (t: number) => {
     /* indexed loops only: no iterators or closures per frame */
     for (let i = 0; i < plates.length; i++) {
       plates[i].rotation.y = (i % 2 ? Math.PI / 8 : 0) + t * (0.055 + (i % 2) * 0.018);
     }
-    seamU.uT.value = t;
+    seamU.uT.value = pulseClock;
+    seamU.uCharge.value = CHARGE_SEAM * energy;
+    rimBoost.value = 1 + CHARGE_RIM * energy;
     for (let b = 0; b < tiers.length; b++) {
       const bt = tiers[b];
       const ang = bt.tier.phase + t * bt.tier.speed;
@@ -825,7 +855,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
           m.port.position.y = bt.tier.y - 0.02 + r;
         }
       }
-      if (degrade < 2 || cometK > 0) writePulses(bt, t, ang);
+      /* the comets run on their own clock: changing a rate under `phase + t * rate` would make them jump */
+      if (degrade < 2 || cometK > 0) writePulses(bt, pulseClock, ang);
     }
     for (let i = 0; i < spinners.length; i++) spinners[i].obj.rotation.y = t * spinners[i].rate;
     shoulder.rotation.z = 0.42 + 0.2 * Math.sin(t * 0.42);
@@ -905,6 +936,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     }
     const dt = Math.min(dtMs / 1000, 0.05);
     time += dt;
+    /* the charge follows the visitor once the canvas has faded in */
+    if (time > HOLD_S) energy += ((hovered || focused ? 1 : 0) - energy) * (1 - Math.exp(-dt * CHARGE_EASE));
+    pulseClock += dt * (1 + CHARGE_CLOCK * energy);
     /* the fades: the comets shrink away, then the outer tier sinks into the
        floor (the floor's depth hides it); each is hidden once it has gone */
     if (degrade >= 2 && cometK > 0) {
@@ -915,8 +949,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       sinkK = Math.min(1, sinkK + dt / SINK_S);
       if (sinkK === 1) tiers[1].group.visible = tiers[1].ring.visible = false;
     }
-    /* ease the camera toward the pointer, frame-rate independent */
-    const k = 1 - Math.exp(-dt * PARALLAX_EASE);
+    /* ease the camera toward the pointer, frame-rate independent — it too
+       waits out the fade, like the charge */
+    const k = time > HOLD_S ? 1 - Math.exp(-dt * PARALLAX_EASE) : 0;
     cam.az += (pointer.x * PARALLAX_AZ - cam.az) * k;
     cam.el += (pointer.y * PARALLAX_EL - cam.el) * k;
     render();
@@ -952,6 +987,21 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     pointer.x = Math.max(-1, Math.min(1, (e.clientX / window.innerWidth) * 2 - 1));
     pointer.y = Math.max(-1, Math.min(1, -((e.clientY / window.innerHeight) * 2 - 1)));
   };
+  /* the hero's own Schedule a Call; the canvas sits in the hero's field */
+  const cta = canvas.closest("#hero")?.querySelector<HTMLElement>('[data-cta="schedule"]') ?? null;
+  const onEnter = () => (hovered = true);
+  const onLeave = () => (hovered = false);
+  const onFocus = () => (focused = true);
+  const onBlur = () => (focused = false);
+  if (cta) {
+    /* already hovered or focused when the scene mounts: charged once HOLD_S has passed */
+    hovered = cta.matches(":hover");
+    focused = document.activeElement === cta;
+    cta.addEventListener("pointerenter", onEnter);
+    cta.addEventListener("pointerleave", onLeave);
+    cta.addEventListener("focus", onFocus);
+    cta.addEventListener("blur", onBlur);
+  }
   const onLost = () => {
     if (lost || disposed) return;
     lost = true;
@@ -1048,6 +1098,10 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       canvas.removeEventListener("webglcontextlost", onLost);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointer);
+      cta?.removeEventListener("pointerenter", onEnter);
+      cta?.removeEventListener("pointerleave", onLeave);
+      cta?.removeEventListener("focus", onFocus);
+      cta?.removeEventListener("blur", onBlur);
       for (const im of instanced) im.dispose();
       for (const g of geometries) g.dispose();
       for (const m of materials) m.dispose();
