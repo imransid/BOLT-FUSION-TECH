@@ -36,6 +36,16 @@
  *               blue (b > g > r), and return within 1.6s of leaving; paused,
  *               a hover changes nothing; hovered before the scene mounts, the
  *               first frame is still the poster, and the charge follows.
+ *   explode     scrolled past the span (the field held in view), the stack
+ *               fully open at 660 and 467 across t = 3–103s and the four
+ *               parallax extremes: the 16px band is still the ground. Then on
+ *               a fresh page nobody has scrolled, against an unscrolled one on
+ *               the same clock: identity at scroll 0, opening further at each
+ *               quarter of the span, frozen while paused (no frame runs), and
+ *               assembled again once back at the top.
+ *   reload      a page reloaded at scrollY 300: its first frame is still the
+ *               poster, and 2.5s on it has opened (against a page loaded at
+ *               the top, on the same clock).
  *   watchdog    frames fed at 40ms: the degradation steps (drawing buffer,
  *               comets, outer tier) happen as fades — no phase loses more
  *               than half of what it drops in one 0.2s step.
@@ -108,7 +118,10 @@ function clockHook() {
       now = performance.now();
     }
   }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-scene-ready"] });
-  /* skip the context's draws while fast-forwarding: the scene still poses */
+  /* skip the context's draws while fast-forwarding: the scene still poses.
+     Every draw the scene ATTEMPTS is counted, skipped or not: a scene frame
+     is the only thing on the page that draws, where a count of rAF callbacks
+     also counts the header's and the page's own */
   const getContext = HTMLCanvasElement.prototype.getContext;
   HTMLCanvasElement.prototype.getContext = function (type, attrs) {
     const ctx = getContext.call(this, type, attrs);
@@ -116,7 +129,11 @@ function clockHook() {
       ctx.__bfProbe = true;
       for (const name of ["drawElements", "drawArrays", "drawElementsInstanced", "drawArraysInstanced", "drawRangeElements"]) {
         const f = ctx[name];
-        if (typeof f === "function") ctx[name] = function (...a) { return window.__bfSkipDraw ? undefined : f.apply(this, a); };
+        if (typeof f === "function")
+          ctx[name] = function (...a) {
+            window.__bfDraws = (window.__bfDraws || 0) + 1;
+            return window.__bfSkipDraw ? undefined : f.apply(this, a);
+          };
       }
     }
     return ctx;
@@ -178,6 +195,8 @@ async function open({ dpr = 1, width = 660, left = 0, css = "", before } = {}) {
   await page.evaluate(() => window.__bfStep(1));
   return { ctx, page, errors, width, left };
 }
+/** How many draw calls the scene has attempted so far: none while it is paused. */
+const draws = (p) => p.page.evaluate(() => window.__bfDraws || 0);
 const advance = (p, seconds, dtMs = 1000 / 60) => p.page.evaluate(([n, d]) => window.__bfStep(n, d), [Math.max(1, Math.round((seconds * 1000) / dtMs)), dtMs]);
 const pointerAt = (p, fx, fy) => p.page.mouse.move(1440 * fx, 1000 * fy);
 
@@ -414,10 +433,122 @@ try {
       window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: true } }));
     });
     await p.page.hover(CTA);
-    const ran = await advance(p, 1.6);
+    const drawsBefore = await draws(p);
+    await advance(p, 1.6);
+    const drew = (await draws(p)) - drawsBefore;
     const d = diff(before, await grab(p));
-    info(`paused: hovered for 1.6s, ${ran} frame(s) ran, the field changed by ${d.line}`);
-    if (ran || d.bigPct > 0) fail(`paused, the scene still answered the hover (${ran} frames ran; ${d.line}) — Pause motion freezes it`);
+    info(`paused: hovered for 1.6s, the scene drew ${drew} time(s), the field changed by ${d.line}`);
+    if (drew || d.bigPct > 0) fail(`paused, the scene still answered the hover (${drew} draw calls; ${d.line}) — Pause motion freezes it`);
+    await p.ctx.close();
+  }
+
+  /* ── explode: the hero scrolled away opens the stack; the band stays the ground ── */
+  if (want("explode")) {
+    console.log("explode — scrolled past the span: the stack fully open, at 660 and 467");
+    for (const width of [660, 467]) {
+      const p = await open({ width });
+      /* past the span, whatever the hero's height: the field is fixed here, so it stays in view */
+      await p.page.evaluate(() => window.scrollTo(0, document.querySelector("#hero").offsetHeight * 1.2));
+      await p.page.waitForTimeout(150);
+      const worst = { dev: 0, L: 1e9, R: 1e9, T: 1e9, B: 1e9, at: {} };
+      const take = (m, label) => {
+        worst.dev = Math.max(worst.dev, m.dev);
+        for (const k of ["L", "R", "T", "B"])
+          if (m[k] < worst[k]) {
+            worst[k] = m[k];
+            worst.at[k] = label;
+          }
+        if (m.dev > 1) fail(`@${width} fully open, ${label}: the edge band is ${m.dev} off the ground — the opened stack reaches the frame's edge (${fmt(m)})`);
+      };
+      await advance(p, 3); // the hold, then the damped opening: e^-13, open
+      for (let t = 3; t <= 103; t += 10) {
+        if (t > 3) await advance(p, 10);
+        take(measure(await grab(p, `explode-${width}-t${t}`)), `t=${t}s`);
+      }
+      for (const [fx, fy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        await pointerAt(p, fx ? 0.999 : 0.001, fy ? 0.999 : 0.001);
+        await advance(p, 7);
+        take(measure(await grab(p, `explode-${width}-ptr${fx}${fy}`)), `pointer ${fx ? "right" : "left"}-${fy ? "bottom" : "top"}`);
+      }
+      info(`@${width} fully open: band within ${worst.dev} of the ground; closest lit pixel L ${worst.L}px (${worst.at.L}), R ${worst.R}px (${worst.at.R}), T ${worst.T}px (${worst.at.T}), B ${worst.B}px (${worst.at.B})`);
+      if (p.errors.length) fail(`@${width}: page errors — ${p.errors.slice(0, 3).join(" | ")}`);
+      await p.ctx.close();
+    }
+    /* it follows the scroll, on a fresh page nobody has scrolled: open as it
+       scrolls down, frozen while paused, and assembled again at the top */
+    console.log("explode — following the scroll on a fresh page, against an unscrolled one at the same moment");
+    const still = await open({ width: 660 });
+    const moved = await open({ width: 660 });
+    const both = async (sec) => {
+      await advance(still, sec);
+      await advance(moved, sec);
+      return diff(await grab(still), await grab(moved)).bigPct;
+    };
+    const span = await moved.page.evaluate(() => document.querySelector("#hero").offsetHeight * 0.55);
+    const opening = [];
+    for (const f of [0, 0.25, 0.5, 0.75, 1]) {
+      await moved.page.evaluate((y) => window.scrollTo(0, y), Math.round(span * f));
+      await moved.page.waitForTimeout(120);
+      opening.push(await both(1.2));
+    }
+    info(`scrolled 0, 25, 50, 75 and 100% of the span: the frame differs from the unscrolled one by ${opening.map((v) => `${v.toFixed(1)}%`).join(", ")} of its pixels`);
+    if (opening[0] > 0.05) fail(`at scroll 0 the frame is not the assembled one (${opening[0].toFixed(2)}% differ) — the exploded view is identity at scroll 0`);
+    for (let i = 1; i < opening.length; i++) if (!(opening[i] > opening[i - 1])) fail(`the stack does not open further as the scroll goes on (${opening.map((v) => v.toFixed(1)).join(" → ")})`);
+    await moved.page.evaluate(() => {
+      document.documentElement.dataset.motion = "paused";
+      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: true } }));
+    });
+    const pausedBefore = await grab(moved);
+    await moved.page.evaluate(() => window.scrollTo(0, 0));
+    await moved.page.waitForTimeout(120);
+    const drawsPaused = await draws(moved);
+    await advance(moved, 1.5);
+    const drewPaused = (await draws(moved)) - drawsPaused;
+    const frozen = diff(pausedBefore, await grab(moved));
+    info(`paused, scrolled back to the top: the scene drew ${drewPaused} time(s), the field changed by ${frozen.line}`);
+    if (drewPaused || frozen.bigPct > 0) fail(`paused, the stack still moved with the scroll (${drewPaused} draw calls; ${frozen.line}) — Pause motion freezes it`);
+    await moved.page.evaluate(() => {
+      delete document.documentElement.dataset.motion;
+      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: false } }));
+    });
+    await advance(moved, 0); // its first frame after a pause has no delta (the loop restarts): the clocks agree again
+    const back = await both(2.5);
+    info(`resumed at the top: 2.5s later it differs from the unscrolled page by ${back.toFixed(2)}% of its pixels`);
+    if (back > 0.05) fail(`back at the top, the stack did not reassemble (${back.toFixed(2)}% of the frame differs from the unscrolled one)`);
+    await still.ctx.close();
+    await moved.ctx.close();
+  }
+
+  /* ── reload: a page loaded mid-scroll still draws the poster first ── */
+  if (want("reload")) {
+    console.log("reload — loaded mid-scroll, the first frame is still the poster");
+    const p = await open({
+      dpr: 2,
+      width: 660,
+      before: async (page) => {
+        await page.evaluate(() => window.scrollTo(0, 300));
+        await page.reload({ waitUntil: "load" });
+        await page.evaluate(() => window.scrollY < 300 && window.scrollTo(0, 300));
+      },
+    });
+    const y = await p.page.evaluate(() => window.scrollY);
+    const first = await grab(p, "reload-t0");
+    if (y < 200) fail(`the reload did not keep the page scrolled (scrollY ${y}) — the probe tested nothing`);
+    if (!existsSync(POSTER)) fail(`no poster at ${path.relative(REPO, POSTER)}`);
+    else {
+      const ref = await sharp(POSTER).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const d0 = diff(first, { data: ref.data, w: ref.info.width, h: ref.info.height });
+      info(`at scrollY ${y}: the first frame against the poster, ${d0.line}`);
+      if (!GPU && (d0.mean > 1.5 || d0.bigPct > 1)) fail(`loaded mid-scroll, the first frame is not the poster (${d0.line}) — the exploded view must start assembled`);
+      /* and then it opens: against a page loaded at the top, on the same clock */
+      const top = await open({ dpr: 2, width: 660 });
+      await advance(p, 2.5);
+      await advance(top, 2.5);
+      const d1 = diff(await grab(p, "reload-t2.5"), await grab(top, "reload-top-t2.5"));
+      info(`2.5s on, against a page loaded at the top at the same moment: ${d1.line}`);
+      if (d1.bigPct < 5) fail(`2.5s after a mid-scroll load the stack has not opened (${d1.line} against an unscrolled page)`);
+      await top.ctx.close();
+    }
     await p.ctx.close();
   }
 

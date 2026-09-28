@@ -43,6 +43,15 @@
  *    renderer, then the context itself. The scene creates no textures.
  *  - A lost context stops the loop and calls `onLost`; nothing throws.
  *
+ * IT OPENS AS THE HERO SCROLLS AWAY: an exploded view, the engineering
+ * drawing's own gesture. Over the first 55% of the hero's height each plate
+ * lifts by its index x 0.13, the inner tier rises with the plate its links
+ * leave from, the seams brighten in the opened gaps, and the camera tilts a
+ * little to follow; scrolling back reassembles it. It is damped, driven by
+ * the scene's own passive scroll listener (scrollY only — no layout read),
+ * and identity at scroll 0; like everything else here it stops with the loop,
+ * so Pause motion freezes it. No GSAP, no pinning.
+ *
  * IT ANSWERS THE PRIMARY ACTION. Hovering or focusing the hero's own
  * "Schedule a Call" (`#hero [data-cta="schedule"]`) charges the system: the
  * seams brighten by 40% (a brighter BLUE, never amber — amber means target),
@@ -56,10 +65,10 @@
  * runs. The first frame, the one that resolves `ready`, is always t = 0 with
  * the camera at rest and nothing charged. That frame is the poster, so the
  * canvas fades in over an identical picture. Every state the visitor drives
- * (the pointer's parallax, the charge) starts at exactly its rest value at
+ * (the pointer's parallax, the charge, the exploded view) starts at exactly its rest value at
  * mount and follows the visitor only once HOLD_S has passed — after the
  * canvas's fade — so the fade is always over the poster's own picture, even
- * on a page loaded with the pointer already on the CTA.
+ * on a page loaded mid-scroll or with the pointer already on the CTA.
  *
  * FRAMING: the HORIZONTAL field of view is fixed, at the 660x560 frame's. A
  * narrower canvas draws the whole frame smaller, exactly as the poster's
@@ -134,6 +143,16 @@ const SINK_S = 2.4; // the outer tier sinks into the floor over this long
 const SINK = 1.7; // world units: deep enough that the floor hides the whole tier
 const BUILD_SLICE_MS = 6; // how long one slice of the build may hold the main thread
 const HOLD_S = 0.75; // scene seconds after the first frame before the visitor's state moves it (the canvas fades in over 0.7s)
+
+/* ── The exploded view: the hero scrolled away ── */
+const EXPLODE_GAP = 0.13; // world units each plate lifts, per index, when fully open (0.24 put the mobile in the edge band)
+const EXPLODE_SPAN = 0.55; // of the hero's height: the scroll over which it opens
+const EXPLODE_EASE = 6; // per second: damped, about half a second behind the scroll
+const EXPLODE_TARGET = 0.25; // the camera's target rises this far with it
+const EXPLODE_TILT = 0.1; // radians the camera lowers, to look into the gaps
+const EXPLODE_BACK = 0.05; // and it steps back by this share of its distance: the opened stack is taller
+const EXPLODE_SEAM = 0.3; // the seams' mix toward pale blue, fully open
+const INNER_PLATE = 4; // the plate the inner tier's links leave from (its centre is INNER.from.y): the tier rises with it
 
 /* ── The charge: the hero's Schedule a Call, hovered or focused ── */
 const CHARGE_EASE = 5; // per second: about 0.6s to settle, either way
@@ -320,7 +339,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
      blue over about a second: it glows, it never flashes. It runs on the
      comets' clock, so it quickens with them when the system is charged, and
      the charge itself lifts every seam toward the same pale blue. */
-  const seamU = { uT: { value: 0 }, uCharge: { value: 0 } };
+  const seamU = { uT: { value: 0 }, uCharge: { value: 0 } }; // uCharge: the charge's and the opened gaps' lift
   const seamMat = mat(new MeshBasicMaterial({ color: BRAND }));
   seamMat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, seamU);
@@ -473,6 +492,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
 
   /* ── The core: one slice of the build ── */
   const plates: Group[] = [];
+  const plateBase: number[] = []; // each plate's height when assembled
   const buildCore = () => {
     const core = new Group();
     scene.add(core);
@@ -489,6 +509,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       /* the seam under this plate: recessed inside both plates' chamfers */
       add(pivot, band(Math.min(r, below) - c - 0.012, GAP + 0.006), seamMat, 0, -h / 2 - GAP / 2, 0);
       plates.push(pivot);
+      plateBase.push(pivot.position.y);
       below = r;
       y += h + GAP;
     });
@@ -500,6 +521,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const inlay = add(top, geo(new RingGeometry(0.45, 0.466, 8, 1, Math.PI / 8)), seamMat, 0, 0.002, 0); // the top seam: the band ends in it
     inlay.rotation.x = -Math.PI / 2;
     plates.push(top);
+    plateBase.push(top.position.y);
   };
 
   /* ── The modules: each a distinct form, no text ── */
@@ -752,6 +774,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let time = 0;
   let pulseClock = 0; // the comets' own clock: time, run faster while charged
   let energy = 0; // the charge, eased: 0 at rest
+  let explode = 0; // the exploded view, eased: 0 assembled — whatever the scroll at mount
+  let explodeTarget = 0; // where the scroll says it should be
+  let explodeSpan = 1; // px of scroll that open it fully
   let hovered = false;
   let focused = false;
   let last = 0;
@@ -839,7 +864,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       plates[i].rotation.y = (i % 2 ? Math.PI / 8 : 0) + t * (0.055 + (i % 2) * 0.018);
     }
     seamU.uT.value = pulseClock;
-    seamU.uCharge.value = CHARGE_SEAM * energy;
+    seamU.uCharge.value = Math.min(1, CHARGE_SEAM * energy + EXPLODE_SEAM * explode);
     rimBoost.value = 1 + CHARGE_RIM * energy;
     for (let b = 0; b < tiers.length; b++) {
       const bt = tiers[b];
@@ -866,14 +891,22 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       tiers[1].group.position.y = -d;
       tiers[1].ring.position.y = OUTER.y - d;
     }
+    /* the exploded view: exactly the assembled pose at explode = 0. Plate i
+       lifts by (i + 1) gaps; the top die (the last entry) rides on the plate
+       it is inlaid into; the plinth never moves, so the outer tier's links,
+       which leave from it, stay attached */
+    for (let i = 0; i < plates.length; i++) plates[i].position.y = plateBase[i] + explode * Math.min(i + 1, PLATES.length) * EXPLODE_GAP;
+    if (tiers[0]) {
+      const lift = explode * (INNER_PLATE + 1) * EXPLODE_GAP;
+      tiers[0].group.position.y = lift;
+      tiers[0].ring.position.y = INNER.y + lift;
+    }
 
     const az = cam.az;
-    const el = CAM_ELEV + cam.el;
-    camera.position.set(
-      CAM_DIST * Math.cos(el) * Math.sin(az),
-      CAM_TARGET_Y + CAM_DIST * Math.sin(el),
-      CAM_DIST * Math.cos(el) * Math.cos(az),
-    );
+    const el = CAM_ELEV + cam.el - explode * EXPLODE_TILT;
+    target.y = CAM_TARGET_Y + explode * EXPLODE_TARGET;
+    const d = CAM_DIST * (1 + EXPLODE_BACK * explode);
+    camera.position.set(d * Math.cos(el) * Math.sin(az), target.y + d * Math.sin(el), d * Math.cos(el) * Math.cos(az));
     camera.lookAt(target);
   };
 
@@ -939,6 +972,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     /* the charge follows the visitor once the canvas has faded in */
     if (time > HOLD_S) energy += ((hovered || focused ? 1 : 0) - energy) * (1 - Math.exp(-dt * CHARGE_EASE));
     pulseClock += dt * (1 + CHARGE_CLOCK * energy);
+    if (time > HOLD_S) explode += (explodeTarget - explode) * (1 - Math.exp(-dt * EXPLODE_EASE));
     /* the fades: the comets shrink away, then the outer tier sinks into the
        floor (the floor's depth hides it); each is hidden once it has gone */
     if (degrade >= 2 && cometK > 0) {
@@ -974,8 +1008,19 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     inView = entries[entries.length - 1].isIntersecting;
     sync();
   });
+  /* the scroll: scrollY against the span, read in the listener — no layout */
+  const hero = canvas.closest<HTMLElement>("#hero");
+  const onScroll = () => {
+    explodeTarget = Math.min(1, Math.max(0, window.scrollY / explodeSpan));
+  };
+  /* the span follows the hero's height, measured here only: at mount and on a resize of it or the canvas */
+  const measure = () => {
+    explodeSpan = Math.max(1, EXPLODE_SPAN * (hero ? hero.offsetHeight : canvas.clientHeight));
+    onScroll();
+  };
   const ro = new ResizeObserver(() => {
     sizeDirty = true;
+    measure();
     if (drawn && !running && !disposed && !lost) render();
   });
   const onVisibility = () => {
@@ -1012,8 +1057,11 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   canvas.addEventListener("webglcontextlost", onLost);
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("pointermove", onPointer, { passive: true });
+  window.addEventListener("scroll", onScroll, { passive: true });
   io.observe(canvas);
   ro.observe(canvas);
+  if (hero) ro.observe(hero);
+  measure();
 
   /* ── The build, in slices ────────────────────────────────────────────────
      Built in one synchronous block this was the page's longest task after
@@ -1098,6 +1146,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       canvas.removeEventListener("webglcontextlost", onLost);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("scroll", onScroll);
       cta?.removeEventListener("pointerenter", onEnter);
       cta?.removeEventListener("pointerleave", onLeave);
       cta?.removeEventListener("focus", onFocus);

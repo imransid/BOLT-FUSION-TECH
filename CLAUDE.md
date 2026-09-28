@@ -630,6 +630,26 @@ for more than five seconds has a pause control.
     button's own hover and focus states stay the signal — the scene only
     answers them. It is identity at rest (charge 0, the clocks equal), so the
     poster did not change. Paused, nothing answers: the loop has stopped.
+  - **It opens as the hero scrolls away** (2026-09-28): an exploded view, the
+    engineering drawing's own gesture for "how it is put together". Over the
+    first 55% of the hero's height of scroll (about 390px at 1440), plate i
+    lifts by (i + 1) x 0.13, the top die riding on the plate it is inlaid
+    into; the inner tier rises with the plate its links leave from (plate 4,
+    by 0.65), so no link detaches; the plinth, and the outer tier's links
+    that leave from it, never move. The seams mix 30% toward pale blue in the
+    opened gaps, and the camera lowers 0.1 rad, lifts its target 0.25 and
+    steps back 5% to take in the taller stack. Scrolling back reassembles
+    it. It follows the scroll damped (6 per second, about half a second
+    behind), from the scene's own passive scroll listener, which reads only
+    `scrollY` — the hero's height is measured at mount and by the
+    ResizeObserver, never per frame or per scroll. No GSAP, no pin, no scroll
+    hijack: the page scrolls exactly as it would without it. It is identity
+    at scroll 0, and like the charge it starts at 0 at mount and waits out
+    the fade, so a page reloaded mid-scroll draws the poster first and then
+    opens. It is frozen by Pause motion (the loop has stopped), and it stops
+    while the field is offscreen, like everything else. A gap of 0.24 per
+    plate (the research's first prototype) pushed the mobile module into the
+    top edge band; at 0.13 the fully open stack keeps it (*The hero field*).
   - **The poster** is `public/hero/scene-poster-v2-{660,1320}.{avif,webp}`, the
     scene's first frame (t = 0), rendered by `scripts/render-scene-poster.mjs`.
     It is a plain `<img>` in a `<picture>`, the LCP element, with the image
@@ -854,12 +874,13 @@ at the end, which means nobody has decided yet.
   - **The poster is a frame of the scene, by construction.** The scene's
     first frame is t = 0 with the camera at rest, and that frame is the poster,
     so the fade shows no jump. **Every state the visitor drives starts at
-    rest and waits out the fade** (2026-09-28): the pointer's parallax and
-    the charge are exactly zero at mount and follow the visitor only once
-    0.75s of scene time has passed (`HOLD_S`; the canvas fades in over 0.7s),
-    so a page loaded with the pointer already on Schedule a Call still fades
-    in over the poster's own picture — `scripts/probe-scene.mjs` compares that
-    first frame with the poster file. **The scene keeps a fixed HORIZONTAL field of
+    rest and waits out the fade** (2026-09-28): the pointer's parallax, the
+    charge and the exploded view are exactly zero at mount and follow the
+    visitor only once 0.75s of scene time has passed (`HOLD_S`; the canvas
+    fades in over 0.7s), so a page loaded with the pointer already on
+    Schedule a Call, or reloaded halfway down the hero, still fades in over
+    the poster's own picture — `scripts/probe-scene.mjs` compares both first
+    frames with the poster file. **The scene keeps a fixed HORIZONTAL field of
     view** (2026-09-28): the 660x560 frame's, 30° vertical at 660x560, so a
     field narrower than 660 (between 1025 and 1280px, 467px at the narrowest)
     draws the whole frame smaller and gains ground above and below, exactly
@@ -886,7 +907,11 @@ at the end, which means nobody has decided yet.
     5s, and the pointer held at each of the four parallax extremes): at 660
     the closest lit pixel is 86px from the left edge, 88 from the right, 48
     from the top and 34 from the bottom; at 467, 60, 62, 116 and 106; the 16px
-    band is the ground in every frame (within 0 of #07090D). The poster script
+    band is the ground in every frame (within 0 of #07090D). Fully exploded
+    (the hero scrolled past the span, t = 3–103s every 10s and the four
+    parallax extremes) the stack is taller and the margins move to 100, 103,
+    41 and 42 at 660, and 71, 73, 111 and 111 at 467 — the band still the
+    ground in every frame. The poster script
     refuses a capture whose 16px edge band is not the ground, and
     `scripts/probe-scene.mjs` fails any frame whose band is not. It is done in the scene itself:
     no overlay and no post-processing, since anything painted over the poster
@@ -1371,7 +1396,9 @@ was 2026-09-16's build), so v2 costs 1.6KB and leaves 39.4KB of the 180KB. It
 added one named import, `BufferAttribute` (the dashed link), which
 `BufferGeometry` already pulls in. With the CTA charge: **144,211 bytes,
 140.8KB** (+298 bytes, no new import), requested at 1.6s against a 247ms load
-event; 39.2KB of the 180KB left.
+event; 39.2KB of the 180KB left. With the exploded view: **144,403 bytes,
+141.0KB** (+192 bytes, no new import), requested at 1.5s against a 118ms load
+event; 39.0KB left.
 
 **The scene is not initial JavaScript, and check 29 says so (2026-09-16).** The
 260KB counts what is requested by the end of the load event, and the scene chunk
@@ -1527,12 +1554,20 @@ as a solid, lit, connected peer with data flowing to it. So:
    0.6s: the one place the scene answers the page's primary action, and it
    rewards the action rather than competing with it (*Motion, as built*). A
    brighter blue, never amber. Identity at rest, so no poster change.
+3. **The exploded view** — the first scroll opens the core into an exploded
+   engineering drawing, plate by plate, and scrolling back reassembles it:
+   the structure of "one engineering system" shown the way engineers draw
+   it (*Motion, as built*). It lives in the first 390px or so of scroll,
+   while the hero leaves; the hero is NOT pinned to lengthen it — for a
+   buyer, delaying the proof below costs more than the effect earns. Its
+   own passive scroll listener, no GSAP; identity at scroll 0, so no poster
+   change; frozen by Pause motion.
 
 It stays inside every rule of *The hero field*: no textures, no
 post-processing, nothing allocated per frame, built in slices, the poster the
 t = 0 frame, the 16px band the ground, desktop and a fine pointer only, the
 canvas `pointer-events: none`, no Raycaster, three.js only in
-`components/field/scene.ts`, and the chunk 140.8KB of its 180KB.
+`components/field/scene.ts`, and the chunk 141.0KB of its 180KB.
 
 ## Decided 2026-09-16: the engineering redesign (owner)
 
