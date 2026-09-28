@@ -4777,3 +4777,69 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-trace__stop[data-bf-lit] {
   fill: var(--bf-brand);
 }
+
+/* How we build — the `rail` hook. At >=1025px the rail is one hairline and six
+   stations drawn in the SVG, each at i/6 of the rail, which is where each of
+   the six equal, gapless columns starts; the stages' own top borders and
+   markers give way to it, keeping their space, so the drawing is the one the
+   page always had. The stages still reveal as before; the rail itself holds
+   still. Below 1025 the SVG is not shown and the borders and markers are the
+   rail. */
+.bf-rail {
+  position: relative;
+}
+
+.bf-rail__line {
+  display: none;
+}
+
+.bf-rail__line .bf-trace__path {
+  stroke: var(--bf-line-strong);
+}
+
+@media (min-width: 1025px) {
+  .bf-rail__line {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+
+  .bf-rail .bf-stage {
+    border-top-color: transparent;
+  }
+
+  .bf-rail .bf-stage::before {
+    content: none;
+  }
+}
+
+/* The final call to action — the `cta` hook, the last trace on the page. At
+   >=1025px a hairline runs the width of the column, halfway between the line
+   and the buttons, and ends in one station over Schedule a Call's first edge:
+   the rail's first stop again, where working together starts. The trace runs
+   along it right to left, into that station. Below 1025 it is not drawn. */
+.bf-final__wire {
+  display: none;
+}
+
+.bf-final__wire .bf-trace__path {
+  stroke: var(--bf-line-strong);
+}
+
+@media (min-width: 1025px) {
+  .bf-final .bf-actions[data-bf-trace] {
+    position: relative;
+  }
+
+  .bf-final__wire {
+    display: block;
+    position: absolute;
+    top: -18px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+}

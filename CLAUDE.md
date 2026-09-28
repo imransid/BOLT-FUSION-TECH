@@ -595,14 +595,15 @@ has a pause control.
   stopped holding) flows here when next seen.
 - **The Signal** (`components/motion/`; owner, 2026-09-28). CSS keeps the block
   reveal and the flow for everyone; gsap owns only the trace overlays, the
-  trace-to-flow handoff and the `[data-bf-trace]` hooks — one owner per element.
+  trace-to-flow handoff and the `[data-bf-trace]` hooks (the delivery rail, the
+  final call to action's line) — one owner per element.
   - **The loader** (`MotionLoader.tsx`, rendered by `SiteShell` on every page,
     renders nothing) is the ONE module that imports gsap, always dynamically.
     Its gate is checked before any import: `(min-width: 1025px) and (pointer:
     fine) and (prefers-reduced-motion: no-preference)` with Save-Data off, and a
     page with nothing to trace (no `[data-bf-flow]` or `[data-bf-trace]` outside
-    the hero — every page but / and /capabilities, whose diagrams are the only
-    hosts so far) imports nothing. Its stages, each a task of its own: the first
+    the hero — /work and its write-ups, /contact, /privacy-policy, the 404)
+    imports nothing. Its stages, each a task of its own: the first
     LCP entry AND the load event, then a macrotask (the browser reports no LCP
     after the reader's first key, press or scroll, so that input stands in for
     the entry, and one made before hydration — which no listener sees — is
@@ -680,6 +681,21 @@ has a pause control.
     station fills in the 200ms `state` time; how an HTML station shows
     `data-bf-lit` is its owner's CSS. Any name works: `rail` 1.2s, `pilot` 1.2s, `cta` 0.9s, anything
     else 1.2s.
+    - `rail` (`HowWeBuild.tsx`, on / and /engineering, >=1025): one hairline
+      over the six stages and a station at the start of each column (i/6 of the
+      rail: the columns are equal and gapless), which is the drawing the
+      stages' own top borders and markers made before — they give way to it at
+      >=1025, keeping their space. The trace runs left to right, lighting the
+      six stations. Below 1025 the borders and markers are the rail, as they
+      always were.
+    - `cta` (`FinalCta.tsx`, on / and every page that ends with it —
+      /capabilities, /industries, /engineering, /about, /insights and each
+      article; >=1025): the buttons' row is the hook. A hairline the width of
+      the column, 18px above the buttons (half their 36px margin), ends in one
+      station over Schedule a Call's first edge — the rail's first stop again,
+      where working together starts. The trace runs right to left into it: the
+      last trace on the page points at the one action that matters. The
+      buttons never move.
     - `pilot`: rendered by the IA stream inside `how_we_work`; handled like any
       hook.
   - **The rules it keeps** (BRIEF §4.4): the resting state is the server HTML;
@@ -1483,8 +1499,8 @@ came 1–6s after navigation. The phone profile, the 1180x820 touch tablet,
 in the Signal's window** — from the first gsap request to 1s after the engine
 starts — in four runs at 1x and four at 4x CPU (the 4x runs' long tasks, 55–375ms
 of blocking, all come before gsap is asked for: the scene's chunk and first
-frame); and during a reading-speed scroll of the whole homepage with
-every diagram's sequence playing, **no long task at 1x or 4x and CLS 0.0000** (main, the same
+frame); and during a reading-speed scroll of the whole homepage with all eight
+sequences playing, **no long task at 1x or 4x and CLS 0.0000** (main, the same
 scroll at 4x: also none, 0.0000). Measured at a load average of 7–9, other
 builds running.
 
@@ -1621,8 +1637,10 @@ exactly; core, ScrollTrigger and DrawSVGPlugin; no `@gsap/react`, SplitText or
 Flip — and it reverses this file's "there is no animation library" (*Stack*).
 It is spent on the one thing CSS cannot do well: drawing the site's own systems
 as they are read — a diagram's connections trace in topology order and then
-flow, and the Lab concept is only sketched (*Motion, as built*). It loads
-only where it runs: after LCP and load, in stages, at >=1025px with a fine pointer, no reduced motion and no Save-Data — the scene's
+flow, the Lab concept is only sketched, the delivery rail traces its six
+stages, and the last trace on the page runs into Schedule a Call (*Motion, as
+built*). It loads only where it runs: after LCP and load, in stages, at
+>=1025px with a fine pointer, no reduced motion and no Save-Data — the scene's
 own profile — so phones, tablets and anyone who asks for less motion never
 download it, and the CSS reveal and flow stay for everyone. The reasons
 (BRIEF §4.1, perf.md): as initial JavaScript, gsap pushed a phone's load event
