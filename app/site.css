@@ -4818,7 +4818,9 @@ button.bf-map__btn[aria-pressed="true"] {
 /* ── The hero's microcopy and proof line (2026-09-28, DECISIONS item 2) ──── *
    Under the calls to action, inside the text column: what the first call is,
    then three shipped products with their attribution — a column rule above
-   them, never a full-width one. */
+   them, never a full-width one. The three sit in one row at every width, each
+   a name with its client under it: 52px tall on a phone, where a stack of
+   three rows took 134px and fell below the first screen. */
 .bf-hero__micro {
   margin-top: 16px;
   max-width: 56ch;
@@ -4844,29 +4846,32 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-hero__proof-list {
   display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  column-gap: 28px;
   margin-top: 4px;
 }
 
 .bf-hero__proof-item {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
-  border-bottom: 1px solid var(--bf-line);
 }
 
-.bf-hero__proof-item:last-child {
-  border-bottom: 0;
-}
-
+/* The name is the link, and its box is 44px tall at every width (WCAG 2.2
+   SC 2.5.5); the client under it rises into the box's lower half, so the
+   line stays as short as the text. A product without a write-up links to
+   itself, live, in a new tab, and says so with the arrow. */
 .bf-hero__proof-name {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   min-height: 44px;
   font-family: var(--bf-font-heading);
   font-size: 17px;
   font-weight: 600;
+  line-height: 1.2;
   color: var(--bf-text);
   text-decoration: underline;
   text-decoration-color: var(--bf-line-strong);
@@ -4878,31 +4883,88 @@ button.bf-map__btn[aria-pressed="true"] {
   text-decoration-color: var(--bf-brand);
 }
 
+.bf-hero__proof-out {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  color: var(--bf-muted);
+}
+
 .bf-hero__proof-for {
-  font-size: 14px;
+  margin-top: -9px;
+  font-size: 13px;
   line-height: 1.4;
   color: var(--bf-muted);
 }
 
-@media (min-width: 560px) {
-  .bf-hero__proof-list {
-    grid-template-columns: repeat(3, auto);
-    justify-content: start;
-    column-gap: 28px;
+@media (max-width: 559px) {
+  .bf-hero__micro { font-size: 14px; }
+  .bf-hero__proof-list { column-gap: 14px; }
+  .bf-hero__proof-name { font-size: 15px; gap: 3px; }
+  .bf-hero__proof-out { width: 10px; height: 10px; }
+  .bf-hero__proof-for { font-size: 12px; }
+}
+
+/* ── The first screen below 1025px (2026-09-28) ──────────────────────────── *
+   The field sits above the text there (SPEC §7; verify-site check 28). At its
+   4:3 and 16:9 it took the whole first screen at 1024x768 — the h1 at 701px —
+   and put the proof line at 945px at 390x844. Now it is a band, still filled
+   by width (cover), so the poster is drawn exactly as wide as `sizes` in
+   Hero.tsx says: 200px tall on a phone (less on a short one), 260–420px on a
+   tablet by the viewport's height. The spacing tightens with it, and the
+   pause control shares the headline's first line (below). Measured with the
+   h1, Schedule a Call and the proof line's names all inside the first screen
+   at 390x844 and 768x1024; at 1024x768 the h1 and both calls to action are,
+   and the proof line starts 30px under the fold. */
+@media (max-width: 1024px) {
+  #hero.bf-hero { padding-top: 16px; }
+  .bf-hero__inner { gap: 24px; }
+  .bf-hero__support { margin-top: 20px; }
+  .bf-hero .bf-actions { margin-top: 28px; }
+  .bf-hero__micro { margin-top: 12px; }
+  .bf-hero__proof { margin-top: 20px; padding-top: 12px; }
+}
+
+@media (max-width: 767px) {
+  .bf-hero__field {
+    aspect-ratio: auto;
+    height: clamp(160px, 22vh, 188px);
   }
 
-  .bf-hero__proof-item {
-    flex-direction: column;
-    align-items: flex-start;
-    border-bottom: 0;
+  .bf-hero__support { margin-top: 16px; }
+
+  .bf-hero__body {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .bf-hero__field {
+    aspect-ratio: auto;
+    height: clamp(260px, 40vh, 420px);
+  }
+}
+
+.bf-hero__body {
+  text-wrap: pretty;
+}
+
+/* The pause control keeps its place under the field's right edge, and the
+   headline's first line ("Build", one short word) rises into that row beside
+   it, 14px under the field: the row was 42px of empty ground. Only where the
+   control is laid out — under reduced motion it keeps no space (above), and
+   the h1 sits the grid's gap under the field. It is lifted over the h1's box
+   so it stays the thing a tap on it reaches. */
+@media (prefers-reduced-motion: no-preference) and (max-width: 1024px) {
+  .bf-hero__media {
+    gap: 14px;
+    margin-bottom: -56px;
   }
 
-  .bf-hero__proof-name {
-    min-height: 40px;
-  }
-
-  .bf-hero__proof-for {
-    margin-top: -6px;
+  .bf-motion-toggle {
+    position: relative;
+    z-index: 1;
   }
 }
 

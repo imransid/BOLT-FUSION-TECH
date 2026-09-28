@@ -136,18 +136,26 @@ const teamSizeSchema = z.string().superRefine((v, ctx) => {
    The hero's contract words — the h1, the support line, the body and both
    calls to action — are unchanged (verify-site check 28); these sit under the
    calls to action.
-   · The microcopy is approved copy, word for word: it must be one of /about's
-     terms (content/pages.ts), so it cannot drift into a new promise.
+   · The microcopy is approved copy, word for word: it must be one whole
+     sentence of one of /about's terms (content/pages.ts) — never empty, never
+     a fragment of one — so it cannot drift into a new promise or be cut to
+     half a promise. verify-site check 30 cannot see it go: the same sentence
+     is served on / in how we work and in the FAQ, and a needle is a
+     substring. RUN 3 of the gate proves the refusal (scripts/gate).
    · The proof line names shipped work by its id in content/projects.ts; the
      hero reads the name, the client and the link from there, so the
      attribution is the projects' own. Only work that is ours and running
      qualifies: a published case study or delivered project (never feature
      work, whose app is the client's, and never an engineer's track record),
      live or in production. ── */
-const heroMicrocopySchema = z.string().superRefine((v, ctx) => {
-  if (!pages.about.howWeWork.terms.some((t) => t.detail.includes(v)))
-    ctx.addIssue({ code: "custom", message: `the hero's microcopy "${v}" is not approved copy: it must be one of /about's terms, word for word (content/pages.ts, about.howWeWork.terms)` });
-});
+const approvedSentences = pages.about.howWeWork.terms.flatMap((t) => t.detail.split(/(?<=[.!?])\s+/));
+const heroMicrocopySchema = z
+  .string()
+  .min(1)
+  .superRefine((v, ctx) => {
+    if (!approvedSentences.includes(v))
+      ctx.addIssue({ code: "custom", message: `the hero's microcopy "${v}" is not approved copy: it must be one whole sentence of /about's terms, word for word (content/pages.ts, about.howWeWork.terms)` });
+  });
 
 const heroProofSchema = z.strictObject({
   /** Before the items: what they are. */

@@ -469,12 +469,29 @@ def b_e(s):
     s.rep("content/site.ts", '    sizeLabel: "developers",\n', '    sizeLabel: "developers",\n    ...({ roster: [{ id: "nadim", status: "pending", name: "Nadim" }] } as {}),\n')
 
 
+def b_f(s):
+    """(f) the hero's first-call line turned into a new promise (2026-09-28:
+    the microcopy is one whole sentence of /about's terms, word for word —
+    DECISIONS item 3, no reply time, no price, no call length)"""
+    s.rep("content/site.ts", '    microcopy: "Your first call is with the engineer who writes the code.",\n', '    microcopy: "We reply within one working day.",\n')
+
+
+def b_g(s):
+    """(g) feature work named on the hero's proof line (2026-09-28: the line
+    names only work that is ours — Bazzile is features inside Bazzile
+    Technology SA's app, never "built by Bolt Fusion")"""
+    s.rep("content/site.ts", '      projects: ["warmchats", "balanzify", "go-style-business"],\n', '      projects: ["warmchats", "bazzile", "go-style-business"],\n')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
     ["c", "an exemption with an empty reason", "content/figure-labels.ts", b_c, [r"exemption's reason"]],
     ["d", "a capability whose evidence tier is not proven, core, capable or lab", "content/engineering.ts", b_d, [r"engineering\.ts failed validation", r"expected one of"]],
     ["e", "a named team roster put back", "content/site.ts", b_e, [r"[Uu]nrecognized key.*roster"]],
+    # new for the 2026-09-28 redesign, one per new build-time rule
+    ["f", "the hero's first-call line turned into a new promise", "content/site.ts", b_f, [r"is not approved copy"]],
+    ["g", "feature work (Bazzile) named on the hero's proof line", "content/site.ts", b_g, [r"hero\.proof: .{1,2}bazzile.{1,2} is feature work in another company's app"]],
 ]
 
 

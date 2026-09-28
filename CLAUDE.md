@@ -125,9 +125,11 @@ fails `next build` with the file named:
   components import that barrel. The schema refuses a primary call to action
   that does not say exactly "Schedule a Call", the words "Book a call" anywhere
   in the file, a homepage description that does not open with the canonical
-  line, a hero microcopy that is not one of /about's terms word for word, and
-  a proof line naming anything but three published projects that are ours and
-  live or in production (never feature work, never a track record).
+  line, a hero microcopy that is not one whole sentence of /about's terms, word
+  for word (never empty, never a fragment of one), and a proof line naming
+  anything but three published projects that are ours and live or in
+  production (never feature work, never a track record). The gate's RUN 3
+  proves the last two refusals (*Verify before pushing*).
 - `engineering.ts` (schema `engineering-schema.ts`) — the engineering company
   (2026-09-16): the six capabilities with every depth field (body, what we build,
   an optional build note, approach, evidence tiers with their scope, the evidence
@@ -258,8 +260,11 @@ does not state.
   above its name (the `attribution` words /work uses), and since 2026-09-28 the
   hero's proof line names three shipped products — WarmChats (for WarmChats,
   Inc.), Balanzify (for Balanzify Inc.) and Go Style Business — read from
-  `content/projects.ts` with the client as the data has it, each linking where
-  it is shown (`lib/work-links.ts`). "See all work (N projects)" counts
+  `content/projects.ts` with the client as the data has it. Each links to its
+  write-up if it has one (WarmChats) and otherwise to the product itself, live
+  — the first of its `links`, in a new tab, with an arrow (Balanzify,
+  Go Style Business) — so "in production" is something a buyer can open and
+  check. "See all work (N projects)" counts
   the published projects that are ours, from the data, the feature work
   included. The track record is not counted.
 - `llms.txt` and `llms-full.txt` credit every project as its card does.
@@ -331,6 +336,22 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   128px — only above a chapter (how we work, what we engineer, the close); the
   proof follows the hero with no hairline between them (that full-width rule
   read as the first screen's floor), so its heading crosses the 900px fold.
+- **The hero's first screen (2026-09-28), measured.** At 1440x900 the proof
+  line is at 585–677px and the first write-up at 913. Below 1025px the field
+  sits above the text (SPEC §7) as a band, still `cover` and filled by width
+  so `sizes` holds: `clamp(160px, 22vh, 188px)` tall on a phone,
+  `clamp(260px, 40vh, 420px)` at 768–1024 — it was 4:3 and 16:9, and took the
+  whole first screen at 1024x768 (the h1 at 701px). The pause control keeps
+  its place under the field's right edge and the headline's first line
+  ("Build") rises into that row beside it (`margin-bottom: -56px` on
+  `.bf-hero__media`, only where the control is laid out — never under reduced
+  motion); the proof line's three items sit in one row at every width, each a
+  44px link over its client. Measured: at 390x844 the h1 at 289, Schedule a
+  Call at 584 and the whole proof line at 745–832 — inside the first screen;
+  at 768x1024 all of it by 989; at 375x812 the names, their clients just
+  under the fold; at 1024x768 and 360x740 the h1 and Schedule a Call are in the
+  first screen and the proof line starts under it (798 and 716px). A phone
+  browser's own bars take more of those heights than the lab viewport does.
   Cards only where the content is a set (/work's projects; a write-up's
   services and stack groups; the homepage's pair of write-ups); everything else
   is a ruled grid, a ledger, a rail, a strata table or a diagram — never a row
@@ -1102,11 +1123,13 @@ misuse fails — and every new rule has a misuse case in the gate's RUN 2.
 runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
-a pattern that matches the clean build proves nothing. RUN 3 builds four kinds
-of bad content — a figure KPI with no status, a capability KPI with one, an
-exemption with an empty reason, a capability tier outside proven, core, capable
-and lab — and requires the schema's own refusal in the build log: a build that
-fails for another reason is unsure. The suite's `--only` list for RUN 2 is
+a pattern that matches the clean build proves nothing. RUN 3 builds seven
+kinds of bad content — a figure KPI with no status, a capability KPI with one,
+an exemption with an empty reason, a capability tier outside proven, core,
+capable and lab, a named roster put back in the team (2026-09-24), and since
+2026-09-28 a hero first-call line that is not approved copy and feature work
+named on the hero's proof line — and requires the schema's own refusal in the
+build log: a build that fails for another reason is unsure. The suite's `--only` list for RUN 2 is
 derived from the case table: a hand-written list once omitted check 9, and its
 case could not fail. A case whose target does not exist yet names the wave that
 brings it and holds the verdict at INCOMPLETE until it runs.
@@ -1320,6 +1343,19 @@ RUN 2 (`scripts/gate/gate-cases.py`).
   visible paragraph on `/`, and check 2 still fails it: the correction narrows
   the reading to rendered text and loosens nothing. Check 2 joins RUN 2's
   derived `--only` list with it.
+- **The build, two new refusals (RUN 3).** The hero's microcopy and proof line
+  are read through the schema (`content/site-schema.ts`), and each new rule
+  has a bad-content build that must fail in its own words. The microcopy must
+  be one whole sentence of /about's terms, word for word: the first version
+  tested `includes`, so `""` compiled and served an empty
+  `<p class="bf-hero__micro">`, and "writes the code" passed as a fragment —
+  and check 30 could not see either, since the sentence is also served in how
+  we work and the FAQ and a needle is a substring. Case (f) sets it to a new
+  promise, "We reply within one working day.", and the build refuses it: "is
+  not approved copy"; `""` and "writes the code" are refused the same way.
+  Case (g) names `bazzile` on the proof line: "hero.proof: "bazzile" is
+  feature work in another company's app". Both proven on throwaway builds of
+  the working tree, and the clean build takes the real content.
 - **The gate's cases, re-anchored with the homepage (same meaning).** `honesty`
   onto the ledger's honesty render (`components/site/home/WhatWeEngineer.tsx`;
   `Capabilities.tsx` is gone); `person-card` onto how we work's headcount as
@@ -1524,7 +1560,7 @@ the hiring terms were only on /about, and "pilot" appeared nowhere on `/`.
 | The order (`site.sectionOrder`) | hero → engineering stories (`#recent-work`, compact) → how we work with you (new) → what we engineer (one ledger that absorbed the six capability sections) → how we build → industries with delivered work → Insights → FAQ → final call to action. Measured: 10,409px at 1440 (from 19,526) and 16,317px at 390 (from 27,544); `#recent-work` at 755px and its first write-up at 913px at 1440 (from 13,847) | `motion-hire/ia` |
 | Off the homepage, each still on its route | the six capability deep dives and the system map (/capabilities, the map after the six: its parts are the six); the stack by layer (/engineering); the industries with no delivered work (/industries); the Team section (/about — its headcount stays on `/`, in how we work). Check 30 retires each on `/` with "moved to /<route> — owner request 2026-09-28 ("make it easy for clients to hire")", and its destination's inventory requires the same needles | `motion-hire/ia` |
 | Kept on `/` | every `[data-capability]` with its tier chip; robotics, its Lab chip, its honesty line verbatim and "Concept — not a shipped system"; `#recent-work` holding the proof strip; `/#contact`; the anchors `#software` … `#cloud` (the ledger's rows); the Service JSON-LD, now tied to the ledger's section | `motion-hire/ia` |
-| The hero | its contract words unchanged (check 28's `HERO`). Under the calls to action: "Your first call is with the engineer who writes the code." (/about's term, word for word — the schema refuses other words) and a proof line — "Built by Bolt Fusion and in production": WarmChats (for WarmChats, Inc.), Balanzify (for Balanzify Inc.), Go Style Business — read from `content/projects.ts` through a strict `hero.proof`. Robotics stays in the hero's body: those are the owner's words, and his call | `motion-hire/ia` |
+| The hero | its contract words unchanged (check 28's `HERO`). Under the calls to action: "Your first call is with the engineer who writes the code." (/about's term, word for word — the schema refuses anything but one whole sentence of those terms, RUN 3 case f) and a proof line — "Built by Bolt Fusion and in production": WarmChats (for WarmChats, Inc.), Balanzify (for Balanzify Inc.), Go Style Business — read from `content/projects.ts` through a strict `hero.proof` (feature work refused, case g), each linked as the data links it: WarmChats to its write-up, Balanzify and Go Style Business to the live products. Proof at the fold below 1025px as well: the field is a band there and the line one row (*Design language*, "The hero's first screen"). Robotics stays in the hero's body: those are the owner's words, and his call | `motion-hire/ia` |
 | No new promises, no new figures | no reply time, no price, no call length. The price question is answered only with /about's interim line ("We'll give you a full quote … once we've seen the real codebase") | `motion-hire/ia` |
 | How we work with you | the four terms, the engagement models, the line under them and the operating detail, the pilot (Week 1, Week 2, Deliverable) on the `pilot` trace hook, the headcount and where the engineers work — every word /about's; closes with Schedule a Call and the ghost "Start a 2-week pilot" | `motion-hire/ia` |
 | The FAQ | four buyer objections first — who writes the code, the overlap, who owns the IP, can we start small — in words the site already publishes; "4–8 hours of overlap … Two-week" has its own exemption, since FAQPage carries it | `motion-hire/ia` |
