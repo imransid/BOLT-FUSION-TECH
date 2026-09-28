@@ -109,6 +109,10 @@ function traceOf(src: SVGGeometryElement, cls: string, dash: string | null, top 
   o.setAttribute("class", cls);
   o.setAttribute("aria-hidden", "true");
   if (dash) o.style.strokeDasharray = dash;
+  /* a trace is drawn the way its source is: a hairline on the pixel grid
+     (crispEdges, the rail's) is traced on it */
+  const sr = getComputedStyle(src).shapeRendering;
+  if (sr && sr !== "auto") o.style.shapeRendering = sr;
   const svg = src.ownerSVGElement!;
   if (top) {
     /* lifted to the drawing's root: carry the source's own transform along
@@ -134,6 +138,31 @@ function traceOf(src: SVGGeometryElement, cls: string, dash: string | null, top 
   svg.append(m);
   o.setAttribute("mask", `url(#${id})`);
   return { draw: p, overlay: o, made: [o, m] };
+}
+
+/** How far motion of its own has carried an element from its place in the
+ *  layout: the translations on it and on its ancestors up to `host` (a
+ *  reveal's rise — the pilot's stations may be revealing while the trace
+ *  starts). A transform that is not a pure translation is left alone. */
+function drift(el: Element | null, host: Element): { x: number; y: number } {
+  let x = 0;
+  let y = 0;
+  for (let n = el; n && n !== host; n = n.parentElement) {
+    const cs = getComputedStyle(n);
+    if (cs.transform && cs.transform !== "none") {
+      const m = new DOMMatrixReadOnly(cs.transform);
+      if (m.a === 1 && m.b === 0 && m.c === 0 && m.d === 1) {
+        x += m.e;
+        y += m.f;
+      }
+    }
+    if (cs.translate && cs.translate !== "none") {
+      const [tx = "0", ty = "0"] = cs.translate.split(" ");
+      x += tx.endsWith("px") ? parseFloat(tx) : 0;
+      y += ty.endsWith("px") ? parseFloat(ty) : 0;
+    }
+  }
+  return { x, y };
 }
 
 /** A stroke's own dash pattern, or null when it is solid. */
@@ -321,11 +350,16 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
         const stops = [...host.querySelectorAll<Element>("[data-bf-trace-stop]")];
         /* A stop is reached at the first point of the trace that touches its
            box — a station drawn on the line, or an HTML station the line runs
-           through (the pilot's <li>s); a stop the line only passes beside is
-           reached at the point nearest its centre. Sampled on screen, every
-           2px of path, so a stretched viewBox measures what is drawn. */
+           through (the rail's stages, the pilot's <li>s); a stop the line only
+           passes beside is reached at the point nearest its centre. Sampled on
+           screen, every 2px of path, so a stretched viewBox measures what is
+           drawn. A stop is measured where the layout puts it: a reveal still
+           rising on it (and not on the drawing) is taken back out. */
+        const lineDrift = drift(svg, host);
         const reach = stops.map((s) => {
-          const b = s.getBoundingClientRect();
+          const d = drift(s, host);
+          const r = s.getBoundingClientRect();
+          const b = new DOMRect(r.x - (d.x - lineDrift.x), r.y - (d.y - lineDrift.y), r.width, r.height);
           const cx = (b.left + b.right) / 2;
           const cy = (b.top + b.bottom) / 2;
           let before = 0;

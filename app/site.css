@@ -4764,6 +4764,10 @@ button.bf-map__btn[aria-pressed="true"] {
   .bf-trace__stop {
     transition: fill 0.2s ease;
   }
+
+  .bf-rail .bf-stage::before {
+    transition: background-color 0.2s ease;
+  }
 }
 
 /* The Lab drawing never flows where the Signal runs — nothing flows in a
@@ -4781,24 +4785,34 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 /* A station on a hook: hollow, the stage marker's square; lit (filled) while
-   a trace passes it. */
+   a trace passes it. A square is drawn on the pixel grid (crispEdges): at
+   DPR 1 a 1px edge at a fractional x spread over two pixels at a third of
+   the brand's strength, where the CSS markers it stands in for are snapped
+   whole. */
 .bf-trace__stop {
   fill: var(--bf-ground);
   stroke: var(--bf-brand);
   stroke-width: 1;
 }
 
+rect.bf-trace__stop {
+  shape-rendering: crispEdges;
+}
+
 .bf-trace__stop[data-bf-lit] {
   fill: var(--bf-brand);
 }
 
-/* How we build — the `rail` hook. At >=1025px the rail is one hairline and six
-   stations drawn in the SVG, each at i/6 of the rail, which is where each of
-   the six equal, gapless columns starts; the stages' own top borders and
-   markers give way to it, keeping their space, so the drawing is the one the
-   page always had. The stages still reveal as before; the rail itself holds
-   still. Below 1025 the SVG is not shown and the borders and markers are the
-   rail. */
+/* How we build — the `rail` hook. At >=1025px the rail is one hairline in the
+   SVG, over the stages' own top borders, which give way to it and keep their
+   space; the stations are the stages themselves (`li[data-bf-trace-stop]`),
+   shown by each stage's own square marker (`.bf-stage::before`), which is
+   filled while it is lit. So the stations sit wherever the grid puts each
+   column, snapped to whole pixels, and the drawing is the one the page always
+   had. The hairline is drawn on the pixel grid too (crispEdges), as the
+   border it stands in for was. The rail holds still: only each stage's text
+   reveals (`.bf-stage__body`). Below 1025 the SVG is not shown and the
+   borders and markers are the rail. */
 .bf-rail {
   position: relative;
 }
@@ -4809,6 +4823,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-rail__line .bf-trace__path {
   stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
 }
 
 @media (min-width: 1025px) {
@@ -4825,8 +4840,11 @@ button.bf-map__btn[aria-pressed="true"] {
     border-top-color: transparent;
   }
 
-  .bf-rail .bf-stage::before {
-    content: none;
+  /* the marker paints over the hairline, and over the trace inside it, as it
+     sat over its own border: it comes later in the page, and neither is
+     given a z-index */
+  .bf-rail .bf-stage[data-bf-lit]::before {
+    background-color: var(--bf-brand);
   }
 }
 
@@ -4841,6 +4859,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-final__wire .bf-trace__path {
   stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
 }
 
 @media (min-width: 1025px) {

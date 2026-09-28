@@ -690,25 +690,40 @@ has a pause control.
     `--bf-line-strong` hairline by default, at zero specificity
     (`:where(.bf-trace__path)`), so each hook's owner styles its own drawing
     whatever order the streams' CSS blocks merge in — with optional stations
-    `[data-bf-trace-stop]`, in order: an SVG `.bf-trace__stop` (the stage
-    marker's hollow square) or any element, like the pilot's `<li>`s. Without
-    script it is a finished drawing. The engine traces the paths in order as
-    one head (`power2.inOut`) and gives each station `data-bf-lit` from the
-    moment the head reaches it until the sequence settles — reached where the
-    trace first touches the station's box, or, for one the line only passes
-    beside, at its nearest point; sampled on screen every 2px, so a stretched
-    `viewBox` with a non-scaling stroke measures what is drawn (probed on a copy
-    of the IA stream's pilot markup: its three stations lit in turn). An SVG
-    station fills in the 200ms `state` time; how an HTML station shows
-    `data-bf-lit` is its owner's CSS. Any name works: `rail` 1.2s, `pilot` 1.2s, `cta` 0.9s, anything
-    else 1.2s.
+    `[data-bf-trace-stop]`, in order: an SVG `rect.bf-trace__stop` (the stage
+    marker's hollow square, drawn `crispEdges`) or any element, like the
+    rail's stages and the pilot's `<li>`s. Without script it is a finished
+    drawing. The engine traces the paths in order as one head (`power2.inOut`)
+    and gives each station `data-bf-lit` from the moment the head reaches it
+    until the sequence settles — reached where the trace first touches the
+    station's box, or, for one the line only passes beside, at its nearest
+    point; sampled on screen every 2px, so a stretched `viewBox` with a
+    non-scaling stroke measures what is drawn (probed on a copy of the IA
+    stream's pilot markup: its three stations lit in turn). A station is
+    measured where the layout puts it: a translation on it or an ancestor
+    inside the host that the drawing does not share (a reveal still rising)
+    is taken back out. An overlay keeps its source's `shape-rendering`, so a
+    hairline on the pixel grid is traced on it. An SVG station fills in the
+    200ms `state` time; how an HTML station shows `data-bf-lit` is its owner's
+    CSS. Any name works: `rail` 1.2s, `pilot` 1.2s, `cta` 0.9s, anything else
+    1.2s.
     - `rail` (`HowWeBuild.tsx`, on / and /engineering, >=1025): one hairline
-      over the six stages and a station at the start of each column (i/6 of the
-      rail: the columns are equal and gapless), which is the drawing the
-      stages' own top borders and markers made before — they give way to it at
-      >=1025, keeping their space. The trace runs left to right, lighting the
-      six stations. Below 1025 the borders and markers are the rail, as they
-      always were.
+      (`crispEdges`) over the six stages, which give their top borders to it
+      and keep their space, and the stages themselves are the stations
+      (`li.bf-stage[data-bf-trace-stop]`), shown by each stage's own square
+      marker (`.bf-stage::before`), filled brand blue while lit — the drawing
+      the page always had. So the stations sit wherever the grid puts each
+      column, whatever the grid does, and snap to whole pixels. The first
+      version drew six SVG squares at i/6 of the rail: at DPR 1 four of the
+      six spread their 1px edge over two pixels at a third of the brand's
+      strength (the CSS squares are one full-strength pixel at 1100, 1439,
+      1440 and 1920), and a column gap would have moved every one of them
+      silently. The rail holds still: each stage's reveal is on its text
+      (`.bf-stage__body`), never on its border or marker, at every width. The
+      trace runs left to right, lighting the six stations in turn (sampled
+      per frame at 1440: 0, 398, 516, 582, 666, 766ms), and settles back to
+      hollow. Below 1025 the borders and markers are the rail, as they always
+      were.
     - `cta` (`FinalCta.tsx`, on / and every page that ends with it —
       /capabilities, /industries, /engineering, /about, /insights and each
       article; >=1025): the buttons' row is the hook. A hairline the width of
