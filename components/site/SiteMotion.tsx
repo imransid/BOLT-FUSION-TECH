@@ -14,6 +14,13 @@ import { useEffect } from "react";
  *    into the viewport, and its cyan flow lines run three passes along their
  *    paths — under five seconds in all, so nothing moves long enough to need a
  *    pause control (WCAG 2.2.2) — and then rest.
+ *    One owner per diagram: where the Signal system runs (components/motion —
+ *    a desktop that allows motion, once gsap has arrived) it claims the
+ *    diagrams still ahead with `data-bf-motion="gsap"`, traces them and starts
+ *    the flow itself, with two passes. A claimed diagram is skipped here and
+ *    stays watched, so one the engine gives back (its gate stopped holding)
+ *    flows here when it is next seen. Until gsap arrives, and wherever it never
+ *    does, this is the whole flow.
  *  · Focus ends a reveal: tabbing into a block below the fold never watches it
  *    fade in around the focused control.
  *
@@ -37,7 +44,7 @@ export default function SiteMotion() {
     const flow = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (!e.isIntersecting) continue;
+          if (!e.isIntersecting || e.target.getAttribute("data-bf-motion") === "gsap") continue;
           e.target.classList.add("bf-flowing");
           flow.unobserve(e.target);
         }

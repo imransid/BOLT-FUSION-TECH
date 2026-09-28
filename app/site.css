@@ -4697,3 +4697,83 @@ button.bf-map__btn[aria-pressed="true"] {
 @media (min-width: 1025px) {
   .bf-notfound .bf-pagehead { padding-block: 160px 200px; }
 }
+
+/* ── motion-hire: motion ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIGNAL — the motion system (owner, 2026-09-28; components/motion; CLAUDE.md
+   "Motion, as built"). Trace a connection in brand blue, let data flow along
+   it in cyan, then settle. Everything below is either a static drawing the
+   server sends complete, or an overlay the engine adds and removes: nothing
+   here is hidden at rest, and nothing moves without script.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A trace hook's drawing ([data-bf-trace] > svg.bf-trace): hairlines, complete
+   in the server HTML. These are defaults at zero specificity (:where), so the
+   owner of each hook styles its own drawing whatever order the blocks of this
+   file come in — the rail and the call to action below name theirs, and the
+   pilot's (the IA stream's) wins over these however it is written. */
+:where(.bf-trace) {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+:where(.bf-trace__path) {
+  fill: none;
+  stroke: var(--bf-line-strong);
+  stroke-width: 1;
+}
+
+/* The overlays the engine clones over a stroke and removes when it settles:
+   brand blue, butt caps (a round cap draws a dot at 0%). A dashed source keeps
+   its own dashes (the engine copies them inline), and the Lab sketch is a
+   light-steel pencil, dashed like every concept drawing — both drawn through
+   a mask (.bf-signal-mask), since DrawSVG owns the dash pattern of whatever it
+   draws. The pencil is lighter than the drawing's own steel, or it would draw
+   steel over steel and nobody would see it pass; it is never blue and never
+   cyan, because nothing in a concept has shipped. */
+.bf-signal-trace {
+  fill: none;
+  stroke: var(--bf-brand);
+  stroke-width: 2;
+  stroke-linecap: butt;
+  pointer-events: none;
+}
+
+.bf-signal-trace--lab {
+  stroke: var(--bf-soft);
+  stroke-width: 1.5;
+}
+
+.bf-signal-mask {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 8;
+  stroke-linecap: butt;
+}
+
+/* After a trace the diagram's flow runs TWO passes, not three: it takes over
+   0.96s into the trace, and 0.96 + 2 x 1.6s ends at 4.2s, under five seconds
+   (WCAG 2.2.2). Only a diagram the engine claimed; the CSS flow everywhere
+   else is unchanged. A station lights in the `state` time. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-bf-motion="gsap"].bf-flowing .dg-flow {
+    animation-iteration-count: 2;
+  }
+
+  .bf-trace__stop {
+    transition: fill 0.2s ease;
+  }
+}
+
+/* A station on a hook: hollow, the stage marker's square; lit (filled) while
+   a trace passes it. */
+.bf-trace__stop {
+  fill: var(--bf-ground);
+  stroke: var(--bf-brand);
+  stroke-width: 1;
+}
+
+.bf-trace__stop[data-bf-lit] {
+  fill: var(--bf-brand);
+}

@@ -352,6 +352,60 @@ def p_scroll_shift(s):
         '      },\n      { rootMargin: "0px 0px -50% 0px" },\n    );\n    io.observe(faq);\n    return () => io.disconnect();\n  }, []);\n  return null;\n}\n'))
 
 
+# ── new for the Signal motion system (2026-09-28), one per new rule ────────
+
+LOADER = "components/motion/MotionLoader.tsx"
+
+
+def p_gsap_static(s):
+    """29 and 31: the loader imports ScrollTrigger statically — gsap in every
+    page's initial JavaScript, requested before the load event"""
+    s.rep(LOADER, 'import { useEffect } from "react";\n', 'import { useEffect } from "react";\nimport { ScrollTrigger as vsStaticTrigger } from "gsap/ScrollTrigger";\n\n(globalThis as unknown as Record<string, unknown>).__vsStaticTrigger = vsStaticTrigger;\n')
+
+
+def p_scene_gsap(s):
+    """25 and 31: the hero scene imports gsap — its chunk carries GSAP. By the
+    dist path, which nothing else imports, so Turbopack bundles it INTO the
+    scene's chunk whether this build imports the scene dynamically or (with
+    scene-static) statically; a scene importing plain "gsap" shares the
+    loader's chunk instead, which check 25 sees in the scene's chunk list"""
+    s.append("components/field/scene.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nimport { gsap as vsSceneGsap } from "gsap/dist/gsap";\nexport const vsSceneGsapVersion = vsSceneGsap.version;\n')
+
+
+def p_signal_second_loader(s):
+    """31: a second module imports gsap dynamically — a second gate"""
+    s.append("components/motion/signal.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nexport const vsSecondLoader = () => import("gsap/Observer");\n')
+
+
+def p_gsap_coarse(s):
+    """25: the loader's gate drops the fine pointer — a touch tablet gets gsap"""
+    s.rep(LOADER, 'const FINE = "(pointer: fine)";\n', 'const FINE = "(min-width: 0px)";\n')
+
+
+def p_gsap_reduced(s):
+    """21: the loader's gate drops reduced motion — gsap requested, and the
+    traces run, under reduced motion"""
+    s.rep(LOADER, 'const CALM = "(prefers-reduced-motion: no-preference)";\n', 'const CALM = "(min-width: 0px)";\n')
+
+
+def p_signal_dead(s):
+    """25: the engine's matchMedia never matches — gsap loads, and the Signal
+    never starts"""
+    s.rep("components/motion/signal.ts", "  mm.add(gate, (ctx) => {\n", '  mm.add("(min-width: 99999px)", (ctx) => {\n')
+
+
+def p_scene_share(s):
+    """25: a three.js module whose import loads the Signal's gsap chunk beside
+    it — what a scene importing plain "gsap" builds to, since Turbopack gives a
+    module two imports share a chunk of its own. Stood in by a throwaway
+    module carrying three.js's signature rather than by scene.ts, because
+    scene-static (same build) turns the scene's own import static and leaves
+    no chunk list to read."""
+    s.write("components/site/VsSceneShareMod.ts", '/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. Carries three.js\'s signature (check 25\'s THREE_CODE) and imports gsap. */\nimport { gsap } from "gsap";\n\n(globalThis as unknown as Record<string, unknown>).__vsSceneShare = ["WebGLRenderer", gsap.version];\n')
+    s.mount("VsSceneShare", client(
+        "export default function VsSceneShare() {\n  useEffect(() => {\n    const t = setTimeout(() => void import(\"./VsSceneShareMod\"), 1500);\n    return () => clearTimeout(t);\n  }, []);\n  return null;\n}\n"))
+
+
 # ── the table: [key, the case, its check, the finding it must print (a JS
 #    regex), its patch (None: the finding comes from the named case's patch),
 #    options] ─────────────────────────────────────────────────────────────────
@@ -418,6 +472,16 @@ CASES = [
     # new with the Signal motion system (2026-09-28): script motion, CLS while reading
     ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],
     ["scroll-shift", "a block inserted above #faq as a reader nears it — CLS while scrolling", 29, r"CLS [\d.]+ during a reading-speed scroll", p_scroll_shift, {}],
+    # new for the Signal motion system (2026-09-28), one per new rule
+    ["gsap-static", "gsap imported statically by the loader — ScrollTrigger in the initial JavaScript", 29, r"the GSAP chunk .* \((?:[^)]*, )?ScrollTrigger[,)].* is requested at \d+ms, before the load event ended", p_gsap_static, {}],
+    ["gsap-static-31", "gsap imported statically by the loader — the repository", 31, r'repository: components/motion/MotionLoader\.tsx imports "gsap/ScrollTrigger" statically', None, {"from": "gsap-static"}],
+    ["scene-gsap", "the hero scene imports gsap — a three.js chunk carrying GSAP", 25, r"is the hero scene's (?:three\.js )?chunk and carries GSAP", p_scene_gsap, {}],
+    ["scene-share", "a three.js chunk whose import loads the Signal's gsap chunk beside it", 25, r"the hero scene's import loads the GSAP chunk .*gsap core.* together with", p_scene_share, {}],
+    ["scene-gsap-31", "the hero scene imports gsap — the repository", 31, r'repository: components/field/scene\.ts imports "gsap/dist/gsap" — gsap belongs to the Signal', None, {"from": "scene-gsap"}],
+    ["signal-second-loader", "a second module imports gsap dynamically", 31, r'repository: components/motion/signal\.ts imports "gsap/Observer" dynamically — gsap is imported by components/motion/MotionLoader\.tsx alone', p_signal_second_loader, {}],
+    ["gsap-coarse", "the Signal's gate without the fine pointer — gsap on a touch tablet (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): requests the GSAP chunk", p_gsap_coarse, {}],
+    ["signal-dead", "the Signal's engine never starts — gsap loads for nothing (1440)", 25, r"^/ @1440[^:]*: the Signal never started", p_signal_dead, {}],
+    ["gsap-reduced", "the Signal's gate without reduced motion — gsap requested under reduced motion", 21, r"^/[^:]*: \d+ GSAP script\(s\) requested under reduced motion — .*the Signal engine", p_gsap_reduced, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more

@@ -111,6 +111,29 @@ const glAllowed = (run) => run.route === "/" && run.width >= 1025 && !run.reduce
 const THREE_CODE = /WebGLRenderer|three\.module|__THREE__|#include <begin_vertex>/;
 const REACT_THREE_CODE = /@react-three|react-three-fiber|__r3f/;
 const GL_CALL_CODE = /getContext\(\s*["'`](?:webgl2?|experimental-webgl)["'`]|WebGL2RenderingContext/;
+/* THE SIGNAL MOTION SYSTEM (owner, 2026-09-28; CLAUDE.md "Motion, as built"):
+   gsap 3.15.0 — core, ScrollTrigger and DrawSVGPlugin — and the engine that
+   drives them, loaded after the load event on a desktop that allows motion
+   (components/motion/MotionLoader.tsx). Known by what their code carries under
+   Turbopack's minifier, read off the production build's chunks on 2026-09-28:
+   the core by its "GreenSock" globals and its "gsap.com" help links; a plugin
+   by how it finds the core, `(x=window.gsap)&&x.registerPlugin`; the engine
+   (components/motion/signal.ts) by its own `data-bf-signal`. The names below
+   only label a chunk in a finding. */
+const GSAP_CODE = /GreenSock|gsap\.com|window\.gsap\)&&[\w$]+\.registerPlugin|data-bf-signal/;
+const GSAP_PARTS = [
+  ["gsap core", /GreenSock|gsap\.com/],
+  ["ScrollTrigger", /scrollerProxy/],
+  ["DrawSVGPlugin", /name:"drawSVG"/],
+  ["the Signal engine", /data-bf-signal/],
+];
+const gsapParts = (t) => {
+  const names = GSAP_PARTS.filter(([, re]) => re.test(t)).map(([n]) => n);
+  return names.length ? names : ["a gsap plugin"];
+};
+/* the one profile the Signal loads in, on any page: >=1025px, a FINE pointer,
+   no touch, no Save-Data, no reduced motion */
+const gsapAllowed = (run) => run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer === "fine";
 
 /* 12 — the canonical company description, word for word (owner, 2026-09-16;
    COPY.md, "Company description — canonical"). Written HERE, as check 9 writes
@@ -529,6 +552,8 @@ function glReport() {
     field: Boolean(field),
     fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
     sceneReady: Boolean(field && field.hasAttribute("data-scene-ready")),
+    /* 25 (2026-09-28): the Signal engine's own evidence that it started */
+    signal: document.documentElement.getAttribute("data-bf-signal"),
     loadEnd: nav ? nav.loadEventEnd : 0,
     scripts: performance
       .getEntriesByType("resource")
@@ -876,7 +901,9 @@ async function perfRun(browser, prof) {
    happens in them; scrolling is not recent input, so every such shift counts
    against a real visitor (web.dev, CLS). One fresh run per profile, throttled
    as above, scrolled at reading speed from the top to the bottom, then 1.5s to
-   settle; the shifts are summed as in perfRun, and the largest are named. */
+   settle; the shifts are summed as in perfRun, and the largest are named. On
+   the desktop profile this is also where the Signal arrives mid-scroll: the
+   first scroll starts its loader. */
 async function perfScrollRun(browser, prof) {
   const ctx = await browser.newContext({ viewport: prof.viewport, ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
   const page = await ctx.newPage();
@@ -902,7 +929,7 @@ async function perfScrollRun(browser, prof) {
   await page.waitForTimeout(1500);
   const r = await page.evaluate(() => {
     const p = window.__vsScrollCls;
-    return { cls: p.cls, shifts: [...p.shifts].sort((a, b) => b.value - a.value).slice(0, 3), height: document.documentElement.scrollHeight };
+    return { cls: p.cls, shifts: [...p.shifts].sort((a, b) => b.value - a.value).slice(0, 3), height: document.documentElement.scrollHeight, signal: document.documentElement.getAttribute("data-bf-signal") };
   });
   await ctx.close();
   return r;
@@ -2458,7 +2485,7 @@ async function visitFocusBack(browser, route, width) {
    writes into inline styles — gsap's tweens, an rAF loop — is invisible to it
    (three live gsap tweens read 0). So an init script, in place before any page
    script, watches every element's inline style and counts the changes to the
-   properties motion is made of (2026-09-28, with the Signal motion system). */
+   properties motion is made of (2026-09-28, the Signal). */
 function scriptMotionHook() {
   const PROPS = ["transform", "translate", "scale", "rotate", "opacity", "stroke-dashoffset", "stroke-dasharray"];
   const log = new Map();
@@ -2515,10 +2542,12 @@ async function visitReduced(browser, route) {
     }
   }
   const n = canvases.length;
-  /* every element a script moved (check 21) */
+  /* every element a script moved, and every script the page requested (check
+     21 classifies them: gsap is never requested under reduced motion) */
   const scripted = await page.evaluate(() => [...(window.__vsScriptMotion || new Map()).values()].sort((a, b) => b.n - a.n));
+  const scripts = await page.evaluate(() => performance.getEntriesByType("resource").filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name)).map((e) => e.name));
   await ctx.close();
-  return { anims, canvasMoving, canvases: n, scripted };
+  return { anims, canvasMoving, canvases: n, scripted, scripts };
 }
 
 /* 23 ── a full-page capture with every time-driven thing pinned */
@@ -2977,7 +3006,7 @@ for (const r of Object.values(perfRuns).flat())
   for (const s of r.scripts || [])
     if (isSameSite(s.url) && !perfKinds.has(s.url)) {
       const t = (await http(toBase(s.url))).text || "";
-      perfKinds.set(s.url, { scene: THREE_CODE.test(t) || GL_CALL_CODE.test(t) || REACT_THREE_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
+      perfKinds.set(s.url, { scene: THREE_CODE.test(t) || GL_CALL_CODE.test(t) || REACT_THREE_CODE.test(t), gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], gz: gzipSync(Buffer.from(t)).length });
     }
 let heroRun = null;
 const lcpRuns = [];
@@ -4051,11 +4080,19 @@ check(
   },
 );
 
-/* 21 — and, since 2026-09-28, nothing a script moves: an element whose inline
-   transform, opacity or stroke dash changes SCRIPT_MOTION_MAX or more times
-   under reduced motion is animated by script. */
+/* 21 — and, since the Signal (2026-09-28), nothing a script moves: an element
+   whose inline transform, opacity or stroke dash changes SCRIPT_MOTION_MAX or
+   more times under reduced motion is animated by script; and gsap is never
+   requested there at all (MotionLoader checks the gate before any import). */
 const SCRIPT_MOTION_MAX = 5;
-check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (an rAF loop, a tween library), which getAnimations() cannot see", (F, I) => {
+const reducedKinds = new Map();
+for (const r of Object.values(reducedRuns))
+  for (const u of r.scripts || [])
+    if (isSameSite(u) && !reducedKinds.has(u)) {
+      const t = (await http(toBase(u))).text || "";
+      reducedKinds.set(u, { gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], gz: gzipSync(Buffer.from(t)).length });
+    }
+check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves, and no gsap requested", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (gsap, an rAF loop), which getAnimations() cannot see", (F, I) => {
   for (const [route, r] of Object.entries(reducedRuns)) {
     if (r.error) {
       F.push(`${route}: the reduced-motion run did not finish (${r.error}) — unsure is a failure`);
@@ -4068,8 +4105,10 @@ check(21, "With reduced motion requested, nothing keeps moving — no CSS animat
     if (r.canvasMoving) F.push(`${route}: the WebGL canvas is still animating`);
     const moved = (r.scripted || []).filter((x) => x.n >= SCRIPT_MOTION_MAX);
     if (moved.length) F.push(`${route}: ${moved.length} element(s) animated by script under reduced motion — e.g. ${moved.slice(0, 4).map((x) => `${x.el} (${x.n} changes)`).join(", ")} to an inline transform, opacity or stroke dash; under reduced motion nothing moves`);
+    const g = (r.scripts || []).filter((u) => reducedKinds.get(u)?.gsap);
+    if (g.length) F.push(`${route}: ${g.length} GSAP script(s) requested under reduced motion — ${g.map((u) => `${short(u)} (${reducedKinds.get(u).parts.join(", ")})`).join(", ")} — the Signal checks the gate before any import, and gsap is never requested there`);
     const few = (r.scripted || []).filter((x) => x.n < SCRIPT_MOTION_MAX);
-    I.push(`${route}: ${r.canvases} canvas element(s); ${few.length ? `${few.length} element(s) with an inline motion style set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.n}x`).join(", ")})` : "no inline motion style set by any script"}`);
+    I.push(`${route}: ${r.canvases} canvas element(s); ${(r.scripts || []).length} script(s), ${g.length ? `${g.length} of them gsap` : "none of them gsap"}; ${few.length ? `${few.length} element(s) with an inline motion style set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.n}x`).join(", ")})` : "no inline motion style set by any script"}`);
   }
 });
 
@@ -4156,7 +4195,10 @@ await (async () => {
   const kind = async (url) => {
     if (!kinds.has(url)) {
       const t = (await http(toBase(url))).text || "";
-      kinds.set(url, { three: THREE_CODE.test(t), r3f: REACT_THREE_CODE.test(t), gl: GL_CALL_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
+      /* every dynamic import's chunk list, as Turbopack writes it:
+         Promise.all(["static/chunks/<hash>.js", …].map(…)) */
+      const lists = [...t.matchAll(/Promise\.all\(\[((?:"[^"\]]+\.js",?)+)\]\.map\(/g)].map((m) => [...m[1].matchAll(/"([^"]+\.js)"/g)].map((x) => `${BASE}/_next/${x[1]}`));
+      kinds.set(url, { three: THREE_CODE.test(t), r3f: REACT_THREE_CODE.test(t), gl: GL_CALL_CODE.test(t), gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], lists, gz: gzipSync(Buffer.from(t)).length });
     }
     return kinds.get(url);
   };
@@ -4164,12 +4206,20 @@ await (async () => {
   /* THE SCENE CHUNK (2026-09-16): every same-site script the allowed profile
      requests on / that no other profile of / requests — what the one allowed
      profile adds is the scene's own code, whatever the bundler names it — and
-     every script that is three.js or asks for a WebGL context. */
+     every script that is three.js or asks for a WebGL context.
+     THE SIGNAL (2026-09-28): gsap loads in exactly the scene's profile too —
+     >=1025px, a fine pointer, no Save-Data, no reduced motion — so its chunks
+     are known by their code (GSAP_CODE) and left out of the scene: they are
+     the motion system's, not the scene's, and counted as the scene they would
+     put it at about 190KB. A three.js chunk that carries GSAP is the scene
+     importing gsap, and fails. */
   const home = runs.filter((r) => r.route === "/" && Array.isArray(r.scripts));
   const urlsOf = (r) => (r.scripts || []).filter((s) => isSameSite(s.url)).map((s) => s.url);
   const otherUrls = new Set(home.filter((r) => !glAllowed(r)).flatMap(urlsOf));
   const sceneOnly = new Set(home.filter(glAllowed).flatMap(urlsOf).filter((u) => !otherUrls.has(u)));
   const sceneUrls = new Set();
+  const gsapUrls = new Map();
+  const gsapInScene = new Set();
   let allowedRuns = 0;
   for (const run of runs) {
     if (!Array.isArray(run.gl)) {
@@ -4217,6 +4267,22 @@ await (async () => {
     for (const sc of (run.scripts || []).filter((x) => isSameSite(x.url))) {
       const k = await kind(sc.url);
       if (k.r3f) F.push(`${run.label}: requests ${short(sc.url)}, a @react-three chunk — the scene is three.js core, never React Three Fiber (SPEC §7)`);
+      if (k.gsap && (k.three || k.gl) && !gsapInScene.has(sc.url)) {
+        gsapInScene.add(sc.url);
+        F.push(`${run.label}: ${short(sc.url)} is the hero scene's ${k.three ? "three.js " : ""}chunk and carries GSAP (${k.parts.join(", ")}) — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+      }
+      /* the Signal's chunks are its own, never the scene's (above) */
+      if (k.gsap && !k.three && !k.gl) {
+        if (!gsapUrls.has(sc.url)) gsapUrls.set(sc.url, { ...k, start: sc.start, loadEnd: run.loadEnd });
+        if (!gsapAllowed(run)) {
+          const gwhy = run.reduced ? "never under reduced motion"
+            : run.saveData ? "never with Save-Data on"
+            : run.phone || run.touch || run.pointer !== "fine" ? `never on a touch device — a ${run.pointer || "coarse"} pointer at ${run.width}px gets the CSS motion`
+            : `never at ${run.width}px — phones and tablets get the CSS motion`;
+          F.push(`${run.label}: requests the GSAP chunk ${short(sc.url)} (${k.parts.join(", ")}, ${kb(k.gz)} gzipped) — the Signal loads gsap only at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion; ${gwhy}`);
+        }
+        continue;
+      }
       const scene = k.three || k.gl || sceneOnly.has(sc.url);
       if (!scene) continue;
       found.push(`${short(sc.url)} ${kb(k.gz)} gzipped at ${Math.round(sc.start)}ms${k.three ? " (three.js)" : k.gl ? " (asks for WebGL)" : " (only in this profile)"}`);
@@ -4240,11 +4306,40 @@ await (async () => {
         if (!run.sceneReady) F.push(`${run.label}: [data-hero-field] never got data-scene-ready — the scene did not draw its first frame`);
       }
     }
+    /* THE SIGNAL'S POSITIVE CASE (2026-09-28): where gsap is allowed, on /,
+       the engine starts — html[data-bf-signal="live"]. Every "never" rule
+       passes on a motion system that is silently dead. */
+    const gsapN = (run.scripts || []).filter((x) => isSameSite(x.url) && kinds.get(x.url)?.gsap).length;
+    if (run.route === "/" && gsapAllowed(run) && run.signal !== "live")
+      F.push(`${run.label}: the Signal never started (no html[data-bf-signal="live"]; ${gsapN} GSAP script(s) requested) — at >=1025px with a fine pointer the homepage's diagrams and rails trace, and a motion system that never starts is silently dead`);
     I.push(
-      `${run.label}: ${reqs.length} WebGL request(s)${reqs.length ? ` (${reqs.filter((g) => g.granted).length} granted)` : ""} (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s)${run.fieldCanvases ? `, ${run.fieldCanvases} in the field` : ""}${run.sceneReady ? ", data-scene-ready" : ""}, ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${allowed ? " — the allowed profile" : ""}${found.length ? `; scene ${found.join(", ")}` : ", no scene chunk"}`,
+      `${run.label}: Signal ${run.signal || "not running"}, ${gsapN} GSAP script(s); ${reqs.length} WebGL request(s)${reqs.length ? ` (${reqs.filter((g) => g.granted).length} granted)` : ""} (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s)${run.fieldCanvases ? `, ${run.fieldCanvases} in the field` : ""}${run.sceneReady ? ", data-scene-ready" : ""}, ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${allowed ? " — the allowed profile" : ""}${found.length ? `; scene ${found.join(", ")}` : ", no scene chunk"}`,
     );
   }
   if (!allowedRuns) F.push("no run of / at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion was made — the scene's positive case went untested; unsure is a failure");
+  /* THE SCENE'S CHUNK GROUP (2026-09-28). Turbopack gives a module that two
+     imports share a chunk of its own, so a scene that imports the gsap the
+     Signal also imports carries no GSAP code itself: its import loads gsap's
+     chunk beside it. So every dynamic import's chunk list is read from the
+     code, and one that loads a three.js chunk and a GSAP chunk together — or a
+     three.js chunk whose own import loads a GSAP chunk — is the scene
+     importing gsap too. Each LIST is judged on its own: Turbopack keeps every
+     import's list in one small loader chunk, so the Signal's own list for gsap
+     core sits beside the scene's, sharing the core's chunk; a check that
+     remembered "this chunk and that gsap chunk" once missed the scene's list
+     behind the Signal's (the scene-share misuse, 2026-09-29). */
+  for (const [u, k] of [...kinds]) {
+    for (const list of k.lists) {
+      const ks = [];
+      for (const c of list) ks.push([c, await kind(c)]);
+      const threeIn = ks.filter(([, x]) => x.three || x.gl);
+      const gsapIn = ks.filter(([, x]) => x.gsap && !x.three && !x.gl);
+      for (const [g, x] of gsapIn) {
+        if (k.three || k.gl) F.push(`${short(u)}, the hero scene's chunk, imports the GSAP chunk ${short(g)} (${x.parts.join(", ")}) — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+        else if (threeIn.length) F.push(`the hero scene's import loads the GSAP chunk ${short(g)} (${x.parts.join(", ")}) together with ${threeIn.map(([c]) => short(c)).join(", ")} — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+      }
+    }
+  }
   /* the scene chunk's weight: every scene script the allowed profile requested, once each */
   if (sceneUrls.size) {
     let total = 0;
@@ -4257,6 +4352,11 @@ await (async () => {
     if (total > SCENE_MAX_GZ) F.push(`the scene chunk is ${kb(total)} gzipped (${parts.join(", ")}) — the budget is ${kb(SCENE_MAX_GZ)} for the script that asks for the context and the three.js code it imports`);
     I.push(`the scene chunk: ${kb(total)} gzipped in ${sceneUrls.size} file(s) — ${parts.join(", ")}; the budget is ${kb(SCENE_MAX_GZ)}`);
   }
+  if (gsapUrls.size) {
+    const total = [...gsapUrls.values()].reduce((a, k) => a + k.gz, 0);
+    const alone = [...gsapUrls.keys()].filter((u) => sceneOnly.has(u)).length;
+    I.push(`the Signal's chunks, left out of the scene (${alone} of them requested by the scene's profile of / alone): ${kb(total)} gzipped in ${gsapUrls.size} file(s) — ${[...gsapUrls].map(([u, k]) => `${short(u)} ${k.parts.join(" + ")} ${kb(k.gz)} at ${Math.round(k.start)}ms (load ${Math.round(k.loadEnd)}ms)`).join(", ")}`);
+  } else I.push("the Signal's chunks: no run requested gsap");
   /* Every font a page preloads is one THAT page renders — read per route, from
      the preload links present once the page has settled (a prefetched route's
      payload can add some), against the page's own @font-face rules and faces. */
@@ -4280,8 +4380,8 @@ await (async () => {
   }
   results.push({
     id: 25,
-    title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load; every preloaded font is one its page renders",
-    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440; a scene chunk over 180KB, or requested before the load event; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
+    title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load, and free of gsap; gsap (the Signal) only in that same profile, on any page, and on / it starts; every preloaded font is one its page renders",
+    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440; a scene chunk over 180KB, or requested before the load event; the scene importing gsap; gsap on a phone, a touch tablet or at 1024; a Signal that never starts; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: I,
@@ -4597,8 +4697,8 @@ check(
 /* 29 */
 check(
   29,
-  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005 at rest and during a reading-speed scroll, initial JavaScript at most 260KB gzipped — the hero's scene loads after load and is not initial JavaScript",
-  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift at rest or while reading; the 3D scene imported statically, so three.js lands in the initial JavaScript",
+  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005 at rest and during a reading-speed scroll, initial JavaScript at most 260KB gzipped — the hero's scene and gsap load after load and are not initial JavaScript",
+  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift at rest or while reading; the 3D scene or gsap imported statically, so three.js or gsap lands in the initial JavaScript",
   (F, I) => {
     const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
     I.push(`machine load average (1 min): ${perfLoad.before.toFixed(2)} before the runs, ${perfLoad.after.toFixed(2)} after — the timings need a quiet machine`);
@@ -4633,7 +4733,7 @@ check(
       else {
         const top = sc.shifts.map((x) => `${x.value.toFixed(4)} at ${x.at}ms, scrollY ${x.y}${x.nodes.length ? ` (${x.nodes.join(", ")})` : ""}`).join("; ");
         if (sc.cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll — the budget is 0.00, and ${BUDGET.cls} or more fails; the largest: ${top}`);
-        I.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll down ${sc.height}px${top ? ` — ${top}` : ", no shift"}`);
+        I.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll down ${sc.height}px${top ? ` — ${top}` : ", no shift"}${name === "desktop" ? `; the Signal ${sc.signal || "did not run"}` : ""}`);
       }
       if (js > BUDGET.initialJs) F.push(`${prof.label}: initial JavaScript ${k1(js)}KB gzipped transferred, over the ${BUDGET.initialJs / 1024}KB budget (runs ${each("jsInitial", k1)})`);
       /* THE SCENE AND THE BUDGET (2026-09-16). Initial JavaScript is what is
@@ -4655,6 +4755,25 @@ check(
         late.size
           ? `${prof.label}: scene chunk(s) requested after load, so not initial JavaScript: ${[...late].map(([u, k]) => `${short(u)} ${k1(k.gz)}KB gzipped at ${ms(k.start)}ms (load ${ms(k.load)}ms)`).join(", ")}`
           : `${prof.label}: no scene chunk requested in the ${ms(4000)}ms after load — the scene runs only at >=1025px with a fine pointer, after load`,
+      );
+      /* THE SIGNAL AND THE BUDGET (2026-09-28): gsap is imported after the
+         load event, in stages, on a desktop that allows motion — never initial
+         JavaScript. A GSAP chunk requested before the load event ended fails,
+         with its size; a three.js chunk carrying gsap is the scene's finding
+         (above, and check 25). */
+      const gEarly = new Map();
+      const gLate = new Map();
+      for (const r of runs)
+        for (const s of r.scripts || []) {
+          const k = perfKinds.get(s.url);
+          if (!k?.gsap || k.scene) continue;
+          (s.start <= r.load ? gEarly : gLate).set(s.url, { ...k, start: s.start, load: r.load });
+        }
+      for (const [u, k] of gEarly) F.push(`${prof.label}: the GSAP chunk ${short(u)} (${k.parts.join(", ")}, ${k1(k.gz)}KB gzipped) is requested at ${ms(k.start)}ms, before the load event ended (${ms(k.load)}ms) — it would be initial JavaScript; the Signal imports gsap after load (components/motion/MotionLoader.tsx)`);
+      I.push(
+        gLate.size
+          ? `${prof.label}: GSAP chunk(s) requested after load, so not initial JavaScript: ${[...gLate].map(([u, k]) => `${short(u)} (${k.parts.join(", ")}) ${k1(k.gz)}KB gzipped at ${ms(k.start)}ms (load ${ms(k.load)}ms)`).join(", ")}`
+          : `${prof.label}: no GSAP chunk requested in the ${ms(4000)}ms after load${name === "mobile" ? " — the Signal never loads on a phone" : ""}`,
       );
     }
   },
@@ -4817,7 +4936,21 @@ check(
           }
         }
       }
-      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned; three.js imported by ${threeFiles.join(", ") || "nothing"}`);
+      /* gsap (the Signal, owner 2026-09-28): ONLY under components/motion/, and
+         only components/motion/MotionLoader.tsx imports it — dynamically,
+         after load and behind its one gate; a type-only import is erased. A
+         static import puts gsap in the initial JavaScript of every page that
+         renders it; a second loader is a second gate to keep in step; gsap in
+         the scene's module busts the scene's 180KB (check 25). */
+      const GSAP_SPEC = /^(?:gsap|@gsap\/[\w.-]+)(?:\/|$)/;
+      const LOADER = "components/motion/MotionLoader.tsx";
+      const gsapUses = [...texts].flatMap(([f, t]) => specsOf(t).filter((s) => GSAP_SPEC.test(s.spec)).map((s) => ({ f, ...s })));
+      for (const u of gsapUses) {
+        if (!u.f.startsWith("components/motion/")) F.push(`repository: ${u.f} imports "${u.spec}"${u.how === "type" ? " (its types)" : ""} — gsap belongs to the Signal motion system under components/motion/ and nowhere else`);
+        else if (u.how === "static") F.push(`repository: ${u.f} imports "${u.spec}" statically — gsap is imported dynamically, after load, so it is never initial JavaScript`);
+        else if (u.how === "dynamic" && u.f !== LOADER) F.push(`repository: ${u.f} imports "${u.spec}" dynamically — gsap is imported by ${LOADER} alone, behind its one gate`);
+      }
+      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned; three.js imported by ${threeFiles.join(", ") || "nothing"}; gsap imported by ${[...new Set(gsapUses.map((u) => `${u.f} (${u.how})`))].join(", ") || "nothing"}`);
     }
   },
 );
