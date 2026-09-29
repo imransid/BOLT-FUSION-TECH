@@ -6632,3 +6632,135 @@ rect.bf-trace__stop {
     grid-row: 1 / span 3;
   }
 }
+
+/* ── The homepage's feature-work tile, in the proof (2026-09-30) ──────────── *
+   After the client story, before the section's Schedule a Call. A hairline
+   tile on the ground, not the client story's surface plate — it is features
+   in another company's app, not systems we built — and a step under it: the
+   title 24 / 28px against the plate's 34. From 1025px the head sits beside
+   the project: its two screens small, then its label, name, what we built,
+   the app's public figure and the links. */
+.bf-feattile {
+  margin-top: 24px;
+  padding: 28px 20px 24px;
+  border: 1px solid var(--bf-line-strong);
+}
+
+@media (min-width: 768px) {
+  .bf-feattile { padding: 32px 32px 28px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: 56px;
+    align-items: start;
+    padding: 40px;
+  }
+}
+
+.bf-feattile__eyebrow {
+  margin-bottom: 12px;
+}
+
+.bf-feattile__title {
+  font-family: var(--bf-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile__title { font-size: 28px; letter-spacing: -0.015em; }
+}
+
+.bf-feattile__intro {
+  margin-top: 12px;
+  max-width: 52ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-feattile__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.bf-feattile__screens {
+  max-width: 256px;
+  gap: 12px;
+}
+
+/* smaller on a phone, so the tile stays a tile */
+@media (max-width: 767px) {
+  .bf-feattile__screens .bf-screens__item:nth-child(2n) { margin-top: 20px; }
+  .bf-feattile__screens .bf-screen__frame { border-width: 4px; border-radius: 16px; }
+  .bf-feattile__screens .bf-screen__cap { margin-top: 10px; font-size: 13px; }
+  .bf-feattile__screens .bf-screen__cap::before { margin-top: 5px; }
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__screens { max-width: none; gap: 14px; }
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__card {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile__card {
+    grid-template-columns: 272px minmax(0, 1fr);
+    gap: 40px;
+    margin-top: 0;
+  }
+}
+
+.bf-feattile__body .bf-attr {
+  margin-bottom: 6px;
+  text-wrap: balance;
+}
+
+.bf-feattile__head .bf-btn--quiet {
+  margin-top: 14px;
+}
+
+.bf-feattile__name {
+  font-family: var(--bf-font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--bf-text);
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__name { font-size: 24px; }
+}
+
+.bf-feattile__role {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-feattile__stat {
+  margin-top: 16px;
+}
+
+.bf-feattile__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 22px;
+  margin-top: 12px;
+}

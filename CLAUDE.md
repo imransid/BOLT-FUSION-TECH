@@ -73,7 +73,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; a Schedule a Call after it, at every width since fix pass B); how we build; the industries with delivered work (below 1025px, a Schedule a Call after them); the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then, since 2026-09-30, the features we shipped into other companies' apps — Bazzile's tile, its two feature screens and its Google Play count — then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; a Schedule a Call after it, at every width since fix pass B); how we build; the industries with delivered work (below 1025px, a Schedule a Call after them); the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
@@ -349,14 +349,15 @@ does not state.
   figures — "passed 70,000 downloads in France in twelve months, with around
   15,000 active users there" — are the client's growth, not ours, and never
   appear: check 30's `bazzile-cuts` set fails "70,000" and "15,000 active
-  users" on /work.
+  users" on `/` and /work.
 - **The label sits directly above the project's name on every card,** the
   case-study rows included, in the brand blue — never a shipped/target colour.
   Verify-site check 9 holds its own copy of the labels and fails a card on
   /work whose label is missing, hidden, somewhere else or not its kind's; a
   track-record card without its employer and role, or with a screenshot; a
-  feature-work card whose label says "built by Bolt Fusion" without "features",
-  or that shows a screenshot outside its captioned
+  feature-work card whose label says "built by Bolt Fusion" without "features"
+  — on /work, and on the homepage's feature-work tile, whose project is a
+  card too (2026-09-30) — or that shows a screenshot outside its captioned
   feature screens, a feature screen that is not one of its own, or one
   without a visible caption naming its own feature, one its role names (until
   2026-09-30: any screenshot at all); a card not in `projects.ts`, or a published
@@ -441,14 +442,33 @@ does not state.
   the four systems" to `/work#ttouch-clothing` (the count from the data), and
   the four systems, each its real screenshot — the one its /work card shows —
   over its name, linking to the live system (the whole tile is the link's
-  target), and its tagline. The section's Schedule a Call follows it, so the
-  call comes after the strongest proof. The screenshots are lazy, in fixed
+  target), and its tagline. The section's Schedule a Call follows it — since
+  2026-09-30 after the feature-work tile below — so the call comes after the
+  strongest proof. The screenshots are lazy, in fixed
   16:10 frames (nothing on the LCP path, no shift; check 29). Check 9 reads
   the band (`[data-client-story]`): its label must be the kind's words for its
   client, where a reader can see it; it must name every published product
   project of that client and nothing else; and every project screenshot in it
   must sit in the tile of a system it names and be that system's own, known by
-  the file it serves. The section's heading is "Built and shipped." (true of
+  the file it serves. **After the client
+  story, the feature work is a tile** (2026-09-30, the owner's third answer:
+  "/work + homepage proof"): `.bf-feattile`, a hairline tile on the ground —
+  not the client story's surface plate, and a step under it (its title 24 /
+  28px against the plate's 34), since it is features in another company's
+  app, not systems we built — with the eyebrow "Feature work", the h3
+  "Features we shipped into other companies’ apps", the intro and "See
+  Bazzile on our work page" to `/work#bazzile`; then each feature-work project
+  with screens as a card (`data-project-kind`, `-scope`, `-id`): its two
+  screens small (256px for the pair on a phone, 272 from 1025px), each
+  captioned with its feature; its label, which says features, directly above
+  its name (an h4); what we built, the role word for word, which names the
+  three features; the public figure with its source; and the store links. It
+  sits before the section's Schedule a Call and carries no filled button, so
+  check 36's one primary in view holds. Check 9 reads its project as a card:
+  the label must be the features label where a reader can see it, and each
+  screen one of its own under a visible caption naming its feature. The
+  hero's proof line stays for work we fully built: RUN 3 case (g) still
+  refuses Bazzile there. The section's heading is "Built and shipped." (true of
   every system in it; "Two products, two write-ups." and "Each one has a full
   technical write-up" went, retired in check 30), and its lead keeps COPY.md's
   words for the two write-ups: "Two full technical write-ups, not a screenshot
@@ -800,7 +820,7 @@ needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
   story on the homepage), `.bf-clientstory` (/work's client-story section),
   `.bf-featwork` / `.bf-feat` (/work's feature-work section and its featured
   card, 2026-09-30; `.bf-subgroup`, the sub-group it replaced, went),
-  `.bf-screens` /
+  `.bf-feattile` (the homepage's feature-work tile), `.bf-screens` /
   `.bf-screen` (feature screens, in `components/site/FeatureScreens.tsx`, with
   `PublicStat`'s `.bf-pubstat`), `.bf-stages` (a rail), `.bf-strata`,
   `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
@@ -2405,29 +2425,42 @@ builds it) fails each with its own finding, none of which the clean build has
 (`gate-expect.mjs`) — and each has its case in `scripts/gate/gate-cases.py`.
 The old rule had no case, so none is retired.
 - **9, changed — feature screens, not no screenshots.** On a feature-work
-  card (by `content/projects.ts` or its own marker), every project
-  screenshot must sit in a `[data-feature-screen]` figure (else "shows a
-  screenshot … outside its feature screens"), be one of its project's
+  card (by `content/projects.ts` or its own marker), wherever it is — /work's
+  featured card and, since this change, the homepage's feature-work tile,
+  whose project is a card (`data-project-kind` on its `<article>`) — every
+  project screenshot must sit in a `[data-feature-screen]` figure (else "shows
+  a screenshot … outside its feature screens"), be one of its project's
   `featureScreens`, known by the file it serves (else "is not one of its
   feature screens in content/projects.ts"), and have a visible caption (else
   "has no visible caption", with "(its caption … is not visible)" when it is
   there but hidden) that names one of the features its role names — the
   suite's own reading, `FEATURES_OF`: the list after the role's colon (else
   "names none of the features its role names") — and that screen's own
-  feature (else "and it is the screen of …"). RUN 2: `feat-generic` (a
-  screenshot of the app outside the figures on /work's card),
-  `feat-cap-words` and `feat-cap-swapped` (one patch: /work's swipe screen
-  captioned "Listing details", its map screen "Swipe-based browsing").
+  feature (else "and it is the screen of …"). The tile's label is checked as
+  every card's: missing, hidden, not the kind's words, or "built by Bolt
+  Fusion" without "features". RUN 2: `feat-generic` (a screenshot of the app
+  outside the figures on /work's card), `feat-cap-words` and
+  `feat-cap-swapped` (one patch: /work's swipe screen captioned "Listing
+  details", its map screen "Swipe-based browsing"), `feat-cap-missing` and
+  `feat-foreign` (one patch: the tile's swipe caption emptied, and a third
+  screen showing OPAL's screenshot), `feat-cap-hidden` (the tile's map caption
+  `visibility: hidden`), `feat-tile-overclaim` and `feat-tile-hidden` (one
+  patch: the tile's label "Delivered project: built by Bolt Fusion for Bazzile
+  Technology SA", sr-only). /work's figures take the screenshot and caption
+  cases on its card and the tile the rest on its own, so no case's damage
+  hides another's.
 - **8, unchanged, and its case** — "100K+ downloads on Google Play" passes
   only through its per-instance exemption in `content/figure-labels.ts`
   (the store's public install band for the client's app, not a measurement
-  of our work), on /work. RUN 2:
+  of our work), on /work and the homepage. RUN 2:
   `pubstat-bare` (the figure rendered without `<FigureText>`): '"100K+" has no
   shipped/target label'.
 - **30** — the `bazzile-cuts` set ("70,000", "15,000 active users"), cut on
-  /work since 2026-09-16; /work's feature-work item holds the new needles
-  (the section's words, the captions, the figure and its source line), and
-  its page head the new lede sentence.
+  /work since 2026-09-16, is now cut on `/` too; a / item for the tile and
+  /work's feature-work item hold the new needles (the section's words, the
+  captions, the figure and its source line), and /work's page head the new
+  lede sentence. RUN 2: `bazzile-70k-home` and `bazzile-users-home` (one
+  patch: the owner's two figures written into the tile).
 - **The build, five new refusals (RUN 3)** in `content/projects.ts`, each in
   the schema's words: (l) Bazzile's swipe screen tied to "listing detail
   pages" — "is for "listing detail pages", which is not one of the features

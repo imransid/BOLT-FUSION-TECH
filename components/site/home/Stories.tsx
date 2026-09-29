@@ -1,12 +1,13 @@
 import FigureText from "@/components/FigureText";
 import ScreenImage from "@/components/site/ScreenImage";
-import { clientStories, clientStoryMembers, countWord, lanes, projects, type ClientStory } from "@/content";
+import { clientStories, clientStoryMembers, countWord, featureWork, lanes, projects, type ClientStory, type Project } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 
 import Cta from "../Cta";
+import FeatureScreens, { PublicStat } from "../FeatureScreens";
 import { ArrowUpRightIcon } from "../icons";
-import { attribution } from "../ProjectCard";
+import { attribution, AttributionLabel, ProjectLinks } from "../ProjectCard";
 import ProofStrip from "../ProofStrip";
 import SectionHead from "../SectionHead";
 
@@ -185,12 +186,66 @@ function ClientStoryBand({ story }: { story: ClientStory }) {
   );
 }
 
+/** Feature work, as a tile (the owner, 2026-09-30): after the client story,
+ *  before the section's Schedule a Call — "Features we shipped into other
+ *  companies’ apps", then each feature-work project that has its screens
+ *  (Bazzile): the screens small, each captioned with its feature; its label,
+ *  which says features, never "built by"; its name; what we built, the role
+ *  word for word, which names the features; the app's public figure with its
+ *  source; and links to its card on /work and to the stores. A hairline tile
+ *  on the ground, not the client story's surface plate: it is not a set of
+ *  systems we built.
+ *
+ *  Each project is a card for verify-site check 9 (`data-project-kind`,
+ *  `-scope`, `-id`, `data-attribution` directly above its name, `data-role`),
+ *  and its screens are FeatureScreens' figures, so the rules /work's card
+ *  keeps hold here too: the label must be the features label where a reader
+ *  can see it, and each screen one of its own, under a visible caption that
+ *  names its feature. The screens are lazy, in fixed frames (check 29). */
+function FeatureWorkTile({ items }: { items: Project[] }) {
+  const titleId = `${featureWork.id}-tile-title`;
+  return (
+    <div className="bf-feattile" data-bf-reveal>
+      <div className="bf-feattile__head">
+        <p className="bf-eyebrow bf-feattile__eyebrow">{featureWork.eyebrow}</p>
+        <h3 id={titleId} className="bf-feattile__title">
+          {featureWork.title}
+        </h3>
+        <p className="bf-feattile__intro">{featureWork.intro}</p>
+        {/* One project: its card on /work; more: the section */}
+        <Cta href={items.length === 1 ? `/work#${items[0].id}` : `/work#${featureWork.id}`} variant="quiet" className="bf-feattile__more">
+          {items.length === 1 ? `See ${items[0].name} on our work page` : "See our feature work"}
+        </Cta>
+      </div>
+      {items.map((p) => (
+        <article key={p.id} className="bf-feattile__card" data-project-kind={p.kind} data-project-scope={p.scope} data-project-id={p.id} aria-labelledby={`${p.id}-tile-name`}>
+          <FeatureScreens p={p} sizes="(min-width: 1025px) 150px, (min-width: 768px) 20vw, calc(50vw - 44px)" className="bf-feattile__screens" />
+          <div className="bf-feattile__body">
+            <AttributionLabel p={p} />
+            <h4 id={`${p.id}-tile-name`} className="bf-feattile__name">
+              {p.name}
+            </h4>
+            <p className="bf-feattile__role" data-role>
+              <FigureText text={p.role} />
+            </p>
+            <PublicStat p={p} className="bf-feattile__stat" />
+            <div className="bf-feattile__links">
+              <ProjectLinks p={p} />
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Engineering stories (SPEC §5), second on the homepage since 2026-09-28 — the
  * proof, straight after the hero (DECISIONS 2026-09-28, item 1): the two
  * write-ups side by side from 1025px, each with who built it; then each
  * client story (TTouch Clothing's four systems, since 2026-09-29), with its
- * screenshots; then the section's own Schedule a Call and the link to all
+ * screenshots; then the feature work with its screens (Bazzile, since
+ * 2026-09-30), as a tile; then the section's own Schedule a Call and the link to all
  * work — the call follows the strongest proof; then the restaurant search's
  * three lanes and the proof strip — "From systems we shipped." (SPEC §8b.1;
  * never "Measured on…": ~$0.001 is a target). Until the design and honesty
@@ -213,6 +268,8 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
      feature work included. The engineers' track record is on that page too,
      credited to them, and is not counted as our work. */
   const ourWork = projects.filter((p) => p.state === "published" && p.kind !== "track-record").length;
+  /* feature work with its screens (2026-09-30): the tile after the client story */
+  const featureScreens = projects.filter((p) => p.state === "published" && p.kind === "project" && p.scope === "features" && p.featureScreens.length > 0);
   return (
     <section id="recent-work" className="bf-section bf-proofsec" aria-labelledby="work-title">
       <div className="bf-wrap">
@@ -236,6 +293,7 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
         {clientStories.map((story) => (
           <ClientStoryBand key={story.id} story={story} />
         ))}
+        {featureScreens.length ? <FeatureWorkTile items={featureScreens} /> : null}
         <p className="bf-actions bf-proofsec__cta">
           <Cta href={SCHEDULE_HREF} cta="schedule">
             {SCHEDULE_LABEL}

@@ -599,8 +599,12 @@ def p_scene_share(s):
 
 
 # ── new for Bazzile's feature screens (2026-09-30), one per new rule ──────
+# /work's featured card takes the screenshot and caption cases on its own
+# figures, the homepage's tile the rest on its own, so no case's damage hides
+# another's: a screen whose caption is gone is not read for its words.
 
 WORK = "app/work/page.tsx"
+TILE = "components/site/home/Stories.tsx"
 
 
 def p_feat_generic(s):
@@ -616,6 +620,31 @@ def p_feat_captions(s):
     screen's feature"""
     s.rep(WORK, '        <FeatureScreens p={p} sizes=',
           '        <FeatureScreens p={{ ...p, featureScreens: p.featureScreens.map((x, i) => ({ ...x, caption: i === 0 ? "Listing details" : "Swipe-based browsing" })) }} sizes=')
+
+
+def p_feat_tile_screens(s):
+    """9: the homepage tile's swipe screen with no caption, and a third screen
+    that is not one of Bazzile's (OPAL's screenshot)"""
+    s.rep(TILE, '          <FeatureScreens p={p} sizes=',
+          '          <FeatureScreens p={{ ...p, featureScreens: [...p.featureScreens.map((x, i) => (i === 0 ? { ...x, caption: "" } : x)), { ...p.featureScreens[0], image: { ...p.featureScreens[0].image, src: "/projects/opal.webp" } }] }} sizes=')
+
+
+def p_feat_cap_hidden(s):
+    """9: the homepage tile's map caption hidden from a reader"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: 9, the tile's second feature screen's caption hidden */\n.bf-feattile .bf-screens__item:nth-child(2) .bf-screen__cap { visibility: hidden; }\n")
+
+
+def p_feat_tile_label(s):
+    """9: the homepage tile's label says Bolt Fusion built the app, and is
+    hidden from a reader"""
+    s.rep(TILE, "            <AttributionLabel p={p} />\n",
+          '            <p className="bf-attr sr-only" data-attribution>\n              Delivered project: built by Bolt Fusion for {p.client}\n            </p>\n')
+
+
+def p_bazzile_figures(s):
+    """30: the client's own figures back on the homepage tile"""
+    s.rep(TILE, '            <PublicStat p={p} className="bf-feattile__stat" />\n',
+          '            <PublicStat p={p} className="bf-feattile__stat" />\n            <p className="bf-feattile__role">Around 70,000 downloads in France in twelve months, and 15,000 active users there.</p>\n')
 
 
 def p_pubstat_bare(s):
@@ -737,6 +766,13 @@ CASES = [
     ["feat-generic", "a generic screenshot of Bazzile's app on its /work card, outside its feature screens", 9, r'^/work @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app and shows a screenshot \(/projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp)\) outside its feature screens', p_feat_generic, {}],
     ["feat-cap-words", "a /work feature screen captioned with no feature its role names (\"Listing details\")", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp) is captioned "Listing details", which names none of the features its role names', p_feat_captions, {}],
     ["feat-cap-swapped", "a /work feature screen captioned with the other screen's feature (the map as swipe browsing)", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-map-matching-\d+\.(?:avif|webp) is captioned "Swipe-based browsing", and it is the screen of "Google Maps location matching"', None, {"from": "feat-cap-words"}],
+    ["feat-cap-missing", "the homepage tile's swipe screen with no caption", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp) has no visible caption — each screen', p_feat_tile_screens, {}],
+    ["feat-foreign", "a screen in the homepage tile that is not one of Bazzile's (OPAL's screenshot)", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/opal-\d+\.(?:avif|webp) is not one of its feature screens in content/projects\.ts', None, {"from": "feat-cap-missing"}],
+    ["feat-cap-hidden", "the homepage tile's map caption hidden (visibility: hidden)", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-map-matching-\d+\.(?:avif|webp) has no visible caption \(its caption "Google Maps location matching" is not visible\)', p_feat_cap_hidden, {}],
+    ["feat-tile-overclaim", "the homepage tile's label says \"built by Bolt Fusion\" without \"features\"", 9, r'^/ @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feat_tile_label, {}],
+    ["feat-tile-hidden", "the homepage tile's label hidden (sr-only)", 9, r'^/ @\d+: "Bazzile" — its attribution label ".*" is not visible', None, {"from": "feat-tile-overclaim"}],
+    ["bazzile-70k-home", "Bazzile's 70,000 downloads back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "70,000" is back', p_bazzile_figures, {}],
+    ["bazzile-users-home", "Bazzile's 15,000 active users back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "15,000 active users" is back', None, {"from": "bazzile-70k-home"}],
     ["pubstat-bare", "Bazzile's Google Play figure without its exemption", 8, r'"100K\+" has no shipped/target label', p_pubstat_bare, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case

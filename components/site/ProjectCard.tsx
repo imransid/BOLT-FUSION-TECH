@@ -17,7 +17,8 @@ import ScreenImage from "./ScreenImage";
  *
  * Feature work (a project with `scope: "features"`, decided 2026-09-16) reads
  * "features built by Bolt Fusion for ‹client›": we built features inside the
- * client's app, not the app, so its label never says "built by Bolt Fusion".
+ * client's app, not the app, so its label never says "built by Bolt Fusion" —
+ * on /work's cards and on the homepage's feature-work tile (2026-09-30) alike.
  */
 export function attribution(p: Project): string {
   switch (p.kind) {

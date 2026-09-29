@@ -425,10 +425,33 @@
         ]
       },
       {
+        "item": "Proof: the features we shipped into other companies’ apps, after the client story (2026-09-30)",
+        "proves": "The owner's highlight of Bazzile (2026-09-30): a tile after TTouch Clothing's client story and before the section's Schedule a Call — its label says features, never built by Bolt Fusion; the two screens where our features live, each captioned with its feature; what we built, word for word; Google Play's public install band with its source; and links to its card on /work and to the stores",
+        "status": "required",
+        "needles": [
+          "Feature work",
+          "Features we shipped into other companies’ apps",
+          "Features we built inside apps other companies own. The apps are theirs: each card names the company and only the features that were ours.",
+          "See Bazzile on our work page",
+          "Delivered project: features built by Bolt Fusion for Bazzile Technology SA",
+          "Bazzile",
+          "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+          "Swipe-based browsing",
+          "Google Maps location matching",
+          "100K+ downloads on Google Play",
+          "The whole app’s install count on its Google Play listing — its reach, not a measure of our features. Read 30 September 2026.",
+          "App Store",
+          "Google Play"
+        ]
+      },
+      {
         "include": "excluded-projects"
       },
       {
         "include": "ttouch-cuts"
+      },
+      {
+        "include": "bazzile-cuts"
       },
       {
         "item": "How we work: the three steps and their section",
