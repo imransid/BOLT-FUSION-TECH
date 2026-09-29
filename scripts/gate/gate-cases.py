@@ -334,6 +334,13 @@ def p_scene_lcp_only(s):
           '      gate ??= Promise.all([new Promise<void>((r) => new PerformanceObserver((l) => void (l.getEntries().length && r())).observe({ type: "largest-contentful-paint", buffered: true })), loaded()]); // THROWAWAY misuse\n')
 
 
+def p_nav_smooth(s):
+    """34: <html> without data-scroll-behavior — Next leaves smooth scrolling
+    on through a route change, and the new page scrolls up from the old
+    offset (the engineering review, 2026-09-29)"""
+    s.rep("app/layout.tsx", '      data-scroll-behavior="smooth"\n', "")
+
+
 def p_scene_hides_poster(s):
     s.rep("components/field/HeroScene.tsx", '        canvas.style.opacity = "1";\n',
           '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster && window.innerWidth >= 1280) vsPoster.style.display = "none";\n')
@@ -609,6 +616,9 @@ CASES = [
     ["lab-flow-phone", "the Lab drawing's connections back as cyan flow lines — flowing on a phone", 33, r"^/capabilities @390 phone \(touch\): the Lab drawing animates — (?:[^;]*; )*path\.dg-flow \(bf-flow\)", None, {"from": "lab-flow"}],
     ["lab-cyan-head", "cyan arrowheads on the Lab drawing's steel edges, no flow line", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) is painted cyan — (?:[^;]*; )*path\.dg-arrowhead fill ", p_lab_cyan_head, {}],
     ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
+    # new at the fix pass (2026-09-29): a client-side navigation starts at the top, and its reveals run
+    ["nav-smooth", "no data-scroll-behavior on <html> — a client-side navigation smooth-scrolls the new page up from the old offset", 34, r"^@1440: the new page's first frame is at scrollY [1-9]\d*", p_nav_smooth, {}],
+    ["nav-reveals", "no data-scroll-behavior on <html> — the new page's reveals judged at the old offset, and skipped", 34, r"^@(?:1440|390): after the navigation, \d+ of \d+ reveals ran as / was read down, against \d+ of \d+ on a fresh load", None, {"from": "nav-smooth"}],
     # new for the TTouch Clothing projects (2026-09-29), one per new rule
     ["story-label", "the homepage's client-story band labelled \"Built by TTouch Clothing\"", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label reads "Built by TTouch Clothing"; it reads "Delivered project: built by Bolt Fusion for TTouch Clothing"', p_story_label, {}],
     ["story-hidden", "the client-story band's label hidden (sr-only)", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label ".*" is not visible', p_story_hidden, {}],

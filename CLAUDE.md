@@ -797,7 +797,20 @@ has a pause control.
   `data-bf-reveal` that is still below the fold after hydration gets
   `.bf-revealed` when it enters the viewport — a 20px rise and fade over 0.8s,
   `fill-mode: none`. Nothing is hidden in the server HTML, and focus ends a
-  reveal (A2).
+  reveal (A2). "Below the fold" is the IntersectionObserver's own first
+  report (2026-09-29), not a position read when the effect runs, which after
+  a client-side navigation can be the old page's.
+- **A client-side navigation starts the new page at its top, at once**
+  (2026-09-29): `<html data-scroll-behavior="smooth">` (`app/layout.tsx`)
+  is how Next 16 knows to turn the stylesheet's smooth scrolling off for a
+  route change (a same-page anchor still scrolls smoothly). Without it the
+  header's logo, followed from the bottom of /capabilities, smooth-scrolled
+  the new page up from 10201 to 0 over about 27 frames while the reader
+  watched, and SiteMotion measured every reveal at that stale offset: 0 of 39
+  ran, against 37 on a fresh load (the engineering review). The page's
+  `SiteShell` mounts anew on a route change, so SiteMotion and the Signal's
+  loader start again on the new page and scan it — trigger counts per page
+  the same on every visit. Verify-site check 34 holds it.
 - **The diagram flow:** a diagram marked `data-bf-flow` gets `.bf-flowing` once
   35% of it is in view, and its cyan `.dg-flow` paths run three 1.6s passes —
   under five seconds, so it needs no pause control (WCAG 2.2.2) — then rest.
@@ -1726,7 +1739,7 @@ plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
   all (`gsap-reduced`): the loader checks its gate before any import.
 
 **The gate (2026-09-16).** RUN 1 builds a fresh copy of HEAD, serves it fresh and
-runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
+runs all 34 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
 a pattern that matches the clean build proves nothing. RUN 3 builds ten
@@ -2015,6 +2028,24 @@ rule's own finding — and each has its case in `scripts/gate/gate-cases.py`.
   delivered work (and off the retired item's needles, which it no longer
   describes), new evidence items on /industries and /capabilities, and the
   `ttouch-cuts` set on / and /work.
+
+**Checks changed in the motion fix pass (2026-09-29).** From the three
+adversarial reviews (design, honesty, engineering) of `redesign/motion-hire`.
+Each rule is proven both ways, and each has its case in
+`scripts/gate/gate-cases.py`.
+- **25, extended — an input before the first paint.** The profile `/ @1440
+  input before first paint` (above, under 25): the scene must start although
+  the browser reports no LCP entry. RUN 2: `scene-lcp-only`.
+- **34, new — a client-side navigation.** From the bottom of /capabilities
+  (scrollY 11809 at 1440, 16198 at 390) the header's logo, `<Link>` to /: on
+  every frame after the click the new page must be at scrollY 0 — its first
+  frame included — and, read down at reading speed, it must run as many
+  reveals as a fresh load of / read the same way (37 of 39 at 1440, 39 of 39
+  at 390), and at >=1025px the Signal must start on it. Two fresh contexts
+  per width, at 1440 and 390. Without `data-scroll-behavior="smooth"` on
+  `<html>` the new page's first frame was at 10201 and ran 0 reveals (the
+  engineering review). RUN 2: `nav-smooth` and `nav-reveals`, one patch (the
+  attribute removed).
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

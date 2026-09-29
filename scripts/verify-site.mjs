@@ -196,6 +196,16 @@ const LAB_PROFILES = [
   { label: "390 phone (touch)", viewport: { width: 390, height: 844 }, touch: true, dpr: 3 },
 ];
 const LAB_ROUTES = ["/", "/capabilities"];
+
+/* 34 (2026-09-29, the engineering review) — a client-side navigation: from
+   the bottom of a long page, the header's logo (the site's one client-side
+   link, <Link> to /; Back and Forward after it are client-side too). The new
+   page must start at its top AT ONCE — app/site.css scrolls <html> smoothly,
+   and Next 16 turns that off for a route change only under
+   html[data-scroll-behavior="smooth"] — and its reveals, and at >=1025px the
+   Signal, must run on it as on a fresh load. */
+const NAV_FROM = "/capabilities";
+const NAV_WIDTHS = [1440, 390];
 const LAB_WATCH_MS = 5500; /* past the CSS flow's three 1.6s passes and the Signal's 1.4s sketch */
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
@@ -389,6 +399,82 @@ async function readingSpeedScroll(page) {
       await new Promise((r) => setTimeout(r, 150));
     }
   });
+}
+
+/* 34 — the reveals of a page: how many there are, and how many have run */
+const revealCount = () => {
+  const all = [...document.querySelectorAll("[data-bf-reveal]")];
+  return { total: all.length, revealed: all.filter((e) => e.classList.contains("bf-revealed")).length };
+};
+/* 34 — a fresh load of / read down at reading speed (the reference), then a
+   page read to the end of NAV_FROM that follows the header's logo to /: its
+   scroll position on every frame after the click, then the same reading
+   down. Two fresh contexts. */
+async function visitNav(browser, w) {
+  const phone = w < 768;
+  const mk = () => browser.newContext({ viewport: { width: w, height: phone ? 844 : 900 }, reducedMotion: "no-preference", ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
+  const fresh = await mk();
+  const fp = await fresh.newPage();
+  await fp.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await fp.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await fp.waitForTimeout(1500);
+  await readingSpeedScroll(fp);
+  await fp.waitForTimeout(1200);
+  const ref = await fp.evaluate(revealCount);
+  await fresh.close();
+
+  const ctx = await mk();
+  /* every frame's scroll position, page and whether the new page is there */
+  await ctx.addInitScript(() => {
+    const log = [];
+    Object.defineProperty(window, "__vsNav", { value: log });
+    const tick = () => {
+      log.push({ y: Math.round(scrollY), path: location.pathname, hero: Boolean(document.getElementById("hero")) });
+      if (log.length > 4000) log.splice(0, 1000);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}${NAV_FROM}`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await page.waitForTimeout(1500);
+  const fromY = await page.evaluate(() => Math.round(scrollY));
+  const clicked = await page.evaluate(() => {
+    window.__vsNav.length = 0;
+    const a = document.querySelector('#masthead a[href="/"]');
+    if (!a) return false;
+    a.click();
+    return true;
+  });
+  if (!clicked) {
+    await ctx.close();
+    return { width: w, ref, clicked };
+  }
+  await page.waitForFunction(() => location.pathname === "/" && document.getElementById("hero"), null, { timeout: 30000 });
+  await page.waitForTimeout(1200);
+  const log = await page.evaluate(() => window.__vsNav.slice());
+  const i = log.findIndex((f) => f.path === "/" && f.hero);
+  const frames = i < 0 ? [] : log.slice(i);
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(1200);
+  const nav = await page.evaluate(revealCount);
+  const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  await ctx.close();
+  return {
+    width: w,
+    ref,
+    clicked,
+    fromY,
+    frames: frames.length,
+    firstY: frames.length ? frames[0].y : null,
+    maxY: frames.length ? Math.max(...frames.map((f) => f.y)) : null,
+    toZero: frames.findIndex((f) => f.y === 0),
+    nav,
+    signal,
+  };
 }
 
 /* 25 ── every WebGL context a page asks for. Installed as an init script, so it
@@ -3357,6 +3443,13 @@ if (want(33))
       process.stderr.write(`  the Lab drawing on ${route} @${prof.label}\n`);
       labRuns.push(await visitLab(browser, route, prof).catch((e) => ({ route, label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
     }
+/* 34 ── a client-side navigation, and what runs on the page it lands on */
+const navRuns = [];
+if (want(34))
+  for (const w of NAV_WIDTHS) {
+    process.stderr.write(`  a client-side navigation ${NAV_FROM} → / @${w}\n`);
+    navRuns.push(await visitNav(browser, w).catch((e) => ({ width: w, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
 let faqRun = null;
 if (want(14)) {
   process.stderr.write("  opening every FAQ answer on /\n");
@@ -5453,6 +5546,38 @@ check(
       I.push(`${where}: watched ${r.samples} x 100ms in view (the drawing at ${r.top}px${r.flowing ? ", .bf-flowing landed" : ""}${r.sketch ? `, the Signal's sketch drew ${r.sketch} steel stroke(s) over it` : ""}) — ${r.anims.length} animation(s), ${r.moved.length} moving line(s), ${r.cyan.length} cyan element(s)`);
     }
     for (const [label, n] of labSeen) if (!n && labRuns.length) F.push(`@${label}: no route showed the Lab drawing in view — robotics' no-flow rule was not tested on this profile; unsure is a failure`);
+  },
+);
+
+/* 34 — a client-side navigation starts the new page at its top, and runs its motion */
+check(
+  34,
+  "A client-side navigation starts the new page at its top, at once, and its reveals — and at >=1025px the Signal — run on it as on a fresh load",
+  "the new page smooth-scrolling up from the old one's offset after the header's logo (html scroll-behavior: smooth without data-scroll-behavior, which Next 16 needs to turn it off for a route change), and every reveal measured at that stale offset and skipped — 0 of 39 from the bottom of /capabilities",
+  (F, I) => {
+    for (const r of navRuns) {
+      const at = `@${r.width}`;
+      if (r.error) {
+        F.push(`${at}: the navigation run failed (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.clicked) {
+        F.push(`${at}: no link to / in the header (#masthead a[href="/"]) — the client-side navigation went untested; unsure is a failure`);
+        continue;
+      }
+      if (!r.frames) {
+        F.push(`${at}: no frame showed the new page after the logo was followed — unsure is a failure`);
+        continue;
+      }
+      if (r.fromY < 2000) F.push(`${at}: ${NAV_FROM} was left at scrollY ${r.fromY}, not deep in the page — the stale offset went untested; unsure is a failure`);
+      if (r.firstY > 1 || r.maxY > 1)
+        F.push(`${at}: the new page's first frame is at scrollY ${r.firstY} (${NAV_FROM} was left at ${r.fromY}; the highest after it ${r.maxY}, 0 only after ${r.toZero < 0 ? "none of" : r.toZero} of ${r.frames} frames) — a client-side navigation starts the new page at its top at once: Next turns smooth scrolling off for a route change only under html[data-scroll-behavior="smooth"]`);
+      if (!r.ref.revealed) F.push(`${at}: a fresh load of / read down ran no reveal (${r.ref.total} marked) — the comparison proves nothing; unsure is a failure`);
+      else if (r.nav.revealed < r.ref.revealed)
+        F.push(`${at}: after the navigation, ${r.nav.revealed} of ${r.nav.total} reveals ran as / was read down, against ${r.ref.revealed} of ${r.ref.total} on a fresh load — the new page's reveals were judged at the old page's offset`);
+      if (r.width >= 1025 && r.signal !== "live") F.push(`${at}: after the navigation the Signal never started on / (no html[data-bf-signal="live"]) — each page's motion starts on that page`);
+      I.push(`${at}: ${NAV_FROM} left at scrollY ${r.fromY}; the new page's first frame at ${r.firstY}, the highest after it ${r.maxY} (${r.frames} frames); reveals ${r.nav.revealed}/${r.nav.total} after the navigation, ${r.ref.revealed}/${r.ref.total} on a fresh load${r.width >= 1025 ? `; the Signal ${r.signal || "not running"}` : ""}`);
+    }
   },
 );
 
