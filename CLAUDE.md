@@ -528,6 +528,12 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
 - **The homepage's ledgers (2026-09-28).** *What we engineer* is one ruled row
   per capability (`.bf-cap6`: the number, the name, the job, every tier with
   its scope, robotics' honesty line, the linked work, "in depth", the diagram);
+  the linked work is a grid from 768px, its label in a column as wide as the
+  label (up to 12rem) and the links wrapping in theirs beside it, so the label
+  keeps its place on every row (2026-09-29, fix pass B: as one flex row, row
+  01's seven links pushed the label onto a line of its own and left
+  GodConnect alone on a third — the design review; at 1440 row 01 is now the
+  five products over the two feature-work links);
   on a phone it ends in a primary Schedule a Call (`.bf-ledger6__cta`, not
   shown from 768px, where the header carries one — the merge, 2026-09-29).
   *How we work* is a spec sheet (`.bf-hww`): the head beside the headcount, the

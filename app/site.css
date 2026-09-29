@@ -5772,13 +5772,26 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: 16px;
 }
 
+/* The label in its own column, the links wrapping in theirs beside it, so
+   the label keeps its place on every row (2026-09-29, the design review: as
+   one flex row, row 01's seven links pushed the label onto a line of its own
+   and left GodConnect alone on a third). The label's box is a link's 44px
+   line, so it sits level with the first row of links; its column is as wide
+   as the label, up to 12rem, inside which POS's "Linked work (online and
+   wholesale commerce)" wraps. On a phone the label is over the links. */
 .bf-cap6__work {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   margin-top: 8px;
   font-size: 15px;
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__work {
+    grid-template-columns: fit-content(12rem) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 16px;
+  }
 }
 
 .bf-cap6__label {
@@ -5786,6 +5799,13 @@ button.bf-map__btn[aria-pressed="true"] {
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__label {
+    padding-block: 12px;
+    line-height: 20px;
+  }
 }
 
 .bf-cap6__work ul {
