@@ -568,7 +568,8 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   six phone screens. Measured (fix pass B): the page's Schedule a Calls at
   466, 2587, 4530, 7622 and 10,813 at 1440 (the longest gap 3,191px), and at
   594, 3518, 7073, 10,034, 12,754 and 15,169 at 390 (3,555; the footer's ghost
-  at 15,515); the page is 11,467px at 1440 and 16,378 at 390.
+  at 15,515); the page is 11,467px at 1440 and 16,378 at 390, under reduced
+  motion (11,509 and 16,368 as check 29 reads it with motion allowed).
   *How we work* is a spec sheet (`.bf-hww`): the head beside the headcount, the
   four terms on one ruled row, the engagement models as a table beside the
   lines under it, and the pilot on its own surface plate, its three stations on
@@ -2308,7 +2309,9 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   longest gaps 3,191px at 1440, the ledger's call to the close's, and 3,555
   at 390, the proof's to how we work's, 4.2 phone screens); four, because a
   run of five needs two calls about five viewports apart, whatever the phase
-  of the steps. RUN 2: `reach-desktop` (the ledger's call phone-only again),
+  of the steps. RUN 2: `reach-desktop` (the ledger's call phone-only again,
+  and how we work's hidden with it, so no other patch in the misuse build can
+  bring the run back under the limit — the ledger's alone makes it 5),
   `header-loud` (the header's call never steps down) and `footer-filled`
   (the footer's filled again). The gate expects 36 checks.
 

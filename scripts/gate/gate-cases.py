@@ -436,10 +436,12 @@ def p_toc_first_tier(s):
 
 
 def p_reach_desktop(s):
-    """36: the ledger's Schedule a Call hidden from 768px again — at 1440 the
-    ledger, how we build, the industries, the insights and the FAQ show none
-    on the way down"""
-    s.append("app/site.css", "\n/* throwaway misuse CSS: 36, the ledger's call phone-only again */\n@media (min-width: 768px) { .bf-ledger6__cta { display: none; } }\n")
+    """36: the ledger's Schedule a Call hidden from 768px again, and how we
+    work's with it — at 1440 about eight viewports, from the proof's call to
+    the close's, show none on the way down. The ledger's alone gives a run of
+    5, one over the limit; how we work's makes the case fail by a margin no
+    other case's patch in the same build can take away"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: 36, the ledger's call phone-only again, and how we work's gone */\n@media (min-width: 768px) { .bf-ledger6__cta, #how-we-work [data-cta=\"schedule\"] { display: none; } }\n")
 
 
 def p_header_loud(s):
@@ -702,7 +704,7 @@ CASES = [
     ["story-shot-foreign", "the client-story band's Sudarshini tile shows OPAL's screenshot", 9, r'^/ @\d+: the client story "ttouch-clothing" — the tile of "Sudarshini" shows /projects/opt/opal-\d+\.(?:avif|webp), which is not its screenshot in content/projects\.ts', p_story_shot_foreign, {}],
     ["toc-first-tier", "/capabilities' contents row shows each capability's first tier alone — ERP without Capable (Full ERP)", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows ERP & enterprise systems as \"[^\"]*Proven[^\"]*\", without Capable — its evidence is Proven \(HR, payroll and a wholesale back office\) and Capable \(Full ERP\)", p_toc_first_tier, {}],
     ["toc-bare-tier", "/capabilities' contents row shows a tier without its scope — ERP's Proven bare", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows the Proven tier of ERP & enterprise systems as \"[^\"]*\", without its scope \"HR, payroll and a wholesale back office\"", None, {"from": "toc-first-tier"}],
-    ["reach-desktop", "the ledger's Schedule a Call hidden from 768px — a long run of viewports with none at 1440", 36, r"^/ @1440: \d+ viewports in a row, scrollY \d+–\d+, show no Schedule a Call on the way down — at most 4", p_reach_desktop, {}],
+    ["reach-desktop", "the ledger's and how we work's Schedule a Calls hidden from 768px — a long run of viewports with none at 1440", 36, r"^/ @1440: \d+ viewports in a row, scrollY \d+–\d+, show no Schedule a Call on the way down — at most 4", p_reach_desktop, {}],
     ["header-loud", "the header's Schedule a Call never steps down — two primaries on the first screen (1440)", 36, r"^/ @1440: two primary Schedule a Calls in one view at scrollY 0 \(scrolling down\) — [^—]*the header's", p_header_loud, {}],
     ["footer-filled", "the footer's Schedule a Call filled again — two primaries at the end of the page", 36, r"^/ @(?:1440|390): two primary Schedule a Calls in one view at scrollY \d+ \(scrolling (?:down|up)\) — [^—]*the footer's", p_footer_filled, {}],
     ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
