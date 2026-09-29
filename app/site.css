@@ -5502,6 +5502,23 @@ button.bf-map__btn[aria-pressed="true"] {
   background-color: var(--bf-brand);
 }
 
+/* A station the Signal's trace has reached (`data-bf-lit`, set only where
+   gsap runs, >=1025px): its square fills brand blue while the trace passes,
+   as the rail's stage markers do, and goes hollow again when it settles. The
+   deliverable's square is filled at rest: the trace ends in it. How an HTML
+   station shows `data-bf-lit` is its owner's CSS (CLAUDE.md, "Motion, as
+   built"), and without this rule the trace ran past three squares that never
+   answered it. */
+.bf-hww__station[data-bf-lit]::before {
+  background-color: var(--bf-brand);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bf-hww__station::before {
+    transition: background-color 0.2s ease;
+  }
+}
+
 @media (min-width: 768px) {
   .bf-hww__plan .bf-trace {
     display: block;

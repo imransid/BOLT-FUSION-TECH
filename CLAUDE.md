@@ -415,7 +415,9 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   the `pilot` trace (`[data-bf-trace="pilot"]`: one `svg.bf-trace` with its
   `.bf-trace__path` drawn complete in a steel hairline from the first
   station's marker to the last's, and the stations `[data-bf-trace-stop]`; the
-  motion stream traces it; below 768px the stations stack down the list's own
+  Signal traces it, and a station it has reached fills brand blue, as the
+  rail's markers do — `.bf-hww__station[data-bf-lit]::before`, the hook
+  owner's CSS; below 768px the stations stack down the list's own
   rule; each station's words start with a capital, set by CSS — the weeks are
   lower-case fragments in `content/pilot.ts`). The *industries* are one ruled
   row of five cells on shared rows (`grid-template-rows: subgrid`), so a name
@@ -847,8 +849,17 @@ has a pause control.
       where working together starts. The trace runs right to left into it: the
       last trace on the page points at the one action that matters. The
       buttons never move.
-    - `pilot`: rendered by the IA stream inside `how_we_work`; handled like any
-      hook.
+    - `pilot` (`HowWeWork.tsx`, on /, >=1025): the IA stream's hook inside
+      how we work, a steel hairline from Week 1's square to the
+      Deliverable's, over the three stations (`li.bf-hww__station`). The
+      trace runs left to right and each square fills brand blue while it is
+      lit (`.bf-hww__station[data-bf-lit]::before`, in the `state` time; the
+      Deliverable's square is filled at rest, and the trace ends in it).
+      Proven at the merge (2026-09-29) on a fresh, unscrolled 1440 page
+      scrolled to it at reading speed: the overlay appeared when the plan
+      reached 70% of the viewport, Week 1, Week 2 and the Deliverable lit at
+      0, 584 and 1000ms, all three went hollow at 1.35s and the overlay was
+      gone at 1.65s — nothing left behind, nothing claimed.
   - **The rules it keeps** (BRIEF §4.4): the resting state is the server HTML;
     text never moves, reverses or exits; numbers, chips and tier meters never
     move; nothing in the hero animates; every entry-bound sequence ends within
