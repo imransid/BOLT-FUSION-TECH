@@ -369,6 +369,105 @@ def p_canonical(s):
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
 
 
+# ── new with the Signal motion system (2026-09-28): motion a script writes, and
+#    CLS while reading ─────────────────────────────────────────────────────────
+
+
+def p_script_motion(s):
+    """21: an rAF loop that ignores reduced motion, writing an inline transform"""
+    s.mount("VsScriptMotion", client(
+        "export default function VsScriptMotion() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-spin\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.transform = `translateX(${n % 2}px)`;\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_script_motion_var(s):
+    """21: an rAF loop that ignores reduced motion, moving a box through a CSS
+    custom property its transform reads — no inline transform ever changes"""
+    s.mount("VsScriptMotionVar", client(
+        "export default function VsScriptMotionVar() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-var\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;transform:translateX(var(--vs-x,0px))";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.setProperty(\"--vs-x\", `${n % 2}px`);\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_script_motion_attr(s):
+    """21: an rAF loop that ignores reduced motion, drawing a line on through
+    its stroke-dashoffset ATTRIBUTE — no inline style ever changes"""
+    s.mount("VsScriptMotionAttr", client(
+        "export default function VsScriptMotionAttr() {\n  useEffect(() => {\n    const ns = \"http://www.w3.org/2000/svg\";\n    const svg = document.createElementNS(ns, \"svg\");\n"
+        '    svg.setAttribute("style", "position:fixed;left:0;top:0;width:2px;height:2px;pointer-events:none");\n    const line = document.createElementNS(ns, "line");\n'
+        '    line.setAttribute("class", "vs-draw");\n    for (const [k, v] of [["x1", "0"], ["y1", "1"], ["x2", "2"], ["y2", "1"], ["stroke", "#000"], ["stroke-dasharray", "2"]]) line.setAttribute(k, v);\n'
+        "    svg.append(line);\n    document.body.append(svg);\n"
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      line.setAttribute(\"stroke-dashoffset\", String(n % 2));\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      svg.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_scroll_shift(s):
+    """29: a 120px block inserted above #faq once #faq reaches the middle of
+    the viewport — a layout shift only a reader who scrolls ever meets"""
+    s.mount("VsScrollShift", client(
+        "export default function VsScrollShift() {\n  useEffect(() => {\n    const faq = document.getElementById(\"faq\");\n    if (!faq) return;\n"
+        "    const io = new IntersectionObserver(\n      (es) => {\n        if (!es.some((e) => e.isIntersecting)) return;\n        io.disconnect();\n"
+        '        const d = document.createElement("div");\n        d.className = "vs-shift";\n        d.style.height = "120px";\n        faq.before(d);\n'
+        '      },\n      { rootMargin: "0px 0px -50% 0px" },\n    );\n    io.observe(faq);\n    return () => io.disconnect();\n  }, []);\n  return null;\n}\n'))
+
+
+# ── new for the Signal motion system (2026-09-28), one per new rule ────────
+
+LOADER = "components/motion/MotionLoader.tsx"
+
+
+def p_gsap_static(s):
+    """29 and 31: the loader imports ScrollTrigger statically — gsap in every
+    page's initial JavaScript, requested before the load event"""
+    s.rep(LOADER, 'import { useEffect } from "react";\n', 'import { useEffect } from "react";\nimport { ScrollTrigger as vsStaticTrigger } from "gsap/ScrollTrigger";\n\n(globalThis as unknown as Record<string, unknown>).__vsStaticTrigger = vsStaticTrigger;\n')
+
+
+def p_scene_gsap(s):
+    """25 and 31: the hero scene imports gsap — its chunk carries GSAP. By the
+    dist path, which nothing else imports, so Turbopack bundles it INTO the
+    scene's chunk whether this build imports the scene dynamically or (with
+    scene-static) statically; a scene importing plain "gsap" shares the
+    loader's chunk instead, which check 25 sees in the scene's chunk list"""
+    s.append("components/field/scene.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nimport { gsap as vsSceneGsap } from "gsap/dist/gsap";\nexport const vsSceneGsapVersion = vsSceneGsap.version;\n')
+
+
+def p_signal_second_loader(s):
+    """31: a second module imports gsap dynamically — a second gate"""
+    s.append("components/motion/signal.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nexport const vsSecondLoader = () => import("gsap/Observer");\n')
+
+
+def p_gsap_coarse(s):
+    """25: the loader's gate drops the fine pointer — a touch tablet gets gsap"""
+    s.rep(LOADER, 'const FINE = "(pointer: fine)";\n', 'const FINE = "(min-width: 0px)";\n')
+
+
+def p_gsap_reduced(s):
+    """21: the loader's gate drops reduced motion — gsap requested, and the
+    traces run, under reduced motion"""
+    s.rep(LOADER, 'const CALM = "(prefers-reduced-motion: no-preference)";\n', 'const CALM = "(min-width: 0px)";\n')
+
+
+def p_signal_dead(s):
+    """25: the engine's matchMedia never matches — gsap loads, and the Signal
+    never starts"""
+    s.rep("components/motion/signal.ts", "  mm.add(gate, (ctx) => {\n", '  mm.add("(min-width: 99999px)", (ctx) => {\n')
+
+
+def p_scene_share(s):
+    """25: a three.js module whose import loads the Signal's gsap chunk beside
+    it — what a scene importing plain "gsap" builds to, since Turbopack gives a
+    module two imports share a chunk of its own. Stood in by a throwaway
+    module carrying three.js's signature rather than by scene.ts, because
+    scene-static (same build) turns the scene's own import static and leaves
+    no chunk list to read."""
+    s.write("components/site/VsSceneShareMod.ts", '/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. Carries three.js\'s signature (check 25\'s THREE_CODE) and imports gsap. */\nimport { gsap } from "gsap";\n\n(globalThis as unknown as Record<string, unknown>).__vsSceneShare = ["WebGLRenderer", gsap.version];\n')
+    s.mount("VsSceneShare", client(
+        "export default function VsSceneShare() {\n  useEffect(() => {\n    const t = setTimeout(() => void import(\"./VsSceneShareMod\"), 1500);\n    return () => clearTimeout(t);\n  }, []);\n  return null;\n}\n"))
+
+
 # ── the table: [key, the case, its check, the finding it must print (a JS
 #    regex), its patch (None: the finding comes from the named case's patch),
 #    options] ─────────────────────────────────────────────────────────────────
@@ -435,6 +534,21 @@ CASES = [
     # new for the 2026-09-28 redesign, one per new rule
     ["fallback-face", "text drawn in a system fallback face (CJK glyphs Jost does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
     ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
+    # new with the Signal motion system (2026-09-28): script motion, CLS while reading
+    ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],
+    ["script-motion-var", "an rAF loop that ignores reduced motion, through a CSS custom property its transform reads", 21, r"^/: \d+ element\(s\) animated by script through a CSS custom property under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-var \(\d+ changes to --vs-x\)", p_script_motion_var, {}],
+    ["script-motion-attr", "an rAF loop that ignores reduced motion, through an SVG stroke-dashoffset attribute", 21, r"^/: \d+ element\(s\) animated by script through an SVG attribute under reduced motion — e\.g\. (?:[^;]*, )?line\.vs-draw \(\d+ changes to stroke-dashoffset\)", p_script_motion_attr, {}],
+    ["scroll-shift", "a block inserted above #faq as a reader nears it — CLS while scrolling", 29, r"CLS [\d.]+ during a reading-speed scroll", p_scroll_shift, {}],
+    # new for the Signal motion system (2026-09-28), one per new rule
+    ["gsap-static", "gsap imported statically by the loader — ScrollTrigger in the initial JavaScript", 29, r"the GSAP chunk .* \((?:[^)]*, )?ScrollTrigger[,)].* is requested at \d+ms, before the load event ended", p_gsap_static, {}],
+    ["gsap-static-31", "gsap imported statically by the loader — the repository", 31, r'repository: components/motion/MotionLoader\.tsx imports "gsap/ScrollTrigger" statically', None, {"from": "gsap-static"}],
+    ["scene-gsap", "the hero scene imports gsap — a three.js chunk carrying GSAP", 25, r"is the hero scene's (?:three\.js )?chunk and carries GSAP", p_scene_gsap, {}],
+    ["scene-share", "a three.js chunk whose import loads the Signal's gsap chunk beside it", 25, r"the hero scene's import loads the GSAP chunk .*gsap core.* together with", p_scene_share, {}],
+    ["scene-gsap-31", "the hero scene imports gsap — the repository", 31, r'repository: components/field/scene\.ts imports "gsap/dist/gsap" — gsap belongs to the Signal', None, {"from": "scene-gsap"}],
+    ["signal-second-loader", "a second module imports gsap dynamically", 31, r'repository: components/motion/signal\.ts imports "gsap/Observer" dynamically — gsap is imported by components/motion/MotionLoader\.tsx alone', p_signal_second_loader, {}],
+    ["gsap-coarse", "the Signal's gate without the fine pointer — gsap on a touch tablet (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): requests the GSAP chunk", p_gsap_coarse, {}],
+    ["signal-dead", "the Signal's engine never starts — gsap loads for nothing (1440)", 25, r"^/ @1440[^:]*: the Signal never started", p_signal_dead, {}],
+    ["gsap-reduced", "the Signal's gate without reduced motion — gsap requested under reduced motion", 21, r"^/[^:]*: \d+ GSAP script\(s\) requested under reduced motion — .*the Signal engine", p_gsap_reduced, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more

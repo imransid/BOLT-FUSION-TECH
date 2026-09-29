@@ -5881,3 +5881,182 @@ button.bf-map__btn[aria-pressed="true"] {
 /* No rules of its own: the scene stream's CSS changes are edits in place to
    the hero's poster rules (.bf-hero__poster, contained at every width, and
    its drift, a pure translate), where a second rule would contradict them. */
+
+/* ── motion-hire: motion ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIGNAL — the motion system (owner, 2026-09-28; components/motion; CLAUDE.md
+   "Motion, as built"). Trace a connection in brand blue, let data flow along
+   it in cyan, then settle. Everything below is either a static drawing the
+   server sends complete, or an overlay the engine adds and removes: nothing
+   here is hidden at rest, and nothing moves without script.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A trace hook's drawing ([data-bf-trace] > svg.bf-trace): hairlines, complete
+   in the server HTML. These are defaults at zero specificity (:where), so the
+   owner of each hook styles its own drawing whatever order the blocks of this
+   file come in — the rail and the call to action below name theirs, and the
+   pilot's (the IA stream's) wins over these however it is written. */
+:where(.bf-trace) {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+:where(.bf-trace__path) {
+  fill: none;
+  stroke: var(--bf-line-strong);
+  stroke-width: 1;
+}
+
+/* The overlays the engine clones over a stroke and removes when it settles:
+   brand blue, butt caps (a round cap draws a dot at 0%). A dashed source keeps
+   its own dashes (the engine copies them inline), and the Lab sketch is a
+   light-steel pencil, dashed like every concept drawing — both drawn through
+   a mask (.bf-signal-mask), since DrawSVG owns the dash pattern of whatever it
+   draws. The pencil is lighter than the drawing's own steel, or it would draw
+   steel over steel and nobody would see it pass; it is never blue and never
+   cyan, because nothing in a concept has shipped. */
+.bf-signal-trace {
+  fill: none;
+  stroke: var(--bf-brand);
+  stroke-width: 2;
+  stroke-linecap: butt;
+  pointer-events: none;
+}
+
+.bf-signal-trace--lab {
+  stroke: var(--bf-soft);
+  stroke-width: 1.5;
+}
+
+.bf-signal-mask {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 8;
+  stroke-linecap: butt;
+}
+
+/* After a trace the diagram's flow runs TWO passes, not three: it takes over
+   0.96s into the trace, and 0.96 + 2 x 1.6s ends at 4.2s, under five seconds
+   (WCAG 2.2.2). Only a diagram the engine claimed; the CSS flow everywhere
+   else is unchanged. A station lights in the `state` time. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-bf-motion="gsap"].bf-flowing .dg-flow {
+    animation-iteration-count: 2;
+  }
+
+  .bf-trace__stop {
+    transition: fill 0.2s ease;
+  }
+
+  .bf-rail .bf-stage::before {
+    transition: background-color 0.2s ease;
+  }
+}
+
+/* The Lab drawing never flows where the Signal runs — nothing flows in a
+   system that has not shipped (BRIEF §3A, §4.2). Held here, in the Signal's
+   own media, and not by the engine's claim: the engine claims only a diagram
+   still ahead of the reader when it starts, 1-4s after load, and a reader who
+   is already there — a reload in place, a deep link to #robotics, a fast
+   reader — met SiteMotion's cyan flow instead (measured: 4 of 4 flow lines
+   running at 1440). Whether gsap arrives or not, at >=1025 with a fine pointer
+   the concept only ever gets the pencil. Below that it keeps the CSS flow. */
+@media (min-width: 1025px) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-bf-flow]:has(.dg-node--concept) .dg-flow {
+    animation: none;
+  }
+}
+
+/* A station on a hook: hollow, the stage marker's square; lit (filled) while
+   a trace passes it. A square is drawn on the pixel grid (crispEdges): at
+   DPR 1 a 1px edge at a fractional x spread over two pixels at a third of
+   the brand's strength, where the CSS markers it stands in for are snapped
+   whole. */
+.bf-trace__stop {
+  fill: var(--bf-ground);
+  stroke: var(--bf-brand);
+  stroke-width: 1;
+}
+
+rect.bf-trace__stop {
+  shape-rendering: crispEdges;
+}
+
+.bf-trace__stop[data-bf-lit] {
+  fill: var(--bf-brand);
+}
+
+/* How we build — the `rail` hook. At >=1025px the rail is one hairline in the
+   SVG, over the stages' own top borders, which give way to it and keep their
+   space; the stations are the stages themselves (`li[data-bf-trace-stop]`),
+   shown by each stage's own square marker (`.bf-stage::before`), which is
+   filled while it is lit. So the stations sit wherever the grid puts each
+   column, snapped to whole pixels, and the drawing is the one the page always
+   had. The hairline is drawn on the pixel grid too (crispEdges), as the
+   border it stands in for was. The rail holds still: only each stage's text
+   reveals (`.bf-stage__body`). Below 1025 the SVG is not shown and the
+   borders and markers are the rail. */
+.bf-rail {
+  position: relative;
+}
+
+.bf-rail__line {
+  display: none;
+}
+
+.bf-rail__line .bf-trace__path {
+  stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
+}
+
+@media (min-width: 1025px) {
+  .bf-rail__line {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+
+  .bf-rail .bf-stage {
+    border-top-color: transparent;
+  }
+
+  /* the marker paints over the hairline, and over the trace inside it, as it
+     sat over its own border: it comes later in the page, and neither is
+     given a z-index */
+  .bf-rail .bf-stage[data-bf-lit]::before {
+    background-color: var(--bf-brand);
+  }
+}
+
+/* The final call to action — the `cta` hook, the last trace on the page. At
+   >=1025px a hairline runs the width of the column, halfway between the line
+   and the buttons, and ends in one station over Schedule a Call's first edge:
+   the rail's first stop again, where working together starts. The trace runs
+   along it right to left, into that station. Below 1025 it is not drawn. */
+.bf-final__wire {
+  display: none;
+}
+
+.bf-final__wire .bf-trace__path {
+  stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
+}
+
+@media (min-width: 1025px) {
+  .bf-final .bf-actions[data-bf-trace] {
+    position: relative;
+  }
+
+  .bf-final__wire {
+    display: block;
+    position: absolute;
+    top: -18px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+}

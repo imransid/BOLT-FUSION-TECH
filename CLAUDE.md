@@ -18,12 +18,16 @@ Do not resolve those by editing either side.
 
 Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS · Barlow and
 Jost through `next/font/google` · deployed on Vercel. There is no CMS and no
-database: the content is typed files in `/content`. There is no animation
-library and no Tailwind. **three.js is back for one thing only, the homepage
-hero's scene**, by the owner's brief of 2026-09-16 (*The hero field*, under
-Hard rules): imported dynamically after LCP and load, desktop only, one chunk
-of at most 180KB gzipped. It left on 2026-09-15 as the @react-three nebula; it
-returns as plain three.js, with no React Three Fiber.
+database: the content is typed files in `/content`. There is no Tailwind.
+**three.js is back for one thing only, the homepage hero's scene**, by the
+owner's brief of 2026-09-16 (*The hero field*, under Hard rules): imported
+dynamically after LCP and load, desktop only, one chunk of at most 180KB
+gzipped. It left on 2026-09-15 as the @react-three nebula; it returns as plain
+three.js, with no React Three Fiber. **The one animation library is gsap
+3.15.0 — core, ScrollTrigger and DrawSVGPlugin — for the Signal motion system
+only** (owner, 2026-09-28; *Decided 2026-09-28*): imported dynamically, in
+stages, after LCP and load, on a desktop that allows motion; phones, tablets,
+Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 - **One stylesheet.** `app/site.css` is the design — the owner's engineering
   redesign of 2026-09-16 (*Design language*): the shell and every page, the 404
@@ -38,16 +42,26 @@ returns as plain three.js, with no React Three Fiber.
   3D scene only — three.js core, dynamically imported after load, desktop-only,
   at most 180KB gzipped. It landed with the 3D wave (`redesign/eng-scene`;
   *The hero field*).
+- **gsap arrives** (owner, 2026-09-28; *Decided 2026-09-28*): for the Signal
+  motion system only — core, ScrollTrigger and DrawSVGPlugin, under gsap's
+  Standard "no charge" licence (commercial use allowed). No `@gsap/react` (its
+  `useGSAP` imports gsap statically, into every page's initial JavaScript), no
+  SplitText, no Flip, no CustomEase, no ScrollSmoother.
 - Package manager: yarn 4 (`packageManager` in package.json), `nodeLinker:
   node-modules` — Turbopack does not support Plug'n'Play. `yarn.lock` is the
   only lockfile.
-- Runtime dependencies: `next`, `react`, `react-dom`, `server-only`, `three`,
-  `zod`. `three` is pinned exactly (`0.186.0`), and `@types/three` in
+- Runtime dependencies: `gsap`, `next`, `react`, `react-dom`, `server-only`,
+  `three`, `zod`. `three` is pinned exactly (`0.186.0`), and `@types/three` in
   devDependencies matches it (`0.186.0`): bump the two together, and
   re-measure the scene chunk when you do. Only `components/field/scene.ts`
   imports it, and only `components/field/HeroScene.tsx` imports that, dynamically
   — check 31 (`--repo`) fails three.js imported anywhere else, or `scene.ts`
-  imported statically. Verify-site check 24 fails a dependency nothing imports.
+  imported statically. `gsap` is pinned exactly too (`3.15.0`; it ships its own
+  types) and re-measured when bumped: only `components/motion/MotionLoader.tsx`
+  imports it, and only dynamically (`components/motion/signal.ts` imports its
+  types, which are erased) — check 31 fails gsap imported anywhere else, a
+  static import, or a second module importing it. Verify-site check 24 fails a
+  dependency nothing imports.
 - There is no CI. `yarn verify:site` (below) is the check to run before pushing.
 - Scripts beside the suite: `scripts/generate-icons.mjs` (the icons, from the
   mark), `scripts/contrast-site.mjs` (the contrast table below),
@@ -667,18 +681,189 @@ beside them, read at build time.
 
 The redesign's motion is quiet (SPEC §3): the hero's 3D scene is to be the one
 orchestrated moment; everywhere else, reveals from a visible resting state,
-hover and focus states, and a slow flow along diagram paths. Transform and
-opacity only. Everything is off under reduced motion, and anything that moves
-for more than five seconds has a pause control.
+hover and focus states, and — since 2026-09-28 — **Signal**, the site's own
+motion system, in three verbs: a connection TRACES in brand blue, data FLOWS
+along it in cyan, then everything SETTLES and holds still in the state the
+server sent (owner, 2026-09-28; BRIEF §4; *Decided 2026-09-28*). It is one idea
+used at every scale, and it carries the argument — how Bolt Fusion builds —
+without delaying reading. Transform, opacity and SVG strokes only. Everything is
+off under reduced motion, and anything that moves for more than five seconds
+has a pause control.
 
 - **The reveal** (`components/site/SiteMotion.tsx`): an element marked
   `data-bf-reveal` that is still below the fold after hydration gets
   `.bf-revealed` when it enters the viewport — a 20px rise and fade over 0.8s,
   `fill-mode: none`. Nothing is hidden in the server HTML, and focus ends a
   reveal (A2).
-- **The diagram flow:** a diagram marked `data-bf-flow` gets `.bf-flowing` once a
-  third of it is in view, and its cyan `.dg-flow` paths run three 1.6s passes —
+- **The diagram flow:** a diagram marked `data-bf-flow` gets `.bf-flowing` once
+  35% of it is in view, and its cyan `.dg-flow` paths run three 1.6s passes —
   under five seconds, so it needs no pause control (WCAG 2.2.2) — then rest.
+  That is the whole flow everywhere the Signal does not run, and on a desktop
+  until gsap has arrived. Where the Signal runs, a diagram still ahead of the
+  reader is traced first and then flows for **two** passes, not three (the
+  flow takes over 0.96s in, so 0.96 + 2 x 1.6 = 4.2s, still under five
+  seconds): the engine claims it with
+  `data-bf-motion="gsap"` at run time, SiteMotion skips a claimed diagram, and
+  `[data-bf-motion="gsap"].bf-flowing .dg-flow` runs two iterations. A claim is
+  made at run time, not in the server HTML, so a desktop where gsap never
+  arrives keeps the CSS flow, and a claim the engine gives back (its gate
+  stopped holding) flows here when next seen. The one exception is the Lab
+  drawing, which never flows in the Signal's media, claimed or not (below).
+- **The Signal** (`components/motion/`; owner, 2026-09-28). CSS keeps the block
+  reveal and the flow for everyone; gsap owns only the trace overlays, the
+  trace-to-flow handoff and the `[data-bf-trace]` hooks (the delivery rail, the
+  final call to action's line) — one owner per element.
+  - **The loader** (`MotionLoader.tsx`, rendered by `SiteShell` on every page,
+    renders nothing) is the ONE module that imports gsap, always dynamically.
+    Its gate is checked before any import: `(min-width: 1025px) and (pointer:
+    fine) and (prefers-reduced-motion: no-preference)` with Save-Data off, and a
+    page with nothing to trace (no `[data-bf-flow]` or `[data-bf-trace]` outside
+    the hero — /work and its write-ups, /contact, /privacy-policy, the 404)
+    imports nothing. Its stages, each a task of its own: the first
+    LCP entry AND the load event, then a macrotask (the browser reports no LCP
+    after the reader's first key, press or scroll, so that input stands in for
+    the entry, and one made before hydration — which no listener sees — is
+    covered by giving up on the entry 3s after load: measured, a wheel 15ms
+    into the load and neither the scene nor the Signal ever started); then the scene's
+    `data-scene-ready` or 3s (a desktop whose WebGL context is refused never
+    gets the attribute; a page with no hero field skips it); then an idle
+    callback (a 300ms timeout where `requestIdleCallback` is missing) — the
+    first scroll cuts those two short, never the load wait; then gsap core ·
+    yield · ScrollTrigger · yield · `registerPlugin` · yield · DrawSVGPlugin ·
+    yield · the engine · yield · start. The gate is watched live: the engine
+    builds inside `gsap.matchMedia(gate)`, which reverts everything when a
+    media condition stops holding and rebuilds when it holds again; Save-Data
+    switched on stops it in the loader. A failed import leaves the page as
+    the server sent it. `<html data-bf-signal="live">` while it runs.
+  - **The engine** (`signal.ts`, gsap passed in, so it imports only gsap's
+    types) arms each host in page order, one per task, and only a host whose
+    trigger is still ahead: a diagram when 35% of it is in view, a hook when it
+    reaches 70% of the viewport's height, once it has stayed in view 150ms (a
+    fly-past spends nothing). A trigger's range ends when the host has left the
+    top of the viewport — for the sticky capability figures, when their
+    column's bottom carries them off, not where their static box would be (a
+    reader landing in the stuck stretch would otherwise look at a claimed
+    diagram that neither traces nor flows). Nothing is created before its
+    trigger, and nothing in `#hero` is ever touched. Every tween is on an
+    overlay it adds and removes: **the originals are never animated** (DrawSVG
+    would overwrite their dash patterns — `.dg-flow`'s `4 12` read `120px,
+    80.1px` when measured). No pins, no scrub on text, no smooth scroll.
+    The triggers re-measure when fonts finish loading and on a
+    150ms-debounced ResizeObserver of `main#main` (the FAQ's `<details>`), and
+    on nothing else of ours — **each trigger on its own**
+    (`ScrollTrigger.getAll()` → `refresh()`, then `ScrollTrigger.update()`),
+    never `ScrollTrigger.refresh()`. A full refresh scrolls the page to the top
+    to measure and puts it back, which cancels a smooth scroll in flight:
+    following `#faq` while main grew 40px, 120ms in, left the reader at
+    2473–4349 with the FAQ still 13–15k px below; `refresh(true)` reached
+    16308–16670; per trigger it lands on 17777, the same as with gsap blocked
+    (3 of 3). None of these triggers pins or scrubs, so re-reading each start
+    and end is all a refresh would do; a probe that prepends 3000px to main
+    and then scrolls to the first diagram's new place sees it trace there
+    (and not, with the ResizeObserver stubbed out).
+  - **Two things ScrollTrigger does to the page, undone in the engine.** It
+    forgets the page's scroll position when the last trigger on it is killed,
+    and a media change then refreshes from the top: when the gate stopped
+    holding (a window narrowed to 1000px) the revert killed every trigger and
+    threw the reader to scrollY 0 (measured 2883 → 0; main stays at 2883). One
+    idle trigger lives as long as the engine and keeps the position (with it,
+    2883, 12000 and 7000 are each kept exactly across 1440 → 1000 or 1024 →
+    1440). And each refresh writes `scroll-behavior:
+    smooth` back INLINE on `<html>`, which would outlive the stylesheet's own
+    guard (smooth only under no-preference motion) once reduced motion is
+    asked for; the engine removes it after each refresh.
+  - **Trace → flow, on every `[data-bf-flow]` diagram** (/, /capabilities):
+    each `.dg-edge` is cloned into a brand-blue 2px overlay with butt caps,
+    placed just under its cyan `.dg-flow` twin so nothing on screen is covered,
+    and drawn in topology order — edges levelled breadth-first from the nodes
+    no edge enters, so in the AI router the router traces before the model —
+    800ms each, `power2.inOut`, 60ms apart and the whole stagger at most 360ms
+    (the nine spokes of the ERP ring close up to 45ms); the overlays fade over
+    300ms and the flow takes over for two passes. A dashed edge is traced
+    dashed, through a mask DrawSVG draws.
+  - **The Lab sketch:** a concept drawing (`.dg-node--concept`, robotics) does
+    not flow where the Signal runs — nothing flows in a system that has not
+    shipped. A light-steel pencil (`--bf-soft`, 1.5px, dashed `5 4` — lighter
+    than the drawing's own `--bf-steel`, or it would draw steel over steel and
+    nobody would see it pass; never blue, never cyan) goes round the loop over
+    the drawing, each concept box and then the edge leaving it, at one speed,
+    1.4s in all, and fades. The evidence tier, shown in behaviour. The "no
+    flow" is CSS, not the engine's claim: `[data-bf-flow]:has(.dg-node--concept)
+    .dg-flow { animation: none }` in the gate's own media (`min-width: 1025px`,
+    `pointer: fine`, no reduced motion; Save-Data is not a media query). The
+    engine claims only a diagram still ahead of the reader when it starts,
+    1–4s after load, so while the "no flow" rode on the claim, a reader who was
+    already there — a reload in place, a deep link to `#robotics`, a fast
+    reader — met SiteMotion's cyan flow (found in review: 4 of 4 flow lines
+    running at 1440 after a reload). Now 0 of 4 run on any of those paths,
+    whether gsap arrives or not. Phones and touch screens, where the Signal
+    never runs, keep the CSS flow on it (4 of 4 at 390 and 1366x1024 touch): an
+    owner question, since it is the same claim in cyan.
+  - **The hooks, `[data-bf-trace="<name>"]`:** a container holding one
+    `<svg class="bf-trace" aria-hidden="true" focusable="false">` of
+    `.bf-trace__path` lines or paths drawn COMPLETE in the server HTML — a
+    `--bf-line-strong` hairline by default, at zero specificity
+    (`:where(.bf-trace__path)`), so each hook's owner styles its own drawing
+    whatever order the streams' CSS blocks merge in — with optional stations
+    `[data-bf-trace-stop]`, in order: an SVG `rect.bf-trace__stop` (the stage
+    marker's hollow square, drawn `crispEdges`) or any element, like the
+    rail's stages and the pilot's `<li>`s. Without script it is a finished
+    drawing. The engine traces the paths in order as one head (`power2.inOut`)
+    and gives each station `data-bf-lit` from the moment the head reaches it
+    until the sequence settles — reached where the trace first touches the
+    station's box, or, for one the line only passes beside, at its nearest
+    point; sampled on screen every 2px, so a stretched `viewBox` with a
+    non-scaling stroke measures what is drawn (probed on a copy of the IA
+    stream's pilot markup: its three stations lit in turn). A station is
+    measured where the layout puts it: a translation on it or an ancestor
+    inside the host that the drawing does not share (a reveal still rising)
+    is taken back out. An overlay keeps its source's `shape-rendering`, so a
+    hairline on the pixel grid is traced on it. An SVG station fills in the
+    200ms `state` time; how an HTML station shows `data-bf-lit` is its owner's
+    CSS. Any name works: `rail` 1.2s, `pilot` 1.2s, `cta` 0.9s, anything else
+    1.2s.
+    - `rail` (`HowWeBuild.tsx`, on / and /engineering, >=1025): one hairline
+      (`crispEdges`) over the six stages, which give their top borders to it
+      and keep their space, and the stages themselves are the stations
+      (`li.bf-stage[data-bf-trace-stop]`), shown by each stage's own square
+      marker (`.bf-stage::before`), filled brand blue while lit — the drawing
+      the page always had. So the stations sit wherever the grid puts each
+      column, whatever the grid does, and snap to whole pixels. The first
+      version drew six SVG squares at i/6 of the rail: at DPR 1 four of the
+      six spread their 1px edge over two pixels at a third of the brand's
+      strength (the CSS squares are one full-strength pixel at 1100, 1439,
+      1440 and 1920), and a column gap would have moved every one of them
+      silently. The rail holds still: each stage's reveal is on its text
+      (`.bf-stage__body`), never on its border or marker, at every width. The
+      trace runs left to right, lighting the six stations in turn (sampled
+      per frame at 1440: 0, 398, 516, 582, 666, 766ms), and settles back to
+      hollow. Below 1025 the borders and markers are the rail, as they always
+      were.
+    - `cta` (`FinalCta.tsx`, on / and every page that ends with it —
+      /capabilities, /industries, /engineering, /about, /insights and each
+      article; >=1025): the buttons' row is the hook. A hairline the width of
+      the column, 18px above the buttons (half their 36px margin), ends in one
+      station over Schedule a Call's first edge — the rail's first stop again,
+      where working together starts. The trace runs right to left into it: the
+      last trace on the page points at the one action that matters. The
+      buttons never move.
+    - `pilot`: rendered by the IA stream inside `how_we_work`; handled like any
+      hook.
+  - **The rules it keeps** (BRIEF §4.4): the resting state is the server HTML;
+    text never moves, reverses or exits; numbers, chips and tier meters never
+    move; nothing in the hero animates; every entry-bound sequence ends within
+    5s (a diagram's trace and flow ends 4.2s after it starts: the last edge is
+    drawn at 1.16s, the flow takes over at 0.96s for 2 x 1.6s; the Lab sketch
+    1.8s; a hook 1.65s); **focus ends a sequence**
+    (focus inside the host's section, or a sequence that would start with focus
+    there, starts at its end); **the pause control ends them too** —
+    `html[data-motion="paused"]` or `bf:motion` with `{ paused: true }` finishes
+    every running sequence, and a new one starts at its end, the server's
+    drawing.
+  - **Tokens** (BRIEF §4.3): `response` 120–160ms and `state` 200ms (CSS);
+    `trace` 800ms per edge, `power2.inOut`, 60ms stagger, 360ms ceiling, 300ms
+    fade; `flow` linear 1.6s a pass, two after a trace, three without; `lab`
+    1.4s, steel, no flow.
 - **The system map:** a lit link's cyan pulse runs four 1.2s passes and rests;
   the other parts dim with a 0.2s opacity change.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
@@ -829,11 +1014,15 @@ for more than five seconds has a pause control.
   renders a bare boolean data attribute as `"true"`, which it read as an
   animation's name — and no check caught it, because every check reads a page at
   rest, where a reveal that never runs and one that has finished look the same.
-- **No animation library.** The FAQ is a `<details name="faq">` with no
-  animation but its icon's quarter turn.
+- **One animation library, for the Signal only** (gsap, above). Everything else
+  is CSS. The FAQ is a `<details name="faq">` with no animation but its icon's
+  quarter turn.
 - **Reduced motion:** nothing moves. The reveal, the diagram flow, the map's
   pulse and fade, the poster's drift, the header's slide, the drawer's slide,
   the FAQ icon and the quiet link's arrow each have a guard (verify-site checks 21 and 23).
+  Since 2026-09-28 check 21 also sees motion a script writes (*Verify before
+  pushing*). gsap is never requested — the loader's gate is checked before any
+  import — and one switched on live is reverted by `gsap.matchMedia`.
 
 ## SEO and AI visibility
 
@@ -1301,6 +1490,61 @@ misuse fails — and every new rule has a misuse case in the gate's RUN 2.
   `bf:motion` instead would make the capture depend on the scene's own pause
   working; reduced motion keeps the scene out of the page.
 
+**Motion a script writes, and CLS while reading (2026-09-28).** Two blind spots
+the Signal motion system would have walked into, closed before it landed. Each
+rule was proven both ways on a served build — the clean build passes, the same
+build with the misuse fails with its own finding — and each has its misuse case
+in the gate's RUN 2.
+- **21** — `getAnimations()` cannot see a script: three live gsap tweens read 0.
+  An init script, in place before any page script, now counts per element the
+  changes a script makes under reduced motion, in three kinds, each its own
+  finding: an inline transform, translate, scale, rotate, opacity or stroke
+  dash (`script-motion`, an rAF loop writing a transform); any inline CSS
+  custom property, since `--x` feeding `transform: translateX(var(--x))` moves
+  what reads it (`script-motion-var`); and an SVG motion attribute —
+  transform, opacity, the stroke dash, x, y, cx, cy, r, x1–y2, d, points —
+  gsap's attr plugin or a hand-rolled draw-on (`script-motion-attr`, an rAF
+  loop writing `stroke-dashoffset`). 5 or more changes is "animated by script"
+  and fails. The first version watched the inline properties alone: in
+  review a custom property and two attributes, each written 120 times under
+  reduced motion, went unseen. The info line names the elements set fewer
+  times, and by which kind.
+- **29** — **CLS while reading**: one fresh run per profile, throttled as the
+  others, scrolled at reading speed top to bottom, at the same 0.005 line; the
+  largest shifts are named with their nodes and scroll position
+  (`scroll-shift`, a block inserted above `#faq` as a reader nears it). The runs
+  at rest never scroll, and scrolling is not recent input, so a shift a reader
+  meets was invisible to the check.
+
+**The Signal and the suite (2026-09-28).** gsap loads in exactly the scene's
+profile, so without a suite change check 25 counts it as the scene (139 + ~50KB,
+over the 180KB cap), and checks 21 and 29 cannot see it at all. Each rule below
+was proven both ways on a served build, and each has its misuse case in the
+gate's RUN 2. gsap's chunks are known by their code, read off Turbopack's
+production chunks (`GSAP_CODE`): the core by "GreenSock" and "gsap.com", a
+plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
+- **25** — gsap chunks are the Signal's, never the scene's: they leave the
+  scene set, and the info line lists them with their sizes. A three.js chunk
+  carrying GSAP is the scene importing gsap, and fails (`scene-gsap`). Turbopack
+  gives a module two imports share a chunk of its own, so a scene importing the
+  gsap the loader imports carries no GSAP code itself: every dynamic import's
+  chunk list (`Promise.all(["static/chunks/…"])`) is read from the code, and
+  one that loads a three.js chunk and a GSAP chunk together fails
+  (`scene-share`). gsap requested where the Signal's gate fails — 390, 768,
+  1024, a phone, a touch tablet, Save-Data, reduced motion — fails
+  (`gsap-coarse`). And the positive case: on / at >=1025px with a fine pointer
+  the engine must start, `html[data-bf-signal="live"]`, because every
+  never-rule passes on a Signal that is silently dead (`signal-dead`).
+- **29** — a GSAP chunk requested before the load event ended fails, printed
+  with its size and parts (`gsap-static`); the info line lists the ones after
+  load, and says so when the phone profile requested none.
+- **31** — gsap (and any `@gsap/*`) is imported only under `components/motion/`,
+  only dynamically, and only by `components/motion/MotionLoader.tsx`; a
+  type-only import is erased (`gsap-static-31`, `scene-gsap-31`,
+  `signal-second-loader`).
+- **21** — no GSAP-signature script may be requested under reduced motion at
+  all (`gsap-reduced`): the loader checks its gate before any import.
+
 **The gate (2026-09-16).** RUN 1 builds a fresh copy of HEAD, serves it fresh and
 runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
@@ -1615,16 +1859,19 @@ than one.
 
 The budget, from the approved rebuild plan, is measured on `/` by verify-site
 check 29, the way the Phase 1 baseline was: the median of three runs, each in a
-fresh context, with no input and no scroll.
+fresh context, with no input and no scroll — and, since 2026-09-28, one more
+run per profile scrolled top to bottom at reading speed, for the layout shifts
+a reader meets.
 
 | | budget |
 |---|---|
 | LCP, mobile lab (390 wide, 4× CPU, 150ms RTT, 1.6Mbps down) | at most 1.5s |
 | blocking time, mobile lab (each long task's time over 50ms, navigation to load + 4s) | at most 150ms |
 | LCP, desktop (1440, unthrottled) | at most 0.5s |
-| CLS | 0.00 — printed to three places, failing at 0.005 |
+| CLS | 0.00 — printed to three places, failing at 0.005; at rest, and during a reading-speed scroll (2026-09-28) |
 | initial JavaScript (requested by the end of the load event, gzipped, as transferred) | at most 260KB |
 | the hero scene chunk (three.js and the scene; 2026-09-16, was 15KB for the raw WebGL2 renderer) | at most 180KB gzipped as transferred; requested only after the load event; never below 1025px, on touch, with Save-Data or under reduced motion — check 25 |
+| the Signal's gsap chunks (gsap 3.15.0 and the engine; 2026-09-28) | not initial JavaScript: requested only after the load event (check 29); never below 1025px, on touch, with Save-Data or under reduced motion (checks 25 and 21); never in the scene's chunk (check 25). No size budget of its own: motion.md's "at most 50KB gzipped" is met, not asserted |
 
 **The homepage, measured 2026-09-16** (check 29 against `next start`, the median
 of three runs, on a machine also building elsewhere — its load average is printed
@@ -1663,6 +1910,33 @@ added one named import, `BufferAttribute` (the dashed link), which
 event; 39.2KB of the 180KB left. With the exploded view: **144,403 bytes,
 141.0KB** (+192 bytes, no new import), requested at 1.5s against a 118ms load
 event; 39.0KB left.
+
+**The Signal's chunks, measured 2026-09-29** (`next start`, the gzip bodies as
+served, `encodedBodySize` in the browser at 1440). Turbopack splits the staged
+imports into four chunks, requested in order and each evaluated in its own
+task: gsap core 26.7KB, ScrollTrigger 17.0KB, DrawSVGPlugin 1.9KB and the
+engine (`signal.ts`) 3.5KB — **49.2KB in all**; the three gsap parts are 45.6KB
+against esbuild's estimate of 45.9KB. (Re-measured 2026-09-29 after the review
+fixes: the three gsap chunks are byte-identical, same hashes; the engine grew
+from 3.3KB to 3.55KB — the per-trigger refresh, the stations' drift. Initial
+JavaScript unchanged at 135.9KB in the same eight files; still no long task in
+the Signal's window in three runs at 1x and three at 4x, at a load average of
+6–11.) **Initial JavaScript went from 135.1KB to
+135.9KB** as check 29 counts it, the same eight files: the +0.8KB is the loader
+itself (its gate, its staged waits and Turbopack's import stubs), and none of
+it is gsap. On an unthrottled 1440 the first gsap chunk is requested 2–3ms
+after `data-scene-ready`, about 270–370ms after navigation in a warm run (the
+load event at ~65ms); without the GPU flags check 29's desktop run uses, the
+idle wait puts it near 1s, and on a loaded machine (load average 15–20) it
+came 1–6s after navigation. The phone profile, the 1180x820 touch tablet,
+1024, reduced motion and Save-Data request no gsap chunk at all. **No long task
+in the Signal's window** — from the first gsap request to 1s after the engine
+starts — in four runs at 1x and four at 4x CPU (the 4x runs' long tasks, 55–375ms
+of blocking, all come before gsap is asked for: the scene's chunk and first
+frame); and during a reading-speed scroll of the whole homepage with all eight
+sequences playing, **no long task at 1x or 4x and CLS 0.0000** (main, the same
+scroll at 4x: also none, 0.0000). Measured at a load average of 7–9, other
+builds running.
 
 **The scene is not initial JavaScript, and check 29 says so (2026-09-16).** The
 260KB counts what is requested by the end of the load event, and the scene chunk
@@ -1821,6 +2095,34 @@ the hiring terms were only on /about, and "pilot" appeared nowhere on `/`.
 | Mobile | no header Schedule a Call below 520px: it does not fit at 360 (measured, *Design language*); contextual primaries after the proof and after how we work instead; no sticky bar. The proof's comes straight after the pair of write-ups, each a phone card of its outcome and result: 1,974px after the hero's at 390, where it was 4,667, and `#recent-work` 3,256px tall there (from 4,412). The ledger shows no diagram below 768px, where its labels would fall under 13px | `motion-hire/ia` |
 | Hierarchy and rhythm | three chapter heads, `clamp(48px, 4.4vw, 64px)` from 1025 — 63px at 1440, inside DECISIONS' 56–64 from 1273, and under the h1 below that, where 56 would have put them above it — every other homepage h2 at 40px, the proof's included, since it shares the first screen with the h1; the final title never above the h1; chips at 12px/600; related sections' padding 80px on a desktop (DECISIONS' 64–80), 64 on a tablet and 56 on a phone, and 128px only above a chapter; 44px hit areas on the homepage's inline links, the hero's proof line at every width; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
 | Honesty cleanup | NIdle Finishing's only proof link 301s to a bare PNG: removed, and the card held back until a working link exists (*Projects and attribution*). The rest of the brief's row 14 is the owner's | `motion-hire/ia` |
+
+**The motion system, "Signal"** (DECISIONS item 9; BRIEF §4; the MOTION
+stream). The request names GSAP, so gsap comes in — `gsap@3.15.0`, pinned
+exactly; core, ScrollTrigger and DrawSVGPlugin; no `@gsap/react`, SplitText or
+Flip — and it reverses this file's "there is no animation library" (*Stack*).
+It is spent on the one thing CSS cannot do well: drawing the site's own systems
+as they are read — a diagram's connections trace in topology order and then
+flow, the Lab concept is only sketched, the delivery rail traces its six
+stages, and the last trace on the page runs into Schedule a Call (*Motion, as
+built*). It loads only where it runs: after LCP and load, in stages, at
+>=1025px with a fine pointer, no reduced motion and no Save-Data — the scene's
+own profile — so phones, tablets and anyone who asks for less motion never
+download it, and the CSS reveal and flow stay for everyone. The reasons
+(BRIEF §4.1, perf.md): as initial JavaScript, gsap pushed a phone's load event
+back ~186ms; staged after load it measured no blocking at all; the buyers'
+own reference sites ship almost no choreography, so the motion stays quiet and
+explains a mechanism or does not ship. The suite learnt to see it: check 25
+tells its chunks from the scene's, check 29 fails it before load and measures
+CLS while scrolling, check 31 keeps it in one loader, and check 21 sees
+script-written motion (*Verify before pushing*).
+
+| question | decision | where |
+|---|---|---|
+| The library | gsap 3.15.0 — core, ScrollTrigger, DrawSVGPlugin — for the Signal only; the scene never imports it | `motion-hire/motion` |
+| Who gets it | >=1025px, a fine pointer, no reduced motion, no Save-Data, watched live; everyone else keeps the CSS motion, which runs until gsap arrives and wherever it never does | `motion-hire/motion` |
+| The flow after a trace | Two 1.6s passes (three without a trace), so trace + flow stays under five seconds | `motion-hire/motion` |
+| The robotics diagram | A steel 1.4s sketch and no flow: nothing flows in a system that has not shipped. The "no flow" is CSS in the Signal's own media, so it holds however the reader arrives and whether gsap loads or not; phones and touch screens keep the CSS flow on it (an owner question) | `motion-hire/motion` |
+| Pins, smooth scroll, SplitText, count-ups | None (BRIEF §4.6–4.7) | `motion-hire/motion` |
 
 **The hero scene, v2** (the scene stream, `motion-hire/scene`). The research
 found the scene well engineered and badly lit: about 95% of the field's pixels
