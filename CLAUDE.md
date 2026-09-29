@@ -614,7 +614,16 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   DOM in the phone's order). The calendar's heading stands alone: its blurb,
   "Or grab an open slot below…", answered the panel's own Schedule a Call,
   which went that day, and was cut. The project form sits under both, at
-  least 480px wide at 1440 (check 32).
+  least 480px wide at 1440 (check 32). **One card, never three** (2026-09-29,
+  fix pass B; the design review): given an iframe wider than about 630px,
+  Calendly draws its desktop layout, its own grey page around its own white
+  card, so at 768–1024 — the calendar the whole column, an 896px iframe at
+  1024 — our white paper held a grey field holding a white card. There the
+  paper is at most 660px (the iframe 612–616px) and Calendly draws its single
+  card, as it does beside the head from 1025px (a 627px iframe at 1440); the
+  project form keeps the same 660px right edge. From 1025px the form runs to
+  its column's edge (it stopped at 640px, 41px short of the calendar card's
+  right edge at 1440).
 - **One light surface, on purpose:** the booking calendar on /contact. Calendly
   paints its own white interface and ignores the colour parameters, so the embed
   is a card we place — white (`--bf-paper`), generous padding, the design's 2px

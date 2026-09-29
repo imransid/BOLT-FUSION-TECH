@@ -4648,6 +4648,25 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-contact__cal { grid-area: cal; min-width: 0; }
 .bf-contact__next { grid-area: next; min-width: 0; }
 
+/* One card, never three (2026-09-29, fix pass B; the design review). Given an
+   iframe wider than about 630px, Calendly draws its desktop layout — its own
+   grey page around its own white card — so at 768–1024, where the calendar
+   had the whole column (an 896px iframe at 1024), our white paper held a
+   grey field holding a white card; at 672px it still did. At most 660px (the
+   iframe 612–616px), it draws the single card it draws beside the head from
+   1025px (a 627px iframe at 1440). The project form under it keeps the same
+   right edge. */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .bf-contact__cal .bf-calendar { max-width: 660px; }
+  #project .bf-form { max-width: 660px; }
+}
+
+/* From 1025px the project form runs to its column's edge, level with the
+   calendar card's above it (it stopped at 640px, 41px short at 1440). */
+@media (min-width: 1025px) {
+  #project .bf-form { max-width: none; }
+}
+
 .bf-contact .bf-status-line {
   margin-bottom: 4px;
 }
