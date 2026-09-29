@@ -3,7 +3,12 @@ import { z } from "zod";
 
 /**
  * COPY.md §3 "Metric band". Every row carries its status verbatim from the
- * approved table. Nothing here is rounded, reformatted, or added.
+ * approved table. Nothing here is rounded, reformatted, or added. The
+ * source is not in COPY.md's table: the restaurant search's rows name it as
+ * every other place does, "Intelligent restaurant search" (2026-09-29, the
+ * design review: the homepage called one product by three names — this and
+ * the industries' link said "Restaurant discovery platform" and "The
+ * restaurant search").
  */
 export const metrics: Metric[] = parseContent(
   z.array(metricSchema),
@@ -13,7 +18,7 @@ export const metrics: Metric[] = parseContent(
       value: "<100ms",
       label: "Search response, 80% of traffic",
       status: "shipped",
-      source: "Restaurant discovery platform",
+      source: "Intelligent restaurant search",
       href: "/work/restaurant-search",
     },
     {
@@ -23,7 +28,7 @@ export const metrics: Metric[] = parseContent(
       /* A budget, not a measurement — relabelled 2026-09-12. CLAUDE.md, "A
          figure labelled shipped with nothing behind it". */
       status: "target",
-      source: "Restaurant discovery platform",
+      source: "Intelligent restaurant search",
       href: "/work/restaurant-search",
     },
     {
@@ -31,7 +36,7 @@ export const metrics: Metric[] = parseContent(
       value: "~90%",
       label: "Of AI calls routed to Haiku, not a frontier model",
       status: "shipped",
-      source: "Restaurant discovery platform",
+      source: "Intelligent restaurant search",
       href: "/work/restaurant-search",
     },
     {

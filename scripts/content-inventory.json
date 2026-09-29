@@ -270,7 +270,7 @@
           "30–40% hit rate target",
           "<100ms",
           "Search response, 80% of traffic",
-          "Restaurant discovery platform",
+          "Intelligent restaurant search",
           "~$0.001",
           "Average cost per AI query",
           "~90%",
@@ -280,6 +280,15 @@
           "WarmChats",
           "From systems we shipped.",
           "Each figure says whether it was measured (shipped) or is a target."
+        ]
+      },
+      {
+        "item": "One product, one name: the proof strip's old source label",
+        "proves": "Nothing: the restaurant search's figures and its industry link name it as its write-up does, so a buyer counts one product, not two",
+        "status": "cut",
+        "cut": "the design review 2026-09-29 — the homepage called one product \"Intelligent restaurant search\", \"Restaurant discovery platform\" and \"The restaurant search\"",
+        "needles": [
+          "Restaurant discovery platform"
         ]
       },
       {

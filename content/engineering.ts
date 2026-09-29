@@ -290,7 +290,7 @@ const raw: EngineeringInput = {
       wouldBuild: ["Conversational search and discovery", "Point of sale with ordering and offline sync", "Multi-branch reporting"],
       capabilityIds: ["ai", "pos", "erp"],
       evidence: [
-        { label: "The restaurant search", href: "/work/restaurant-search", workSlug: "restaurant-search" },
+        { label: "Intelligent restaurant search", href: "/work/restaurant-search", workSlug: "restaurant-search" },
         { label: "Our point-of-sale work", href: "#pos" },
       ],
     },

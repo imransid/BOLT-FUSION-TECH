@@ -166,7 +166,12 @@ fails `next build` with the file named:
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage (the
   proof strip, the restaurant story's lanes, the client-story band) and
-  `lib/structured-data.ts`. `projects.ts` also holds the client stories
+  `lib/structured-data.ts`. A figure's `source` names its project as the
+  project's card does — the restaurant search's three are "Intelligent
+  restaurant search", and so is its link in the industries (2026-09-29, the
+  design review: the homepage called it that, "Restaurant discovery platform"
+  and "The restaurant search", and a buyer could count two products; check
+  30 cuts the second on `/`). `projects.ts` also holds the client stories
   (`clientStories`, 2026-09-29: a title and an intro; its members are computed
   from `client`, never stored) and refuses one with fewer than two members, a
   count in its words that is not its member count, or "live" said of a set

@@ -101,7 +101,7 @@ to answer. That is what makes the unit economics predictable as volume grows.
 | `~$0.001` | Average cost per AI query | target |
 | `~90%` | Of AI calls routed to Haiku, not a frontier model | shipped |
 
-Source: restaurant discovery platform.
+Source: Intelligent restaurant search.
 
 ---
 
