@@ -2,24 +2,29 @@ import { z } from "zod";
 
 import { CANONICAL_DESCRIPTION } from "./canonical";
 import { figureLabels } from "./figure-labels";
+import { pages } from "./pages";
+import { projects } from "./projects";
 
-/* The homepage's sections, in the owner's redesign of 2026-09-16 (SPEC §5):
-   the hero; what we engineer; the six capabilities; the system map;
-   industries; how we build; technical depth; engineering stories (the two
-   write-ups and the proof strip); the team; the FAQ; the final call to action.
-   The booking calendar and the contact panel moved to /contact. The
-   architecture section, How we work and the engagement models left the
-   homepage: $SP/engineering/MOVES.md records where each item went. */
+/* The homepage's sections — the owner's request of 2026-09-28, "make it easy
+   for clients to hire" (DECISIONS 2026-09-28, item 1; CLAUDE.md, "Decided
+   2026-09-28"): the hero; the engineering stories, compact, with the proof
+   strip (`stories`, #recent-work); how we work with you (`how_we_work`: the
+   terms, the engagement models, the pilot and the headcount); what we engineer
+   (`what_we_engineer`: one ledger row per capability, which absorbed the six
+   deep dives); how we build; the industries with delivered work; the Insights
+   teaser and the FAQ (`faq`); the final call to action.
+   Left the homepage that day, each still on its own route: the six capability
+   deep dives and the system map (/capabilities), the stack by layer
+   (/engineering), the industries without delivered work (/industries) and the
+   Team section (/about; its headcount is in how we work). Until then the order
+   was the 2026-09-16 redesign's (SPEC §5). */
 export const sectionIds = [
   "hero",
-  "what_we_engineer",
-  "capabilities",
-  "system_map",
-  "industries",
-  "how_we_build",
-  "technical_depth",
   "stories",
-  "team",
+  "how_we_work",
+  "what_we_engineer",
+  "how_we_build",
+  "industries",
   "faq",
   "final_cta",
 ] as const;
@@ -127,6 +132,56 @@ const teamSizeSchema = z.string().superRefine((v, ctx) => {
     });
 });
 
+/* ── The hero's proof line and its microcopy (2026-09-28; DECISIONS item 2).
+   The hero's contract words — the h1, the support line, the body and both
+   calls to action — are unchanged (verify-site check 28); these sit under the
+   calls to action.
+   · The microcopy is approved copy, word for word: it must be one whole
+     sentence of one of /about's terms (content/pages.ts) — never empty, never
+     a fragment of one — so it cannot drift into a new promise or be cut to
+     half a promise. verify-site check 30 cannot see it go: the same sentence
+     is served on / in how we work and in the FAQ, and a needle is a
+     substring. RUN 3 of the gate proves the refusal (scripts/gate).
+   · The proof line names shipped work by its id in content/projects.ts; the
+     hero reads the name, the client and the link from there, so the
+     attribution is the projects' own. Only work that is ours and running
+     qualifies: a published case study or delivered project (never feature
+     work, whose app is the client's, and never an engineer's track record),
+     live or in production. ── */
+const approvedSentences = pages.about.howWeWork.terms.flatMap((t) => t.detail.split(/(?<=[.!?])\s+/));
+const heroMicrocopySchema = z
+  .string()
+  .min(1)
+  .superRefine((v, ctx) => {
+    if (!approvedSentences.includes(v))
+      ctx.addIssue({ code: "custom", message: `the hero's microcopy "${v}" is not approved copy: it must be one whole sentence of /about's terms, word for word (content/pages.ts, about.howWeWork.terms)` });
+  });
+
+const heroProofSchema = z.strictObject({
+  /** Before the items: what they are. */
+  label: z.string().min(1),
+  /** Three project ids in content/projects.ts, in the order shown. */
+  projects: z
+    .array(z.string())
+    .length(3)
+    .superRefine((ids, ctx) => {
+      for (const [i, id] of ids.entries()) {
+        const p = projects.find((x) => x.id === id);
+        const why = !p
+          ? "is not a project in content/projects.ts"
+          : p.state !== "published"
+            ? `is ${p.state}, not published`
+            : !(p.kind === "case-study" || (p.kind === "project" && p.scope === "product"))
+              ? `is ${p.kind === "project" ? "feature work in another company's app" : p.kind} — the proof line names only work that is ours`
+              : !(p.status === "live" || p.status === "in-production")
+                ? "is not live or in production (content/projects.ts says so, or it is not on the line)"
+                : "";
+        if (why) ctx.addIssue({ code: "custom", path: [i], message: `hero.proof: "${id}" ${why}` });
+      }
+      if (new Set(ids).size !== ids.length) ctx.addIssue({ code: "custom", message: "hero.proof names a project twice" });
+    }),
+});
+
 /* Every figure carries a shipped or target label (CLAUDE.md hard rule).
    Required here as well as in content/metrics.ts, so no KPI can reach a page
    without one. */
@@ -230,6 +285,11 @@ export const siteContentSchema = z
       body: z.string().min(1),
       primaryCta: scheduleCtaSchema,
       secondaryCta: linkSchema,
+      /** Under the calls to action: what the first call is — approved copy,
+       *  word for word (/about's terms, content/pages.ts). 2026-09-28. */
+      microcopy: heroMicrocopySchema,
+      /** The proof line under it: shipped work, by id in content/projects.ts. */
+      proof: heroProofSchema,
     }),
     team: z.strictObject({
       benchLabel: z.string(),
@@ -300,20 +360,24 @@ export const siteContentSchema = z
     /* /contact (2026-09-16): the contact panel and the booking calendar that
        closed the old homepage, and a short project form that opens the
        visitor's email app — the site's existing mechanism, mailto, and no
-       backend. */
+       backend. Since 2026-09-28 the calendar sits beside the h1 (after it on a
+       phone), so the panel's own Schedule a Call — a jump to that calendar —
+       went: the header's is on every page. */
     contact: z.strictObject({
       meta: z.strictObject({ title: z.string().min(1), description: z.string().min(1) }),
       eyebrow: z.string().min(1),
       statusLabel: z.string(),
       title: z.string(),
       body: z.string(),
-      primaryCta: scheduleCtaSchema,
       emailLabel: z.string(),
       emailHref: safeHref,
       emailAddress: z.string().email(),
       schedule: z.strictObject({
         title: z.string().min(1),
-        blurb: z.string().min(1),
+        /* No blurb since 2026-09-28: "Or grab an open slot below — same
+           30‑minute intro call." answered the panel's own Schedule a Call,
+           which went when the calendar moved beside the h1 (its "Or" pointed
+           at nothing). */
         frameTitle: z.string().min(1),
         /** Whose calendar this is and who hosts it, on the panel itself. */
         caption: z.string().min(1),

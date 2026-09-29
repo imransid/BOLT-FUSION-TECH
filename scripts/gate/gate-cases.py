@@ -118,7 +118,10 @@ def p_vanishing_frame(s):
 
 
 def p_logotype(s):
-    s.rep("app/contact/page.tsx", '<p className="bf-lead">\n                <FigureText text={c.schedule.blurb} />', '<p data-logotype className="bf-lead">\n                <FigureText text={c.schedule.blurb} />')
+    # re-anchored 2026-09-28: onto the panel's body, beside the calendar — the
+    # calendar's blurb it anchored on was cut that day (same meaning: a
+    # data-logotype on /contact text that is not the wordmark)
+    s.rep("app/contact/page.tsx", '              <p className="bf-lead">{c.body}</p>\n', '              <p data-logotype className="bf-lead">{c.body}</p>\n')
 
 
 def p_faq_ld(s):
@@ -128,13 +131,18 @@ def p_faq_ld(s):
 def p_faq_client_only(s):
     s.write("components/site/home/VsClientOnly.tsx", '"use client";\nimport { useEffect, useState } from "react";\nexport default function VsClientOnly({ children }: { children: React.ReactNode }) {\n  const [on, setOn] = useState(false);\n  useEffect(() => setOn(true), []);\n  return on ? <>{children}</> : null;\n}\n')
     s.rep("components/site/home/Faq.tsx", 'import type { SiteContent } from "@/content/site-schema";\n', 'import type { SiteContent } from "@/content/site-schema";\nimport VsClientOnly from "./VsClientOnly";\n')
-    s.rep("components/site/home/Faq.tsx", '<p className="bf-faq__a">{item.a}</p>', '<p className="bf-faq__a"><VsClientOnly>{item.a}</VsClientOnly></p>')
+    # re-anchored 2026-09-28: the answer renders through <FigureText> (its figures are labelled where they sit)
+    s.rep("components/site/home/Faq.tsx", '                <FigureText text={item.a} />\n', '                <VsClientOnly>\n                  <FigureText text={item.a} />\n                </VsClientOnly>\n')
 
 
 def p_person_card(s):
-    """a named member's card put back in the Team section (homepage and /about)"""
+    """a named member's card put back where the team is shown — /about's Team
+    section, and the homepage's headcount, in how we work with you since
+    2026-09-28 (the Team section left / that day; re-anchored, same meaning)"""
     s.rep("components/site/home/Team.tsx", '            <p className="bf-lead">{team.subtext}</p>\n',
           '            <p className="bf-lead">{team.subtext}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
+    s.rep("components/site/home/HowWeWork.tsx", '            <p className="bf-hww__where">{where.lead}</p>\n',
+          '            <p className="bf-hww__where">{where.lead}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
 
 
 def p_admin(s):
@@ -313,7 +321,9 @@ def p_scene_hides_poster(s):
 
 
 def p_honesty(s):
-    s.rep("components/site/home/Capabilities.tsx", "          {c.honesty ? (\n", "          {false && c.honesty ? (\n")
+    # re-anchored 2026-09-28: the six capability sections became one ledger on /
+    # (components/site/home/WhatWeEngineer.tsx), which renders the honesty line
+    s.rep("components/site/home/WhatWeEngineer.tsx", "        {c.honesty ? (\n", "        {false && c.honesty ? (\n")
 
 
 def p_tier_status(s):
@@ -321,7 +331,26 @@ def p_tier_status(s):
 
 
 def p_kubernetes(s):
+    # the stack's list renders on /engineering since 2026-09-28 (it left /), and
+    # /engineering's inventory includes the evidence cuts, so check 30 still sees it
     s.rep("components/site/home/TechnicalDepth.tsx", "                  ))}\n                </ul>", '                  ))}\n                  {layer.id === "infrastructure" ? <li>Kubernetes</li> : null}\n                </ul>')
+
+
+def p_contact_form(s):
+    """32 (2026-09-28): the /contact project form collapsed to its content's
+    width — the shape of the bug found that day, when /work's card rule
+    (.bf-project) won over the contact wrapper of the same name and the form
+    rendered 203px wide at 1440"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the /contact project form collapsed (the .bf-project collision's shape) */\n#project > .bf-wrap { display: flex !important; flex-direction: column; align-items: flex-start; }\n")
+
+
+def p_fallback_face(s):
+    """2 (2026-09-28): text that the site's faces cannot draw, so the browser
+    paints it in a system fallback — Jost has no CJK glyphs. Check 2 reads only
+    text the browser renders since that day (an element in a closed <details>
+    is never painted); this proves it still sees the text it does render."""
+    s.rep("components/site/home/Faq.tsx", '        <div className="bf-faq__list">\n',
+          '        <p className="bf-lead">\u6f22\u5b57\u306e\u6587\u5b57\u5217\u3092\u8868\u793a\u3059\u308b</p>\n        <div className="bf-faq__list">\n')
 
 
 def p_canonical(s):
@@ -335,7 +364,7 @@ def p_canonical(s):
 CASES = [
     # kept from the 2026-09-15 gate, re-anchored on the redesign's files
     ["vanishing-frame", "a WebGL context in a frame that removes itself", 25, r"WebGL context request\(s\) — (?:[^;]*; )*webgl2? in a child frame", p_vanishing_frame, {}],
-    ["logotype", "logotype on the schedule blurb (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
+    ["logotype", "logotype on the contact panel's body (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
     ["faq-drop", "FAQPage drops a question", 14, r"which FAQPage leaves out", p_faq_ld, {}],
     ["faq-answer", "FAQPage changes an answer", 14, r'FAQPage answers ".*" differently from the page', None, {"from": "faq-drop"}],
     ["faq-client", "FAQ answers rendered only in the browser", 14, r"is not in the served HTML — the markup describes", p_faq_client_only, {}],
@@ -392,6 +421,9 @@ CASES = [
     ["tier-status", "a data-status on a tier chip", 33, r"a tier chip \(\[data-tier=\"[a-z]+\"\][^)]*\) carries data-status", p_tier_status, {}],
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
+    # new for the 2026-09-28 redesign, one per new rule
+    ["fallback-face", "text drawn in a system fallback face (CJK glyphs Jost does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
+    ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
@@ -439,12 +471,29 @@ def b_e(s):
     s.rep("content/site.ts", '    sizeLabel: "developers",\n', '    sizeLabel: "developers",\n    ...({ roster: [{ id: "nadim", status: "pending", name: "Nadim" }] } as {}),\n')
 
 
+def b_f(s):
+    """(f) the hero's first-call line turned into a new promise (2026-09-28:
+    the microcopy is one whole sentence of /about's terms, word for word —
+    DECISIONS item 3, no reply time, no price, no call length)"""
+    s.rep("content/site.ts", '    microcopy: "Your first call is with the engineer who writes the code.",\n', '    microcopy: "We reply within one working day.",\n')
+
+
+def b_g(s):
+    """(g) feature work named on the hero's proof line (2026-09-28: the line
+    names only work that is ours — Bazzile is features inside Bazzile
+    Technology SA's app, never "built by Bolt Fusion")"""
+    s.rep("content/site.ts", '      projects: ["warmchats", "balanzify", "go-style-business"],\n', '      projects: ["warmchats", "bazzile", "go-style-business"],\n')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
     ["c", "an exemption with an empty reason", "content/figure-labels.ts", b_c, [r"exemption's reason"]],
     ["d", "a capability whose evidence tier is not proven, core, capable or lab", "content/engineering.ts", b_d, [r"engineering\.ts failed validation", r"expected one of"]],
     ["e", "a named team roster put back", "content/site.ts", b_e, [r"[Uu]nrecognized key.*roster"]],
+    # new for the 2026-09-28 redesign, one per new build-time rule
+    ["f", "the hero's first-call line turned into a new promise", "content/site.ts", b_f, [r"is not approved copy"]],
+    ["g", "feature work (Bazzile) named on the hero's proof line", "content/site.ts", b_g, [r"hero\.proof: .{1,2}bazzile.{1,2} is feature work in another company's app"]],
 ]
 
 

@@ -44,13 +44,15 @@ Every figure published on this site carries a `shipped` or `target` label.
 
 ## Key pages
 
-- [Home](/): what we engineer, the six capabilities with their evidence, the
-  system map, industries, how we build, the stack by layer, the two engineering
-  stories with their labelled figures, the engineers, and answers to buyer
-  questions.
+- [Home](/): the two engineering stories with their labelled figures; how we
+  work with you (named engineers, the overlap hours, IP and NDA, the engagement
+  models, the two-week pilot, and the team: 15+ developers); what we engineer,
+  each capability with its evidence tier, linked work and diagram; how we build;
+  the industries with delivered work; and answers to buyer questions.
 - [Capabilities](/capabilities): the six capabilities in depth: what we build in
   each, how we approach it, its evidence tier with the evidence behind it, the
   linked work, and each capability's own diagram. Robotics is Lab and says so.
+  Then the system map: how the six fit together.
 - [Industries](/industries): each industry's problems and what we would build
   for it. Delivered work is linked only where it exists: restaurants (the
   restaurant search, and our point-of-sale work), retail (OPAL, our own store;
@@ -135,9 +137,6 @@ and the companies involved are not our clients.
 
 - Go Smart: Modhumoti Bank's digital banking app, built at Brain Station 23,
   2020–2022. Our engineer's role: Software Engineer, secure backend services.
-- NIdle Finishing: finishing-stage digitisation for a ready-made-garments
-  factory floor, built at Intellier, Nov 2023 – Feb 2024. Our engineer's role:
-  Senior Software Engineer.
 
 ## Full text
 

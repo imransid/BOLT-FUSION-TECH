@@ -142,6 +142,9 @@ const CTA_WORDS = {
   project: { text: "Tell Us About Your Project", path: "/contact", hash: "#project" },
 };
 const BOOK_A_CALL = /\bbook\s+a\s+call\b/i;
+/* 32 (2026-09-28) — the project form on /contact, at 1440: never narrower
+   than this. It rendered 203px wide there (a class collision). */
+const PROJECT_FORM_MIN = 480;
 
 /* 33 — the honesty contract (SPEC §8b.7, binding, verbatim): robotics is Lab,
    and says so where it is shown. The tiers and their labels (CLAUDE.md,
@@ -1031,12 +1034,17 @@ function collectInPage() {
   const fontPreloads = [...document.querySelectorAll('link[rel="preload"][as="font"]')].map((l) => l.getAttribute("href"));
 
   /* stamp text-bearing elements so the CDP pass can ask which platform font
-     actually rendered them — getComputedStyle only says what was asked for */
+     actually rendered them — getComputedStyle only says what was asked for.
+     Only text the browser renders: an element inside a closed <details> has a
+     box (an inline one even reports a size) but is never painted, so CDP names
+     no font for it, and "?" read as a fallback (2026-09-28: the first figure
+     wrapper inside an FAQ answer). checkVisibility() is false there. */
   let stamped = 0;
   for (const el of document.body.querySelectorAll("*")) {
     if (el.closest("script, style, noscript, template, svg")) continue;
     if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
     if (!visible(el)) continue;
+    if (typeof el.checkVisibility === "function" && !el.checkVisibility()) continue;
     el.setAttribute("data-vs-t", String(stamped));
     if (++stamped >= 1200) break;
   }
@@ -1291,6 +1299,16 @@ function collectInPage() {
         .filter((a) => !a.closest("nav") && new URL(a.href, location.href).pathname !== "/")
         .map((a) => ({ text: flatText(a), href: a.getAttribute("href"), abs: a.href, cta: a.getAttribute("data-cta"), shown: visible(a) }))
     : null;
+  /* 32 (2026-09-28) ── the project form where "Tell Us About Your Project"
+     lands: its rendered width. It rendered 203px wide at 1440 in a panel whose
+     heading touched its border — /work's card rule (.bf-project) won over the
+     contact wrapper's, which had the same name — and nothing measured it. */
+  const projectForm = (() => {
+    const f = document.querySelector("#project .bf-form");
+    if (!f) return null;
+    const r = f.getBoundingClientRect();
+    return { width: Math.round(r.width), shown: visible(f), box: describe(f.parentElement || f) };
+  })();
   const bookCall = [];
   {
     const BOOK = /\bbook\s+a\s+call\b/i;
@@ -1366,7 +1384,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, bookCall, capabilities, tierChips };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -4820,11 +4838,23 @@ await (async () => {
   const contact = await http(toBase("/contact"));
   if (contact.status !== 200) F.push(`/contact answers ${contact.status || contact.error} — every Schedule a Call goes nowhere`);
   else for (const id of ["schedule", "project"]) if (!new RegExp(`\\sid="${id}"`).test(contact.html || "")) F.push(`/contact has no element with id="${id}" — /contact#${id} goes nowhere`);
+  /* (f) the project form is usable where it lands (2026-09-28): at 1440 it is
+     at least PROJECT_FORM_MIN wide. It rendered 203px wide there — a class
+     collision with /work's card, which no check measured. */
+  const cv = visits["/contact@1440"];
+  if (ROUTES.includes("/contact") && WIDTHS.includes(1440)) {
+    if (!cv) F.push("/contact @1440 was not visited — the project form's width cannot be read; unsure is a failure");
+    else if (!cv.projectForm) F.push("/contact @1440: there is no #project .bf-form — Tell Us About Your Project lands on no form");
+    else if (!cv.projectForm.shown) F.push("/contact @1440: the project form (#project .bf-form) is not visible");
+    else if (cv.projectForm.width < PROJECT_FORM_MIN)
+      F.push(`/contact @1440: the project form (#project .bf-form) is ${cv.projectForm.width}px wide — at 1440 it is at least ${PROJECT_FORM_MIN}px, or the step where a visitor writes to us reads as broken (in ${cv.projectForm.box})`);
+    else I.push(`/contact @1440: the project form is ${cv.projectForm.width}px wide (at least ${PROJECT_FORM_MIN}px)`);
+  }
   I.push(`calls to action followed: ${Object.entries(count).map(([kind, n]) => `${kind} ×${n}`).join(", ") || "none"}; "Book a call" searched in ${ROUTES.length} served page(s), every rendered visit, the 404 and the llms files`);
   results.push({
     id: 32,
-    title: "\"Schedule a Call\" everywhere: no page says \"Book a call\"; the header's button and every schedule call to action read \"Schedule a Call\" and go to /contact#schedule; / carries Explore Our Capabilities and Tell Us About Your Project",
-    catches: "the retired \"Book a call\" coming back — on a button, in an attribute, in the JSON-LD or the llms files; a call to action relabelled, or pointing somewhere else; a Schedule a Call that lands on nothing",
+    title: "\"Schedule a Call\" everywhere: no page says \"Book a call\"; the header's button and every schedule call to action read \"Schedule a Call\" and go to /contact#schedule; / carries Explore Our Capabilities and Tell Us About Your Project; the project form on /contact is at least 480px wide at 1440",
+    catches: "the retired \"Book a call\" coming back — on a button, in an attribute, in the JSON-LD or the llms files; a call to action relabelled, or pointing somewhere else; a Schedule a Call that lands on nothing; the project form on /contact collapsed to a sliver (it rendered 203px wide at 1440)",
     status: F.length ? "FAIL" : "PASS",
     findings: F,
     info: I,

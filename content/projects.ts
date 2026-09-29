@@ -33,6 +33,11 @@ import { z } from "zod";
  *   ("a platform for players to connect with coaches and other players"), not
  *   the multiplayer classic-games platform with no signups the portfolio
  *   describes. A card would show one product under another's name.
+ * - NIdle Finishing (track record) is `awaiting-asset` since 2026-09-28: its
+ *   only proof link, "Intellier's case study" (intellier.com/nidle/), 301s to
+ *   a bare PNG. A proof link that opens an image hurts trust, so it went
+ *   (DECISIONS 2026-09-28, item 8), and a track-record text card without a
+ *   proof link is not published (the schema). It returns with a working link.
  *
  * Excluded for good (owner, 2026-09-15) — never add them: the Jumatechs apps
  * (Myrep, IQ Test, Cleva, Bidesh App; Jumatechs is the owner's current
@@ -252,8 +257,10 @@ export const projects: Project[] = parseContent(
       builtAt: "Intellier",
       period: "Nov 2023 – Feb 2024",
       stack: ["React Native", "GraphQL", "NestJS"],
-      links: [{ label: "Intellier's case study", href: "https://intellier.com/nidle/" }],
-      state: "published",
+      // Held back 2026-09-28 — see the note at the top of this file. Its only
+      // link, intellier.com/nidle/, 301s to a bare PNG.
+      links: [],
+      state: "awaiting-asset",
     },
   ],
   "projects.ts",

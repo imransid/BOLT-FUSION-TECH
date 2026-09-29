@@ -32,19 +32,10 @@ const raw: SiteContentInput = {
     ogDescription: CANONICAL_DESCRIPTION,
   },
   site: {
-    sectionOrder: [
-      "hero",
-      "what_we_engineer",
-      "capabilities",
-      "system_map",
-      "industries",
-      "how_we_build",
-      "technical_depth",
-      "stories",
-      "team",
-      "faq",
-      "final_cta",
-    ],
+    /* The owner, 2026-09-28: "make it easy for clients to hire" — proof
+       second, then how to start, then the range (DECISIONS 2026-09-28, item 1;
+       CLAUDE.md, "Decided 2026-09-28"). */
+    sectionOrder: ["hero", "stories", "how_we_work", "what_we_engineer", "how_we_build", "industries", "faq", "final_cta"],
     sectionVisibility: {},
   },
   /* SPEC §4, in its order. Routes, not homepage anchors, on every page.
@@ -99,6 +90,15 @@ const raw: SiteContentInput = {
     body: "We engineer digital systems — from web and mobile platforms to AI automation, ERP, POS, robotics, and the infrastructure that makes them work.",
     primaryCta: { label: SCHEDULE_LABEL, href: SCHEDULE_HREF },
     secondaryCta: { label: "Explore Our Capabilities", href: "/capabilities" },
+    /* 2026-09-28 (DECISIONS item 2): under the calls to action. The approved
+       /about term, word for word (content/pages.ts; the schema refuses any
+       other words), and the proof line: shipped work, read from
+       content/projects.ts with its own attribution. */
+    microcopy: "Your first call is with the engineer who writes the code.",
+    proof: {
+      label: "Built by Bolt Fusion and in production",
+      projects: ["warmchats", "balanzify", "go-style-business"],
+    },
   },
   team: {
     benchLabel: "Your bench",
@@ -383,6 +383,33 @@ const raw: SiteContentInput = {
     badge: "FAQ",
     title: "Questions? Answers.",
     items: [
+      /* The four buyer objections (2026-09-28, DECISIONS item 6), first. Every
+         answer is words the site already publishes: /about's terms, the line
+         under its models table and its operating detail (content/pages.ts),
+         the team's subtext above, and the pilot (content/pilot.ts). No
+         figure, no new promise. "Can we start small?" ends at the pilot's
+         terms: /about's interim quote line ("a full quote for the wider build
+         at the end of it") would give this page a second answer to the cost
+         question beside "How do you estimate timeline and cost?" (ranges after
+         a short discovery) — which of the two holds is the owner's. "4–8 hours of overlap with US and EU working days. Two-week"
+         has its own exemption for this instance (the FAQPage
+         JSON-LD carries it too, and check 8 reads that). */
+      {
+        q: "Who writes the code?",
+        a: "Named engineers are assigned before you sign. Your first call is with the engineer who writes the code.",
+      },
+      {
+        q: "How much do our working hours overlap?",
+        a: "4–8 hours of overlap with US and EU working days. Two-week sprints, a demo at the end of each, a named escalation contact, and a written weekly report.",
+      },
+      {
+        q: "Who owns the IP?",
+        a: "You own the IP: it is assigned to you on payment. An NDA is signed before scoping.",
+      },
+      {
+        q: "Can we start small?",
+        a: "Yes. Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo. Two weeks. Fixed price. Full IP. No obligation.",
+      },
       {
         q: "What kinds of projects do you take on?",
         // Reworded 2026-09-16 (owner's redesign): "we focus on custom web and
@@ -417,8 +444,10 @@ const raw: SiteContentInput = {
     secondary: { label: "Tell Us About Your Project", href: "/contact#project" },
   },
   /* /contact. The panel's words (status, title, body, email) and the
-     calendar's (its heading, blurb and frame title) are the old homepage's,
-     unchanged, moved here on 2026-09-16. The project form is new: three fields
+     calendar's (its heading and frame title) are the old homepage's,
+     unchanged, moved here on 2026-09-16; the calendar's blurb, "Or grab an
+     open slot below…", was cut on 2026-09-28 (its "Or" answered the panel's
+     Schedule a Call, removed that day). The project form is new: three fields
      that open the visitor's email app, addressed to the team — the site's
      existing mechanism (mailto), with no backend and nothing stored. */
   contact: {
@@ -431,13 +460,11 @@ const raw: SiteContentInput = {
     statusLabel: "Taking new engagements",
     title: "Tell us what you need to ship",
     body: "Share goals, timeline, and constraints—we'll reply with honest fit, a suggested approach, and next steps. No pressure, no jargon wall.",
-    primaryCta: { label: SCHEDULE_LABEL, href: "#schedule" },
     emailLabel: "Email the team",
     emailHref: "mailto:hello@boltfusiontech.com",
     emailAddress: "hello@boltfusiontech.com",
     schedule: {
       title: "Pick a time (30 min)",
-      blurb: "Or grab an open slot below — same 30‑minute intro call.",
       frameTitle: "Schedule a 30-minute call — Bolt Fusion Tech",
       // Calendly paints its own white interface and ignores the colour
       // parameters, so the panel is placed as a light card and says whose

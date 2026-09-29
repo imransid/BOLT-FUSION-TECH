@@ -1,7 +1,9 @@
 import HeroScene from "@/components/field/HeroScene";
+import { projects } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 
 import Cta, { ctaKind } from "../Cta";
+import { ArrowUpRightIcon } from "../icons";
 import MotionToggle from "../MotionToggle";
 
 /* The width the poster is DRAWN at, which is what `sizes` must say. The image
@@ -22,6 +24,23 @@ function headlineLines(title: string): [string, string] {
   const words = title.trim().split(/\s+/);
   const cut = Math.max(1, Math.floor(words.length / 2));
   return [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
+}
+
+/** The proof line's items: each project's name, client and link from
+ *  content/projects.ts. A case study links to its write-up; a product without
+ *  one links to the product itself, live — its first link in
+ *  content/projects.ts — so "in production" is something a buyer can open and
+ *  check, not a card to scan for on /work (2026-09-28, DECISIONS item 2: "the
+ *  existing links from content/projects.ts"). */
+function proofItems(ids: readonly string[]) {
+  return ids.map((id) => {
+    const p = projects.find((x) => x.id === id);
+    if (!p) throw new Error(`hero.proof names "${id}", which is not in content/projects.ts`);
+    const writeUp = p.kind === "case-study" && p.href ? p.href : null;
+    const href = writeUp ?? p.links[0]?.href;
+    if (!href) throw new Error(`hero.proof names "${id}", which has no write-up and no live link in content/projects.ts`);
+    return { id, name: p.name, client: p.client ?? null, href, external: !writeUp };
+  });
 }
 
 /**
@@ -47,6 +66,7 @@ function headlineLines(title: string): [string, string] {
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   const [first, rest] = headlineLines(hero.title);
+  const proof = proofItems(hero.proof.projects);
   return (
     <section id="hero" className="bf-hero" aria-labelledby="hero-title">
       <div className="bf-wrap bf-hero__inner">
@@ -63,6 +83,35 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
             <Cta href={hero.secondaryCta.href} variant="ghost" cta={ctaKind(hero.secondaryCta.href)}>
               {hero.secondaryCta.label}
             </Cta>
+          </div>
+          {/* Under the calls to action (2026-09-28): what the first call is, in
+              the approved /about words, and the proof line — shipped work with
+              its attribution, each a link to its write-up or to the product
+              itself. Server HTML, still, like everything the hero says
+              (check 28). */}
+          <p className="bf-hero__micro">{hero.microcopy}</p>
+          <div className="bf-hero__proof">
+            <p id="hero-proof-label" className="bf-hero__proof-label">
+              {hero.proof.label}
+            </p>
+            <ul className="bf-hero__proof-list" aria-labelledby="hero-proof-label">
+              {proof.map((p) => (
+                <li key={p.id} className="bf-hero__proof-item">
+                  {p.external ? (
+                    <a href={p.href} className="bf-hero__proof-name" target="_blank" rel="noopener noreferrer">
+                      {p.name}
+                      <ArrowUpRightIcon className="bf-hero__proof-out" />
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  ) : (
+                    <a href={p.href} className="bf-hero__proof-name">
+                      {p.name}
+                    </a>
+                  )}
+                  {p.client ? <span className="bf-hero__proof-for">for {p.client}</span> : null}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
