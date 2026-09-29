@@ -512,9 +512,19 @@ def p_lab_dash_motion(s):
 
 
 def p_signal_dead(s):
-    """25: the engine's matchMedia never matches — gsap loads, and the Signal
-    never starts"""
-    s.rep("components/motion/signal.ts", "  mm.add(gate, (ctx) => {\n", '  mm.add("(min-width: 99999px)", (ctx) => {\n')
+    """25: the engine's matchMedia never matches on the homepage — gsap loads,
+    and the Signal never starts there. On / only since 2026-09-29: the build
+    it shares carries hook-blink, whose check (35) reads the Signal's traces
+    on /engineering, where the engine must still run for that case to fail
+    on its own damage"""
+    s.rep("components/motion/signal.ts", "  mm.add(gate, (ctx) => {\n", '  mm.add(location.pathname === "/" ? "(min-width: 99999px)" : gate, (ctx) => {\n')
+
+
+def p_hook_blink(s):
+    """35: a hook settles back to the server's hollow drawing — every payoff a
+    blink again (the design review, 2026-09-29)"""
+    s.rep("components/motion/signal.ts", "          traces.forEach((t) => t.made.forEach((m) => m.remove()));\n          lightHook(host);\n        };\n",
+          "          traces.forEach((t) => t.made.forEach((m) => m.remove()));\n          unlightHook(host); // THROWAWAY misuse: back to the hollow drawing\n          lit.delete(host);\n        };\n")
 
 
 def p_scene_share(s):
@@ -618,6 +628,8 @@ CASES = [
     ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
     # new at the fix pass (2026-09-29): a client-side navigation starts at the top, and its reveals run
     ["nav-smooth", "no data-scroll-behavior on <html> — a client-side navigation smooth-scrolls the new page up from the old offset", 34, r"^@1440: the new page's first frame is at scrollY [1-9]\d*", p_nav_smooth, {}],
+    ["hook-blink", "the Signal's hooks settle back to the hollow drawing — the payoff a blink", 35, r"^/engineering @1440 a fresh load: read down at reading speed, 0 of \d+ stations of the Signal's hooks are lit at rest", p_hook_blink, {}],
+    ["hook-blink-untraced", "the Signal's hooks settle back to the hollow drawing — the line not left traced", 35, r"^/engineering @1440 a fresh load: the hook\(s\) rail, cta did not settle traced", None, {"from": "hook-blink"}],
     ["nav-reveals", "no data-scroll-behavior on <html> — the new page's reveals judged at the old offset, and skipped", 34, r"^@(?:1440|390): after the navigation, \d+ of \d+ reveals ran as / was read down, against \d+ of \d+ on a fresh load", None, {"from": "nav-smooth"}],
     # new for the TTouch Clothing projects (2026-09-29), one per new rule
     ["story-label", "the homepage's client-story band labelled \"Built by TTouch Clothing\"", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label reads "Built by TTouch Clothing"; it reads "Delivered project: built by Bolt Fusion for TTouch Clothing"', p_story_label, {}],

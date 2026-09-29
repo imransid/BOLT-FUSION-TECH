@@ -4,8 +4,11 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
 /**
  * "Signal" — the site's motion system (owner, 2026-09-28; BRIEF §4; CLAUDE.md
  * "Motion, as built"). Three verbs: TRACE a connection in brand blue, let data
- * FLOW along it in cyan, then SETTLE — everything holds still in the state the
- * server sent. Imported only by ./MotionLoader, after its gate and its staged
+ * FLOW along it in cyan, then SETTLE — everything holds still: a diagram in the
+ * state the server sent, and a hook LIT where the trace reached it (its
+ * stations filled and its line brand blue, since 2026-09-29: settling back to
+ * the server's hollow drawing made every payoff a 0.3s blink). The lit state
+ * only adds to the server's drawing; nothing on screen is taken away. Imported only by ./MotionLoader, after its gate and its staged
  * waits; gsap and its plugins arrive as arguments, so this module imports
  * nothing from gsap but types (check 31: gsap is imported by the loader alone).
  *
@@ -23,8 +26,10 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  *  · every `[data-bf-trace="<name>"]` hook — its `svg.bf-trace` holds
  *    `.bf-trace__path` elements drawn complete in the server HTML; an overlay
  *    traces them in order, and each `[data-bf-trace-stop]` carries
- *    `data-bf-lit` from the moment the trace reaches it until the sequence
- *    settles. Any name works; `rail`, `pilot` and `cta` have their durations.
+ *    `data-bf-lit` from the moment the trace reaches it, and keeps it. The
+ *    trace holds, then the host takes `data-bf-traced` — its own line turns
+ *    brand blue (app/site.css) — and the overlay fades onto it. Any name
+ *    works; `rail`, `pilot` and `cta` have their durations.
  *  A dashed source is traced dashed: its overlay is revealed through a mask
  *  that DrawSVG draws, since DrawSVG owns the dash pattern of what it draws.
  *
@@ -36,7 +41,9 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  *    overlays that are added and removed, and the stops' lit state;
  *  · every sequence ends inside 5s; focus inside a host's section ends it, and
  *    so does the pause control (`html[data-motion="paused"]`, `bf:motion`); a
- *    sequence that would start in either state starts at its end;
+ *    sequence that would start in either state starts at its end — a hook lit,
+ *    a diagram as the server drew it. When the gate stops holding, every hook
+ *    goes back to the server's drawing, and is lit again if it holds again;
  *  · SVG strokes and opacity only: no pins, no layout, no scroll smoothing;
  *    the triggers re-measure when fonts finish loading and on a debounced
  *    ResizeObserver of `main#main` (the FAQ's <details>) — each on its own,
@@ -66,6 +73,8 @@ const LAB_S = 1.4; /* the Lab sketch, steel, no flow */
 const LAB_DASH = "5 4"; /* the concept dash (app/site.css, .dg-node--concept) */
 const HOOK_S: Record<string, number> = { rail: 1.2, pilot: 1.2, cta: 0.9 };
 const HOOK_DEFAULT_S = 1.2;
+const HOOK_HOLD_S = 0.4; /* a hook's trace holds this long once it has arrived… */
+const HOOK_FADE_S = 0.6; /* …then its overlay fades onto the lit drawing */
 /* where a sequence starts: a diagram once 35% of it is in view; a hook when it reaches 70% of the viewport's height */
 const FLOW_AT = 0.35;
 const HOOK_AT = 0.7;
@@ -74,6 +83,8 @@ const DWELL_MS = 150; /* in view this long before a sequence starts */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MARK = "data-bf-signal";
+const LIT = "data-bf-lit"; /* a station the trace has reached */
+const TRACED = "data-bf-traced"; /* a hook whose trace has run: its line is brand blue */
 
 type Seq = { tl: Timeline; host: HTMLElement; scope: Element; settle: () => void; flowing: boolean };
 /** what DrawSVG draws (`draw`), what fades (`overlay`), and everything to remove */
@@ -237,8 +248,22 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
   const running = new Set<Seq>();
   const played = new WeakSet<Element>();
   const paused = () => root.dataset.motion === "paused";
+  /* The hooks that have settled, lit: every station and the line. Kept for
+     the engine's life, so that when the gate stops holding they go back to
+     the server's drawing and, when it holds again, are lit again (without a
+     trace: they were read). */
+  const lit = new Set<HTMLElement>();
+  const lightHook = (host: HTMLElement) => {
+    for (const s of host.querySelectorAll("[data-bf-trace-stop]")) s.setAttribute(LIT, "");
+    host.setAttribute(TRACED, "");
+    lit.add(host);
+  };
+  const unlightHook = (host: HTMLElement) => {
+    for (const s of host.querySelectorAll("[data-bf-trace-stop]")) s.removeAttribute(LIT);
+    host.removeAttribute(TRACED);
+  };
 
-  /* Ends a sequence where it would have ended: overlays gone, stops unlit, a
+  /* Ends a sequence where it would have ended: overlays gone, a hook lit, a
      flow the trace handed on stopped at rest. */
   const finish = (s: Seq) => {
     s.tl.kill();
@@ -267,11 +292,13 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
     root.setAttribute(MARK, "live");
     let dead = false;
     const claims = new Set<HTMLElement>();
+    /* the gate holds again: the hooks read before are lit again */
+    lit.forEach(lightHook);
 
-    const begin = (host: HTMLElement, scope: Element, build: (seq: Seq) => void) => {
+    const begin = (host: HTMLElement, scope: Element, build: (seq: Seq) => void, atEnd?: () => void) => {
       const focus = document.activeElement;
       const focused = focus && focus !== document.body && scope.contains(focus);
-      if (paused() || focused) return; /* starts at its end: the server's drawing */
+      if (paused() || focused) return atEnd?.(); /* starts at its end: a hook lit, a diagram the server's drawing */
       const seq: Seq = { tl: gsap.timeline({ paused: true }), host, scope, settle: () => {}, flowing: false };
       build(seq);
       const settle = seq.settle;
@@ -343,7 +370,7 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
       const svg = host.querySelector<SVGSVGElement>("svg.bf-trace");
       const paths = svg ? [...svg.querySelectorAll<SVGGeometryElement>(".bf-trace__path")] : [];
       if (!paths.length) return;
-      begin(host, host.closest("section") ?? host, (seq) => {
+      const build = (seq: Seq) => {
         const tl = seq.tl;
         const traces = paths.map((p) => traceOf(p, "bf-signal-trace", dashOf(p)));
         const lens = paths.map((p) => p.getTotalLength() || 0);
@@ -387,11 +414,13 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
           return nearAt;
         });
         const segs: Tween[] = traces.map((t) => gsap.fromTo(t.draw, { drawSVG: "0% 0%" }, { drawSVG: "0% 100%", duration: 1, ease: "none", paused: true }));
-        const lit = new Set<Element>();
+        const reached = new Set<Element>();
+        /* its end, wherever it is ended: the overlays gone, and the hook lit —
+           every station, and the line */
         seq.settle = () => {
           segs.forEach((s) => s.kill());
           traces.forEach((t) => t.made.forEach((m) => m.remove()));
-          lit.forEach((s) => s.removeAttribute("data-bf-lit"));
+          lightHook(host);
         };
         const head = { d: 0 };
         tl.to(head, {
@@ -405,20 +434,23 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
               rest -= lens[i];
             });
             stops.forEach((s, i) => {
-              if (!lit.has(s) && reach[i] <= head.d + 0.5) {
-                lit.add(s);
-                s.setAttribute("data-bf-lit", "");
+              if (!reached.has(s) && reach[i] <= head.d + 0.5) {
+                reached.add(s);
+                s.setAttribute(LIT, "");
               }
             });
           },
         });
+        /* it holds where it arrived; then the line under it turns brand blue
+           and the overlay fades onto it — the stations stay lit */
+        tl.add(() => host.setAttribute(TRACED, ""), `+=${HOOK_HOLD_S}`);
         tl.to(
           traces.map((t) => t.overlay),
-          { opacity: 0, duration: FADE_S, ease: "power1.out" },
-          "+=0.15",
+          { opacity: 0, duration: HOOK_FADE_S, ease: "power1.out" },
+          "<",
         );
-        tl.add(() => lit.forEach((s) => s.removeAttribute("data-bf-lit")), "<");
-      });
+      };
+      begin(host, host.closest("section") ?? host, build, () => lightHook(host));
     };
 
     /* Arms one host: a trigger whose range — from its start to the host's
@@ -488,6 +520,8 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
       /* armed and never played: back to the CSS */
       claims.forEach((h) => h.removeAttribute("data-bf-motion"));
       claims.clear();
+      /* the gate no longer holds: the server's drawing, until it holds again */
+      lit.forEach(unlightHook);
       root.removeAttribute(MARK);
     };
   });

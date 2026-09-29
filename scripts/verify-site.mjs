@@ -206,6 +206,17 @@ const LAB_ROUTES = ["/", "/capabilities"];
    Signal, must run on it as on a fresh load. */
 const NAV_FROM = "/capabilities";
 const NAV_WIDTHS = [1440, 390];
+/* 35 (2026-09-29, the design review) — the Signal's payoff: a hook's trace
+   SETTLES LIT. Read on the same two runs as 34 (a fresh / read down, and / after
+   the navigation), at >=1025px where the Signal runs, once everything read
+   has had time to finish: every station of every hook drawn at this width is
+   lit, the host carries data-bf-traced, and no overlay is left. Settling back
+   to the hollow drawing made each payoff a blink: the pilot's three stations
+   lit for 0.3s, the close's one for 267ms. */
+const HOOK_SETTLE_MS = 3000;
+/* 35 — beside /, fresh and after the navigation (34's runs): a page with
+   the rail and the close's hooks and no hero */
+const HOOK_ROUTES = ["/engineering"];
 const LAB_WATCH_MS = 5500; /* past the CSS flow's three 1.6s passes and the Signal's 1.4s sketch */
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
@@ -401,11 +412,40 @@ async function readingSpeedScroll(page) {
   });
 }
 
-/* 34 — the reveals of a page: how many there are, and how many have run */
+/* 34 — the reveals of a page: how many there are, and how many have run;
+   35 — and each Signal hook outside the hero: drawn at this width, its
+   stations and how many are lit, traced, overlays left */
 const revealCount = () => {
   const all = [...document.querySelectorAll("[data-bf-reveal]")];
-  return { total: all.length, revealed: all.filter((e) => e.classList.contains("bf-revealed")).length };
+  const hooks = [...document.querySelectorAll("[data-bf-trace]")]
+    .filter((h) => !h.closest("#hero"))
+    .map((h) => {
+      const svg = h.querySelector("svg.bf-trace");
+      const stops = [...h.querySelectorAll("[data-bf-trace-stop]")];
+      return {
+        name: h.getAttribute("data-bf-trace"),
+        shown: Boolean(svg) && getComputedStyle(svg).display !== "none" && h.getClientRects().length > 0,
+        stops: stops.length,
+        lit: stops.filter((x) => x.hasAttribute("data-bf-lit")).length,
+        traced: h.hasAttribute("data-bf-traced"),
+        overlays: h.querySelectorAll(".bf-signal-trace").length,
+      };
+    });
+  return { total: all.length, revealed: all.filter((e) => e.classList.contains("bf-revealed")).length, hooks, signal: document.documentElement.getAttribute("data-bf-signal") };
 };
+/* 35 — a fresh load of `route` read down at reading speed, then the hooks' state once it has settled */
+async function visitHooks(browser, route, w) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: 900 }, reducedMotion: "no-preference" });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}${route}`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(HOOK_SETTLE_MS);
+  const st = await page.evaluate(revealCount);
+  await ctx.close();
+  return { route, width: w, st };
+}
 /* 34 — a fresh load of / read down at reading speed (the reference), then a
    page read to the end of NAV_FROM that follows the header's logo to /: its
    scroll position on every frame after the click, then the same reading
@@ -419,7 +459,7 @@ async function visitNav(browser, w) {
   await fp.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await fp.waitForTimeout(1500);
   await readingSpeedScroll(fp);
-  await fp.waitForTimeout(1200);
+  await fp.waitForTimeout(HOOK_SETTLE_MS);
   const ref = await fp.evaluate(revealCount);
   await fresh.close();
 
@@ -459,7 +499,7 @@ async function visitNav(browser, w) {
   const i = log.findIndex((f) => f.path === "/" && f.hero);
   const frames = i < 0 ? [] : log.slice(i);
   await readingSpeedScroll(page);
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(HOOK_SETTLE_MS);
   const nav = await page.evaluate(revealCount);
   const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
   await ctx.close();
@@ -3445,10 +3485,17 @@ if (want(33))
     }
 /* 34 ── a client-side navigation, and what runs on the page it lands on */
 const navRuns = [];
-if (want(34))
+if (want(34) || want(35))
   for (const w of NAV_WIDTHS) {
     process.stderr.write(`  a client-side navigation ${NAV_FROM} → / @${w}\n`);
     navRuns.push(await visitNav(browser, w).catch((e) => ({ width: w, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
+/* 35 ── the hooks on a page beside / */
+const hookRuns = [];
+if (want(35))
+  for (const route of HOOK_ROUTES.filter((r) => ROUTES.includes(r))) {
+    process.stderr.write(`  the Signal's hooks, read down ${route} @1440\n`);
+    hookRuns.push(await visitHooks(browser, route, 1440).catch((e) => ({ route, width: 1440, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
   }
 let faqRun = null;
 if (want(14)) {
@@ -5578,6 +5625,46 @@ check(
       if (r.width >= 1025 && r.signal !== "live") F.push(`${at}: after the navigation the Signal never started on / (no html[data-bf-signal="live"]) — each page's motion starts on that page`);
       I.push(`${at}: ${NAV_FROM} left at scrollY ${r.fromY}; the new page's first frame at ${r.firstY}, the highest after it ${r.maxY} (${r.frames} frames); reveals ${r.nav.revealed}/${r.nav.total} after the navigation, ${r.ref.revealed}/${r.ref.total} on a fresh load${r.width >= 1025 ? `; the Signal ${r.signal || "not running"}` : ""}`);
     }
+  },
+);
+
+/* 35 — the Signal's hooks settle lit */
+check(
+  35,
+  "The Signal's traces settle lit: read down at >=1025px, every station of every hook drawn there stays lit, its line traced, no overlay left — on a fresh load and after a client-side navigation",
+  "a payoff that blinks: the hook's stations lit only while the trace passes and then all hollow again — the pilot's three for 0.3s, the close's one for 267ms (the design review, 2026-09-29)",
+  (F, I) => {
+    const reads = [];
+    for (const r of navRuns) {
+      if (r.width < 1025 || r.error || !r.clicked) continue; /* 34 reports a run that failed */
+      reads.push([`/ @${r.width} a fresh load`, r.ref], [`/ @${r.width} after the navigation`, r.nav]);
+    }
+    for (const r of hookRuns) {
+      if (r.error) F.push(`${r.route} @${r.width}: the run failed (${r.error}) — unsure is a failure`);
+      else reads.push([`${r.route} @${r.width} a fresh load`, r.st]);
+    }
+    for (const [at, st] of reads) {
+      if (!st) continue;
+      if (st.signal !== "live") {
+        F.push(`${at}: the Signal is not running (no html[data-bf-signal="live"]) — its traces went untested; unsure is a failure`);
+        continue;
+      }
+      const shown = st.hooks.filter((h) => h.shown);
+      if (!shown.length) {
+        F.push(`${at}: no Signal hook is drawn here — the rule tested nothing; unsure is a failure`);
+        continue;
+      }
+      const stops = shown.reduce((n, h) => n + h.stops, 0);
+      const lit = shown.reduce((n, h) => n + h.lit, 0);
+      const each = shown.map((h) => `${h.name} ${h.lit}/${h.stops}${h.traced ? ", traced" : ""}${h.overlays ? `, ${h.overlays} overlay(s)` : ""}`).join("; ");
+      if (lit < stops) F.push(`${at}: read down at reading speed, ${lit} of ${stops} stations of the Signal's hooks are lit at rest (${each}) — a trace settles lit: every station it reached stays lit`);
+      const untraced = shown.filter((h) => !h.traced).map((h) => h.name);
+      if (untraced.length) F.push(`${at}: the hook(s) ${untraced.join(", ")} did not settle traced (no data-bf-traced) — the line a trace ran along stays brand blue`);
+      const left = shown.filter((h) => h.overlays).map((h) => `${h.name} ${h.overlays}`);
+      if (left.length) F.push(`${at}: an overlay is still on the hook(s) ${left.join(", ")} ${HOOK_SETTLE_MS}ms after the reading — a sequence ends within 5s`);
+      I.push(`${at}: ${lit} of ${stops} stations lit at rest — ${each}`);
+    }
+    if (!reads.length) F.push("no run at >=1025px read the Signal's hooks — unsure is a failure");
   },
 );
 

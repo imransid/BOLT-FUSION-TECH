@@ -11,6 +11,10 @@ import type { ReactNode } from "react";
  * `cta` sets `data-cta`, the suite's handle on the calls to action that matter
  * (SPEC §8): "schedule" on every Schedule a Call, "explore" on Explore Our
  * Capabilities, "project" on Tell Us About Your Project.
+ *
+ * `traceStop` makes the button a station of the Signal hook around it
+ * (`data-bf-trace-stop`, CLAUDE.md "Motion, as built"): the final call to
+ * action's trace ends on its Schedule a Call.
  */
 export default function Cta({
   href,
@@ -18,6 +22,7 @@ export default function Cta({
   variant = "primary",
   size = "md",
   cta,
+  traceStop = false,
   className = "",
 }: {
   href: string;
@@ -25,10 +30,16 @@ export default function Cta({
   variant?: "primary" | "ghost" | "quiet";
   size?: "sm" | "md";
   cta?: "schedule" | "explore" | "project";
+  traceStop?: boolean;
   className?: string;
 }) {
   return (
-    <a href={href} className={`bf-btn bf-btn--${variant} bf-btn--${size}${className ? ` ${className}` : ""}`} data-cta={cta}>
+    <a
+      href={href}
+      className={`bf-btn bf-btn--${variant} bf-btn--${size}${className ? ` ${className}` : ""}`}
+      data-cta={cta}
+      data-bf-trace-stop={traceStop ? "" : undefined}
+    >
       {children}
       {variant === "quiet" ? (
         <svg className="bf-btn__arrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">

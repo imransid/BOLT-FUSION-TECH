@@ -5516,8 +5516,8 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 /* A station the Signal's trace has reached (`data-bf-lit`, set only where
-   gsap runs, >=1025px): its square fills brand blue while the trace passes,
-   as the rail's stage markers do, and goes hollow again when it settles. The
+   gsap runs, >=1025px): its square fills brand blue as the trace reaches it,
+   as the rail's stage markers do, and stays filled — the plan, traced. The
    deliverable's square is filled at rest: the trace ends in it. How an HTML
    station shows `data-bf-lit` is its owner's CSS (CLAUDE.md, "Motion, as
    built"), and without this rule the trace ran past three squares that never
@@ -6016,8 +6016,8 @@ button.bf-map__btn[aria-pressed="true"] {
    touch screens kept the cyan flow on it; verify-site check 33 now fails a
    flow line, a cyan paint or a moving flow in the Lab drawing anywhere. */
 
-/* A station on a hook: hollow, the stage marker's square; lit (filled) while
-   a trace passes it. A square is drawn on the pixel grid (crispEdges): at
+/* A station on a hook: hollow, the stage marker's square; lit (filled) once
+   a trace has reached it. A square is drawn on the pixel grid (crispEdges): at
    DPR 1 a 1px edge at a fractional x spread over two pixels at a third of
    the brand's strength, where the CSS markers it stands in for are snapped
    whole. */
@@ -6033,6 +6033,15 @@ rect.bf-trace__stop {
 
 .bf-trace__stop[data-bf-lit] {
   fill: var(--bf-brand);
+}
+
+/* A hook whose trace has run (`data-bf-traced`, 2026-09-29): its own line is
+   brand blue, under the overlay that fades onto it, and stays so with its
+   lit stations — the settled state is the lit one. It adds to the server's
+   drawing and takes nothing from it: the same line, the same width. Above
+   every owner's own stroke (three classes deep). */
+[data-bf-trace][data-bf-traced] .bf-trace__path {
+  stroke: var(--bf-brand);
 }
 
 /* How we build — the `rail` hook. At >=1025px the rail is one hairline in the
@@ -6081,10 +6090,14 @@ rect.bf-trace__stop {
 }
 
 /* The final call to action — the `cta` hook, the last trace on the page. At
-   >=1025px a hairline runs the width of the column, halfway between the line
-   and the buttons, and ends in one station over Schedule a Call's first edge:
-   the rail's first stop again, where working together starts. The trace runs
-   along it right to left, into that station. Below 1025 it is not drawn. */
+   >=1025px the buttons' row is as wide as the buttons, and a hairline runs
+   over them, halfway between the line and the buttons, from the second's far
+   edge to Schedule a Call's first edge, then down into it: the button is the
+   station, where working together starts. The trace runs along it right to
+   left and down; reached, Schedule a Call's top edge turns brand blue (its
+   border was transparent: nothing moves) and stays so. Below 1025 it is not
+   drawn. Until 2026-09-29 the line ran the column's full width, 1,300px at
+   1440, into an 8px square above the button. */
 .bf-final__wire {
   display: none;
 }
@@ -6097,6 +6110,11 @@ rect.bf-trace__stop {
 @media (min-width: 1025px) {
   .bf-final .bf-actions[data-bf-trace] {
     position: relative;
+    width: fit-content;
+  }
+
+  .bf-final .bf-actions[data-bf-trace] .bf-btn--primary[data-bf-lit] {
+    border-top-color: var(--bf-brand);
   }
 
   .bf-final__wire {

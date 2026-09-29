@@ -786,8 +786,12 @@ The redesign's motion is quiet (SPEC §3): the hero's 3D scene is to be the one
 orchestrated moment; everywhere else, reveals from a visible resting state,
 hover and focus states, and — since 2026-09-28 — **Signal**, the site's own
 motion system, in three verbs: a connection TRACES in brand blue, data FLOWS
-along it in cyan, then everything SETTLES and holds still in the state the
-server sent (owner, 2026-09-28; BRIEF §4; *Decided 2026-09-28*). It is one idea
+along it in cyan, then everything SETTLES and holds still (owner, 2026-09-28;
+BRIEF §4; *Decided 2026-09-28*) — a diagram in the state the server sent, and,
+since 2026-09-29, a hook LIT where its trace reached it: its stations filled
+and its line brand blue, which only adds to the server's drawing (below, *The
+hooks*). BRIEF §4 said every sequence settles to the server state; for the
+hooks that made every payoff a blink (the design review). It is one idea
 used at every scale, and it carries the argument — how Bolt Fusion builds —
 without delaying reading. Transform, opacity and SVG strokes only. Everything is
 off under reduced motion, and anything that moves for more than five seconds
@@ -925,8 +929,16 @@ has a pause control.
     marker's hollow square, drawn `crispEdges`) or any element, like the
     rail's stages and the pilot's `<li>`s. Without script it is a finished
     drawing. The engine traces the paths in order as one head (`power2.inOut`)
-    and gives each station `data-bf-lit` from the moment the head reaches it
-    until the sequence settles — reached where the trace first touches the
+    and gives each station `data-bf-lit` from the moment the head reaches it,
+    and it KEEPS it: **the settled state is the lit one** (2026-09-29). The
+    trace holds 0.4s where it arrived, then the host takes `data-bf-traced` —
+    its own line turns brand blue, the same width
+    (`[data-bf-trace][data-bf-traced] .bf-trace__path`) — and the 2px overlay
+    fades onto it over 0.6s. Until then the stations went hollow and the
+    overlay faded 0.15s after arrival: filmed on a fresh 1440 page, the pilot's
+    three lit for about 0.3s, the rail's six went dark together 0.57s after
+    the last lit, and the close's one station was lit for 267ms (the design
+    review). Reached where the trace first touches the
     station's box, or, for one the line only passes beside, at its nearest
     point; sampled on screen every 2px, so a stretched `viewBox` with a
     non-scaling stroke measures what is drawn (probed on a copy of the IA
@@ -937,7 +949,11 @@ has a pause control.
     hairline on the pixel grid is traced on it. An SVG station fills in the
     200ms `state` time; how an HTML station shows `data-bf-lit` is its owner's
     CSS. Any name works: `rail` 1.2s, `pilot` 1.2s, `cta` 0.9s, anything else
-    1.2s.
+    1.2s. A sequence ended early (focus, the pause control) or one that would
+    start in either state lands on the same end: the hook lit. When the gate
+    stops holding (a window narrowed below 1025, reduced motion switched on)
+    every lit hook goes back to the server's drawing, and is lit again, with
+    no trace, if the gate holds again. Verify-site check 35 reads it.
     - `rail` (`HowWeBuild.tsx`, on / and /engineering, >=1025): one hairline
       (`crispEdges`) over the six stages, which give their top borders to it
       and keep their space, and the stages themselves are the stations
@@ -952,17 +968,25 @@ has a pause control.
       silently. The rail holds still: each stage's reveal is on its text
       (`.bf-stage__body`), never on its border or marker, at every width. The
       trace runs left to right, lighting the six stations in turn (sampled
-      per frame at 1440: 0, 398, 516, 582, 666, 766ms), and settles back to
-      hollow. Below 1025 the borders and markers are the rail, as they always
-      were.
+      per frame at 1440: 0, 398, 516, 582, 666, 766ms), and settles lit: six
+      filled markers on a brand-blue line (2026-09-29; it went back to hollow
+      until then). Below 1025 the borders and markers are the rail, as they
+      always were.
     - `cta` (`FinalCta.tsx`, on / and every page that ends with it —
       /capabilities, /industries, /engineering, /about, /insights and each
-      article; >=1025): the buttons' row is the hook. A hairline the width of
-      the column, 18px above the buttons (half their 36px margin), ends in one
-      station over Schedule a Call's first edge — the rail's first stop again,
-      where working together starts. The trace runs right to left into it: the
-      last trace on the page points at the one action that matters. The
-      buttons never move.
+      article; >=1025): the buttons' row is the hook, and since 2026-09-29 it
+      is as wide as the buttons (`width: fit-content`). A hairline 18px above
+      them (half their 36px margin) runs from the second button's far edge to
+      Schedule a Call's first edge and turns down into its top-left corner:
+      the button itself is the station (`Cta traceStop`, its
+      `data-bf-trace-stop`). The trace runs right to left over both buttons
+      and down; reached, Schedule a Call's top edge turns brand blue — its
+      border was transparent, so nothing moves — and stays so, with the line:
+      the last trace on the page ends on the one action that matters. Until
+      then the line ran the column's full width (1,300px at 1440) into an 8px
+      square above the button: the trace crossed 1,100px of empty space,
+      pointed away from the button for most of its travel, and its station was
+      lit for 267ms (the design review). The buttons never move.
     - `pilot` (`HowWeWork.tsx`, on /, >=1025): the IA stream's hook inside
       how we work, a steel hairline from Week 1's square to the
       Deliverable's, over the three stations (`li.bf-hww__station`). The
@@ -973,22 +997,28 @@ has a pause control.
       scrolled to it at reading speed: the overlay appeared when the plan
       reached 70% of the viewport, Week 1, Week 2 and the Deliverable lit at
       0, 584 and 1000ms, all three went hollow at 1.35s and the overlay was
-      gone at 1.65s — nothing left behind, nothing claimed.
-  - **The rules it keeps** (BRIEF §4.4): the resting state is the server HTML;
+      gone at 1.65s. Since 2026-09-29 they stay lit: filmed the same way (a
+      burst every ~130ms), the three lit at 0, ~530 and ~940ms of the burst,
+      the overlay gone by ~2.1s, and the plan at rest traced — three filled
+      squares on a brand-blue line.
+  - **The rules it keeps** (BRIEF §4.4): the resting state is the server HTML,
+    or for a hook the server HTML lit (its stations filled, its line brand
+    blue — additive, since 2026-09-29);
     text never moves, reverses or exits; numbers, chips and tier meters never
     move; nothing in the hero animates; every entry-bound sequence ends within
     5s (a diagram's trace and flow ends 4.2s after it starts: the last edge is
     drawn at 1.16s, the flow takes over at 0.96s for 2 x 1.6s; the Lab sketch
-    1.8s; a hook 1.65s); **focus ends a sequence**
+    1.8s; a hook 2.2s — its trace, a 0.4s hold and a 0.6s fade); **focus ends a sequence**
     (focus inside the host's section, or a sequence that would start with focus
     there, starts at its end); **the pause control ends them too** —
     `html[data-motion="paused"]` or `bf:motion` with `{ paused: true }` finishes
-    every running sequence, and a new one starts at its end, the server's
-    drawing.
+    every running sequence, and a new one starts at its end — a diagram the
+    server's drawing, a hook lit.
   - **Tokens** (BRIEF §4.3): `response` 120–160ms and `state` 200ms (CSS);
     `trace` 800ms per edge, `power2.inOut`, 60ms stagger, 360ms ceiling, 300ms
-    fade; `flow` linear 1.6s a pass, two after a trace, three without; `lab`
-    1.4s, steel, no flow.
+    fade; a hook's trace 1.2s (`cta` 0.9s), a 400ms hold and a 600ms fade onto
+    its lit line; `flow` linear 1.6s a pass, two after a trace, three without;
+    `lab` 1.4s, steel, no flow.
 - **The system map:** a lit link's cyan pulse runs four 1.2s passes and rests;
   the other parts dim with a 0.2s opacity change.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
@@ -2046,6 +2076,15 @@ Each rule is proven both ways, and each has its case in
   `<html>` the new page's first frame was at 10201 and ran 0 reveals (the
   engineering review). RUN 2: `nav-smooth` and `nav-reveals`, one patch (the
   attribute removed).
+- **35, new — the Signal's traces settle lit.** At 1440, on a fresh / and a
+  fresh /engineering read down at reading speed, and on / after 34's
+  navigation, 3s after the reading: every station of every hook drawn at that
+  width is lit (`data-bf-lit`; 10 on /, 7 on /engineering), each host carries
+  `data-bf-traced`, and no overlay is left. RUN 2: `hook-blink` and
+  `hook-blink-untraced` (the hook's settle back to the hollow drawing), read
+  on /engineering. `signal-dead` (check 25) kills the engine on / only since:
+  it shares the misuse build with `hook-blink`, which needs the engine alive
+  on /engineering to fail on its own damage.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

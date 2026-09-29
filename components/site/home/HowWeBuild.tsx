@@ -15,7 +15,9 @@ import SectionHead from "../SectionHead";
  * starts, so the stations follow the grid whatever it does and snap to whole
  * pixels. Without script it is a finished drawing, the one the stages' top
  * borders drew before. Where gsap runs, a brand-blue trace runs along it once,
- * left to right, lighting each station as it passes, then settles back.
+ * left to right, lighting each station as it passes, and settles lit: the six
+ * markers filled and the line brand blue (2026-09-29; it went back to the
+ * hollow drawing until then, 0.3s after the last station lit).
  * The rail holds still: each stage's text reveals (`.bf-stage__body`), and its
  * border and marker stay where they are at every width. Below 1025 the rail is
  * the stages' own borders and markers.
