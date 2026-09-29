@@ -205,6 +205,9 @@ const raw: EngineeringInput = {
       evidenceNote:
         "We've built point-of-sale systems for restaurants, including offline sync and receipt-printer integration, and we're building a multi-tenant platform for retail and other verticals. Online commerce is shipped: the Sudarshini store and TTouch Clothing's wholesale portal.",
       workSlugs: ["sudarshini", "ttouch-wholesale"],
+      /* The linked work is the Proven tier's, not the till's: "Linked work
+         (online and wholesale commerce)" (2026-09-29, the honesty review). */
+      workScope: "Online and wholesale commerce",
       diagram: {
         id: "till-hub",
         title: "POS & commerce: the till at the centre",
@@ -297,7 +300,12 @@ const raw: EngineeringInput = {
     {
       id: "retail",
       name: "Retail & commerce",
-      problems: ["Stock that is wrong by the time it is counted", "Several branches and one set of books"],
+      /* The first problem and the first two builds are what the evidence
+         does (2026-09-29, the honesty review, as Logistics'): TTouch
+         Wholesale shows trade prices to approved shops only, and Sudarshini is
+         an online store. The rest are still what we'd build — no stock-count
+         or multi-branch system is claimed. */
+      problems: ["Trade prices that only approved shops should see", "Stock that is wrong by the time it is counted", "Several branches and one set of books"],
       wouldBuild: ["E-commerce stores", "Wholesale ordering portals", "Point of sale and inventory"],
       capabilityIds: ["software", "pos", "erp"],
       /* Client work first (2026-09-29): TTouch Clothing's store and wholesale

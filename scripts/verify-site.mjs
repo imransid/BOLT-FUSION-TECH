@@ -387,7 +387,11 @@ function loadContent(rel) {
     const file = fileURLToPath(new URL(`../${rel}`, import.meta.url));
     const js = ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     const mod = { exports: {} };
-    const stubs = { "./schema": { parseContent: (_schema, data) => data, metricSchema: null }, zod: { z: new Proxy({}, { get: () => () => null }) } };
+    const stubs = {
+      "./schema": { parseContent: (_schema, data) => data, metricSchema: null },
+      "./engineering-schema": { engineeringSchema: null },
+      zod: { z: new Proxy({}, { get: () => () => null }) },
+    };
     new Function("module", "exports", "require", js)(mod, mod.exports, (id) => {
       if (id in stubs) return stubs[id];
       throw new Error(`it imports "${id}", which the suite does not load`);
@@ -1731,6 +1735,28 @@ function collectInPage() {
     shown: visible(t),
     where: sectionOf(t),
   }));
+  /* 33 (2026-09-29, fix pass B) ── a capability's tiers wherever they stand
+     for the capability: a box of tier chips with no words of its own (a
+     concept tag aside), inside that capability's [data-capability] or in a
+     link to its section (/capabilities' contents row). A chip beside an
+     item's own words ("Online stores" in what we build) is that item's, and
+     not read here. */
+  const tierGroups = [];
+  for (const g of new Set([...document.querySelectorAll("[data-tier]")].map((t) => t.parentElement).filter(Boolean))) {
+    const bare = g.cloneNode(true);
+    bare.querySelectorAll("[data-tier], .bf-concept").forEach((x) => x.remove());
+    if ((bare.textContent || "").trim()) continue;
+    const link = g.closest("a[href]");
+    const hash = link ? new URL(link.getAttribute("href"), location.href).hash.slice(1) : "";
+    const cap = g.closest("[data-capability]")?.getAttribute("data-capability") || hash || null;
+    if (!cap) continue;
+    tierGroups.push({
+      cap,
+      via: g.closest("[data-capability]") ? "section" : "link",
+      where: `${sectionOf(g) || "the page"}${link ? ` (the link to #${hash})` : ""}`,
+      chips: [...g.children].filter((c) => c.matches("[data-tier]")).map((t) => ({ tier: t.getAttribute("data-tier"), text: (t.innerText || t.textContent || "").replace(/\s+/g, " ").trim(), seen: seenByReader(t) })),
+    });
+  }
   /* 33 (2026-09-29) ── the Lab drawing: every diagram holding a concept node,
      its flow lines, and every element in it — painted or in its <defs> — whose
      stroke, fill or stop colour is cyan, the colour of data flow */
@@ -1777,7 +1803,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, clientStoryBands, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips, labDrawings };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, clientStoryBands, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips, tierGroups, labDrawings };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -5629,10 +5655,11 @@ await (async () => {
    a figure's label — it carries no data-status, which check 8 reads as one. */
 check(
   33,
-  "The honesty contract: every capability shows its evidence tier; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status; the Lab drawing carries no cyan and no .dg-flow, and never animates a flow, on any profile",
-  "a capability shown with no evidence tier; robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label; data drawn flowing through the robotics concept — a cyan flow line or arrowhead in the Lab drawing, or a flow running on it on a phone, a touch tablet or a desktop",
+  "The honesty contract: every capability shows its evidence tier — every one of them, each with its scope, wherever its tiers are shown; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status; the Lab drawing carries no cyan and no .dg-flow, and never animates a flow, on any profile",
+  "a capability shown with no evidence tier, or with only its first, or with a bare tier whose scope says what it covers (ERP's \"Proven\" without \"HR, payroll and a wholesale back office\" claims full ERP); robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label; data drawn flowing through the robotics concept — a cyan flow line or arrowhead in the Lab drawing, or a flow running on it on a phone, a touch tablet or a desktop",
   (F, I) => {
     const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    let capsTs;
     const said = new Set();
     const once = (key, line) => {
       if (said.has(key)) return;
@@ -5663,6 +5690,37 @@ check(
         else if (t.shown && !new RegExp(`(^|[^\\p{L}])${TIER_LABELS[t.tier]}([^\\p{L}]|$)`, "u").test(t.text)) once(`lbl|${route}|${t.tier}|${t.text}`, `${at(k)}: a [data-tier="${t.tier}"] chip reads "${t.text}" — it says "${TIER_LABELS[t.tier]}"`);
       }
       I.push(`${at(k)}: ${caps.length} capability section(s)${caps.length ? ` (${caps.map((c) => `${c.id}: ${c.tiers.filter((t) => t.seen).map((t) => t.tier).join("+") || "no tier seen"}`).join(", ")})` : ""}; ${(v.tierChips || []).length} tier chip(s)${robotics.length ? `; the robotics honesty line ${robotics.some((c) => c.honesty.some((x) => x.seen && norm(x.text) === norm(ROBOTICS_HONESTY))) ? "shown, verbatim" : "NOT shown verbatim"}` : ""}`);
+      /* every tier, with its scope (2026-09-29, fix pass B): where a
+         capability's tiers are shown for it, all of them are, each saying its
+         scope where content/engineering.ts gives one. /capabilities' contents
+         row showed only the first, bare — ERP read as a plain "Proven", which
+         the ledger, the llms files and the JSON-LD all deny ("full ERP is
+         designed but not yet delivered") (the honesty review). */
+      if (capsTs === undefined) {
+        try {
+          capsTs = loadContent("content/engineering.ts").engineering.capabilities;
+          if (!Array.isArray(capsTs)) throw new Error("it exports no capabilities");
+        } catch (e) {
+          capsTs = null;
+          F.push(`content/engineering.ts could not be read (${e.message}) — a capability's tiers cannot be checked against it; unsure is a failure`);
+        }
+      }
+      for (const g of v.tierGroups || []) {
+        const c = capsTs ? capsTs.find((x) => x.id === g.cap) : null;
+        if (!c) continue;
+        const want = c.evidence.map((e) => `${TIER_LABELS[e.tier] ?? e.tier}${e.scope ? ` (${e.scope})` : ""}`).join(" and ");
+        const shownTiers = g.chips.filter((t) => t.seen);
+        const missing = c.evidence.filter((e) => !shownTiers.some((t) => t.tier === e.tier));
+        if (missing.length)
+          once(`tiers|${route}|${g.where}|${c.id}`, `${at(k)}: ${g.where} shows ${c.name} as ${shownTiers.map((t) => `"${t.text}"`).join(" and ") || "nothing a reader can see"}, without ${missing.map((e) => TIER_LABELS[e.tier] ?? e.tier).join(" or ")} — its evidence is ${want}, and every tier is shown where its tiers are`);
+        for (const e of c.evidence) {
+          if (!e.scope) continue;
+          const chip = shownTiers.find((t) => t.tier === e.tier);
+          if (chip && !norm(chip.text).includes(norm(e.scope)))
+            once(`scope|${route}|${g.where}|${c.id}|${e.tier}`, `${at(k)}: ${g.where} shows the ${TIER_LABELS[e.tier] ?? e.tier} tier of ${c.name} as "${chip.text}", without its scope "${e.scope}" — a bare "${TIER_LABELS[e.tier] ?? e.tier}" claims the whole capability`);
+        }
+      }
+      if ((v.tierGroups || []).length) I.push(`${at(k)}: ${(v.tierGroups || []).length} capability tier group(s) read for every tier and its scope (${[...new Set((v.tierGroups || []).map((g) => g.via))].join(", ")})`);
       /* robotics honesty (2026-09-29): the Lab drawing, as served and painted */
       const labs = v.labDrawings || [];
       if (route === "/capabilities" && robotics.length && !labs.length) F.push(`${at(k)}: /capabilities shows robotics but no Lab drawing (an svg with .dg-node--concept) was found — the no-cyan rule tested nothing; unsure is a failure`);

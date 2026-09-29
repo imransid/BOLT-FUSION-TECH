@@ -427,6 +427,14 @@ def p_story_shot_loose(s):
           '        <div className="bf-clientband__aside">\n          <ScreenImage src="/projects/fanlock.webp" alt="" sizes="300px" />\n')
 
 
+def p_toc_first_tier(s):
+    """33: /capabilities' contents row back to each capability's first tier,
+    with no scope — ERP reads as a plain "Proven" """
+    s.rep("app/capabilities/page.tsx",
+          "                      {c.evidence.map((e) => (\n                        <TierChip key={e.tier} tier={e.tier} scope={e.scope} />\n",
+          "                      {[c.evidence[0]].map((e) => (\n                        <TierChip key={e.tier} tier={e.tier} />\n")
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -672,6 +680,8 @@ CASES = [
     ["story-missing", "the client-story band leaves out one of TTouch Clothing's systems", 9, r'^/ @\d+: the client story "ttouch-clothing" leaves out "Delivery Lens BD", a published product project of TTouch Clothing', None, {"from": "story-foreign"}],
     # new at fix pass B (2026-09-29): the band shows each system's screenshot
     ["story-shot-foreign", "the client-story band's Sudarshini tile shows OPAL's screenshot", 9, r'^/ @\d+: the client story "ttouch-clothing" — the tile of "Sudarshini" shows /projects/opt/opal-\d+\.(?:avif|webp), which is not its screenshot in content/projects\.ts', p_story_shot_foreign, {}],
+    ["toc-first-tier", "/capabilities' contents row shows each capability's first tier alone — ERP without Capable (Full ERP)", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows ERP & enterprise systems as \"[^\"]*Proven[^\"]*\", without Capable — its evidence is Proven \(HR, payroll and a wholesale back office\) and Capable \(Full ERP\)", p_toc_first_tier, {}],
+    ["toc-bare-tier", "/capabilities' contents row shows a tier without its scope — ERP's Proven bare", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows the Proven tier of ERP & enterprise systems as \"[^\"]*\", without its scope \"HR, payroll and a wholesale back office\"", None, {"from": "toc-first-tier"}],
     ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
@@ -853,6 +863,13 @@ def b_i(s):
     s.rep("content/projects.ts", '        title: "Four systems for TTouch Clothing",\n', '        title: "Five systems for TTouch Clothing",\n')
 
 
+def b_k(s):
+    """(k) a capability's linked work scoped to a tier it does not name as
+    later: POS's workScope set to its first tier, "Point of sale" (2026-09-29:
+    the linked work names a LATER tier's scope, or none)"""
+    s.rep("content/engineering.ts", '      workScope: "Online and wholesale commerce",\n', '      workScope: "Point of sale",\n')
+
+
 def b_j(s):
     """(j) a client story that says its set is live while a member is not:
     Delivery Lens BD set to in production (2026-09-29)"""
@@ -872,6 +889,8 @@ BAD = [
     ["h", "a client story with one member (Balanzify Inc.)", "content/projects.ts", b_h, [r"a client story is a set — it needs at least two published product projects for .{1,2}Balanzify Inc\..{1,2}, and has 1"]],
     ["i", "a client story whose title says five over four members", "content/projects.ts", b_i, [r"its title says .{1,2}five.{1,2}, and .{1,2}TTouch Clothing.{1,2} has four published product projects"]],
     ["j", "a client story that says it is live while a member is in production", "content/projects.ts", b_j, [r"its intro says the set is live, and Delivery Lens BD is not"]],
+    # new at fix pass B (2026-09-29), one per new build-time rule
+    ["k", "POS's linked work scoped to its first tier (point of sale), which it does not evidence", "content/engineering.ts", b_k, [r"engineering\.ts failed validation", r"POS & commerce.{1,2}: workScope .{1,2}Point of sale.{1,2} is not the scope of one of its later tiers"]],
 ]
 
 

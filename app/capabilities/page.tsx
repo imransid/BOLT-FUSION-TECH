@@ -20,7 +20,7 @@ import { siteContent } from "@/content/site";
 import { pageMetadata } from "@/lib/page-meta";
 import { getSiteUrl } from "@/lib/site-url";
 import { breadcrumbLd, organizationLd, serviceLd } from "@/lib/structured-data";
-import { workLink } from "@/lib/work-links";
+import { workLabel, workLink } from "@/lib/work-links";
 
 export function generateMetadata(): Metadata {
   const m = pages.capabilities.head.meta;
@@ -122,7 +122,7 @@ function CapabilityDetail({ c, flip, reading }: { c: Capability; flip: boolean; 
             {work.length ? (
               <div className="bf-evidence__work">
                 <p id={`${c.id}-work`} className="bf-evidence__label">
-                  Linked work
+                  {workLabel(c)}
                 </p>
                 <ul aria-labelledby={`${c.id}-work`}>
                   {work.map((w) => (
@@ -214,8 +214,13 @@ export default function CapabilitiesPage() {
                   <a href={`#${c.id}`} className="bf-toc__link">
                     <DomainGlyph id={c.id} className="bf-toc__glyph" />
                     <span className="bf-toc__name">{c.name}</span>
+                    {/* Every tier with its scope, as the ledger shows them
+                        (2026-09-29, the honesty review): the first alone read
+                        ERP as a plain "Proven" (verify-site check 33). */}
                     <span className="bf-toc__tier">
-                      <TierChip tier={c.evidence[0].tier} />
+                      {c.evidence.map((e) => (
+                        <TierChip key={e.tier} tier={e.tier} scope={e.scope} />
+                      ))}
                     </span>
                   </a>
                 </li>

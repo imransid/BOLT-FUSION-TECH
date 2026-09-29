@@ -666,7 +666,8 @@
           "HR, payroll and a wholesale back office",
           "Full ERP",
           "Online and wholesale commerce",
-          "Point of sale"
+          "Point of sale",
+          "Linked work (online and wholesale commerce)"
         ]
       },
       {
@@ -1700,7 +1701,8 @@
           "Wholesale ordering portals",
           "Online commerce is shipped: the Sudarshini store and TTouch Clothing's wholesale portal.",
           "Delivery Lens BD",
-          "TTouch Employee Verification"
+          "TTouch Employee Verification",
+          "Linked work (online and wholesale commerce)"
         ]
       }
     ],
@@ -1751,7 +1753,8 @@
           "Employee records and verification",
           "Delivery Lens BD",
           "Orders shipped to customers who refuse them at the door",
-          "Courier data and delivery-risk checks"
+          "Courier data and delivery-risk checks",
+          "Trade prices that only approved shops should see"
         ]
       }
     ],

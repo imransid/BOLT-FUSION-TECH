@@ -1,7 +1,7 @@
 import { engineering } from "@/content/engineering";
 import type { Capability } from "@/content/engineering-schema";
 import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
-import { workLink } from "@/lib/work-links";
+import { workLabel, workLink } from "@/lib/work-links";
 
 import Cta from "../Cta";
 import CapabilityDiagram from "../diagrams";
@@ -48,7 +48,7 @@ function Row({ c, n }: { c: Capability; n: number }) {
         {work.length ? (
           <div className="bf-cap6__work">
             <p id={workId} className="bf-cap6__label">
-              Linked work
+              {workLabel(c)}
             </p>
             <ul aria-labelledby={workId}>
               {work.map((w) => (

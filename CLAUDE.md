@@ -149,7 +149,11 @@ fails `next build` with the file named:
 - `engineering.ts` (schema `engineering-schema.ts`) — the engineering company
   (2026-09-16): the six capabilities with every depth field (body, what we build,
   an optional build note, approach, evidence tiers with their scope, the evidence
-  note, linked work slugs, metric ids, the diagram id, title, description and
+  note, linked work slugs — and, where the work evidences a later tier than
+  the first, that tier's scope (`workScope`, 2026-09-29, fix pass B: POS's
+  linked work is its online and wholesale commerce, so both the ledger and
+  /capabilities label it "Linked work (online and wholesale commerce)" beside
+  the till's tagline and diagram) — metric ids, the diagram id, title, description and
   caption, the honesty line where Lab), the industries (problems, what we'd build,
   evidence links only where work exists, a note), the six How We Build stages,
   the technical-depth layers, the system map (parts, links, worked flows) and each
@@ -159,8 +163,15 @@ fails `next build` with the file named:
   unlabelled figure anywhere in it (the same idea as check 8, at build time),
   linked work that is not published Bolt Fusion work (never a track-record
   project), a Lab capability without its honesty line or a Lab diagram not
-  captioned "Concept", Kubernetes, Kafka or RabbitMQ, and a robotics link or flow
-  not marked concept.
+  captioned "Concept", Kubernetes, Kafka or RabbitMQ, a robotics link or flow
+  not marked concept, and a `workScope` that is not one of its later tiers'
+  scopes (RUN 3, case k). An industry's problems and builds are as strong as
+  its evidence, first where the evidence does them: Logistics' first problem
+  and build are what Delivery Lens BD does, and — since 2026-09-29, fix pass B,
+  the honesty review — Retail's first problem is "Trade prices that only
+  approved shops should see" (TTouch Wholesale), with its first two builds the
+  online store and the wholesale portal; the rest stay what we'd build, and no
+  stock-count or multi-branch system is claimed.
 - `canonical.ts` — the canonical company description, one string, imported by
   the metadata, the share image, the structured data and the content.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
@@ -708,7 +719,7 @@ the write-ups — then the footer. No light bands, no navy panels.
 
 | page | sections, in order |
 |---|---|
-| `/capabilities` | page head with the tier legend · a contents row (each capability with its glyph and tier) · six capability sections (`#software` … `#cloud`): eyebrow, h2, body, robotics' honesty line (`data-honesty`), what we build (a tier chip where an item's evidence differs), how we approach it ("How we'd approach it" for Lab), evidence (the tiers, the note, the AI capability's three figures in `[data-metric]` rows, linked work, the articles written from it), and its own diagram beside the text, captioned (robotics: "Concept — not a shipped system") and described · the system map (since 2026-09-28; it was the homepage's): the map beside its lists of parts, connections and worked flows · final call to action |
+| `/capabilities` | page head with the tier legend · a contents row (each capability with its glyph and every tier with its scope — since 2026-09-29, fix pass B; it showed the first tier alone, and ERP read as a bare "Proven") · six capability sections (`#software` … `#cloud`): eyebrow, h2, body, robotics' honesty line (`data-honesty`), what we build (a tier chip where an item's evidence differs), how we approach it ("How we'd approach it" for Lab), evidence (the tiers, the note, the AI capability's three figures in `[data-metric]` rows, linked work, the articles written from it), and its own diagram beside the text, captioned (robotics: "Concept — not a shipped system") and described · the system map (since 2026-09-28; it was the homepage's): the map beside its lists of parts, connections and worked flows · final call to action |
 | `/industries` | page head · "Industries with delivered work." (restaurants, retail, real estate, HR, salons and, since 2026-09-29, logistics: the problems, what we'd build, what it draws on, where we've built it) · "No delivered work here yet." (healthcare, education, enterprise operations, startups: no evidence cell) · final call to action |
 | `/engineering` | page head · how we build (the homepage's stages rail) · in practice (the three phases of `content/process.ts`, each naming its stages) · the stack by layer (the homepage's strata) · architecture principles (eight, each linked to its write-up or article) · verify before release (what the suite fails on, with no number; what the build refuses) · final call to action |
 | `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
@@ -1877,14 +1888,15 @@ plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
 runs all 34 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
-a pattern that matches the clean build proves nothing. RUN 3 builds ten
+a pattern that matches the clean build proves nothing. RUN 3 builds eleven
 kinds of bad content — a figure KPI with no status, a capability KPI with one,
 an exemption with an empty reason, a capability tier outside proven, core,
 capable and lab, a named roster put back in the team (2026-09-24), since
 2026-09-28 a hero first-call line that is not approved copy and feature work
 named on the hero's proof line, and since 2026-09-29 a client story with one
 member, one whose title's count is wrong, and one that says it is live while
-a member is not — and requires the schema's own refusal in the
+a member is not, and since fix pass B a capability's `workScope` set to its
+first tier's scope — and requires the schema's own refusal in the
 build log: a build that fails for another reason is unsure. The suite's `--only` list for RUN 2 is
 derived from the case table: a hand-written list once omitted check 9, and its
 case could not fail. A case whose target does not exist yet names the wave that
@@ -2228,6 +2240,30 @@ carries cases that ask for WebGL contexts of their own.
   it shares the misuse build with `hook-blink`, which needs the engine alive
   on /engineering to fail on its own damage.
 
+**Checks changed in fix pass B (2026-09-29).** From the same three reviews'
+layout, type and content findings. Each rule is proven both ways — the
+working tree passes; the same tree with the misuse fails with that rule's
+own finding — and each has its case in `scripts/gate/gate-cases.py`.
+- **9, extended — the client story's screenshots** (under *Checks changed for
+  the TTouch Clothing projects*, above): `story-shot-foreign`,
+  `story-shot-loose`.
+- **33, extended — every tier, with its scope.** Wherever a capability's
+  tiers are shown for it — a box of tier chips with no words of its own (a
+  concept tag aside) inside its `[data-capability]`, or in a link to its
+  section, as /capabilities' contents row is — every tier in
+  `content/engineering.ts` must be there where a reader can see it, each
+  carrying its scope's words where it has one. The contents row showed only
+  the first, bare: ERP read as a plain "Proven", which the ledger, the llms
+  files and the Organization JSON-LD all deny (the honesty review). A chip
+  beside an item's own words ("Online stores" in what we build) is that
+  item's, and not read. The suite now loads `content/engineering.ts` (a stub
+  for its schema module, as for `./schema`). RUN 2: `toc-first-tier` and
+  `toc-bare-tier`, one patch (the row back to the first tier, no scope).
+- **The build, one new refusal (RUN 3, case k):** a `workScope` that is not
+  one of the capability's later tiers' scopes — POS's set to "Point of sale"
+  is refused in the schema's words, proven by loading the patched content
+  with the real zod.
+
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
 speed. Measured on a page that has already been scrolled, or never scrolled, it
@@ -2540,8 +2576,8 @@ claim that TTouch "came back"; no dates.
 |---|---|---|
 | /work | the four as a client story under their own h3, `#ttouch-clothing`, between the product cards and the feature work; each card the standard one, with a real screenshot and a live link. **Revised 2026-09-29 (fix pass B, the design review):** its own section and h2 straight after the case studies, named in the page's lede | `motion-hire/projects`, fix pass B |
 | The homepage | a text band in `#recent-work`, after the proof strip, with one link to `/work#ttouch-clothing`; the hero's proof line unchanged. **Revised 2026-09-29 (fix pass B, the design and honesty reviews):** a plate straight after the pair of write-ups, before the section's Schedule a Call, with the four screenshots; the section's heading "Built and shipped." | `motion-hire/projects`, fix pass B |
-| Industries | Retail & commerce gains Sudarshini and TTouch Wholesale; HR gains TTouch Employee Verification; Logistics moves to delivered work on Delivery Lens BD, its first problem ("Orders shipped to customers who refuse them at the door") and first build ("Courier data and delivery-risk checks") written to what that product does; each evidence link lands on its card | `motion-hire/projects` |
-| Capabilities | Software engineering links Delivery Lens BD and Sudarshini; ERP's Proven scope is "HR, payroll and a wholesale back office" (Full ERP stays Capable, its line byte-identical); POS & commerce is Core for point of sale and Proven for "Online and wholesale commerce", with "Online stores" and "Wholesale ordering portals" in what it builds — still no payments or commerce integrations claimed; AI, Cloud and Robotics unchanged | `motion-hire/projects` |
+| Industries | Retail & commerce gains Sudarshini and TTouch Wholesale; HR gains TTouch Employee Verification; Logistics moves to delivered work on Delivery Lens BD, its first problem ("Orders shipped to customers who refuse them at the door") and first build ("Courier data and delivery-risk checks") written to what that product does; each evidence link lands on its card. **Fix pass B (2026-09-29, the honesty review):** Retail's first problem is "Trade prices that only approved shops should see", the same rule applied | `motion-hire/projects`, fix pass B |
+| Capabilities | Software engineering links Delivery Lens BD and Sudarshini; ERP's Proven scope is "HR, payroll and a wholesale back office" (Full ERP stays Capable, its line byte-identical); POS & commerce is Core for point of sale and Proven for "Online and wholesale commerce", with "Online stores" and "Wholesale ordering portals" in what it builds — still no payments or commerce integrations claimed; AI, Cloud and Robotics unchanged. **Fix pass B (2026-09-29, the honesty review):** POS's linked work reads "Linked work (online and wholesale commerce)"; /capabilities' contents row shows every tier with its scope | `motion-hire/projects`, fix pass B |
 | /industries' layout | the homepage's industries grid rules were scoped to its section: they had laid /industries' rows out five to a row from 1025px | `motion-hire/projects` |
 
 ## Decided 2026-09-28: easier to hire, and the motion system (owner)

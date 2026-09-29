@@ -2589,6 +2589,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-toc__tier {
   grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* How we approach it: not a sequence, so not numbered — a short brand rule. */
