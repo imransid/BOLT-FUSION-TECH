@@ -770,9 +770,11 @@ async function visitLcp(browser, prof) {
     const above = h1Box ? vis.btm <= h1Box.t + 1 : null;
     const where = h1Box ? `the visible poster spans x ${Math.round(vis.l)}–${Math.round(vis.r)}, y ${Math.round(vis.t)}–${Math.round(vis.btm)}; the h1's lines x ${Math.round(h1Box.l)}–${Math.round(h1Box.r)}, y ${Math.round(h1Box.t)}–${Math.round(h1Box.b)}` : "no h1";
     const badCanvases = [...document.querySelectorAll("canvas")].filter((c) => !field?.contains(c) || !same(c)).map((c) => `${tag(c)} ${c.offsetWidth}x${c.offsetHeight}${field?.contains(c) ? " inside the field, not its box" : " outside [data-hero-field]"}`);
-    /* H4: how far the chosen file is stretched to cover the field. The file's
+    /* H4: how far the chosen file is stretched to fill the field. The file's
        own width is its srcset `w` descriptor — naturalWidth is density-corrected
-       by `sizes` for a srcset image, and says nothing about the file. */
+       by `sizes` for a srcset image, and says nothing about the file. The drawn
+       width follows the poster's own object-fit: `cover` fills the larger of
+       the two axes, `contain` (>=1025px since 2026-09-28) the smaller. */
     let fileW = 0;
     for (const s of [...(p.parentElement?.querySelectorAll("source") || []), p])
       for (const c of (s.getAttribute("srcset") || "").split(",")) {
@@ -780,7 +782,8 @@ async function visitLcp(browser, prof) {
         if (u && d && /^\d+w$/.test(d) && new URL(u, location.href).href === p.currentSrc) fileW = parseInt(d, 10);
       }
     const aspect = p.naturalWidth && p.naturalHeight ? p.naturalWidth / p.naturalHeight : 0;
-    const needW = field && aspect ? Math.max(field.clientWidth, field.clientHeight * aspect) * devicePixelRatio : 0;
+    const fit = getComputedStyle(p).objectFit;
+    const needW = field && aspect ? (fit === "contain" ? Math.min : Math.max)(field.clientWidth, field.clientHeight * aspect) * devicePixelRatio : 0;
     out.state = {
       rendered: !why,
       why,
@@ -797,6 +800,7 @@ async function visitLcp(browser, prof) {
       fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
       badCanvases,
       upscale: needW && fileW ? +(needW / fileW).toFixed(2) : null,
+      fit,
       natural: fileW || "?",
       dpr: devicePixelRatio,
     };
@@ -4524,7 +4528,7 @@ check(
       if (r.width < 1025 && st.above === false) F.push(`/ ${r.label}: the poster is not above the headline — below 1025px the field sits above the text (${st.where})`);
       for (const c of st.badCanvases) F.push(`/ ${r.label}: a canvas ${c} — any canvas sits inside [data-hero-field] with the field's box`);
       I.push(
-        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to cover the field`,
+        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to ${st.fit === "contain" ? "fit (contain)" : "cover"} the field`,
       );
     }
   },

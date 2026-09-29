@@ -6,16 +6,22 @@ import Cta, { ctaKind } from "../Cta";
 import { ArrowUpRightIcon } from "../icons";
 import MotionToggle from "../MotionToggle";
 
-/* The width the poster is DRAWN at, which is what `sizes` must say. The image
-   covers its frame, so a frame taller than the image's 660:560 is filled by
-   height, and the drawn width is the frame's height x 1.18, not its width.
-   At >=1025px the frame is 560px tall (app/site.css) and never wider than
-   660px, so the poster is drawn exactly 660px wide at every desktop width: the
-   660 file at DPR 1, the 1320 file at DPR 2, neither stretched (H4). Below
-   1025px the frame is filled by width: the content column, the viewport less
-   the side gutters (16px each at phone widths). Phones take the 660 file at
-   every density through the first two sources. */
-const SIZES = "(min-width: 1025px) 660px, calc(100vw - 32px)";
+/* The width the poster is DRAWN at, which is what `sizes` must say. The
+   poster is CONTAINED in its frame at every width (app/site.css, 2026-09-29),
+   so it is drawn at the smaller of the frame's width and its height x 1.18:
+   at >=1025px the frame is 560px tall and at most 660 wide, so 467-660px (660
+   from 1280 up); at 768-1024 the frame is 16:9, so 468-638px. Never more than
+   660 from 768px up: the 660 file at DPR 1 and the 1320 file at DPR 2 are
+   never stretched (H4). Phones take the 660 file at every density through
+   the first two sources (drawn 316px wide at 390).
+
+   The two 660 files are not the same picture. `-660-1x` is the scene's frame
+   rendered at DPR 1, what a DPR-1 desktop canvas draws, line for line, so its
+   crossfade shows no jump; `-660` is the DPR-2 frame downsampled, which
+   draws the one-pixel lines at about half strength and so brightened them as
+   the canvas faded in (the adversarial review), but resamples better on a
+   phone, where it is drawn at under half its size. */
+const SIZES = "660px";
 
 /** The headline as two lines that never break inside: "Build" / "what's next."
  *  A line of one word is fine at the top; verify-site check 7 fails a headline
@@ -62,7 +68,7 @@ function proofItems(ids: readonly string[]) {
  * <HeroScene /> (components/field) mounts the three.js scene inside the field,
  * over the poster, at >=1025px with a fine pointer, no Save-Data and motion
  * allowed, after LCP and load. The poster is that scene's first frame, t = 0
- * (scene-poster-v1-*: /hero/* is served immutable, so a re-render is v2).
+ * (scene-poster-v2-*: /hero/* is served immutable, so a re-render is v3).
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   const [first, rest] = headlineLines(hero.title);
@@ -119,15 +125,15 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
           <div className="bf-hero__stage">
             <div className="bf-hero__field" aria-hidden="true" data-hero-field>
               <picture>
-                <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/scene-poster-v1-660.avif" />
-                <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/scene-poster-v1-660.webp" />
-                <source type="image/avif" srcSet="/hero/scene-poster-v1-660.avif 660w, /hero/scene-poster-v1-1320.avif 1320w" sizes={SIZES} />
-                <source type="image/webp" srcSet="/hero/scene-poster-v1-660.webp 660w, /hero/scene-poster-v1-1320.webp 1320w" sizes={SIZES} />
+                <source media="(max-width: 767px)" type="image/avif" srcSet="/hero/scene-poster-v2-660.avif" />
+                <source media="(max-width: 767px)" type="image/webp" srcSet="/hero/scene-poster-v2-660.webp" />
+                <source type="image/avif" srcSet="/hero/scene-poster-v2-660-1x.avif 660w, /hero/scene-poster-v2-1320.avif 1320w" sizes={SIZES} />
+                <source type="image/webp" srcSet="/hero/scene-poster-v2-660-1x.webp 660w, /hero/scene-poster-v2-1320.webp 1320w" sizes={SIZES} />
                 {/* The LCP poster: a plain <img> in a <picture>, never next/image, so its fetch priority, size and formats are exactly what the served HTML says, with no optimizer round trip. */}
                 <img
                   data-hero-poster
                   className="bf-hero__poster"
-                  src="/hero/scene-poster-v1-660.webp"
+                  src="/hero/scene-poster-v2-660.webp"
                   alt=""
                   aria-hidden="true"
                   width={660}
