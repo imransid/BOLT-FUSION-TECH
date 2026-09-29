@@ -105,12 +105,15 @@ export function ProjectLinks({ p }: { p: Project }) {
 /** One project that is not a case study: a real screenshot of its live site
  *  when it is ours (none for a track record, nor for features in a client's
  *  app), then the text. Its name is an h3, or an h4 on a card in a sub-group
- *  under its own h3 (/work's feature work). `data-project-kind`,
- *  `data-project-scope` and `data-project-id` are check 9's. */
+ *  under its own h3 (/work's feature work and client stories). `data-project-kind`,
+ *  `data-project-scope` and `data-project-id` are check 9's. The card's `id` is
+ *  its project's, so evidence can link to the card itself (`/work#sudarshini`,
+ *  2026-09-29; lib/work-links.ts) — check 15 fails a link to one that is gone. */
 export default function ProjectCard({ p, sizes, headingLevel = 3 }: { p: Project; sizes: string; headingLevel?: 3 | 4 }) {
   const Name = headingLevel === 4 ? "h4" : "h3";
   return (
     <li
+      id={p.id}
       className={p.image ? "bf-project bf-project--shot" : "bf-project"}
       data-project-kind={p.kind}
       data-project-scope={p.kind === "project" ? p.scope : undefined}

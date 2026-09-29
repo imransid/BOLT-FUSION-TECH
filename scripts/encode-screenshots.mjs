@@ -29,6 +29,10 @@ const SCREENSHOTS = [
   "/projects/balanzify.webp",
   "/projects/go-style-business.webp",
   "/projects/opal.webp",
+  "/projects/delivery-lens-bd.webp",
+  "/projects/ttouch-wholesale.webp",
+  "/projects/sudarshini.webp",
+  "/projects/ttouch-employee-verification.webp",
 ];
 const OUT = "/projects/opt";
 /* 640 for phones; the full width (capped at 1280) for everything larger. The

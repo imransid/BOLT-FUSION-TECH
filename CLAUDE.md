@@ -73,7 +73,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`: the two write-ups side by side — on a phone each its outcome and its result — then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; on a phone, a Schedule a Call after it); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`: the two write-ups side by side — on a phone each its outcome and its result — then a Schedule a Call, the restaurant search's three lanes, the proof strip and, since 2026-09-29, TTouch Clothing's client-story band); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; on a phone, a Schedule a Call after it); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
@@ -81,7 +81,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 | `/about` | who we are; the team (the Team section: 15+ developers, no one named, no Person node — on the homepage since 2026-09-28 only its headcount, in how we work); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
 | `/insights` | the index of the articles | `content/insights.ts`, `content/pages.ts` · static |
 | `/insights/[slug]` | an article (`generateStaticParams`, `dynamicParams = false`): the sections in reading order, code in Barlow 500, each "diagram" an ordered flow, related work; Article JSON-LD | `content/insights.ts` · SSG |
-| `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
+| `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects (with TTouch Clothing's four systems as a client story, `#ttouch-clothing`, since 2026-09-29), in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
@@ -165,7 +165,12 @@ fails `next build` with the file named:
   the metadata, the share image, the structured data and the content.
 - `metrics.ts`, `projects.ts`, `services.ts`, `process.ts`, `pilot.ts`,
   `architecture.ts` (schemas in `schema.ts`) — read by `/work`, the homepage (the
-  proof strip, the restaurant story's lanes) and `lib/structured-data.ts`.
+  proof strip, the restaurant story's lanes, the client-story band) and
+  `lib/structured-data.ts`. `projects.ts` also holds the client stories
+  (`clientStories`, 2026-09-29: a title and an intro; its members are computed
+  from `client`, never stored) and refuses one with fewer than two members, a
+  count in its words that is not its member count, or "live" said of a set
+  whose members are not all live (the gate's RUN 3, cases h–j).
   `services.ts` (the engagement models) and `pilot.ts` (which carries COPY.md
   §7's title and body since 2026-09-16) left the homepage on 2026-09-16 and
   render on /about — and, since 2026-09-28, in the homepage's how we work too; `process.ts`'s three steps gave way to the six stages on the
@@ -219,7 +224,7 @@ does not state.
 | kind | what it is | the label on its card | links | image |
 |---|---|---|---|---|
 | `case-study` | a Bolt Fusion project with a write-up here: WarmChats, restaurant search | "Case study: built by Bolt Fusion [for ‹client›]" | its write-up (required), and the live product | a real screenshot |
-| `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
+| `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business, and TTouch Clothing's four systems — Delivery Lens BD, TTouch Wholesale, Sudarshini, TTouch Employee Verification (2026-09-29) | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
 | `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **none** — the app's UI is the client's |
 | `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
 | `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23); NIdle Finishing (Intellier) is held back (below) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
@@ -230,8 +235,41 @@ does not state.
   screenshot or metrics. It is never called our client and carries no
   confidential detail.
 - **A product another company owns is "built by Bolt Fusion for …", never
-  ours:** WarmChats belongs to WarmChats, Inc., Balanzify to Balanzify Inc.
-  (`client`).
+  ours:** WarmChats belongs to WarmChats, Inc., Balanzify to Balanzify Inc.,
+  and the four TTouch systems to TTouch Clothing (`client`).
+- **TTouch Clothing's four systems (owner, 2026-09-29; *Decided 2026-09-29*).**
+  Delivery Lens BD (a courier-risk web app for online sellers), TTouch
+  Wholesale (an approval-based wholesale portal and its back office),
+  Sudarshini (the store of TTouch's saree brand) and TTouch Employee
+  Verification (a public check and an HR back office). All four are full
+  builds — design, app, backend and database — by Bolt Fusion as an outside
+  vendor, so each card reads "Delivered project: built by Bolt Fusion for
+  TTouch Clothing", the client byte-identical on all four (check 9 compares
+  the whole label). **The owner's word is the only source:** no repository,
+  commit or document for any of them is on this machine (searched
+  2026-09-29), so no date, duration, team size or database is stated, and
+  every summary and role says only what the public sites show and what the
+  owner said. The stack tags are the public fingerprints in the evidenced
+  stack words (React, Next.js, Node.js, Django, REST) and name no database. No
+  figures: the sites' counters, catalogue sizes and speed and accuracy claims
+  are TTouch's, and check 30's `ttouch-cuts` set fails them — and the
+  demo's phone numbers, the API's hidden fields and "came back" — on `/` and
+  /work. All four link to their live sites; the employee portal's link is the
+  owner's choice ("It already has a rate limit / protection" — his
+  statement, not verified). **The credit caveat:** the four sites' footers
+  credit "TTouch Clothing (IT Department)", and none mentions Bolt Fusion.
+  Never say a Bolt Fusion credit exists on them; the owner is asking TTouch
+  to add one.
+- **A client story (2026-09-29)** is one client's product projects shown
+  together: `clientStories` in `content/projects.ts` holds its anchor, title
+  and intro, and its members are computed — every published product project
+  whose `client` is the story's, byte for byte. On /work it is a sub-group of
+  Bolt Fusion projects under its own h3; on the homepage, a band in the proof
+  (below). The build refuses a story with fewer than two members, a count in
+  its title or intro that is not its member count ("Four systems" cannot
+  outlive a fifth card), and "live" said of a set whose members are not all
+  live. It says "Four systems for TTouch Clothing", never "came back for
+  four": that would claim separate engagements the owner has not stated.
 - **Feature work says it is feature work (owner, 2026-09-16).** Bazzile and
   GodConnect Online were delivered through Bolt Fusion as features inside other
   companies' apps. We did not build those apps, so their label is "features
@@ -260,15 +298,31 @@ does not state.
   saved as webp in `public/projects/`, of a view with no faces in it: FanLock's
   "Fight leaks" section (its hero shows a face), Balanzify's migration page (its
   homepage dashboard shows customer avatars), Go Style Business's sign-in page
-  (its only public page) and OPAL's shop (its hero collage shows faces). Never a
+  (its only public page) and OPAL's shop (its hero collage shows faces). The
+  four TTouch systems (2026-09-29) are public pages only, captured with every
+  non-GET request, the Meta Pixel and the Cloudflare beacon blocked, never a
+  login and never a typed field: Delivery Lens BD's homepage with its demo
+  settled on TTouch's own published number (never a frame with the demo's
+  other two numbers), TTouch Wholesale's public catalogue (no prices, no
+  images), TTouch Employee Verification's empty verify page (never a result),
+  and — since every storefront view of Sudarshini shows the brand's model —
+  a product page's details panel, cropped from a 1440×900 capture at DPR 3 and
+  scaled to 1440×900, with the product photograph and the random "N people are
+  viewing" line outside the crop (the owner: "a view with no face", picked or
+  cropped). Never a
   mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
   2026-09-16.
 - **/work is four sections,** one per kind, in `projectSections` order. The
   track-record section says what it means: "Work our engineers shipped at
   previous employers — credited to them, not claimed as ours." Inside Bolt
-  Fusion projects the product cards come first. Under them is a sub-group headed
+  Fusion projects the product cards come first. Under them each client story
+  is a sub-group (`.bf-subgroup--client`, anchored at its id,
+  `/work#ttouch-clothing`): the eyebrow "Client story", its h3 and its intro —
+  beside the h3 from 1025px — over its members' cards, two across, with h4
+  names. Under that is a sub-group headed
   by its own h3, "Features we shipped into other companies’ apps", whose cards
-  have h4 names so the outline nests. Every grid, that one included, fills
+  have h4 names so the outline nests. Every card carries its project's id, so
+  evidence links land on the card itself (`/work#sudarshini`). Every grid, that one included, fills
   its rows: three across from 1025px, two across from 768px, one on phones; a
   set that divides by neither is one column, and a card alone lays its
   screenshot beside its text.
@@ -280,7 +334,17 @@ does not state.
   write-up if it has one (WarmChats) and otherwise to the product itself, live
   — the first of its `links`, in a new tab, with an arrow (Balanzify,
   Go Style Business) — so "in production" is something a buyer can open and
-  check. "See all work (N projects)" counts
+  check. Delivery Lens BD replaces Go Style Business there only after TTouch
+  fixes its demo's phone numbers and adds a privacy policy and terms (owner,
+  2026-09-29). After the proof strip, each client story is a band — TTouch
+  Clothing's label, the story's h3, the four names (each linking to the live
+  system) over their taglines, and "See the four systems" to
+  `/work#ttouch-clothing`, the count from the data; text only, since a
+  screenshot off a /work card must link to a write-up (check 9) and the
+  homepage's weight is budgeted (check 29). Check 9 reads the band
+  (`[data-client-story]`): its label must be the kind's words for its client,
+  where a reader can see it, and it must name every published product
+  project of that client and nothing else. "See all work (N projects)" counts
   the published projects that are ours, from the data, the feature work
   included. The track record is not counted.
 - `llms.txt` and `llms-full.txt` credit every project as its card does.
@@ -443,14 +507,23 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   rail's markers do — `.bf-hww__station[data-bf-lit]::before`, the hook
   owner's CSS; below 768px the stations stack down the list's own
   rule; each station's words start with a capital, set by CSS — the weeks are
-  lower-case fragments in `content/pilot.ts`). The *industries* are one ruled
-  row of five cells on shared rows (`grid-template-rows: subgrid`), so a name
-  that wraps moves every cell's "Where we've built it" with it. *The
-  engineering stories* (`#recent-work`) are the pair of write-ups — on a phone
-  each is its outcome and its result, the problem, the system and the
+  lower-case fragments in `content/pilot.ts`). The *industries* are a ruled
+  grid on shared rows (`grid-template-rows: subgrid`), so a name that wraps
+  moves every cell's "Where we've built it" with it — one row of five until
+  2026-09-29, two rows of three since Logistics made six; the grid rules are
+  scoped to the homepage's section (`.bf-inds-sec`), because /industries lists
+  its rows in a `.bf-inds` too, and they had laid its industries out five to a
+  row. *The engineering stories* (`#recent-work`) are the pair of write-ups — on
+  a phone each is its outcome and its result, the problem, the system and the
   engineering staying in the served HTML for the write-up to tell — then the
   section's Schedule a Call, then the lanes band and the proof strip, whose
-  four figures are ruled rows on a phone, not boxed cards.
+  four figures are ruled rows on a phone, not boxed cards, then the
+  client-story band (`.bf-clientband`, 2026-09-29): TTouch Clothing's label
+  over the story's h3, "See the four systems" to `/work#ttouch-clothing`
+  beside them from 1025px, and one ruled row of the four names over their
+  taglines — four across from 1025px, two from 768px, one on phones — each
+  name a 44px link to the live system, set as the hero's proof line is. Text
+  only: no screenshot on the homepage.
 - **The system map** (`components/site/SystemMap.tsx`, a client component; on
   /capabilities after the six since 2026-09-28, the homepage's until then): the
   SVG is the picture for a pointer and is `aria-hidden`; the lists beside it
@@ -567,7 +640,9 @@ needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
 - **CSS primitives** (`app/site.css`): `.bf-wrap`, `.bf-section`, `.bf-head` /
   `.bf-eyebrow` / `.bf-h2` / `.bf-h4` / `.bf-lead`, `.bf-head--chapter`,
   `.bf-actions`, `.bf-btn--*`, `.bf-cap6` (a ledger row), `.bf-hww` (how we
-  work's spec sheet), `.bf-inds` (a ruled row), `.bf-stages` (a rail), `.bf-strata`,
+  work's spec sheet), `.bf-inds` (a ruled grid), `.bf-clientband` (a client
+  story on the homepage), `.bf-subgroup` / `.bf-subgroup--client` (/work's
+  sub-groups), `.bf-stages` (a rail), `.bf-strata`,
   `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
   `.bf-pagehead` (a page's h1 block), `.bf-prose` (an article, the privacy
   policy), `.bf-form` / `.bf-field`, the `data-bf-reveal` / `data-bf-flow`
@@ -577,7 +652,8 @@ needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
   with their sections on 2026-09-28.
 - **Lib:** `lib/page-meta.ts` (`pageMetadata`: the title, description,
   canonical and share card an inner page needs), `lib/work-links.ts`
-  (`workLink`: where a linked project is shown), `lib/dates.ts` (`longDate`),
+  (`workLink`: where a linked project is shown — a write-up, or since 2026-09-29
+  the project's own card, `/work#<id>`), `lib/dates.ts` (`longDate`),
   and `articleLd` beside the rest in `lib/structured-data.ts`.
 
 ### The inner pages, as built (2026-09-16)
@@ -590,12 +666,12 @@ the write-ups — then the footer. No light bands, no navy panels.
 | page | sections, in order |
 |---|---|
 | `/capabilities` | page head with the tier legend · a contents row (each capability with its glyph and tier) · six capability sections (`#software` … `#cloud`): eyebrow, h2, body, robotics' honesty line (`data-honesty`), what we build (a tier chip where an item's evidence differs), how we approach it ("How we'd approach it" for Lab), evidence (the tiers, the note, the AI capability's three figures in `[data-metric]` rows, linked work, the articles written from it), and its own diagram beside the text, captioned (robotics: "Concept — not a shipped system") and described · the system map (since 2026-09-28; it was the homepage's): the map beside its lists of parts, connections and worked flows · final call to action |
-| `/industries` | page head · "Industries with delivered work." (restaurants, retail, real estate, HR, salons: the problems, what we'd build, what it draws on, where we've built it) · "No delivered work here yet." (healthcare, education, logistics, enterprise operations, startups: no evidence cell) · final call to action |
+| `/industries` | page head · "Industries with delivered work." (restaurants, retail, real estate, HR, salons and, since 2026-09-29, logistics: the problems, what we'd build, what it draws on, where we've built it) · "No delivered work here yet." (healthcare, education, enterprise operations, startups: no evidence cell) · final call to action |
 | `/engineering` | page head · how we build (the homepage's stages rail) · in practice (the three phases of `content/process.ts`, each naming its stages) · the stack by layer (the homepage's strata) · architecture principles (eight, each linked to its write-up or article) · verify before release (what the suite fails on, with no number; what the build refuses) · final call to action |
 | `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
 | `/insights` | page head · the articles as a ledger (date, author, title, dek, capabilities) · final call to action |
 | `/insights/[slug]` | page head (back link, h1, dek, author, date) · the sections in reading order, beside related work, capabilities and more insights · final call to action |
-| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
+| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the client story — "Four systems for TTouch Clothing", an eyebrow, h3 and intro over four h4 cards, two across, at `#ttouch-clothing` — then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
 | `/work/warmchats` | page head with the screenshot · executive summary and the numbers · how it works · the product · architecture beside the full stack · outcome · call to action and the sign-off |
 | `/work/restaurant-search` | page head with the system image · executive summary and the KPIs · the three lanes · the stack beside the bounded contexts · call to action |
 | `/privacy-policy` | page head with the date · the policy as legal prose |
@@ -610,9 +686,10 @@ the write-ups — then the footer. No light bands, no navy panels.
   pilot", "Start a 2-week pilot", "Read the write-up" — are the ghost variant
   with no `data-cta`.
 - **/work's contract with check 9 is unchanged:** every card is an `<li>` marked
-  `data-project-kind` (`-scope`, `-id`); its `[data-attribution]` label, in the
-  brand blue, is directly followed by its name (an h3, or an h4 under the
-  feature-work sub-group's h3); `data-role`, `data-built-at` and
+  `data-project-kind` (`-scope`, `-id`), and since 2026-09-29 carrying its
+  project's `id`; its `[data-attribution]` label, in the
+  brand blue, is directly followed by its name (an h3, or an h4 under a
+  sub-group's h3 — the client story's or the feature work's); `data-role`, `data-built-at` and
   `data-project-status` sit on the facts; each figure is a `[data-metric]` row
   with its own chip; and no other h3 or h4 is on the page. Grids fill their rows:
   three across from 1025px; a set of two, two across from 768px; a set of three,
@@ -1607,12 +1684,14 @@ plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
 runs all 33 checks with `--repo`: every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
-a pattern that matches the clean build proves nothing. RUN 3 builds seven
+a pattern that matches the clean build proves nothing. RUN 3 builds ten
 kinds of bad content — a figure KPI with no status, a capability KPI with one,
 an exemption with an empty reason, a capability tier outside proven, core,
-capable and lab, a named roster put back in the team (2026-09-24), and since
+capable and lab, a named roster put back in the team (2026-09-24), since
 2026-09-28 a hero first-call line that is not approved copy and feature work
-named on the hero's proof line — and requires the schema's own refusal in the
+named on the hero's proof line, and since 2026-09-29 a client story with one
+member, one whose title's count is wrong, and one that says it is live while
+a member is not — and requires the schema's own refusal in the
 build log: a build that fails for another reason is unsure. The suite's `--only` list for RUN 2 is
 derived from the case table: a hand-written list once omitted check 9, and its
 case could not fail. A case whose target does not exist yet names the wave that
@@ -1862,6 +1941,35 @@ RUN 2 (`scripts/gate/gate-cases.py`).
   /engineering only now, so /engineering's inventory includes the evidence
   cuts and check 30 still sees a cut technology come back. `cache-lane`
   stands: the restaurant search's lanes stay on `/`, as a band in the stories.
+
+**Checks changed for the TTouch Clothing projects (2026-09-29).** Each rule was
+proven both ways — the site passes; a copy with the misuse fails with that
+rule's own finding — and each has its case in `scripts/gate/gate-cases.py`.
+- **9, extended — the client-story band.** The homepage's band
+  (`[data-client-story]`) is not a card, so no kind marker put it in check 9's
+  reach, and its label is the only thing that says who built the four
+  systems. Check 9 now reads it: the band's `[data-attribution]` must read the
+  kind's words for the story's client — written in the suite, "Delivered
+  project: built by Bolt Fusion for TTouch Clothing" — where a reader can see
+  it; every `[data-story-project]` must be a published product project of that
+  client, linking out over https to one of its own links; and no member may be
+  left out. RUN 2: `story-label` (the label changed to "Built by TTouch
+  Clothing"), `story-hidden` (the label given `sr-only`), `story-foreign` (our
+  own OPAL named among TTouch's) and `story-missing` (Delivery Lens BD left out,
+  from the same patch). Proven on a served build of the working tree with the
+  three patches: all four findings, at 1440 and 390; the clean build passes.
+- **The build, three new refusals (RUN 3).** `clientStories` in
+  `content/projects.ts`: (h) a story pointed at a client with one published
+  product project — "a client story is a set"; (i) "Five systems" over four
+  members — "its title says "five", and "TTouch Clothing" has four published
+  product projects"; (j) Delivery Lens BD set to in production under "All four
+  are live." — "its intro says the set is live, and Delivery Lens BD is not".
+  Each proven by loading the patched content with the real zod.
+- **30** — a /work item for the client story, a / item for its band and one
+  for the tiers it adds, Logistics among the homepage's industries with
+  delivered work (and off the retired item's needles, which it no longer
+  describes), new evidence items on /industries and /capabilities, and the
+  `ttouch-cuts` set on / and /work.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading
@@ -2128,6 +2236,46 @@ a `sourceRef`, and the build fails without one. It covers every place a status
 is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
+
+## Decided 2026-09-29: the TTouch Clothing projects (owner)
+
+The owner's request, 2026-09-29, verbatim:
+
+> https://wholesale.ttouch.clothing
+> https://sudarshini.com
+> https://deliverylensbd.com
+> https://employee.ttouch.clothing
+>
+> add this our 4 project best way and hegilighted them perfect way
+
+His answers (through AskUserQuestion, the recommended option each time; the
+session's `research/projects/OWNER-ANSWERS.md`, which wins over its
+`PROPOSAL.md` where they differ):
+
+| question | the owner's answer | where it is on the site |
+|---|---|---|
+| Name the clients? | Yes, all of them, each linked to its live site | the four cards, the band, the llms files |
+| What did Bolt Fusion build? | Everything, for all four: design, website/app, backend and database — "Built by Bolt Fusion for …", not feature work | `kind: "project"`, product scope; each role "The whole build: …" |
+| Screenshots? | Public pages only; nothing behind a login; never log in | the four captures (*Projects and attribution*) |
+| Figures? | None: each described by what it does | no figure in any new string; check 30's `ttouch-cuts` |
+| The relationship? | Bolt Fusion is an outside company working for TTouch; all four "Built by Bolt Fusion for TTouch Clothing". The footers credit TTouch's IT department: a note for the owner (ask TTouch to add a "Built by Bolt Fusion" credit), and the site must not claim any credit exists | the label; never a word about a credit |
+| Sudarshini? | A TTouch brand: credited as built for TTouch Clothing | its summary, "TTouch Clothing's saree brand" |
+| Sudarshini's picture? | "A view with no face": pick or crop the best public view with no person in it | a product page's details panel, cropped |
+| Timing? | Add the cards now; TTouch fixes the issues this week. Delivery Lens BD joins the hero's proof line only after its demo phone numbers and its missing privacy policy and terms are fixed; until then the hero keeps WarmChats · Balanzify · Go Style Business. The security issues (the wholesale JS's webhook URL, the anonymous API's hidden fields, the verify endpoint and its guessable IDs, Delivery Lens BD's demo numbers and missing policy, Sudarshini's random "viewing now" number) go to the owner, not onto the site | /work, the band and Industries now; the hero unchanged |
+| The employee portal's link? | "Link it" — its option read "It already has a rate limit / protection". His statement, not verified | `employee.ttouch.clothing` on its card and in the band |
+
+The proposal's defaults, taken because the owner was not asked: the stack
+tags as drafted (React / Next.js, Django, REST, Node.js) with no database and
+no MongoDB; the headline "Four systems for TTouch Clothing", which makes no
+claim that TTouch "came back"; no dates.
+
+| what | decided | where |
+|---|---|---|
+| /work | the four as a client story under their own h3, `#ttouch-clothing`, between the product cards and the feature work; each card the standard one, with a real screenshot and a live link | `motion-hire/projects` |
+| The homepage | a text band in `#recent-work`, after the proof strip, with one link to `/work#ttouch-clothing`; the hero's proof line unchanged | `motion-hire/projects` |
+| Industries | Retail & commerce gains Sudarshini and TTouch Wholesale; HR gains TTouch Employee Verification; Logistics moves to delivered work on Delivery Lens BD, its first problem ("Orders shipped to customers who refuse them at the door") and first build ("Courier data and delivery-risk checks") written to what that product does; each evidence link lands on its card | `motion-hire/projects` |
+| Capabilities | Software engineering links Delivery Lens BD and Sudarshini; ERP's Proven scope is "HR, payroll and a wholesale back office" (Full ERP stays Capable, its line byte-identical); POS & commerce is Core for point of sale and Proven for "Online and wholesale commerce", with "Online stores" and "Wholesale ordering portals" in what it builds — still no payments or commerce integrations claimed; AI, Cloud and Robotics unchanged | `motion-hire/projects` |
+| /industries' layout | the homepage's industries grid rules were scoped to its section: they had laid /industries' rows out five to a row from 1025px | `motion-hire/projects` |
 
 ## Decided 2026-09-28: easier to hire, and the motion system (owner)
 

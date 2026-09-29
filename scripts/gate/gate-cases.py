@@ -364,6 +364,25 @@ def p_fallback_face(s):
           '        <p className="bf-lead">\u6f22\u5b57\u306e\u6587\u5b57\u5217\u3092\u8868\u793a\u3059\u308b</p>\n        <div className="bf-faq__list">\n')
 
 
+# ── new for the TTouch Clothing projects (2026-09-29), one per new rule ─────
+
+
+def p_story_label(s):
+    """9: the client-story band's label no longer says Bolt Fusion built it"""
+    s.rep("components/site/home/Stories.tsx", "            {attribution(members[0])}\n", "            Built by TTouch Clothing\n")
+
+
+def p_story_hidden(s):
+    """9: the client-story band's label hidden from a reader"""
+    s.rep("components/site/home/Stories.tsx", '          <p className="bf-attr" data-attribution>\n', '          <p className="bf-attr sr-only" data-attribution>\n')
+
+
+def p_story_members(s):
+    """9: the band names our own OPAL as TTouch Clothing's, and leaves out
+    Delivery Lens BD"""
+    s.rep("components/site/home/Stories.tsx", "        {members.map((p) => {\n", '        {[...members.slice(1), ...projects.filter((x) => x.id === "opal")].map((p) => {\n')
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -581,6 +600,11 @@ CASES = [
     ["lab-flow-phone", "the Lab drawing's connections back as cyan flow lines — flowing on a phone", 33, r"^/capabilities @390 phone \(touch\): the Lab drawing animates — (?:[^;]*; )*path\.dg-flow \(bf-flow\)", None, {"from": "lab-flow"}],
     ["lab-cyan-head", "cyan arrowheads on the Lab drawing's steel edges, no flow line", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) is painted cyan — (?:[^;]*; )*path\.dg-arrowhead fill ", p_lab_cyan_head, {}],
     ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
+    # new for the TTouch Clothing projects (2026-09-29), one per new rule
+    ["story-label", "the homepage's client-story band labelled \"Built by TTouch Clothing\"", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label reads "Built by TTouch Clothing"; it reads "Delivered project: built by Bolt Fusion for TTouch Clothing"', p_story_label, {}],
+    ["story-hidden", "the client-story band's label hidden (sr-only)", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label ".*" is not visible', p_story_hidden, {}],
+    ["story-foreign", "the client-story band names our own OPAL as TTouch Clothing's", 9, r'^/ @\d+: the client story "ttouch-clothing" names "OPAL", which is not a published product project of TTouch Clothing', p_story_members, {}],
+    ["story-missing", "the client-story band leaves out one of TTouch Clothing's systems", 9, r'^/ @\d+: the client story "ttouch-clothing" leaves out "Delivery Lens BD", a published product project of TTouch Clothing', None, {"from": "story-foreign"}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
@@ -721,6 +745,24 @@ def b_g(s):
     s.rep("content/site.ts", '      projects: ["warmchats", "balanzify", "go-style-business"],\n', '      projects: ["warmchats", "bazzile", "go-style-business"],\n')
 
 
+def b_h(s):
+    """(h) a client story that is not a set: pointed at a client with one
+    published product project (2026-09-29: a story needs at least two)"""
+    s.rep("content/projects.ts", '        id: "ttouch-clothing",\n        client: "TTouch Clothing",\n', '        id: "ttouch-clothing",\n        client: "Balanzify Inc.",\n')
+
+
+def b_i(s):
+    """(i) a client story whose title's count is not its member count — "Five
+    systems" over four cards (2026-09-29: the count is the data's)"""
+    s.rep("content/projects.ts", '        title: "Four systems for TTouch Clothing",\n', '        title: "Five systems for TTouch Clothing",\n')
+
+
+def b_j(s):
+    """(j) a client story that says its set is live while a member is not:
+    Delivery Lens BD set to in production (2026-09-29)"""
+    s.rep("content/projects.ts", '      client: "TTouch Clothing",\n      status: "live",\n      stack: ["Next.js", "Node.js"],\n', '      client: "TTouch Clothing",\n      status: "in-production",\n      stack: ["Next.js", "Node.js"],\n')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
@@ -730,6 +772,10 @@ BAD = [
     # new for the 2026-09-28 redesign, one per new build-time rule
     ["f", "the hero's first-call line turned into a new promise", "content/site.ts", b_f, [r"is not approved copy"]],
     ["g", "feature work (Bazzile) named on the hero's proof line", "content/site.ts", b_g, [r"hero\.proof: .{1,2}bazzile.{1,2} is feature work in another company's app"]],
+    # new for the TTouch Clothing projects (2026-09-29), one per new build-time rule
+    ["h", "a client story with one member (Balanzify Inc.)", "content/projects.ts", b_h, [r"a client story is a set — it needs at least two published product projects for .{1,2}Balanzify Inc\..{1,2}, and has 1"]],
+    ["i", "a client story whose title says five over four members", "content/projects.ts", b_i, [r"its title says .{1,2}five.{1,2}, and .{1,2}TTouch Clothing.{1,2} has four published product projects"]],
+    ["j", "a client story that says it is live while a member is in production", "content/projects.ts", b_j, [r"its intro says the set is live, and Delivery Lens BD is not"]],
 ]
 
 

@@ -14,18 +14,23 @@ yet. Lab: research or prototype only.
 - Software engineering (Proven): web platforms, mobile applications (React
   Native), backend systems (NestJS, Django), APIs and integrations (REST,
   GraphQL, gRPC), real-time platforms, and multi-tenant SaaS on Postgres
-  row-level security. Shipped: Go Style Business, Balanzify and FanLock, and
-  feature work for Bazzile and GodConnect.
+  row-level security. Shipped: Go Style Business, Balanzify, FanLock, Delivery
+  Lens BD and Sudarshini, and feature work for Bazzile and GodConnect.
 - AI & automation (Proven): AI agents with a human hand-off, LLM applications,
   retrieval and search, intelligent workflows, and AI services built to plug
   into a larger product. Document intelligence is Capable. Shipped: WarmChats
   and the restaurant search.
-- ERP & enterprise systems: HR and payroll are Proven (Balanzify's
-  microservices). Full ERP is Capable: designed in our point-of-sale
-  back-office plans, not yet delivered.
-- POS & commerce (Core): we've built point-of-sale systems for restaurants,
-  including offline sync and receipt-printer integration, and we're building a
-  multi-tenant platform for retail and other verticals.
+- ERP & enterprise systems: HR, payroll and a wholesale back office are Proven
+  (Balanzify's microservices, TTouch Clothing's employee verification and
+  TTouch Wholesale's quotations, sales memos, supplier stock and accounts).
+  Full ERP is Capable: designed in our point-of-sale back-office plans, not yet
+  delivered.
+- POS & commerce: point of sale is Core — we've built point-of-sale systems for
+  restaurants, including offline sync and receipt-printer integration, and
+  we're building a multi-tenant platform for retail and other verticals.
+  Online and wholesale commerce are Proven: the Sudarshini store and TTouch
+  Clothing's wholesale portal. No payments or commerce integrations are
+  claimed.
 - Robotics & intelligent systems (Lab): we engineer software for machines; we
   don't manufacture hardware. We haven't delivered robotics work yet, and
   nothing here is a shipped system.
@@ -44,9 +49,10 @@ Every figure published on this site carries a `shipped` or `target` label.
 
 ## Key pages
 
-- [Home](/): the two engineering stories with their labelled figures; how we
-  work with you (named engineers, the overlap hours, IP and NDA, the engagement
-  models, the two-week pilot, and the team: 15+ developers); what we engineer,
+- [Home](/): the two engineering stories with their labelled figures, and
+  TTouch Clothing's four systems; how we work with you (named engineers, the
+  overlap hours, IP and NDA, the engagement models, the two-week pilot, and the
+  team: 15+ developers); what we engineer,
   each capability with its evidence tier, linked work and diagram; how we build;
   the industries with delivered work; and answers to buyer questions.
 - [Capabilities](/capabilities): the six capabilities in depth: what we build in
@@ -55,11 +61,13 @@ Every figure published on this site carries a `shipped` or `target` label.
   Then the system map: how the six fit together.
 - [Industries](/industries): each industry's problems and what we would build
   for it. Delivered work is linked only where it exists: restaurants (the
-  restaurant search, and our point-of-sale work), retail (OPAL, our own store;
-  retail point of sale in development), real estate (WarmChats, and feature work
-  for Bazzile), HR (Balanzify) and salons (Go Style Business). Healthcare,
-  education, logistics, enterprise operations and startups are what we would
-  build, with no past work claimed.
+  restaurant search, and our point-of-sale work), retail (Sudarshini and TTouch
+  Wholesale, built for TTouch Clothing, and OPAL, our own store; retail point
+  of sale in development), real estate (WarmChats, and feature work for
+  Bazzile), HR (Balanzify, and TTouch Clothing's employee verification), salons
+  (Go Style Business) and logistics (Delivery Lens BD, built for TTouch
+  Clothing). Healthcare, education, enterprise operations and startups are
+  what we would build, with no past work claimed.
 - [Engineering](/engineering): how we build, as six stages in order; the stack
   by layer; architecture principles from the systems we built, each linked to
   where it is written up; and the checks this site passes before every release.
@@ -83,7 +91,8 @@ Every figure published on this site carries a `shipped` or `target` label.
   built by Bolt Fusion for WarmChats, Inc., which owns the product.
   Claude qualifies and routes each lead, GPT-4.1 replies on email and SMS, and
   bookings write to the calendar. First-reply-under-60s is a `target`.
-- [All work](/work): the two case studies, the other products we built, and our
+- [All work](/work): the two case studies, the other products we built —
+  among them TTouch Clothing's four systems, at /work#ttouch-clothing — and our
   engineers' track record, every card labelled with who built it.
 - [Privacy policy](/privacy-policy)
 
@@ -108,6 +117,27 @@ product is theirs, not ours:
   production, Jul 2025 – ongoing.
 - Go Style Business (https://business.gostyle.uk/): a salon business management
   platform. Built by Bolt Fusion; our role: backend lead. In production.
+
+TTouch Clothing's four systems. TTouch Clothing, a fashion brand from
+Bangladesh, owns all four; Bolt Fusion built each end to end — design, app,
+backend and database — as an outside vendor:
+
+- Delivery Lens BD (https://deliverylensbd.com/): a subscription web app for
+  online sellers in Bangladesh that checks a customer's delivery record across
+  several couriers and rates the risk before the order ships, with bulk checks
+  and a developer API. Built by Bolt Fusion for TTouch Clothing. Live.
+- TTouch Wholesale (https://wholesale.ttouch.clothing/): an approval-based
+  wholesale portal, with a back office for quotations, sales memos, supplier
+  stock and accounts, and the pricing rules. Built by Bolt Fusion for TTouch
+  Clothing. Live.
+- Sudarshini (https://sudarshini.com/): the online store of Sudarshini,
+  TTouch Clothing's saree brand, with shoppable product videos,
+  cash-on-delivery checkout and an admin. Built by Bolt Fusion for TTouch
+  Clothing. Live.
+- TTouch Employee Verification (https://employee.ttouch.clothing/): a public
+  page that confirms a person works at TTouch Clothing, and an HR back office
+  for staff records and departments with an audit log. Built by Bolt Fusion
+  for TTouch Clothing. Live.
 
 Feature work, delivered by Bolt Fusion inside apps other companies own. We
 built features in these apps, not the apps: each app belongs to the company

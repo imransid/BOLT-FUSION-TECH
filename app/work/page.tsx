@@ -13,7 +13,7 @@ import ScreenImage from "@/components/site/ScreenImage";
 import SectionHead from "@/components/site/SectionHead";
 import SiteShell from "@/components/site/SiteShell";
 import StatusChip from "@/components/site/StatusChip";
-import { metrics, projectSections, projects, type Project } from "@/content";
+import { clientStories, clientStoryMembers, metrics, projectSections, projects, type Project } from "@/content";
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
@@ -27,10 +27,12 @@ import { getSiteUrl } from "@/lib/site-url";
  *    two-item grid looks unfinished, two rows look deliberate;
  *  · Bolt Fusion projects, in-house products and our engineers' track record —
  *    cards on a grid that fills its rows at every width (app/site.css, "/work").
- *    Inside Bolt Fusion projects, the products first, then a sub-group under
+ *    Inside Bolt Fusion projects, the products first; then each client story
+ *    (2026-09-29: TTouch Clothing's four systems) as a sub-group under its own
+ *    h3, anchored at its id (`/work#ttouch-clothing`); then a sub-group under
  *    its own h3 for the features we shipped into other companies' apps
- *    (`scope: "features"`, decided 2026-09-16), its cards' names h4s, on a
- *    grid of its own that fills its rows too.
+ *    (`scope: "features"`, decided 2026-09-16). Every sub-group's cards have
+ *    h4 names, on a grid of its own that fills its rows too.
  *
  * Every card carries its attribution label directly above the project's name.
  * A track-record card is text only: the product belongs to someone else. So is
@@ -107,6 +109,9 @@ function ProjectGrid({ items, headingLevel, labelledBy }: { items: Project[]; he
 
 /** The feature-work sub-group's heading. Plain words: what these cards are. */
 const FEATURES_TITLE = "Features we shipped into other companies’ apps";
+
+/** A client story's eyebrow: what the sub-group is, in sentence case. */
+const STORY_EYEBROW = "Client story";
 
 /** A write-up's row: the screenshot, then the label, the name, the figures and
  *  the link to the write-up. */
@@ -217,7 +222,11 @@ export default function WorkIndexPage() {
         </PageHead>
 
         {sections.map((s) => {
-          const products = s.items.filter((p) => p.scope !== "features");
+          /* a client story takes its members out of the product grid — only a
+             story that is a set: projects.ts refuses one with fewer than two */
+          const stories = s.kind === "project" ? clientStories.map((story) => ({ story, members: clientStoryMembers(story) })) : [];
+          const inStory = new Set(stories.flatMap((x) => x.members.map((p) => p.id)));
+          const products = s.items.filter((p) => p.scope !== "features" && !inStory.has(p.id));
           const features = s.items.filter((p) => p.scope === "features");
           const featuresId = `${s.id}-features-title`;
           return (
@@ -235,6 +244,20 @@ export default function WorkIndexPage() {
                     {products.length > 0 ? <ProjectGrid items={products} /> : null}
                     {/* The heading's parent holds the cards it heads: verify-site
                         check 9 reads such a heading as a group's, not a card's. */}
+                    {stories.map(({ story, members }) => (
+                      <div key={story.id} id={story.id} className="bf-subgroup bf-subgroup--client">
+                        <p className="bf-eyebrow bf-subgroup__eyebrow" data-bf-reveal>
+                          {STORY_EYEBROW}
+                        </p>
+                        <h3 id={`${story.id}-title`} className="bf-subgroup__title" data-bf-reveal>
+                          {story.title}
+                        </h3>
+                        <p className="bf-lead bf-subgroup__intro" data-bf-reveal>
+                          {story.intro}
+                        </p>
+                        <ProjectGrid items={members} headingLevel={4} labelledBy={`${story.id}-title`} />
+                      </div>
+                    ))}
                     {features.length > 0 ? (
                       <div className="bf-subgroup">
                         <h3 id={featuresId} className="bf-subgroup__title" data-bf-reveal>

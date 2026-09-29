@@ -9,7 +9,8 @@
     "`match: \"word\"` matches whole words (\"Expo\" is not \"export\"); `ignoreCase`. `sets` hold items a route includes",
     "({ \"include\": name }). `awaiting` holds a page not yet published: printed until it is in the sitemap, then it must",
     "move into `routes`. Adding a route is data only.",
-    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too."
+    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too.",
+    "2026-09-29, TTouch Clothing's four systems (owner): a /work item for the client story and a / item for its band, Logistics among the industries with delivered work, the evidence they add on /industries and /capabilities, and the `ttouch-cuts` set on / and /work — the client's own figures and data, and the \"came back\" the owner struck."
   ],
   "excludedAsInterfaceText": [
     ", LinkedIn profile (opens in a new tab)",
@@ -136,6 +137,28 @@
           "Named engineers are assigned before you sign. Ask on the call who would work on your project.",
           "15+",
           "developers"
+        ]
+      }
+    ],
+    "ttouch-cuts": [
+      {
+        "item": "TTouch Clothing's own figures and data, and a repeat-engagement claim",
+        "proves": "Nothing about us: the four sites' counters, catalogue sizes and speed and accuracy claims are the client's marketing, not Bolt Fusion's metrics; the demo's phone numbers belong to unknown people; the API's hidden fields are the client's; and the owner has not said TTouch came back for separate engagements (research/projects/PROPOSAL.md §3 and OWNER-ANSWERS.md, 2026-09-29)",
+        "status": "cut",
+        "cut": "owner, 2026-09-29: no figures, public pages only, no private data — and \"came back for four systems\" is not used on the site",
+        "needles": [
+          "3,281",
+          "189 products",
+          "15K+",
+          "25K+",
+          "45K+",
+          "99.99%",
+          "people are viewing",
+          "01610083516",
+          "01850889998",
+          "supplier_code",
+          "max_price",
+          "came back"
         ]
       }
     ]
@@ -350,7 +373,28 @@
         ]
       },
       {
+        "item": "Proof: TTouch Clothing's four systems, as a band (2026-09-29)",
+        "proves": "One client, four live systems, each labelled as its /work card is — text only, each name linked to the live system, and one link to the story on /work",
+        "status": "required",
+        "needles": [
+          "Delivered project: built by Bolt Fusion for TTouch Clothing",
+          "Four systems for TTouch Clothing",
+          "See the four systems",
+          "Delivery Lens BD",
+          "Courier-risk checks for online sellers",
+          "TTouch Wholesale",
+          "An approval-based wholesale portal",
+          "Sudarshini",
+          "The Sudarshini saree store",
+          "TTouch Employee Verification",
+          "Employee verification and HR records"
+        ]
+      },
+      {
         "include": "excluded-projects"
+      },
+      {
+        "include": "ttouch-cuts"
       },
       {
         "item": "How we work: the three steps and their section",
@@ -593,6 +637,17 @@
         ]
       },
       {
+        "item": "What we engineer: the tiers TTouch Clothing's systems add (2026-09-29)",
+        "proves": "ERP's Proven scope covers a wholesale back office, and online and wholesale commerce are Proven beside point of sale's Core — each backed by a published project; Full ERP stays Capable",
+        "status": "required",
+        "needles": [
+          "HR, payroll and a wholesale back office",
+          "Full ERP",
+          "Online and wholesale commerce",
+          "Point of sale"
+        ]
+      },
+      {
         "item": "The system map",
         "proves": "How the capabilities connect, as text for a crawler and a reader without script — on /capabilities, after the six, where its inventory requires every needle",
         "status": "retired",
@@ -620,6 +675,7 @@
           "Real estate",
           "HR & professional services",
           "Salons & beauty",
+          "Logistics",
           "Where we’ve built it",
           "All industries"
         ]
@@ -633,7 +689,6 @@
           "Technology we can build for…",
           "Healthcare",
           "Education",
-          "Logistics",
           "Enterprise operations",
           "Startups & technology companies"
         ]
@@ -872,6 +927,36 @@
         ]
       },
       {
+        "item": "Bolt Fusion projects: TTouch Clothing's four systems, as one client story (2026-09-29)",
+        "proves": "Four full builds the owner confirmed on 2026-09-29 — design, app, backend and database — each labelled built by Bolt Fusion for TTouch Clothing, which owns them (Sudarshini is a TTouch brand), under their own h3 at /work#ttouch-clothing",
+        "status": "required",
+        "needles": [
+          "Client story",
+          "Four systems for TTouch Clothing",
+          "TTouch Clothing is a fashion brand from Bangladesh. We built four of its systems end to end",
+          "All four are live.",
+          "Delivered project: built by Bolt Fusion for TTouch Clothing",
+          "Delivery Lens BD",
+          "A subscription web app for online sellers in Bangladesh",
+          "The whole build: design, the web app, subscriptions, the developer API, the admin console and the database",
+          "deliverylensbd.com",
+          "TTouch Wholesale",
+          "A wholesale portal for TTouch Clothing: shops register",
+          "The whole build: design, the customer portal, the admin back office, the API and the database",
+          "wholesale.ttouch.clothing",
+          "Sudarshini",
+          "The online store of Sudarshini, TTouch Clothing's saree brand",
+          "The whole build: design, the storefront, the admin, the API and the database",
+          "sudarshini.com",
+          "TTouch Employee Verification",
+          "A public page where anyone can check that a person really works at TTouch Clothing",
+          "The whole build: design, the verification page, the HR back office, the API and the database",
+          "employee.ttouch.clothing",
+          "Node.js",
+          "REST"
+        ]
+      },
+      {
         "item": "Bolt Fusion feature work: Bazzile, GodConnect Online",
         "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion",
         "status": "required",
@@ -951,6 +1036,9 @@
       },
       {
         "include": "excluded-projects"
+      },
+      {
+        "include": "ttouch-cuts"
       },
       {
         "item": "Building something with a constraint like these?",
@@ -1568,6 +1656,20 @@
           "A camera sees a defect",
           "Concept"
         ]
+      },
+      {
+        "item": "Evidence: what TTouch Clothing's systems add (2026-09-29)",
+        "proves": "The Proven scopes and linked work the four systems back, and no more: Full ERP stays Capable, point of sale stays Core, and no payments or commerce integrations are claimed",
+        "status": "required",
+        "needles": [
+          "HR, payroll and a wholesale back office",
+          "Online and wholesale commerce",
+          "Online stores",
+          "Wholesale ordering portals",
+          "Online commerce is shipped: the Sudarshini store and TTouch Clothing's wholesale portal.",
+          "Delivery Lens BD",
+          "TTouch Employee Verification"
+        ]
       }
     ],
     "/industries": [
@@ -1601,6 +1703,23 @@
           "Logistics",
           "Enterprise operations",
           "Startups & technology companies"
+        ]
+      },
+      {
+        "item": "Where we've built it: TTouch Clothing's systems (2026-09-29)",
+        "proves": "Retail gains client work, HR a second delivery, and Logistics moves to delivered work on Delivery Lens BD — its first problem and build rewritten to what that product does",
+        "status": "required",
+        "needles": [
+          "Sudarshini",
+          "TTouch Wholesale",
+          "OPAL, our own e-commerce store",
+          "Wholesale ordering portals",
+          "Balanzify",
+          "TTouch Employee Verification",
+          "Employee records and verification",
+          "Delivery Lens BD",
+          "Orders shipped to customers who refuse them at the door",
+          "Courier data and delivery-risk checks"
         ]
       }
     ],
