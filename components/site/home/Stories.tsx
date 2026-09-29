@@ -1,10 +1,11 @@
 import FigureText from "@/components/FigureText";
 import ScreenImage from "@/components/site/ScreenImage";
-import { lanes, projects } from "@/content";
+import { clientStories, clientStoryMembers, countWord, lanes, projects, type ClientStory } from "@/content";
 import type { SiteContent } from "@/content/site-schema";
 import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 
 import Cta from "../Cta";
+import { ArrowUpRightIcon } from "../icons";
 import { attribution } from "../ProjectCard";
 import ProofStrip from "../ProofStrip";
 import SectionHead from "../SectionHead";
@@ -106,6 +107,60 @@ function LanesBand({ story, title }: { story: Work; title: string }) {
   );
 }
 
+/** A client story as a band (2026-09-29): one client's systems, text only —
+ *  who built them (the label every one of its cards on /work carries, from
+ *  content/projects.ts), the story's title, each system's name over its
+ *  tagline, and one link to the story on /work, where the screenshots are.
+ *  No screenshot here: a /projects/ image off a /work card must link to a
+ *  write-up (check 9), and the homepage's weight is budgeted (check 29).
+ *  Each name opens the live system, in a new tab, as the hero's proof line
+ *  does. The count in the link is the data's. `data-client-story`,
+ *  `data-attribution` and `data-story-project` are verify-site check 9's: the
+ *  label must be the kind's words for this client, and every name a
+ *  published project of it. */
+function ClientStoryBand({ story }: { story: ClientStory }) {
+  const members = clientStoryMembers(story);
+  const titleId = `${story.id}-band-title`;
+  return (
+    <div className="bf-clientband" data-client-story={story.id} data-bf-reveal>
+      <div className="bf-clientband__head">
+        <div>
+          <p className="bf-attr" data-attribution>
+            {attribution(members[0])}
+          </p>
+          <h3 id={titleId} className="bf-clientband__title">
+            {story.title}
+          </h3>
+        </div>
+        <Cta href={`/work#${story.id}`} variant="quiet" className="bf-clientband__all">
+          See the {countWord(members.length)} systems
+        </Cta>
+      </div>
+      <ul className="bf-clientband__list" aria-labelledby={titleId}>
+        {members.map((p) => {
+          const live = p.links[0];
+          return (
+            <li key={p.id} className="bf-clientband__item" data-story-project={p.id}>
+              <h4 className="bf-clientband__name">
+                {live ? (
+                  <a href={live.href} target="_blank" rel="noopener noreferrer">
+                    {p.name}
+                    <ArrowUpRightIcon className="bf-clientband__out" />
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                ) : (
+                  p.name
+                )}
+              </h4>
+              <p className="bf-clientband__line">{p.tagline ?? p.summary}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 /**
  * Engineering stories (SPEC §5), second on the homepage since 2026-09-28 — the
  * proof, straight after the hero (DECISIONS 2026-09-28, item 1): the two
@@ -114,7 +169,11 @@ function LanesBand({ story, title }: { story: Work; title: string }) {
  * primary right after the proof, which at 390 is about 2,000px after the
  * hero's rather than 4,700; then the restaurant search's three lanes and the
  * proof strip — "From systems we shipped." (SPEC §8b.1; never "Measured on…":
- * ~$0.001 is a target).
+ * ~$0.001 is a target); then, since 2026-09-29, each client story as a band
+ * (TTouch Clothing's four systems) — the proof chapter closes on a client with
+ * several live systems, and the next section answers how to start. It sits
+ * after the section's Schedule a Call, never before it, so it does not push
+ * that button down a phone.
  *
  * Its heading is the standard h2, not a chapter head: at 1440 it shares the
  * first screen with the h1, and two near-equal headlines there blurred which
@@ -161,6 +220,9 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
         </p>
         {laneStory ? <LanesBand story={laneStory} title={lanesTitle} /> : null}
         <ProofStrip id="proof-title" title={work.proofTitle} note={work.proofNote} />
+        {clientStories.map((story) => (
+          <ClientStoryBand key={story.id} story={story} />
+        ))}
       </div>
     </section>
   );

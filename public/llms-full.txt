@@ -130,6 +130,41 @@ management platform, in production serving real salons. Built by Bolt Fusion;
 our role: backend lead, on a multi-tenant NestJS and Prisma backend on
 PostgreSQL, deployed on Docker Swarm.
 
+## TTouch Clothing: four systems for one client
+
+TTouch Clothing is a fashion brand from Bangladesh. Bolt Fusion built four of
+its systems end to end — design, apps, backends and databases — as an outside
+vendor. TTouch Clothing owns all four. All four are live. On /work they sit
+together at /work#ttouch-clothing.
+
+**Delivery Lens BD** (https://deliverylensbd.com/). A subscription web app for
+online sellers in Bangladesh: enter a customer's mobile number, and it checks
+their delivery record across several couriers and rates the risk before the
+order ships. It also runs bulk checks and has a developer API. Built by Bolt
+Fusion for TTouch Clothing: design, the web app, subscriptions, the developer
+API, the admin console and the database. Stack: Next.js, Node.js. Live.
+
+**TTouch Wholesale** (https://wholesale.ttouch.clothing/). A wholesale portal
+for TTouch Clothing: shops register, and once approved they browse the
+catalogue and see trade prices, while the back office runs quotations, sales
+memos, supplier stock and accounts, and the pricing rules. Built by Bolt Fusion
+for TTouch Clothing: design, the customer portal, the admin back office, the
+API and the database. Stack: React, Django, REST. Live.
+
+**Sudarshini** (https://sudarshini.com/). The online store of Sudarshini,
+TTouch Clothing's saree brand: shoppable product videos, shopping by design
+code or by fabric, cash-on-delivery checkout, and an admin for products,
+orders, delivery charges and seasonal themes. Built by Bolt Fusion for TTouch
+Clothing: design, the storefront, the admin, the API and the database. Stack:
+React, Node.js. Live.
+
+**TTouch Employee Verification** (https://employee.ttouch.clothing/). A public
+page where anyone can check that a person really works at TTouch Clothing, and
+a back office where HR keeps staff records and departments, with an audit log
+of every check. Built by Bolt Fusion for TTouch Clothing: design, the
+verification page, the HR back office, the API and the database. Stack: React,
+Node.js. Live.
+
 ## Feature work, built by Bolt Fusion inside other companies' apps
 
 We built features in these apps, not the apps. Each belongs to the company
@@ -202,7 +237,9 @@ now, which is still in development.
   (Proven, Core, Capable, Lab), what we build, how we approach it and the work
   behind it. Robotics is Lab: we haven't delivered robotics work yet.
 - /industries — each industry's problems and what we would build, with
-  delivered work linked only where it exists.
+  delivered work linked only where it exists: restaurants, retail (TTouch
+  Clothing's store and wholesale portal, and OPAL), real estate, HR, salons and
+  logistics (Delivery Lens BD).
 - /engineering — how we build (six stages), the stack by layer, architecture
   principles from the systems we built, and the checks this site passes before
   every release.

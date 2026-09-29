@@ -5758,8 +5758,11 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 /* ── Industries with delivered work (2026-09-28) ─────────────────────────── *
-   One ruled row of five cells, each linking where we built it, then "All
-   industries" to /industries and its honest split. */
+   A ruled grid of cells, each linking where we built it, then "All
+   industries" to /industries and its honest split. Scoped to the homepage's
+   section (2026-09-29): /industries lists its rows in a `.bf-inds` too, and
+   these grid rules laid its industries out five to a row from 1025px and two
+   from 768px, each row a column of words a few letters wide. */
 .bf-inds__head {
   display: grid;
   gap: 4px;
@@ -5783,7 +5786,7 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
-.bf-inds {
+.bf-inds-sec .bf-inds {
   display: grid;
   border-top: 1px solid var(--bf-line-strong);
 }
@@ -5795,7 +5798,7 @@ button.bf-map__btn[aria-pressed="true"] {
 }
 
 @media (min-width: 768px) {
-  .bf-inds {
+  .bf-inds-sec .bf-inds {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 32px;
   }
@@ -5810,13 +5813,15 @@ button.bf-map__btn[aria-pressed="true"] {
   .bf-inds__cell:nth-child(odd):nth-last-child(2) { border-bottom: 0; }
 }
 
-/* One row of five from 1025px, on shared rows (subgrid): a name that wraps
-   ("HR & professional services") pushes every cell's "Where we've built it"
-   down with it, so the labels stay on one line across the row. */
+/* Two rows of three from 1025px (2026-09-29: six industries, when Logistics
+   gained delivered work — one row of five until then, and six in it would have
+   left an orphan), on shared rows (subgrid): a name that wraps ("HR &
+   professional services") pushes every cell's "Where we've built it" down with
+   it, so the labels stay on one line across the row. */
 @media (min-width: 1025px) {
-  .bf-inds {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-template-rows: repeat(4, auto);
+  .bf-inds-sec .bf-inds {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(8, auto);
     column-gap: 0;
   }
 
@@ -5831,9 +5836,13 @@ button.bf-map__btn[aria-pressed="true"] {
     border-left: 1px solid var(--bf-line);
   }
 
-  .bf-inds__cell:first-child {
+  .bf-inds__cell:nth-child(3n + 1) {
     padding-left: 0;
     border-left: 0;
+  }
+
+  .bf-inds__cell:nth-child(n + 4) {
+    border-top: 1px solid var(--bf-line);
   }
 }
 
@@ -5863,4 +5872,189 @@ button.bf-map__btn[aria-pressed="true"] {
   font-size: 14px;
   line-height: 1.5;
   color: var(--bf-muted);
+}
+
+/* ── motion-hire: projects (2026-09-29) ── */
+/* ── TTouch Clothing's four systems: a client story on /work ─────────────── *
+   A sub-group of Bolt Fusion projects under its own h3, like the feature work
+   under it: the eyebrow, the h3 and the intro are the sub-group's own children,
+   so check 9 reads the h3 as the group's heading. From 1025px the head is two
+   columns — the title beside the intro — over the grid of four, two across. */
+.bf-subgroup--client .bf-subgroup__eyebrow {
+  margin-bottom: 10px;
+}
+
+.bf-subgroup--client .bf-subgroup__title {
+  margin-bottom: 0;
+}
+
+.bf-subgroup__intro {
+  margin-top: 12px;
+  margin-bottom: 32px;
+  max-width: 68ch;
+}
+
+@media (min-width: 1025px) {
+  .bf-subgroup--client {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas:
+      "eyebrow intro"
+      "title intro"
+      "grid grid";
+    grid-template-rows: auto 1fr auto;
+    column-gap: 64px;
+  }
+
+  .bf-subgroup--client > .bf-subgroup__eyebrow { grid-area: eyebrow; }
+  .bf-subgroup--client > .bf-subgroup__title { grid-area: title; }
+
+  .bf-subgroup--client > .bf-subgroup__intro {
+    grid-area: intro;
+    align-self: end;
+    margin: 0;
+  }
+
+  .bf-subgroup--client > .bf-projects {
+    grid-area: grid;
+    margin-top: 40px;
+  }
+}
+
+/* ── The client story on the homepage: a band in the proof ───────────────── *
+   Text only, after the proof strip (Stories.tsx): the label over the title,
+   "See the four systems" beside them from 1025px, then one ruled row of the
+   four names over their taglines — four across from 1025px, two from 768px,
+   one on phones. Each name is a 44px link, set like the hero's proof line. The
+   last row draws no rule of its own: the next section's hairline is its floor. */
+.bf-clientband {
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1px solid var(--bf-line-strong);
+}
+
+.bf-clientband__head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.bf-clientband__head .bf-attr {
+  margin-bottom: 6px;
+}
+
+.bf-clientband__head .bf-btn--quiet {
+  justify-self: start;
+  margin-top: 0;
+}
+
+.bf-clientband__title {
+  font-family: var(--bf-font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--bf-text);
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 48px;
+    margin-bottom: 20px;
+  }
+}
+
+.bf-clientband__list {
+  display: grid;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-clientband__item {
+  min-width: 0;
+  padding: 6px 0 16px;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+.bf-clientband__item:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+
+  .bf-clientband__item:nth-child(odd):nth-last-child(2) {
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 0;
+  }
+
+  .bf-clientband__item {
+    padding: 10px 22px 4px;
+    border-bottom: 0;
+    border-left: 1px solid var(--bf-line);
+  }
+
+  .bf-clientband__item:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+.bf-clientband__name {
+  font-family: var(--bf-font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--bf-text);
+}
+
+/* A name that wraps ("TTouch Employee Verification" in a quarter of the row)
+   starts on the same line as its neighbours: its 44px box grows down from a
+   fixed top, as the industries' links do. */
+.bf-clientband__name a {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-height: 44px;
+  padding-block: 12px 8px;
+  color: var(--bf-text);
+  text-decoration: underline;
+  text-decoration-color: var(--bf-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.bf-clientband__name a:hover {
+  text-decoration-color: var(--bf-brand);
+}
+
+.bf-clientband__out {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  color: var(--bf-muted);
+}
+
+.bf-clientband__line {
+  margin-top: -2px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--bf-soft);
+}
+
+@media (max-width: 767px) {
+  .bf-clientband {
+    margin-top: 48px;
+    padding-top: 24px;
+  }
 }

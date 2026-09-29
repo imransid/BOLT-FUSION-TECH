@@ -79,8 +79,9 @@ const raw: EngineeringInput = {
       ],
       approach: ["The data model is designed before the screens.", "The failure modes are named before the features."],
       evidence: [{ tier: "proven" }],
-      evidenceNote: "Shipped: Go Style Business, Balanzify and FanLock, and feature work for Bazzile and GodConnect.",
-      workSlugs: ["go-style-business", "balanzify", "fanlock", "bazzile", "godconnect-online"],
+      evidenceNote:
+        "Shipped: Go Style Business, Balanzify, FanLock, Delivery Lens BD and Sudarshini, and feature work for Bazzile and GodConnect.",
+      workSlugs: ["go-style-business", "balanzify", "fanlock", "delivery-lens-bd", "sudarshini", "bazzile", "godconnect-online"],
       diagram: {
         id: "layered-stack",
         title: "Software engineering: a layered stack",
@@ -144,13 +145,18 @@ const raw: EngineeringInput = {
         "Each department is a module with its own boundary.",
         "Branches are part of the model from the first schema.",
       ],
+      /* 2026-09-29: the Proven scope widens to the modules TTouch Clothing's
+         systems delivered — HR records and a wholesale back office. They were
+         delivered as separate systems; one shared model across them was not,
+         which is why Full ERP stays Capable. The Capable line below is
+         byte-identical on purpose: the gate's RUN 3 case d anchors on it. */
       evidence: [
-        { tier: "proven", scope: "HR and payroll" },
+        { tier: "proven", scope: "HR, payroll and a wholesale back office" },
         { tier: "capable", scope: "Full ERP" },
       ],
       evidenceNote:
-        "Proven for HR and payroll: Balanzify's microservices. Full ERP is Capable — designed in our point-of-sale back-office plans, not yet delivered.",
-      workSlugs: ["balanzify"],
+        "Proven for HR and payroll (Balanzify's microservices), HR records (TTouch Clothing's employee verification) and a wholesale back office (TTouch Wholesale's quotations, sales memos, supplier stock and accounts). Full ERP is Capable — designed in our point-of-sale back-office plans, not yet delivered.",
+      workSlugs: ["balanzify", "ttouch-wholesale", "ttouch-employee-verification"],
       diagram: {
         id: "module-ring",
         title: "ERP: modules around one data core",
@@ -179,16 +185,26 @@ const raw: EngineeringInput = {
         { label: "Inventory", tier: "capable" },
         { label: "Multi-branch", tier: "capable" },
         { label: "Reporting", tier: "capable" },
+        { label: "Online stores", tier: "proven" },
+        { label: "Wholesale ordering portals", tier: "proven" },
       ],
       approach: [
         "Offline first: the till keeps selling when the network drops, and syncs when it returns.",
         "The hardware at the counter is part of the system, receipt printers included.",
         "A sale is the start of the work, not the end of it: the back office reads from it.",
       ],
-      evidence: [{ tier: "core" }],
+      /* 2026-09-29: online and wholesale commerce are shipped (Sudarshini and
+         TTouch Wholesale), so they are Proven; point of sale stays Core and
+         first — it is the headline, and nothing new touches it. SPEC §8b still
+         holds: no payments and no commerce integrations are claimed
+         (Sudarshini takes cash on delivery). */
+      evidence: [
+        { tier: "core", scope: "Point of sale" },
+        { tier: "proven", scope: "Online and wholesale commerce" },
+      ],
       evidenceNote:
-        "We've built point-of-sale systems for restaurants, including offline sync and receipt-printer integration, and we're building a multi-tenant platform for retail and other verticals.",
-      workSlugs: [],
+        "We've built point-of-sale systems for restaurants, including offline sync and receipt-printer integration, and we're building a multi-tenant platform for retail and other verticals. Online commerce is shipped: the Sudarshini store and TTouch Clothing's wholesale portal.",
+      workSlugs: ["sudarshini", "ttouch-wholesale"],
       diagram: {
         id: "till-hub",
         title: "POS & commerce: the till at the centre",
@@ -282,9 +298,15 @@ const raw: EngineeringInput = {
       id: "retail",
       name: "Retail & commerce",
       problems: ["Stock that is wrong by the time it is counted", "Several branches and one set of books"],
-      wouldBuild: ["E-commerce stores", "Point of sale and inventory"],
+      wouldBuild: ["E-commerce stores", "Wholesale ordering portals", "Point of sale and inventory"],
       capabilityIds: ["software", "pos", "erp"],
-      evidence: [{ label: "OPAL, our own e-commerce store", href: "/work#in-house", workSlug: "opal" }],
+      /* Client work first (2026-09-29): TTouch Clothing's store and wholesale
+         portal. Each evidence link lands on the project's own card. */
+      evidence: [
+        { label: "Sudarshini", href: "/work#sudarshini", workSlug: "sudarshini" },
+        { label: "TTouch Wholesale", href: "/work#ttouch-wholesale", workSlug: "ttouch-wholesale" },
+        { label: "OPAL, our own e-commerce store", href: "/work#opal", workSlug: "opal" },
+      ],
       note: "Retail point of sale in development.",
     },
     {
@@ -295,16 +317,19 @@ const raw: EngineeringInput = {
       capabilityIds: ["ai", "software"],
       evidence: [
         { label: "WarmChats", href: "/work/warmchats", workSlug: "warmchats" },
-        { label: "Feature work for Bazzile", href: "/work#projects", workSlug: "bazzile" },
+        { label: "Feature work for Bazzile", href: "/work#bazzile", workSlug: "bazzile" },
       ],
     },
     {
       id: "hr",
       name: "HR & professional services",
       problems: ["Payroll, leave and attendance in separate tools", "Onboarding run from an inbox"],
-      wouldBuild: ["HR and payroll platforms", "Client and workflow portals"],
+      wouldBuild: ["HR and payroll platforms", "Employee records and verification", "Client and workflow portals"],
       capabilityIds: ["erp", "software"],
-      evidence: [{ label: "Balanzify", href: "/work#projects", workSlug: "balanzify" }],
+      evidence: [
+        { label: "Balanzify", href: "/work#balanzify", workSlug: "balanzify" },
+        { label: "TTouch Employee Verification", href: "/work#ttouch-employee-verification", workSlug: "ttouch-employee-verification" },
+      ],
     },
     {
       id: "salons",
@@ -312,7 +337,7 @@ const raw: EngineeringInput = {
       problems: ["Bookings, staff and client records in separate apps", "Several locations run from one spreadsheet"],
       wouldBuild: ["Salon and studio management platforms", "Booking and staff scheduling"],
       capabilityIds: ["software", "cloud"],
-      evidence: [{ label: "Go Style Business", href: "/work#projects", workSlug: "go-style-business" }],
+      evidence: [{ label: "Go Style Business", href: "/work#go-style-business", workSlug: "go-style-business" }],
     },
     {
       id: "healthcare",
@@ -329,11 +354,16 @@ const raw: EngineeringInput = {
       capabilityIds: ["software", "ai", "erp"],
     },
     {
+      /* Delivered work since 2026-09-29: Delivery Lens BD. Its first problem
+         and its first build are what that product does — so the evidence is
+         exactly as strong as the claim; the rest are still what we'd build,
+         and linking the product beside them claims none of them. */
       id: "logistics",
       name: "Logistics",
-      problems: ["Shipments tracked by phone call", "Warehouse stock that two systems count differently"],
-      wouldBuild: ["Tracking and dispatch platforms", "Warehouse inventory systems", "Driver and field apps"],
+      problems: ["Orders shipped to customers who refuse them at the door", "Shipments tracked by phone call", "Warehouse stock that two systems count differently"],
+      wouldBuild: ["Courier data and delivery-risk checks", "Tracking and dispatch platforms", "Warehouse inventory systems", "Driver and field apps"],
       capabilityIds: ["software", "erp", "cloud"],
+      evidence: [{ label: "Delivery Lens BD", href: "/work#delivery-lens-bd", workSlug: "delivery-lens-bd" }],
     },
     {
       id: "enterprise-operations",

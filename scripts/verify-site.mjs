@@ -1125,6 +1125,24 @@ function collectInPage() {
     };
   });
 
+  /* 9 ── a client story shown as a band (2026-09-29, the homepage's
+     `[data-client-story]`): no card, so no kind marker, but a label all the
+     same — who built the systems it names — and the projects it names
+     (`[data-story-project]`), each with its links. */
+  const clientStoryBands = [...document.querySelectorAll("[data-client-story]")].map((band) => {
+    const label = band.querySelector("[data-attribution]");
+    return {
+      id: band.getAttribute("data-client-story"),
+      label: label ? { text: flat(label), seen: readable(label) } : null,
+      names: [...band.querySelectorAll("[data-story-project]")].map((n) => ({
+        id: n.getAttribute("data-story-project"),
+        text: flat(n.querySelector("h2, h3, h4, h5, h6") || n).replace(/\s*\(opens in a new tab\)$/, "").slice(0, 60),
+        seen: readable(n),
+        links: [...n.querySelectorAll("a[href]")].map((a) => a.href),
+      })),
+    };
+  });
+
   /* 4 (JS-on side) ── what is readable once scripts have run, so the JS-off
      pass can tell "waits for a script" from "hidden by design" (hover reveals) */
   const visibleTexts = [...document.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,button,label,span,div")]
@@ -1384,7 +1402,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, clientStoryBands, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -3341,11 +3359,15 @@ await (async () => {
   const sitemapWork = ROUTES.filter((r) => /^\/work\/.+/.test(r));
   const linkedFromIndex = new Set();
   let projectsTs = null;
+  let storiesTs = null;
   try {
     projectsTs = loadContent("content/projects.ts").projects;
     if (!Array.isArray(projectsTs)) throw new Error("it exports no projects array");
+    storiesTs = loadContent("content/projects.ts").clientStories;
+    if (!Array.isArray(storiesTs)) throw new Error("it exports no clientStories array");
   } catch (e) {
     projectsTs = null;
+    storiesTs = null;
     F.push(`content/projects.ts could not be read (${e.message}) — the cards on /work cannot be checked against it; unsure is a failure`);
   }
   const writeupOf = (href) => isSameSite(href) && /^\/work\/.+/.test(new URL(href).pathname);
@@ -3429,13 +3451,48 @@ await (async () => {
     }
     if (route === "/work" && projectsTs)
       for (const p of projectsTs) if (p.state === "published" && !shown.has(p.id)) F.push(`${at(k)}: "${p.name}" is published in content/projects.ts and has no card on /work`);
+
+    /* a client story as a band (2026-09-29): its label is the kind's words for
+       its client — written here, as every card's are — where a reader can see
+       it, and it names every published product project of that client, and
+       nothing else, each linking out over https to that project's own link */
+    for (const band of v.clientStoryBands || []) {
+      const where = `${at(k)}: the client story "${band.id}"`;
+      const story = storiesTs ? storiesTs.find((st) => st.id === band.id) : null;
+      if (storiesTs && !story) {
+        F.push(`${where} is not a client story in content/projects.ts`);
+        continue;
+      }
+      const client = story?.client ?? null;
+      const expected = client ? ATTRIBUTION.project.full({ client, scope: "product" }) : null;
+      if (!band.label) F.push(`${where} carries no attribution label [data-attribution] — a reader cannot tell who built its systems`);
+      else {
+        if (!band.label.seen) F.push(`${where} — its label "${band.label.text}" is not visible`);
+        if (expected ? band.label.text !== expected : !ATTRIBUTION.project.starts.some((st) => band.label.text.startsWith(st)))
+          F.push(`${where} — its label reads "${band.label.text}"; it reads "${expected ?? "Delivered project: built by Bolt Fusion for …"}"`);
+      }
+      const members =
+        projectsTs && client ? projectsTs.filter((p) => p.state === "published" && p.kind === "project" && (p.scope ?? "product") === "product" && p.client === client) : null;
+      for (const n of band.names) {
+        const p = projectsTs ? projectsTs.find((x) => x.id === n.id) : null;
+        if (projectsTs && !p) F.push(`${where} names "${n.text}" (data-story-project="${n.id ?? ""}"), which is not a project in content/projects.ts`);
+        else if (p && members && !members.includes(p)) F.push(`${where} names "${p.name}", which is not a published product project of ${client}`);
+        if (!n.seen) F.push(`${where} — "${n.text}" is not visible`);
+        for (const l of n.links) {
+          if (!l.startsWith("https://")) F.push(`${where} — "${n.text}" links to ${l}, which is not https`);
+          else if (p && !(p.links || []).some((x) => x.href === l)) F.push(`${where} — "${n.text}" links to ${l}, which is not one of its links in content/projects.ts`);
+        }
+      }
+      if (members) for (const p of members) if (!band.names.some((n) => n.id === p.id)) F.push(`${where} leaves out "${p.name}", a published product project of ${client}`);
+      I.push(`${route}: client story "${band.id}" — "${band.label?.text ?? "no label"}"; ${band.names.map((n) => n.text).join(", ") || "no names"}`);
+    }
   }
   for (const r of sitemapWork) if (!linkedFromIndex.has(r)) F.push(`${r} is published in the sitemap but no project card links to it`);
   for (const p of linkedFromIndex) if (!sitemapWork.includes(p)) F.push(`${p} is linked as a write-up but missing from the sitemap`);
   results.push({
     id: 9,
     title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
-    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot; a client story's band whose label is missing, hidden or not its client's, or that names a project that is not that client's, or leaves one out",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: [...new Set(I)],

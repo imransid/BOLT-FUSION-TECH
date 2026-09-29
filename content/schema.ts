@@ -104,7 +104,8 @@ export const projectKindSchema = z.enum(["case-study", "project", "in-house", "t
 export type ProjectKind = z.infer<typeof projectKindSchema>;
 
 /* ── what a Bolt Fusion delivery was — decided by the owner, 2026-09-16 ──────
- *  · product   we built the product: FanLock, Balanzify, Go Style Business
+ *  · product   we built the product: FanLock, Balanzify, Go Style Business,
+ *              TTouch Clothing's four systems (2026-09-29)
  *  · features  we built features inside an app another company owns: Bazzile,
  *              GodConnect Online. The label reads "features built by Bolt
  *              Fusion for ‹client›" — never "built by Bolt Fusion" — so it names
@@ -165,6 +166,9 @@ export const projectSchema = z
     href: pending(z.string().min(1)).default(null),
     /** Links out: the live product, store listings, public proof. */
     links: z.array(projectLinkSchema).default([]),
+    /** What it is in a few words, for the homepage's client-story band only
+     *  (2026-09-29), where a name sits over it instead of a card's summary. */
+    tagline: z.string().min(1).max(60).optional(),
     state: projectStateSchema,
     /** Metric ids shown on the /work row. Relations, not copies. */
     metricIds: z.array(z.string().min(1)).default([]),
@@ -246,6 +250,21 @@ export const projectSectionsSchema = z
     message: "Every project kind has exactly one section on /work.",
   });
 export type ProjectSection = z.infer<typeof projectSectionSchema>;
+
+/** A client story (2026-09-29): one client's product projects shown together —
+ *  on /work as a sub-group of Bolt Fusion projects under its own h3, and on the
+ *  homepage as a band in the proof. Which projects belong to it is not stored:
+ *  it is every published product project whose `client` is exactly this one
+ *  (content/projects.ts, `clientStoryMembers`), because nothing derived is. */
+export const clientStorySchema = z.object({
+  /** The anchor on /work: /work#ttouch-clothing. */
+  id: z.string().regex(/^[a-z][a-z-]*$/),
+  /** Equals Project.client, byte for byte. */
+  client: z.string().min(1),
+  title: z.string().min(1),
+  intro: z.string().min(1),
+});
+export type ClientStory = z.infer<typeof clientStorySchema>;
 
 /* ── services ───────────────────────────────────────────────────────────── */
 export const serviceSchema = z.object({

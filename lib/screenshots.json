@@ -79,5 +79,41 @@
       1280
     ],
     "base": "/projects/opt/opal"
+  },
+  "/projects/delivery-lens-bd.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/delivery-lens-bd"
+  },
+  "/projects/ttouch-wholesale.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/ttouch-wholesale"
+  },
+  "/projects/sudarshini.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/sudarshini"
+  },
+  "/projects/ttouch-employee-verification.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/ttouch-employee-verification"
   }
 }
