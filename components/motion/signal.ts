@@ -8,9 +8,10 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  * state the server sent, and a hook LIT where the trace reached it (its
  * stations filled and its line brand blue, since 2026-09-29: settling back to
  * the server's hollow drawing made every payoff a 0.3s blink). The lit state
- * only adds to the server's drawing; nothing on screen is taken away. Imported only by ./MotionLoader, after its gate and its staged
- * waits; gsap and its plugins arrive as arguments, so this module imports
- * nothing from gsap but types (check 31: gsap is imported by the loader alone).
+ * only adds to the server's drawing; nothing on screen is taken away.
+ * Imported only by ./MotionLoader, after its gate and its staged waits; gsap
+ * and its plugins arrive as arguments, so this module imports nothing from
+ * gsap but types (check 31: gsap is imported by the loader alone).
  *
  * What it animates, and nothing else:
  *  · every `[data-bf-flow]` diagram — a blue overlay CLONED from each
