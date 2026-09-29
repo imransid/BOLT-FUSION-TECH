@@ -638,6 +638,19 @@ def p_scene_pop(s):
     s.rep("components/field/scene.ts", "      cometK = Math.max(0, cometK - dt / FADE_S);", "      cometK = 0; // THROWAWAY misuse")
 
 
+def p_scene_cadence(s):
+    """cadence: the watchdog judging the display's cadence again, on every
+    browser — a steady 30Hz (a laptop on battery) reads as a slow GPU, and
+    the comets and the outer tier go (the design review, 2026-09-29)"""
+    s.rep("components/field/scene.ts", "      const dropping = !gpuSeen && avgMs > SLOW_FRAME_MS && uneven();\n", "      const dropping = avgMs > SLOW_FRAME_MS; // THROWAWAY misuse: the cadence alone, as until 2026-09-29\n")
+
+
+def p_scene_gpu_blind(s):
+    """watchdog: the GPU clock read and never judged — a GPU too slow for the
+    scene, at a smooth cadence, never degrades it"""
+    s.rep("components/field/scene.ts", "      const gpuSlow = gpuSeen && avgGpu > WORK_MS;\n", "      const gpuSlow = false; // THROWAWAY misuse\n")
+
+
 def p_charge_amber(s):
     """charge: the seams mix toward amber — which keeps blue > green > red
     at the charge's 24%, and lowers the blue"""
@@ -683,6 +696,13 @@ PROBE_CASES = [
     ["scene-nopause", "Pause motion ignored by the scene — the stack follows the scroll while paused", "probe:explode", r"^paused, the stack still moved with the scroll \([1-9]\d* draw calls", p_scene_nopause, {}],
     ["scene-nopause-charge", "Pause motion ignored by the scene — the charge answers a hover while paused", "probe:charge", r"^paused, the scene still answered the hover \([1-9]\d* draw calls", None, {"from": "scene-nopause"}],
     ["scene-pop", "the watchdog drops the comets in one frame", "probe:watchdog", r"^the comets: \d+% of it went in one 0\.2s step at [\d.]+s — it vanished instead of fading", p_scene_pop, {}],
+    ["scene-gpu-blind", "the watchdog never judges the GPU's clocked time — a slow GPU at a smooth cadence keeps everything", "probe:watchdog", r"^a GPU clocked at 30ms a frame, at a smooth 60Hz cadence with cheap script work: the drawing buffer never stepped down in 4s", p_scene_gpu_blind, {}],
+    # the cadence check's control (with no GPU clock, an uneven cadence DOES
+    # degrade) has no case of its own: a patch that stops it degrading cannot
+    # share a build with scene-cadence, which makes every slow cadence
+    # degrade. It fails its check itself ("proves nothing") if it ever stops.
+    ["scene-cadence", "the watchdog judges the display's cadence again — a steady 30Hz strips the scene", "probe:cadence", r"^30Hz, GPU clocked at 1\.5ms a frame: the drawing buffer stepped down to 825x700", p_scene_cadence, {}],
+    ["scene-cadence-safari", "the watchdog judges the display's cadence again — with no GPU clock (Safari)", "probe:cadence", r"^30Hz, no GPU clock \(Safari\): the drawing buffer stepped down to 825x700", None, {"from": "scene-cadence"}],
     ["charge-amber", "the charge mixes toward amber (the order of the channels holds, the blue falls)", "probe:charge", r"^hover: the charged seams are rgb [\d,]+ against [\d,]+ at rest — blue -\d+\.\d as red rises [\d.]+ — the charge is a brighter blue, never amber", p_charge_amber, {}],
     ["charge-jump", "the charge snaps on instead of easing", "probe:charge", r"^hover: \d+% of the charge came in the first 0\.1s — it eases in, it does not jump", p_charge_jump, {}],
     ["scene-cross-core", "the inner tier sways 52° — modules swing in front of the core", "probe:overlap", r'^assembled: "(?:web|ai)" comes within -?[\d.]+px of the core, in front of it — a module crosses the core', p_scene_cross_core, {}],

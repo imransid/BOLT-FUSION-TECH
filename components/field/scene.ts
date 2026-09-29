@@ -33,11 +33,16 @@
  *    tier (the comets' heads and their tails), and the loop writes their
  *    matrices straight into the instance buffers. Every other vector it uses
  *    is allocated once.
- *  - The frame-time watchdog: once the running average frame (about ten
- *    frames, so jitter cannot reset it) has stayed over 20ms for 2s, the
- *    drawing buffer steps down once, from DPR 1.75 to 1.25; after 2s more the
- *    comets fade out, and after 2s more the outer tier sinks into the floor.
- *    Nothing vanishes in one frame.
+ *  - The watchdog judges the scene's own WORK, never the display's cadence:
+ *    the script time of each frame's pose and draw, and the GPU time of its
+ *    draw where the browser can clock it (EXT_disjoint_timer_query_webgl2).
+ *    Once either has averaged over 10ms for 2s — or, with no GPU clock,
+ *    frames have come both slow (over 20ms) and uneven — the drawing buffer
+ *    steps down once, from DPR 1.75 to 1.25; after 2s more the comets fade
+ *    out, and after 2s more the outer tier sinks into the floor. Nothing
+ *    vanishes in one frame. A steady 30Hz cadence with cheap work — Safari's
+ *    Low Power Mode, Chrome's Energy Saver — is the display's rate, and
+ *    costs the scene nothing.
  *  - Paused while the canvas is offscreen and while the tab is hidden.
  *  - `dispose()` frees every geometry, material and instance buffer, then the
  *    renderer, then the context itself. The scene creates no textures.
@@ -138,7 +143,16 @@ const STEEL = 0x6b7385; // Lab work: the site's steel, as on the dashed Lab chip
 
 const MAX_DPR = 1.75;
 const SLOW_DPR = 1.25; // the watchdog's one step down, before anything is dropped
-const SLOW_FRAME_MS = 20;
+/* The watchdog (2026-09-29). It judged the rAF interval until then, so a
+   display delivering every second vsync — Safari's Low Power Mode, Chrome's
+   Energy Saver, a laptop on battery — read as a slow GPU: on an M2 at a 30Hz
+   cadence, with every frame drawn far inside its budget, the comets and the
+   outer tier (ERP, POS, the robot) were gone within 3s (the design review). */
+const WORK_MS = 10; // the scene's own work a frame, script or GPU, averaged: over this, it is the slow part
+const SLOW_FRAME_MS = 20; // with no GPU clock: frames this slow on average…
+const UNEVEN_MS = 4; // …AND this uneven (p90 - p10 of the last GAPS intervals): a display's own cadence is steady
+const GAPS = 30; // the intervals the evenness is judged over
+const QUERIES = 4; // GPU timer queries in flight: a result arrives a frame or more after its draw
 const SLOW_FOR_MS = 2000;
 const FADE_S = 0.8; // the comets fade out over this long
 const SINK_S = 3.6; // the outer tier sinks into the floor over this long (at 2.4, the smaller outer modules of 2026-09-29 lost 48% of their light in one 0.2s)
@@ -786,7 +800,14 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let focused = false;
   let last = 0;
   let slowFor = 0;
-  let avgMs = 1000 / 60; // the running average frame time, for the watchdog
+  let avgMs = 1000 / 60; // the running average rAF interval, for the watchdog (the cadence)
+  let avgWork = 0; // the running average script time of a frame's pose and draw (ms)
+  let avgGpu = 0; // the running average GPU time of a frame's draw (ms), where the browser clocks it
+  let gpuSeen = false; // a GPU clock has reported: judge the GPU by it, and never by the cadence
+  const gaps = new Float64Array(GAPS); // the last GAPS rAF intervals, a ring
+  const gapSort = new Float64Array(GAPS);
+  let gapN = 0;
+  let gapAt = 0;
   let degrade = 0; // 0 all; 1 the drawing buffer stepped down; 2 no comets; 3 no outer tier
   let cometK = 1; // the comets' scale while they fade out (degrade 2)
   let sinkK = 0; // how far the outer tier has sunk, 0..1 (degrade 3)
@@ -799,6 +820,38 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let visible = !document.hidden;
   let paused = opts.paused ?? false;
   let sizeDirty = true;
+
+  /* The GPU's own clock, where the browser has one (Chrome and Edge on the
+     desktop; not Safari, not Firefox): a ring of TIME_ELAPSED queries, made
+     once, each read back a frame or more after the draw it timed. A reading
+     taken while the clock jumped (GPU_DISJOINT_EXT) is dropped. */
+  const gl = renderer.getContext() as WebGL2RenderingContext;
+  const timer = gl.getExtension("EXT_disjoint_timer_query_webgl2");
+  const queries: WebGLQuery[] = [];
+  if (timer)
+    for (let i = 0; i < QUERIES; i++) {
+      const q = gl.createQuery();
+      if (q) queries.push(q);
+    }
+  const queryBusy = new Uint8Array(queries.length);
+  let queryAt = 0;
+  const readGpu = () => {
+    for (let i = 0; i < queries.length; i++) {
+      if (!queryBusy[i] || !gl.getQueryParameter(queries[i], gl.QUERY_RESULT_AVAILABLE)) continue;
+      queryBusy[i] = 0;
+      if (gl.getParameter(timer!.GPU_DISJOINT_EXT)) continue;
+      avgGpu += (Math.min(gl.getQueryParameter(queries[i], gl.QUERY_RESULT) / 1e6, 250) - avgGpu) * 0.1;
+      gpuSeen = true;
+    }
+  };
+  /** The cadence is uneven: the spread of the last GAPS intervals, p90 - p10, over UNEVEN_MS. */
+  const uneven = () => {
+    if (gapN < GAPS) return false;
+    gapSort.set(gaps);
+    gapSort.sort();
+    const k = (GAPS / 10) | 0;
+    return gapSort[GAPS - 1 - k] - gapSort[k] > UNEVEN_MS;
+  };
 
   const smooth = (e0: number, e1: number, x: number) => {
     const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
@@ -929,7 +982,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     renderer.render(scene, camera);
   };
 
-  /** The watchdog's next step, once the frames have been slow for SLOW_FOR_MS. */
+  /** The watchdog's next step, once the scene has been the slow part for SLOW_FOR_MS. */
   const degradeStep = () => {
     degrade++;
     if (degrade === 1) {
@@ -948,18 +1001,17 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     raf = requestAnimationFrame(frame);
     const dtMs = last ? now - last : 0;
     last = now;
-    /* the watchdog: 2s of slow frames per step */
     if (dtMs && degrade < 3) {
-      /* judged on a running average over about ten frames: a slow device's
-         frames are uneven, and testing each frame alone reset the count on
-         every fast one, so it never fired (probe 6e). One long hitch is
-         clamped, so it cannot trip it alone. */
+      /* the cadence, kept for a browser with no GPU clock: a running average
+         over about ten frames (a slow device's frames are uneven, and testing
+         each frame alone reset the count on every fast one, so it never fired:
+         probe 6e; one long hitch is clamped, so it cannot trip it alone), and
+         the last GAPS intervals, for their evenness */
       avgMs += (Math.min(dtMs, 250) - avgMs) * 0.1;
-      slowFor = avgMs > SLOW_FRAME_MS ? slowFor + dtMs : 0;
-      if (slowFor > SLOW_FOR_MS) {
-        slowFor = 0;
-        degradeStep();
-      }
+      gaps[gapAt] = dtMs;
+      gapAt = (gapAt + 1) % GAPS;
+      if (gapN < GAPS) gapN++;
+      if (queries.length) readGpu();
     }
     const dt = Math.min(dtMs / 1000, 0.05);
     time += dt;
@@ -982,7 +1034,33 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const k = time > HOLD_S ? 1 - Math.exp(-dt * PARALLAX_EASE) : 0;
     cam.az += (pointer.x * PARALLAX_AZ - cam.az) * k;
     cam.el += (pointer.y * PARALLAX_EL - cam.el) * k;
+    /* the frame's own work: its script time around the pose and the draw, and
+       its GPU time where there is a query free to clock it */
+    const t0 = performance.now();
+    const q = queries.length && !queryBusy[queryAt] ? queries[queryAt] : null;
+    if (q) gl.beginQuery(timer!.TIME_ELAPSED_EXT, q);
     render();
+    if (q) {
+      gl.endQuery(timer!.TIME_ELAPSED_EXT);
+      queryBusy[queryAt] = 1;
+      queryAt = (queryAt + 1) % queries.length;
+    }
+    /* the watchdog: 2s of the scene being the slow part, per step. It is slow
+       when its own work is — the script's, or the GPU's where it is clocked.
+       With no GPU clock, only frames that are slow AND uneven stand in for the
+       GPU: a display's own cadence (30Hz on battery) is steady, and a device
+       that cannot keep up drops frames unevenly. */
+    if (dtMs && degrade < 3) {
+      avgWork += (Math.min(performance.now() - t0, 250) - avgWork) * 0.1;
+      const busy = avgWork > WORK_MS;
+      const gpuSlow = gpuSeen && avgGpu > WORK_MS;
+      const dropping = !gpuSeen && avgMs > SLOW_FRAME_MS && uneven();
+      slowFor = busy || gpuSlow || dropping ? slowFor + dtMs : 0;
+      if (slowFor > SLOW_FOR_MS) {
+        slowFor = 0;
+        degradeStep();
+      }
+    }
   };
 
   const start = () => {
@@ -1146,7 +1224,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       for (const im of instanced) im.dispose();
       for (const g of geometries) g.dispose();
       for (const m of materials) m.dispose();
-      const gl = renderer.getContext();
+      for (const q of queries) gl.deleteQuery(q);
       renderer.dispose();
       /* release the context now rather than at GC; losing a lost one is a GL error */
       if (!gl.isContextLost()) renderer.forceContextLoss();

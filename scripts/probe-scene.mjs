@@ -63,9 +63,23 @@
  *   reload      a page reloaded at scrollY 300: its first frame is still the
  *               poster, and 2.5s on it has opened (against a page loaded at
  *               the top, on the same clock).
- *   watchdog    frames fed at 40ms: the degradation steps (drawing buffer,
- *               comets, outer tier) happen as fades — no phase loses more
- *               than half of what it drops in one 0.2s step.
+ *   watchdog    frames fed at 40ms, each costing 30ms of the scene's own
+ *               script work: the degradation steps (drawing buffer, comets,
+ *               outer tier) happen as fades — no phase loses more than half
+ *               of what it drops in one 0.2s step. Then a GPU clocked at 30ms
+ *               a frame (the timer query's results, stood in for) at a
+ *               smooth 60Hz cadence and cheap script work: the drawing buffer
+ *               steps down within 4s — the GPU's own time is the slow part.
+ *   cadence     a steady 30Hz cadence (33.3ms frames: Safari's Low Power
+ *               Mode, Chrome's Energy Saver) with cheap work, 12s, with the
+ *               GPU clocked at 1.5ms (Chrome, an M2 through Metal) and with no
+ *               GPU clock (Safari): nothing degrades — the drawing buffer is
+ *               whole, and the t = 12s frame is the 60Hz one's, comets and
+ *               outer tier included. Its control: with no GPU clock, an
+ *               uneven cadence (16.7/50/33.3/66.7/33.3ms, 40ms on average)
+ *               with cheap work steps the buffer down within 5s, or the check
+ *               could not tell a display's cadence from a device that cannot
+ *               keep up, and proves nothing.
  *
  * Exit 0 when every check passed, 1 otherwise. The frames it read go to
  * --shots when given; --json writes a report in the suite's shape (each check
@@ -167,9 +181,37 @@ function clockHook() {
         if (typeof f === "function")
           ctx[name] = function (...a) {
             window.__bfDraws = (window.__bfDraws || 0) + 1;
+            /* the watchdog check's slow frames: `__bfWorkMs` of the scene's
+               own script work, once a frame, inside its draw (drawn or not) */
+            if (window.__bfWorkMs && !window.__bfWorked) {
+              window.__bfWorked = true;
+              const until = performance.now() + window.__bfWorkMs;
+              while (performance.now() < until);
+            }
             return window.__bfSkipDraw ? undefined : f.apply(this, a);
           };
       }
+      /* the GPU's clock (EXT_disjoint_timer_query_webgl2), stood in for:
+         `__bfTimer = "none"` hides it (Safari, Firefox); a number in
+         `__bfGpuMs` makes every query report that much GPU time, at once and
+         never disjoint — a GPU of known speed, whatever this one is */
+      const getExtension = ctx.getExtension;
+      ctx.getExtension = function (n) {
+        return n === "EXT_disjoint_timer_query_webgl2" && window.__bfTimer === "none" ? null : getExtension.call(this, n);
+      };
+      const getQueryParameter = ctx.getQueryParameter;
+      if (getQueryParameter)
+        ctx.getQueryParameter = function (q, pname) {
+          if (typeof window.__bfGpuMs !== "number") return getQueryParameter.call(this, q, pname);
+          if (pname === this.QUERY_RESULT_AVAILABLE) return true;
+          if (pname === this.QUERY_RESULT) return window.__bfGpuMs * 1e6;
+          return getQueryParameter.call(this, q, pname);
+        };
+      const getParameter = ctx.getParameter;
+      ctx.getParameter = function (pname) {
+        if (typeof window.__bfGpuMs === "number" && pname === 0x8fbb) return false; // GPU_DISJOINT_EXT
+        return getParameter.call(this, pname);
+      };
     }
     return ctx;
   };
@@ -178,6 +220,7 @@ function clockHook() {
     let ran = 0;
     for (let f = 0; f < frames; f++) {
       window.__bfSkipDraw = !drawLast || f < frames - 1;
+      window.__bfWorked = false;
       const ids = queue.splice(0);
       now += dtMs;
       for (const id of ids) {
@@ -213,9 +256,10 @@ const browser = await chromium.launch({
     : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 
-/** A fresh page with the scene drawn at t = 0 and its clock ours; `before(page)` runs after load. */
-async function open({ dpr = 1, width = 660, left = 0, css = "", before } = {}) {
+/** A fresh page with the scene drawn at t = 0 and its clock ours; `before(page)` runs after load; `init`'s keys are set on window before any page script (the watchdog's stand-ins). */
+async function open({ dpr = 1, width = 660, left = 0, css = "", before, init } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr, reducedMotion: "no-preference" });
+  if (init) await ctx.addInitScript((o) => Object.assign(window, o), init);
   await ctx.addInitScript(clockHook);
   await ctx.addInitScript(captureHook);
   await ctx.addInitScript((css) => {
@@ -750,10 +794,18 @@ try {
     await p.ctx.close();
   }
 
+  /* the drawing buffer's size: 1155x980 whole at DPR 2 (1.75 x 660x560), 825x700 once the watchdog has stepped it */
+  const bufferOf = (p) =>
+    p.page.evaluate(() => {
+      const c = document.querySelector("[data-hero-field] canvas");
+      return `${c.width}x${c.height}`;
+    });
+
   /* ── watchdog: slow frames degrade by fades, never in one frame ── */
   if (want("watchdog")) {
-    begin("watchdog", "watchdog — 40ms frames: each step a fade");
-    const p = await open({ dpr: 2, width: 660 });
+    begin("watchdog", "watchdog — 40ms frames, each 30ms of the scene's own work: each step a fade; a GPU clocked slow steps it too");
+    /* the scene's own script work, 30ms a frame: the watchdog judges work, never the cadence alone */
+    const p = await open({ dpr: 2, width: 660, init: { __bfWorkMs: 30 } });
     const first = measure(await grab(p));
     const flow = [first.flow];
     const solid = [first.lit - first.flow];
@@ -764,10 +816,7 @@ try {
       flow.push(m.flow);
       solid.push(m.lit - m.flow);
     }
-    const buf = await p.page.evaluate(() => {
-      const c = document.querySelector("[data-hero-field] canvas");
-      return `${c.width}x${c.height}`;
-    });
+    const buf = await bufferOf(p);
     info(`the comets' light every 0.2s: ${flow.map((v) => v.toFixed(3)).join(" ")}`);
     info(`the rest, lit: ${solid.map((v) => v.toFixed(1)).join(" ")}`);
     info(`drawing buffer after the steps: ${buf}`);
@@ -797,6 +846,55 @@ try {
     phase(flow, "the comets", 0.8);
     phase(solid, "the outer tier", 0.05);
     await p.ctx.close();
+
+    /* a slow GPU the browser can clock: 30ms of GPU time a frame, at a smooth
+       60Hz cadence and cheap script work — the GPU's time is the slow part */
+    const g = await open({ dpr: 2, width: 660, init: { __bfGpuMs: 30 } });
+    await advance(g, 4);
+    const gbuf = await bufferOf(g);
+    info(`a GPU clocked at 30ms a frame, 60Hz, cheap script work: the drawing buffer is ${gbuf} after 4s`);
+    if (gbuf !== "825x700") fail(`a GPU clocked at 30ms a frame, at a smooth 60Hz cadence with cheap script work: the drawing buffer never stepped down in 4s (it is ${gbuf}) — where the browser clocks the GPU, its time is what the watchdog judges`);
+    await g.ctx.close();
+  }
+
+  /* ── cadence: a steady 30Hz display is not a slow GPU ── */
+  if (want("cadence")) {
+    begin("cadence", "cadence — a steady 30Hz cadence with cheap work degrades nothing; an uneven one does");
+    /* the 60Hz reference at t = 12s, the same scene time: the pose depends on t alone, so a scene that kept everything draws the same frame */
+    const ref = await open({ dpr: 2, width: 660, init: { __bfGpuMs: 1.5 } });
+    await advance(ref, 12);
+    const refImg = await grab(ref, "cadence-60hz-t12");
+    const refM = measure(refImg);
+    const refBuf = await bufferOf(ref);
+    info(`60Hz reference at t = 12s: the drawing buffer ${refBuf}, the comets' light ${refM.flow.toFixed(3)}, lit ${refM.lit.toFixed(1)}%`);
+    await ref.ctx.close();
+    for (const [label, init] of [
+      ["GPU clocked at 1.5ms a frame", { __bfGpuMs: 1.5 }],
+      ["no GPU clock (Safari)", { __bfTimer: "none" }],
+    ]) {
+      const p = await open({ dpr: 2, width: 660, init });
+      await advance(p, 12, 1000 / 30);
+      const img = await grab(p, `cadence-30hz-${init.__bfTimer ? "noclock" : "clock"}-t12`);
+      const m = measure(img);
+      const buf = await bufferOf(p);
+      const d = diff(img, refImg);
+      info(`30Hz, ${label}, t = 12s: the drawing buffer ${buf}, the comets' light ${m.flow.toFixed(3)} (60Hz ${refM.flow.toFixed(3)}), lit ${m.lit.toFixed(1)}% (60Hz ${refM.lit.toFixed(1)}%); against the 60Hz frame: ${d.line}`);
+      if (buf !== refBuf) fail(`30Hz, ${label}: the drawing buffer stepped down to ${buf} (60Hz: ${refBuf}) — a steady 30Hz cadence with cheap work is the display's rate (a laptop on battery), not a slow GPU`);
+      if (m.flow < 0.8 * refM.flow) fail(`30Hz, ${label}: the comets' light is ${m.flow.toFixed(3)} at t = 12s against ${refM.flow.toFixed(3)} at 60Hz — the data flow faded at the display's own cadence`);
+      if (d.bigPct > 1) fail(`30Hz, ${label}: the t = 12s frame differs from the 60Hz one (${d.line}) — at a steady 30Hz with cheap work the watchdog took something away`);
+      await p.ctx.close();
+    }
+    /* the control: frames that are slow AND uneven, with no GPU clock and
+       cheap work — a device that cannot keep up — do step it down */
+    const c = await open({ dpr: 2, width: 660, init: { __bfTimer: "none" } });
+    await c.page.evaluate(() => {
+      const seq = [1000 / 60, 50, 1000 / 30, 200 / 3, 1000 / 30];
+      for (let i = 0; i < 125; i++) window.__bfStep(1, seq[i % seq.length], i === 124);
+    });
+    const cbuf = await bufferOf(c);
+    info(`control, no GPU clock, an uneven cadence (16.7/50/33.3/66.7/33.3ms) for 5s: the drawing buffer is ${cbuf}`);
+    if (cbuf !== "825x700") fail(`control: with no GPU clock, an uneven cadence averaging 40ms never stepped the drawing buffer down in 5s (it is ${cbuf}) — this check cannot tell a display's cadence from a device that cannot keep up, and proves nothing`);
+    await c.ctx.close();
   }
 } finally {
   await browser.close();

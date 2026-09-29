@@ -1302,21 +1302,50 @@ at the end, which means nobody has decided yet.
     Every geometry, material and vector is made once, and the hot loops use no
     iterators or closures.
   - DPR capped at 1.75. **The watchdog degrades by steps, and nothing vanishes
-    in one frame** (2026-09-28). Once the running average frame (about ten
-    frames) has stayed over 20ms for two seconds, the drawing buffer steps
-    down ONCE, from DPR 1.75 to 1.25 — one reallocation, before anything is
-    dropped (a display at or under 1.25 skips the step). After two more slow
-    seconds the comets fade out over 0.8s (by area, so evenly); after two
-    more the outer tier sinks into the floor over 3.6s — the floor's depth
-    hides it — and is then hidden. Before, the pulses and then the outer tier
-    went `visible = false`: on SwiftShader POS, ERP and the robot vanished in
-    one frame, and a slow integrated GPU saw the same pop.
-    `scripts/probe-scene.mjs` feeds 40ms frames and fails a phase that loses
-    more than half of what it drops in one 0.2s step (the old watchdog: 84% of
-    the comets and 69% of the outer tier; now 28-29% and 31-32%, run to run). Testing each frame
+    in one frame** (2026-09-28). **It judges the scene's own work, never the
+    display's cadence** (2026-09-29): the script time of each frame's pose and
+    draw (`performance.now()` around them), and the GPU time of its draw where
+    the browser can clock it (`EXT_disjoint_timer_query_webgl2`: Chrome and
+    Edge on the desktop; a ring of four queries made once, each read a frame
+    or more later, a disjoint reading dropped). The scene is the slow part
+    when either has averaged (about ten frames) over 10ms — or, with no GPU
+    clock (Safari, Firefox), when frames come both slow (a running average
+    over 20ms) AND uneven (p90 − p10 of the last 30 intervals over 4ms): a
+    display's own cadence is steady, and a device that cannot keep up drops
+    frames unevenly. Once it has been the slow part for two seconds, the
+    drawing buffer steps down ONCE, from DPR 1.75 to 1.25 — one reallocation,
+    before anything is dropped (a display at or under 1.25 skips the step).
+    After two more slow seconds the comets fade out over 0.8s (by area, so
+    evenly); after two more the outer tier sinks into the floor over 3.6s —
+    the floor's depth hides it — and is then hidden. Before, the pulses and
+    then the outer tier went `visible = false`: on SwiftShader POS, ERP and
+    the robot vanished in one frame, and a slow integrated GPU saw the same
+    pop. **Until 2026-09-29 it judged the rAF interval** (over 20ms on
+    average for 2s), so a display delivering every second vsync — Safari's
+    Low Power Mode, Chrome's Energy Saver, a laptop on battery — read as a
+    slow GPU: on the M2 through Metal at a 30Hz cadence, every frame drawn
+    far inside its budget, the comets were gone at once and the lower right
+    (ERP, the robot) fell from 1,200 lit pixels to 73 by 3s (the design
+    review). Measured since, on this machine: the M2 draws a frame in 0.24ms
+    of GPU time at DPR 1 and 0.58ms at 1.75 (the median over 120 frames);
+    SwiftShader in 13.8ms at DPR 1 and 25ms at 1.25, so it still degrades,
+    as a GPU that slow should. On Metal at the 30Hz cadence the scene now
+    keeps its comets (428-585 cyan pixels) and its lower right (1,193-1,275)
+    for 16s, as at 60Hz (`.probe/review-design/watchdog.mjs`).
+    `scripts/probe-scene.mjs` (watchdog) feeds 40ms frames that each cost 30ms
+    of the scene's own script work and fails a phase that loses more than
+    half of what it drops in one 0.2s step (the old watchdog: 84% of the
+    comets and 69% of the outer tier; now 28-29% and 31-32%, run to run), and
+    requires a GPU clocked at 30ms a frame, at a smooth 60Hz cadence, to step
+    the buffer down within 4s; (cadence) a steady 30Hz cadence with cheap
+    work, with the GPU clocked at 1.5ms and with no GPU clock, keeps the whole
+    buffer and draws at t = 12s exactly the 60Hz frame (0.00% of pixels off),
+    and, its control, an uneven cadence with no clock steps the buffer down.
+    The clock's results are stood in for by the probe (a GPU of known speed,
+    whatever the machine's is). Testing each frame
     alone reset the count on every fast frame, and a slow device's uneven
     frames kept resetting it, so it never fired (probe 6e, 2026-09-16), which
-    is why it reads the running average. Paused offscreen (IntersectionObserver) and
+    is why it reads running averages. Paused offscreen (IntersectionObserver) and
     when the tab is hidden. On teardown every geometry, material and instance
     buffer is disposed, then the renderer, and the context is released
     (`forceContextLoss`); the scene makes no textures. A lost context
@@ -1991,7 +2020,11 @@ poster the browser draws under it, at 660, 536 and 467, DPR 1 and 2),
 before mount still starts on the poster), `explode` (the band fully open;
 identity at scroll 0, opening with the scroll, frozen by Pause motion,
 reassembled at the top), `reload` (a page loaded mid-scroll starts on the
-poster, then opens) and `watchdog` (each step a fade). It takes over the
+poster, then opens), `watchdog` (each step a fade, on frames that cost the
+scene 30ms of work; and a GPU clocked slow steps it down at a smooth cadence)
+and `cadence` (2026-09-29: a steady 30Hz cadence with cheap work degrades
+nothing, with the GPU clocked and with no clock, and draws the 60Hz frame;
+its control, an uneven cadence with no clock, does degrade). It takes over the
 scene's clock on fresh, unscrolled pages and scrolls them itself, so nothing
 viewport-triggered is already over. It pins the field at 0,200 above the page
 — the field AND `.bf-hero__stage`, the isolating ancestor its z-index lives
@@ -2070,7 +2103,10 @@ load event: 250 bytes less than the orbiting v2, which carried the rise
 shader for the inner tier's links and ring; 39.2KB of the 180KB left. At
 the merge (2026-09-29) the explode's span is read from the canvas instead of
 the hero: 25 bytes less (the chunk file at `gzip -6`: 143,438 → 143,413;
-574,670 → 574,608 raw).
+574,670 → 574,608 raw). The watchdog's work clock (2026-09-29: the script and
+GPU time of a frame, and the cadence's evenness, instead of its interval):
+387 bytes more (143,413 → 143,800 at `gzip -6`; 574,608 → 575,457 raw), no
+new import.
 
 **Re-measured 2026-09-28, with the scene's v2** (the studio, the comets, the
 Lab robot, the fit-width camera and the watchdog's fades): **143,913 bytes,
