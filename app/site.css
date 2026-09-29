@@ -4920,14 +4920,25 @@ button.bf-map__btn[aria-pressed="true"] {
 /* ── The first screen below 1025px (2026-09-28) ──────────────────────────── *
    The field sits above the text there (SPEC §7; verify-site check 28). At its
    4:3 and 16:9 it took the whole first screen at 1024x768 — the h1 at 701px —
-   and put the proof line at 945px at 390x844. Now it is a band, still filled
-   by width (cover), so the poster is drawn exactly as wide as `sizes` in
-   Hero.tsx says: 200px tall on a phone (less on a short one), 260–420px on a
-   tablet by the viewport's height. The spacing tightens with it, and the
-   pause control shares the headline's first line (below). Measured with the
-   h1, Schedule a Call and the proof line's names all inside the first screen
-   at 390x844 and 768x1024; at 1024x768 the h1 and both calls to action are,
-   and the proof line starts 30px under the fold. */
+   and put the proof line at 945px at 390x844. Now it is a band, and the
+   poster is CONTAINED in it, as at every width (.bf-hero__poster): its
+   660x560 frame is drawn at the band's height, x 1.18 wide, so the band's
+   height IS the scene's size. The band takes what the first screen leaves
+   under it (2026-09-29, the merge): never less than 22vh on a phone and 40vh
+   on a tablet (the heights the fold was measured at), more where the text
+   leaves room — `100svh` less the text's height at 390 (658px) or at 768
+   (600px) — and never more than 260px on a phone or 560px, the frame's own
+   height, on a tablet, so it is never drawn over 660px wide (`sizes`, H4).
+   So at 390x844, 375x812, 360x740 and 1024x768 it is what the fold allows
+   (186, 179, 163 and 307px), and on a tall phone or a portrait tablet the
+   scene grows into the room: 257px at 412x915, the whole 660x560 frame at
+   820x1180 and 1024x1366, where it was 188 and 420. The spacing tightens with
+   it, and the pause control shares the headline's first line (below).
+   Measured with the h1, Schedule a Call and the proof line's names all inside
+   the first screen at 390x844, 412x915 and 768x1024 (under reduced motion
+   too); at 1024x768 the h1 and both calls to action are, and the proof line
+   starts 30px under the fold. The first declaration is the fallback for a
+   browser without `svh`. */
 @media (max-width: 1024px) {
   #hero.bf-hero { padding-top: 16px; }
   .bf-hero__inner { gap: 24px; }
@@ -4941,6 +4952,7 @@ button.bf-map__btn[aria-pressed="true"] {
   .bf-hero__field {
     aspect-ratio: auto;
     height: clamp(160px, 22vh, 188px);
+    height: clamp(160px, max(22vh, 100svh - 658px), 260px);
   }
 
   .bf-hero__support { margin-top: 16px; }
@@ -4955,6 +4967,7 @@ button.bf-map__btn[aria-pressed="true"] {
   .bf-hero__field {
     aspect-ratio: auto;
     height: clamp(260px, 40vh, 420px);
+    height: clamp(260px, max(40vh, 100svh - 600px), 560px);
   }
 }
 

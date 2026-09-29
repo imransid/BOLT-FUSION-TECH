@@ -358,17 +358,33 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   floor, where a rule of its own drew two floors 80px apart.
 - **The hero's first screen (2026-09-28), measured.** At 1440x900 the proof
   line is at 585–677px and the first write-up at 913. Below 1025px the field
-  sits above the text (SPEC §7) as a band, the poster contained in it like
-  everywhere else (*The hero field*): `clamp(160px, 22vh, 188px)` tall on a phone,
-  `clamp(260px, 40vh, 420px)` at 768–1024 — it was 4:3 and 16:9, and took the
-  whole first screen at 1024x768 (the h1 at 701px). The pause control keeps
+  sits above the text (SPEC §7) as a band — it was 4:3 and 16:9, and took the
+  whole first screen at 1024x768 (the h1 at 701px) — and the poster is
+  contained in it like everywhere else (*The hero field*), so the band's height
+  is the scene's size: the frame is drawn at that height and 1.18 times as
+  wide. **The band takes what the first screen leaves** (the merge,
+  2026-09-29): `clamp(160px, max(22vh, 100svh - 658px), 260px)` on a phone and
+  `clamp(260px, max(40vh, 100svh - 600px), 560px)` at 768–1024 — never less
+  than the 22vh and 40vh the fold was first measured with, more where the
+  text leaves room (658 and 600px are the text's height under the band at 390
+  and 768), and at most 260px on a phone and 560, the frame's own height, on a
+  tablet, so the poster is never drawn over 660px wide (`sizes`, H4); each
+  after a fallback without `svh`. Measured: 186px at 390x844 (drawn 219 wide),
+  179 at 375x812, 163 at 360x740, 160 at 390x664, 257 at 412x915 (was 188,
+  drawn 303 wide), 424 at 768x1024 (drawn 500), the whole 660x560 frame at
+  820x1180 and 1024x1366 (was 420), and 307 at 1024x768 (drawn 362). Contained
+  in IA's first band — sized for `cover` — the scene was drawn at most 222px
+  wide on any phone and 495 on any tablet; `probe-scene` (poster) reads the
+  16px band as ground at 390, 768 and 1024, the nearest lit pixel 23px from
+  the band's top at 390 and 37 at 1024. The pause control keeps
   its place under the field's right edge and the headline's first line
   ("Build") rises into that row beside it (`margin-bottom: -56px` on
   `.bf-hero__media`, only where the control is laid out — never under reduced
   motion); the proof line's three items sit in one row at every width, each a
   44px link over its client. Measured: at 390x844 the h1 at 289, Schedule a
   Call at 584 and the whole proof line at 745–832 — inside the first screen;
-  at 768x1024 all of it by 989; at 375x812 the names, their clients just
+  at 412x915 by 823 and at 768x1024 by 1003 (both 10px lower under reduced
+  motion, still inside); at 375x812 the names, their clients just
   under the fold; at 1024x768 and 360x740 the h1 and Schedule a Call are in the
   first screen and the proof line starts under it (798 and 716px). A phone
   browser's own bars take more of those heights than the lab viewport does.
@@ -999,7 +1015,8 @@ has a pause control.
     layout shift, and under reduced motion it is still. `probe-scene`
     (poster) reads it as the browser draws it at 390, 768, 1024 and a touch
     tablet at both ends of the drift: the 16px band stays ground, the nearest
-    lit pixel 34px from an edge at 390 and 48 at 768. The v1
+    lit pixel 23px from an edge at 390 and 47 at 768, in the hero's band
+    below 1025 (34 and 48 in the 4:3 and 16:9 fields before the merge). The v1
     files (2026-09-16) stay in `public/hero/`, unreferenced and unchanged: a
     page served before v2 still asks for them. The step-3 files,
     `field-poster-{660,1320}.*`, were deleted at the integration (2026-09-24):

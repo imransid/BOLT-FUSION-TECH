@@ -10,10 +10,12 @@ import MotionToggle from "../MotionToggle";
    poster is CONTAINED in its frame at every width (app/site.css, 2026-09-29),
    so it is drawn at the smaller of the frame's width and its height x 1.18:
    at >=1025px the frame is 560px tall and at most 660 wide, so 467-660px (660
-   from 1280 up); at 768-1024 the frame is 16:9, so 468-638px. Never more than
-   660 from 768px up: the 660 file at DPR 1 and the 1320 file at DPR 2 are
-   never stretched (H4). Phones take the 660 file at every density through
-   the first two sources (drawn 316px wide at 390).
+   from 1280 up); below 1025 it is the hero's band, at most 560px tall on a
+   tablet (drawn 362-660px wide: 362 at 1024x768, 500 at 768x1024, 660 on a
+   portrait tablet) and 260 on a phone (189-306px). Never more than 660 from
+   768px up: the 660 file at DPR 1 and the 1320 file at DPR 2 are never
+   stretched (H4). Phones take the 660 file at every density through the
+   first two sources (drawn 219px wide at 390x844).
 
    The two 660 files are not the same picture. `-660-1x` is the scene's frame
    rendered at DPR 1, what a DPR-1 desktop canvas draws, line for line, so its
