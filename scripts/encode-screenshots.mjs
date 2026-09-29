@@ -31,7 +31,7 @@ const SCREENSHOTS = [
   "/projects/opal.webp",
   "/projects/delivery-lens-bd.webp",
   "/projects/ttouch-wholesale.webp",
-  "/projects/sudarshini.webp",
+  "/projects/sudarshini-signin.webp",
   "/projects/ttouch-employee-verification.webp",
 ];
 const OUT = "/projects/opt";

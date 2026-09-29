@@ -245,13 +245,17 @@ export const projects: Project[] = parseContent(
       stack: ["React", "Node.js"],
       tagline: "The Sudarshini saree store",
       image: {
-        // Every public view of the store shows the brand's model. The owner
-        // (2026-09-29): "a view with no face" — picked or cropped. This is a
-        // product page's details panel, cropped from a 1440x900 capture (at DPR
-        // 3, then scaled to 1440x900): the product photograph on its left and
-        // the random "N people are viewing" line under it are outside the crop.
-        src: "/projects/sudarshini.webp",
-        alt: "A product page in the Sudarshini store: a georgette saree's name, price, stock and SKU, its details in Bengali, and the add-to-cart and buy-now buttons",
+        // The store's admin sign-in page, as it loads: a 1440x900 capture at
+        // DPR 1, the scale of the other three (recaptured 2026-09-29). Every
+        // storefront view shows the brand's model or a painted goddess behind
+        // the grid, and its prices and SKUs (the owner: "a view with no face";
+        // no prices — answer 3), so no storefront view qualifies; answer 3
+        // allows a sign-in page, as Go Style Business's card shows. The first
+        // capture, a product page's details panel cropped from DPR 3, was
+        // about 2.5 times the others' scale and showed a price and a SKU (the
+        // design and honesty reviews).
+        src: "/projects/sudarshini-signin.webp",
+        alt: "The Sudarshini store's admin sign-in page: “Welcome back”, “Sign in to manage products, banners, menus, orders, and admins.”, the email and password fields and the Login button",
         width: 1440,
         height: 900,
       },

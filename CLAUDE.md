@@ -310,11 +310,14 @@ does not state.
   settled on TTouch's own published number (never a frame with the demo's
   other two numbers), TTouch Wholesale's public catalogue (no prices, no
   images), TTouch Employee Verification's empty verify page (never a result),
-  and — since every storefront view of Sudarshini shows the brand's model —
-  a product page's details panel, cropped from a 1440×900 capture at DPR 3 and
-  scaled to 1440×900, with the product photograph and the random "N people are
-  viewing" line outside the crop (the owner: "a view with no face", picked or
-  cropped). Never a
+  and Sudarshini's admin sign-in page (recaptured 2026-09-29), at the others'
+  1440×900 and DPR 1: every storefront view of it shows the brand's model or a
+  painted goddess behind the grid, and prices and SKUs (the owner: "a view
+  with no face", and no prices), so none qualifies, and answer 3 allows a
+  sign-in page. Its first capture, a product page's details panel cropped
+  from DPR 3, was about 2.5 times the other three's scale and showed a price
+  and a SKU, which its alt text read out (the design and honesty reviews);
+  it was never deployed, and its files are deleted. Never a
   mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
   2026-09-16.
 - **/work is four sections,** one per kind, in `projectSections` order. The

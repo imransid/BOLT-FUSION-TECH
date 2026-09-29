@@ -98,14 +98,14 @@
     ],
     "base": "/projects/opt/ttouch-wholesale"
   },
-  "/projects/sudarshini.webp": {
+  "/projects/sudarshini-signin.webp": {
     "width": 1440,
     "height": 900,
     "widths": [
       640,
       1280
     ],
-    "base": "/projects/opt/sudarshini"
+    "base": "/projects/opt/sudarshini-signin"
   },
   "/projects/ttouch-employee-verification.webp": {
     "width": 1440,
