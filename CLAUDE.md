@@ -888,7 +888,7 @@ at the end, which means nobody has decided yet.
     one frame, and a slow integrated GPU saw the same pop.
     `scripts/probe-scene.mjs` feeds 40ms frames and fails a phase that loses
     more than half of what it drops in one 0.2s step (the old watchdog: 84% of
-    the comets and 69% of the outer tier; now 29% and 31%). Testing each frame
+    the comets and 69% of the outer tier; now 28-29% and 31-32%, run to run). Testing each frame
     alone reset the count on every fast frame, and a slow device's uneven
     frames kept resetting it, so it never fired (probe 6e, 2026-09-16), which
     is why it reads the running average. Paused offscreen (IntersectionObserver) and
