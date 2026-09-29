@@ -15,10 +15,11 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  *    their dash patterns), drawn in topology order, then handed to the CSS
  *    flow (`.bf-flowing`) for TWO passes. A concept drawing (`.dg-node--concept`,
  *    the Lab tier) is sketched in steel instead, and does not flow: nothing
- *    flows in a system that has not shipped. That "no flow" is app/site.css's,
- *    in the gate's own media, not this engine's — it holds for a concept the
- *    engine never claimed (a reload in place, a deep link, a fast reader) and
- *    wherever gsap never arrives;
+ *    flows in a system that has not shipped. That "no flow" is the drawing's
+ *    own, not this engine's: a concept drawing carries no flow lines and no
+ *    cyan at all (components/site/diagrams.tsx, 2026-09-29), so it holds for a
+ *    concept the engine never claimed (a reload in place, a deep link, a fast
+ *    reader), wherever gsap never arrives, and on phones and touch screens;
  *  · every `[data-bf-trace="<name>"]` hook — its `svg.bf-trace` holds
  *    `.bf-trace__path` elements drawn complete in the server HTML; an overlay
  *    traces them in order, and each `[data-bf-trace-stop]` carries

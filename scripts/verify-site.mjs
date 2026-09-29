@@ -175,6 +175,19 @@ const PROJECT_FORM_MIN = 480;
 const ROBOTICS_HONESTY =
   "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.";
 const TIER_LABELS = { proven: "Proven", core: "Core", capable: "Capable", lab: "Lab" };
+/* 33 (2026-09-29, the lead designer under the owner's honesty rule) — the Lab
+   drawing (a diagram with a concept node: robotics) shows NO cyan and never
+   flows, on any profile. Read on every visit (its markup, painted or in its
+   <defs>), and on fresh pages scrolled to it where each motion system runs:
+   a desktop with a fine pointer (the Signal's sketch), a touch tablet and a
+   phone (the CSS flow). */
+const LAB_PROFILES = [
+  { label: "1440 desktop (fine pointer)", viewport: { width: 1440, height: 900 } },
+  { label: "1180x820 tablet (touch, coarse pointer)", viewport: { width: 1180, height: 820 }, touch: true, dpr: 2 },
+  { label: "390 phone (touch)", viewport: { width: 390, height: 844 }, touch: true, dpr: 3 },
+];
+const LAB_ROUTES = ["/", "/capabilities"];
+const LAB_WATCH_MS = 5500; /* past the CSS flow's three 1.6s passes and the Signal's 1.4s sketch */
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
    targets). Measured on / as the Phase 1 baseline was (scratchpad perf.mjs): a
@@ -942,6 +955,47 @@ async function perfScrollRun(browser, prof) {
   return r;
 }
 
+/* 33 (2026-09-29) ── cyan in a drawing: every element whose stroke, fill or
+   stop colour is the flow colour (--bf-flow, resolved in the page) or any
+   saturated cyan (hue 160-195 degrees). Self-contained: it runs in the
+   browser, installed as window.__bfLabCyan before the collector and the Lab
+   probe call it. */
+function labCyanIn(svg) {
+  const probe = document.createElement("span");
+  probe.style.color = "var(--bf-flow)";
+  document.body.append(probe);
+  const flow = getComputedStyle(probe).color;
+  probe.remove();
+  const rgb = (v) => {
+    const m = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/.exec(v || "");
+    return m && (m[4] === undefined || +m[4] > 0.05) ? [+m[1], +m[2], +m[3]] : null;
+  };
+  const cyanish = ([R, G, B]) => {
+    const [r, g, b] = [R / 255, G / 255, B / 255];
+    const max = Math.max(r, g, b);
+    const d = max - Math.min(r, g, b);
+    if (max < 0.45 || d / max < 0.45) return false;
+    let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+    return h >= 160 && h <= 195;
+  };
+  const out = [];
+  for (const el of [svg, ...svg.querySelectorAll("*")]) {
+    const cs = getComputedStyle(el);
+    for (const prop of ["stroke", "fill", "stop-color"]) {
+      const v = cs.getPropertyValue(prop);
+      const c = rgb(v);
+      if (c && (v === flow || cyanish(c))) {
+        const cls = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
+        out.push(`${el.tagName.toLowerCase()}${cls.length ? "." + cls.join(".") : ""} ${prop} ${v}`);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
 /* ── in-page collector (runs in the browser) ─────────────────────────────── */
 function collectInPage() {
   const visible = (el) => {
@@ -1419,6 +1473,18 @@ function collectInPage() {
     shown: visible(t),
     where: sectionOf(t),
   }));
+  /* 33 (2026-09-29) ── the Lab drawing: every diagram holding a concept node,
+     its flow lines, and every element in it — painted or in its <defs> — whose
+     stroke, fill or stop colour is cyan, the colour of data flow */
+  const labDrawings = [...document.querySelectorAll("svg")]
+    .filter((s) => s.querySelector(".dg-node--concept"))
+    .map((s) => ({
+      id: [...s.classList].find((c) => c.startsWith("bf-dg--")) || describe(s),
+      where: sectionOf(s),
+      shown: visible(s),
+      flows: s.querySelectorAll(".dg-flow").length,
+      cyan: typeof window.__bfLabCyan === "function" ? window.__bfLabCyan(s) : null,
+    }));
 
   /* 18 ── the logotype scope: how many elements carry it, and how many render */
   const logos = [...document.querySelectorAll("[data-logotype]")];
@@ -1453,7 +1519,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips, labDrawings };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -2704,6 +2770,7 @@ async function visit(browser, route, width) {
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const glData = await page.evaluate(glReport); /* before the contrast pass draws its own canvas */
   glData.frames = await readFrameGl(page);
+  await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`); /* check 33's cyan reader, for the collector */
   const data = await page.evaluate(collectInPage);
   data.glData = glData;
   data.stalled = stalled;
@@ -2797,6 +2864,80 @@ async function visit(browser, route, width) {
    Each is brought into view, so anything that reveals on entry inside it has
    played before the text is read. readFigures is evaluated with the grammar,
    tokenizeFigures, as its argument. */
+/* 33 (2026-09-29) ── the Lab drawing over time, on a FRESH page nobody has
+   scrolled: the page is scrolled to the drawing here, at reading speed, so the
+   CSS flow and the Signal's sketch are triggered while this watches — on a
+   settled page they would already be over, and "it never flowed" would be a
+   fact about the probe. Every 100ms for LAB_WATCH_MS once it is in view: any
+   animation or transition running on the drawing's own elements (the engine's
+   overlays, .bf-signal-*, and its masks are the sketch, not the drawing), any
+   own element whose stroke-dashoffset moves (a flow written by script), and
+   any cyan painted in it, overlays included. */
+async function visitLab(browser, route, prof) {
+  const ctx = await browser.newContext({
+    viewport: prof.viewport,
+    reducedMotion: "no-preference",
+    ...(prof.touch ? { isMobile: true, hasTouch: true, deviceScaleFactor: prof.dpr || 2 } : {}),
+  });
+  try {
+    const page = await ctx.newPage();
+    await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+    await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`);
+    const found = await page.evaluate(() => {
+      const shown = (s) => s.getClientRects().length > 0 && s.getBoundingClientRect().width > 0 && getComputedStyle(s).visibility !== "hidden";
+      const svg = [...document.querySelectorAll("svg")].find((s) => s.querySelector(".dg-node--concept") && shown(s));
+      if (!svg) return null;
+      const own = (el) => !(el.getAttribute("class") || "").split(/\s+/).some((c) => c.startsWith("bf-signal")) && !el.closest("mask");
+      const name = (el) => `${el.tagName.toLowerCase()}${(el.getAttribute("class") || "").trim() ? "." + el.getAttribute("class").trim().split(/\s+/).join(".") : ""}`;
+      const lab = (window.__bfLab = { samples: 0, anims: [], moved: [], cyan: [], flowing: false, sketch: 0, inView: false, top: Math.round(svg.getBoundingClientRect().top + scrollY) });
+      const add = (list, v) => list.length < 12 && !list.includes(v) && list.push(v);
+      const dash = new Map();
+      let from = null;
+      const tick = () => {
+        const r = svg.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) {
+          lab.inView = true;
+          from ??= performance.now();
+        }
+        if (from === null) return;
+        for (const a of svg.getAnimations({ subtree: true })) {
+          const t = a.effect && a.effect.target;
+          if (a.playState === "running" && t && own(t)) add(lab.anims, `${name(t)} (${a.animationName || a.transitionProperty || "animation"})`);
+        }
+        for (const el of svg.querySelectorAll("path, line, polyline, polygon, rect, circle, ellipse")) {
+          if (!own(el)) continue;
+          const d = getComputedStyle(el).strokeDashoffset;
+          if (!dash.has(el)) dash.set(el, d);
+          else if (dash.get(el) !== d) add(lab.moved, `${name(el)} (${dash.get(el)} -> ${d})`);
+        }
+        for (const c of window.__bfLabCyan(svg)) add(lab.cyan, c);
+        if (svg.closest("[data-bf-flow]")?.classList.contains("bf-flowing")) lab.flowing = true;
+        lab.sketch = Math.max(lab.sketch, svg.querySelectorAll(".bf-signal-trace").length);
+        lab.samples++;
+      };
+      window.__bfLabTimer = setInterval(tick, 100);
+      return { top: lab.top, height: Math.round(svg.getBoundingClientRect().height) };
+    });
+    if (!found) return { route, label: prof.label, rendered: false };
+    /* reading speed, to the drawing's middle; then watch */
+    const aim = Math.max(0, found.top + found.height / 2 - prof.viewport.height / 2);
+    await page.evaluate(async (aim) => {
+      for (let y = scrollY; y < aim; y = Math.min(aim, y + 120)) {
+        window.scrollTo(0, Math.min(aim, y + 120));
+        await new Promise((r) => setTimeout(r, 90));
+      }
+    }, aim);
+    await page.waitForTimeout(LAB_WATCH_MS);
+    const out = await page.evaluate(() => {
+      clearInterval(window.__bfLabTimer);
+      return window.__bfLab;
+    });
+    return { route, label: prof.label, rendered: true, ...out };
+  } finally {
+    await ctx.close();
+  }
+}
+
 async function readFiguresIn(page) {
   const opened = await page.evaluate(() => {
     const all = [...document.querySelectorAll("details")];
@@ -3156,6 +3297,14 @@ if (want(23))
       error: String(e?.message || e).split("\n")[0].slice(0, 200),
     }));
   }
+/* 33 (2026-09-29) ── the Lab drawing, watched on fresh pages at each profile */
+const labRuns = [];
+if (want(33))
+  for (const route of LAB_ROUTES.filter((r) => ROUTES.includes(r)))
+    for (const prof of LAB_PROFILES) {
+      process.stderr.write(`  the Lab drawing on ${route} @${prof.label}\n`);
+      labRuns.push(await visitLab(browser, route, prof).catch((e) => ({ route, label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+    }
 let faqRun = null;
 if (want(14)) {
   process.stderr.write("  opening every FAQ answer on /\n");
@@ -5137,8 +5286,8 @@ await (async () => {
    a figure's label — it carries no data-status, which check 8 reads as one. */
 check(
   33,
-  "The honesty contract: every capability shows its evidence tier; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status",
-  "a capability shown with no evidence tier; robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label",
+  "The honesty contract: every capability shows its evidence tier; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status; the Lab drawing carries no cyan and no .dg-flow, and never animates a flow, on any profile",
+  "a capability shown with no evidence tier; robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label; data drawn flowing through the robotics concept — a cyan flow line or arrowhead in the Lab drawing, or a flow running on it on a phone, a touch tablet or a desktop",
   (F, I) => {
     const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
     const said = new Set();
@@ -5171,7 +5320,40 @@ check(
         else if (t.shown && !new RegExp(`(^|[^\\p{L}])${TIER_LABELS[t.tier]}([^\\p{L}]|$)`, "u").test(t.text)) once(`lbl|${route}|${t.tier}|${t.text}`, `${at(k)}: a [data-tier="${t.tier}"] chip reads "${t.text}" — it says "${TIER_LABELS[t.tier]}"`);
       }
       I.push(`${at(k)}: ${caps.length} capability section(s)${caps.length ? ` (${caps.map((c) => `${c.id}: ${c.tiers.filter((t) => t.seen).map((t) => t.tier).join("+") || "no tier seen"}`).join(", ")})` : ""}; ${(v.tierChips || []).length} tier chip(s)${robotics.length ? `; the robotics honesty line ${robotics.some((c) => c.honesty.some((x) => x.seen && norm(x.text) === norm(ROBOTICS_HONESTY))) ? "shown, verbatim" : "NOT shown verbatim"}` : ""}`);
+      /* robotics honesty (2026-09-29): the Lab drawing, as served and painted */
+      const labs = v.labDrawings || [];
+      if (route === "/capabilities" && robotics.length && !labs.length) F.push(`${at(k)}: /capabilities shows robotics but no Lab drawing (an svg with .dg-node--concept) was found — the no-cyan rule tested nothing; unsure is a failure`);
+      for (const d of labs) {
+        const tag = `the Lab drawing (${d.id}${d.where ? ` in ${d.where}` : ""})`;
+        if (d.cyan === null) once(`labnull|${route}`, `${at(k)}: ${tag} could not be read for cyan — unsure is a failure`);
+        if (d.flows) once(`labflow|${route}|${d.id}`, `${at(k)}: ${tag} carries ${d.flows} flow line(s) (.dg-flow) — robotics is Lab: nothing flows in a system that has not shipped, and its connections are dashed steel`);
+        if (d.cyan && d.cyan.length) once(`labcyan|${route}|${d.id}`, `${at(k)}: ${tag} is painted cyan — ${d.cyan.slice(0, 3).join("; ")}${d.cyan.length > 3 ? ` (+${d.cyan.length - 3})` : ""} — cyan is data flow, and the Lab drawing shows none`);
+      }
+      if (labs.length) I.push(`${at(k)}: ${labs.length} Lab drawing(s) in the page, ${labs.filter((d) => d.shown).length} shown — ${labs.reduce((n, d) => n + d.flows, 0)} flow line(s), ${labs.reduce((n, d) => n + (d.cyan ? d.cyan.length : 0), 0)} cyan element(s)`);
     }
+    /* robotics honesty over time: fresh pages, scrolled to the drawing where each motion system runs */
+    const labSeen = new Map(LAB_PROFILES.map((p) => [p.label, 0]));
+    for (const r of labRuns) {
+      const where = `${r.route} @${r.label}`;
+      if (r.error) {
+        F.push(`${where}: the Lab drawing's run failed (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.rendered) {
+        I.push(`${where}: no Lab drawing is shown here`);
+        continue;
+      }
+      if (!r.inView || r.samples < 20) {
+        F.push(`${where}: the Lab drawing was never watched in view (${r.samples} sample(s)) — the rule tested nothing; unsure is a failure`);
+        continue;
+      }
+      labSeen.set(r.label, labSeen.get(r.label) + 1);
+      if (r.anims.length) F.push(`${where}: the Lab drawing animates — ${r.anims.slice(0, 3).join("; ")} — robotics is Lab: it never flows, on any profile`);
+      if (r.moved.length) F.push(`${where}: a line of the Lab drawing moves its dashes — ${r.moved.slice(0, 3).join("; ")} — robotics is Lab: it never flows, on any profile`);
+      if (r.cyan.length) F.push(`${where}: the Lab drawing is painted cyan while it is read — ${r.cyan.slice(0, 3).join("; ")} — cyan is data flow, and the Lab drawing shows none`);
+      I.push(`${where}: watched ${r.samples} x 100ms in view (the drawing at ${r.top}px${r.flowing ? ", .bf-flowing landed" : ""}${r.sketch ? `, the Signal's sketch drew ${r.sketch} steel stroke(s) over it` : ""}) — ${r.anims.length} animation(s), ${r.moved.length} moving line(s), ${r.cyan.length} cyan element(s)`);
+    }
+    for (const [label, n] of labSeen) if (!n && labRuns.length) F.push(`@${label}: no route showed the Lab drawing in view — robotics' no-flow rule was not tested on this profile; unsure is a failure`);
   },
 );
 

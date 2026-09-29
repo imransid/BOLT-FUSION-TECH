@@ -5984,19 +5984,15 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
-/* The Lab drawing never flows where the Signal runs — nothing flows in a
-   system that has not shipped (BRIEF §3A, §4.2). Held here, in the Signal's
-   own media, and not by the engine's claim: the engine claims only a diagram
-   still ahead of the reader when it starts, 1-4s after load, and a reader who
-   is already there — a reload in place, a deep link to #robotics, a fast
-   reader — met SiteMotion's cyan flow instead (measured: 4 of 4 flow lines
-   running at 1440). Whether gsap arrives or not, at >=1025 with a fine pointer
-   the concept only ever gets the pencil. Below that it keeps the CSS flow. */
-@media (min-width: 1025px) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  [data-bf-flow]:has(.dg-node--concept) .dg-flow {
-    animation: none;
-  }
-}
+/* The Lab drawing never flows, on any profile — nothing flows in a system
+   that has not shipped (BRIEF §3A, §4.2). Since 2026-09-29 that is the
+   drawing's own: it carries no `.dg-flow` and no cyan at all
+   (components/site/diagrams.tsx), only dashed steel edges with steel
+   arrowheads, so there is nothing here to hold still. Until then this block
+   held its flow still in the Signal's media only (the engine's claim came too
+   late for a reload in place, a deep link or a fast reader), and phones and
+   touch screens kept the cyan flow on it; verify-site check 33 now fails a
+   flow line, a cyan paint or a moving flow in the Lab drawing anywhere. */
 
 /* A station on a hook: hollow, the stage marker's square; lit (filled) while
    a trace passes it. A square is drawn on the pixel grid (crispEdges): at

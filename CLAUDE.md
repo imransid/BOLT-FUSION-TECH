@@ -334,7 +334,9 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   `#2ee6d6`; shipped `#34d399`, target `#fbbf24`; focus `#8ab4ff`. Content capped
   at 1240px; the side gutter `clamp(16px, 4vw, 48px)`; the header 72px.
 - **The cyan is never text and never a chip:** flow lines in the diagrams, the
-  system map and, from the 3D wave, the hero scene. **Green and amber mean a
+  system map and, from the 3D wave, the hero scene — and **never in the Lab
+  drawing** (robotics), on any profile: nothing flows in a system that has not
+  shipped (2026-09-29, check 33). **Green and amber mean a
   figure's shipped and target status, and nothing else.**
 - **No neon, no glow on text.** One subtle radial light behind the hero field;
   gradients only inside the scene and the diagrams. The faint engineering grid
@@ -414,7 +416,11 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   module ring, a till hub with its offline queue, a machine loop (dashed, and
   captioned "Concept — not a shipped system"), a release pipeline. `role="img"`,
   named by its `<title>` and described by its `<desc>`; colours by class; the cyan
-  on `.dg-flow` only. Labels are 15–17 units on a 480-unit drawing, legible at a
+  on `.dg-flow` only. **The machine loop is the Lab drawing and carries no
+  flow** (2026-09-29, the lead designer under the owner's honesty rule): its
+  five connections are dashed steel edges with steel arrowheads, it has no
+  `.dg-flow` and no flow arrowhead in its `<defs>` (`<Svg flow={false}>`), so
+  there is no cyan in its markup at all, on any profile. Labels are 15–17 units on a 480-unit drawing, legible at a
   phone's width at full size. **In the homepage's ledger (2026-09-28)** each is
   drawn at a compact size, measured: beside its row in a 440px column from
   1280px (the drawing 422px wide, labels 12.3–15.8px) and 420px at 1025–1279
@@ -800,23 +806,21 @@ has a pause control.
     300ms and the flow takes over for two passes. A dashed edge is traced
     dashed, through a mask DrawSVG draws.
   - **The Lab sketch:** a concept drawing (`.dg-node--concept`, robotics) does
-    not flow where the Signal runs — nothing flows in a system that has not
+    not flow, on any profile — nothing flows in a system that has not
     shipped. A light-steel pencil (`--bf-soft`, 1.5px, dashed `5 4` — lighter
     than the drawing's own `--bf-steel`, or it would draw steel over steel and
     nobody would see it pass; never blue, never cyan) goes round the loop over
     the drawing, each concept box and then the edge leaving it, at one speed,
-    1.4s in all, and fades. The evidence tier, shown in behaviour. The "no
-    flow" is CSS, not the engine's claim: `[data-bf-flow]:has(.dg-node--concept)
-    .dg-flow { animation: none }` in the gate's own media (`min-width: 1025px`,
-    `pointer: fine`, no reduced motion; Save-Data is not a media query). The
-    engine claims only a diagram still ahead of the reader when it starts,
-    1–4s after load, so while the "no flow" rode on the claim, a reader who was
-    already there — a reload in place, a deep link to `#robotics`, a fast
-    reader — met SiteMotion's cyan flow (found in review: 4 of 4 flow lines
-    running at 1440 after a reload). Now 0 of 4 run on any of those paths,
-    whether gsap arrives or not. Phones and touch screens, where the Signal
-    never runs, keep the CSS flow on it (4 of 4 at 390 and 1366x1024 touch): an
-    owner question, since it is the same claim in cyan.
+    1.4s in all, and fades. The evidence tier, shown in behaviour. **The "no
+    flow" is the drawing's own** (2026-09-29, the merge; the lead designer's
+    decision under the owner's honesty rule): the machine loop carries no
+    `.dg-flow` at all, only dashed steel edges with steel arrowheads, so
+    nothing can flow on it however the reader arrives — before or without
+    gsap, after a reload in place or a deep link to `#robotics`, and on phones
+    and touch screens, which until the merge kept the CSS cyan flow on it (4 of
+    4 lines at 390 and 1366x1024 touch; the motion stream's CSS rule held it
+    still only in the Signal's own media, and is gone). Check 33 watches it on
+    fresh pages at 1440, 1180x820 touch and 390 (*Verify before pushing*).
   - **The hooks, `[data-bf-trace="<name>"]`:** a container holding one
     `<svg class="bf-trace" aria-hidden="true" focusable="false">` of
     `.bf-trace__path` lines or paths drawn COMPLETE in the server HTML — a
@@ -1519,7 +1523,22 @@ misuse fails — and every new rule has a misuse case in the gate's RUN 2.
   exists) shows a visible Lab chip, no other tier, and a `[data-honesty]` element
   holding SPEC §8b.7's line verbatim where a reader can see it; no tier chip
   carries or holds a `data-status`, which check 8 reads as a figure's label; and
-  a tier chip says its tier.
+  a tier chip says its tier. **Robotics honesty in the drawing (2026-09-29, the
+  merge):** the Lab drawing (any `svg` holding `.dg-node--concept`) carries no
+  `.dg-flow` and no cyan — on every visit it reads every element of the
+  drawing, painted or in its `<defs>`, for a stroke, fill or stop colour that
+  is `--bf-flow` or any saturated cyan (hue 160–195°) — and it never animates
+  a flow: on FRESH pages of / and /capabilities at 1440 (a fine pointer, where
+  the Signal sketches it), 1180x820 touch and 390 (touch, where the CSS flow
+  would run), scrolled to it at reading speed and watched every 100ms for
+  5.5s, no animation or transition runs on its own elements (the engine's
+  `.bf-signal-*` overlays and masks are the sketch, and exempt), no own line's
+  `stroke-dashoffset` moves, and nothing in it is painted cyan. A profile on
+  which no route showed the drawing in view is a failure, not a pass. Misuse
+  cases: `lab-flow` (the four connections back as flow lines; also
+  `lab-flow-phone`, the flow running at 390), `lab-cyan-head` (cyan arrowheads
+  on steel edges, no flow line) and `lab-dash-motion` (the steel dashes
+  animated on a coarse pointer, no cyan).
 - **23** — unchanged in what it compares. It captures under reduced motion, where
   the scene never mounts (check 25 fails one that does), and hides every canvas
   for the capture, so the live canvas cannot reach it; it now prints what the page
@@ -2166,7 +2185,7 @@ script-written motion (*Verify before pushing*).
 | The library | gsap 3.15.0 — core, ScrollTrigger, DrawSVGPlugin — for the Signal only; the scene never imports it | `motion-hire/motion` |
 | Who gets it | >=1025px, a fine pointer, no reduced motion, no Save-Data, watched live; everyone else keeps the CSS motion, which runs until gsap arrives and wherever it never does | `motion-hire/motion` |
 | The flow after a trace | Two 1.6s passes (three without a trace), so trace + flow stays under five seconds | `motion-hire/motion` |
-| The robotics diagram | A steel 1.4s sketch and no flow: nothing flows in a system that has not shipped. The "no flow" is CSS in the Signal's own media, so it holds however the reader arrives and whether gsap loads or not; phones and touch screens keep the CSS flow on it (an owner question) | `motion-hire/motion` |
+| The robotics diagram | A steel 1.4s sketch and no flow: nothing flows in a system that has not shipped. **At the merge (2026-09-29, the lead designer under the owner's honesty rule): no cyan anywhere on any profile** — its connections are dashed steel with steel arrowheads and it carries no flow line, so phones and touch screens no longer flow it either (the owner question the motion stream left); check 33 holds it | `motion-hire/motion`, the merge |
 | Pins, smooth scroll, SplitText, count-ups | None (BRIEF §4.6–4.7) | `motion-hire/motion` |
 
 **The hero scene, v2** (the scene stream, `motion-hire/scene`). The research

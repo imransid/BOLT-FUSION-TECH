@@ -450,6 +450,33 @@ def p_gsap_reduced(s):
     s.rep(LOADER, 'const CALM = "(prefers-reduced-motion: no-preference)";\n', 'const CALM = "(min-width: 0px)";\n')
 
 
+# ── new at the merge (2026-09-29): robotics honesty, the Lab drawing ───────
+
+
+DIAGRAMS = "components/site/diagrams.tsx"
+
+
+def p_lab_flow(s):
+    """33: the Lab drawing's four connections back as flow lines — a cyan
+    .dg-flow over each, with its cyan arrowhead, flowing on a phone and a
+    touch tablet (the drawing as it was until the merge)"""
+    s.rep(DIAGRAMS, '    <Svg id="machine-loop" capability={c} flow={false}>\n', '    <Svg id="machine-loop" capability={c}>\n')
+    for d in ("M136 86H182", "M298 86H344", "M402 112V232", "M344 258H298"):
+        s.rep(DIAGRAMS, f'      <Wire id="machine-loop" d="{d}" dashed flow={{false}} />\n', f'      <Wire id="machine-loop" d="{d}" />\n')
+
+
+def p_lab_cyan_head(s):
+    """33: cyan arrowheads on the Lab drawing's steel edges — no flow line at
+    all, only the colour of data flow where it points"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the Lab drawing's arrowheads in the flow colour */\n.bf-dg--machine-loop .dg-arrowhead { fill: var(--bf-flow); }\n")
+
+
+def p_lab_dash_motion(s):
+    """33: the Lab drawing's steel dashes marching on touch screens — a flow
+    drawn in steel, with no cyan anywhere"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the Lab drawing's edges animated on a coarse pointer */\n@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {\n  .bf-dg--machine-loop .dg-edge { animation: bf-flow 1.6s linear infinite; }\n}\n")
+
+
 def p_signal_dead(s):
     """25: the engine's matchMedia never matches — gsap loads, and the Signal
     never starts"""
@@ -549,6 +576,11 @@ CASES = [
     ["gsap-coarse", "the Signal's gate without the fine pointer — gsap on a touch tablet (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): requests the GSAP chunk", p_gsap_coarse, {}],
     ["signal-dead", "the Signal's engine never starts — gsap loads for nothing (1440)", 25, r"^/ @1440[^:]*: the Signal never started", p_signal_dead, {}],
     ["gsap-reduced", "the Signal's gate without reduced motion — gsap requested under reduced motion", 21, r"^/[^:]*: \d+ GSAP script\(s\) requested under reduced motion — .*the Signal engine", p_gsap_reduced, {}],
+    # new at the merge (2026-09-29): robotics honesty — the Lab drawing shows no cyan and never flows, on any profile
+    ["lab-flow", "the Lab drawing's connections back as cyan flow lines", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) carries \d+ flow line\(s\) \(\.dg-flow\)", p_lab_flow, {}],
+    ["lab-flow-phone", "the Lab drawing's connections back as cyan flow lines — flowing on a phone", 33, r"^/capabilities @390 phone \(touch\): the Lab drawing animates — (?:[^;]*; )*path\.dg-flow \(bf-flow\)", None, {"from": "lab-flow"}],
+    ["lab-cyan-head", "cyan arrowheads on the Lab drawing's steel edges, no flow line", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) is painted cyan — (?:[^;]*; )*path\.dg-arrowhead fill ", p_lab_cyan_head, {}],
+    ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
