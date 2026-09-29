@@ -685,7 +685,11 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   its intro and "See the four systems" from 1025px, over the four systems —
   four across from 1025px, two across below it, phones included — each its
   screenshot in a 16:10 frame, its name a 44px link to the live system whose
-  target is the whole tile, and its tagline; then the section's Schedule a
+  target is the whole tile, and its tagline; then, since 2026-09-30, the
+  feature-work tile (`.bf-feattile`, *Projects and attribution*): a hairline
+  tile on the ground, its head beside Bazzile's card from 1025px, the card's
+  two screens small beside its label, name, what we built and its Google Play
+  figure from 768px and over them on a phone; then the section's Schedule a
   Call, then the lanes band and the proof strip, whose four figures are ruled
   rows on a phone, not boxed cards. Measured: the plate is 511px tall at 1440
   (at 2028), 1061 at 1024 and 865 at 390, and the section's Schedule a Call
@@ -2452,7 +2456,7 @@ The old rule had no case, so none is retired.
 - **8, unchanged, and its case** — "100K+ downloads on Google Play" passes
   only through its per-instance exemption in `content/figure-labels.ts`
   (the store's public install band for the client's app, not a measurement
-  of our work), on /work and the homepage. RUN 2:
+  of our work), on /work, the homepage and the llms files. RUN 2:
   `pubstat-bare` (the figure rendered without `<FigureText>`): '"100K+" has no
   shipped/target label'.
 - **30** — the `bazzile-cuts` set ("70,000", "15,000 active users"), cut on
@@ -2747,6 +2751,43 @@ a `sourceRef`, and the build fails without one. It covers every place a status
 is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
+
+## Decided 2026-09-30: Bazzile's feature screens and its public install count (owner)
+
+The owner's request, 2026-09-30, verbatim:
+
+> Bazzile
+> Real Estate Marketplace
+> The app has passed 70,000 downloads in France in twelve months, with around
+> 15,000 active users there. I shipped features into the Bazzile React Native
+> app: swipe-based browsing, Google Maps location matching and Firebase
+> real-time sync. Bazzile is a Swiss real estate marketplace based in Geneva,
+> where listings come only from professional agencies, are ranked by an AI
+> matching model, and sync with most agency CRMs. Live on the App Store and
+> Google Play.
+> https://apps.apple.com/fr/app/bazzile/id1622224603
+> https://play.google.com/store/apps/details?id=com.bazzile.app
+> add this project with screen shot best highlight way
+
+Bazzile was already on the site as a text card (*Projects and attribution*):
+feature work, no screenshot without the client's permission, and the 70,000
+downloads never shown. His answers (through AskUserQuestion) reverse the
+first of those for Bazzile and keep the second:
+
+| question | the owner's answer | where it is on the site |
+|---|---|---|
+| Do you have Bazzile's permission to show screens of their app on our website? | "Yes, show our feature screens" — Bazzile's official App Store screenshots, ONLY the screens with our features (swipe browsing, map matching), captioned as features built by Bolt Fusion for Bazzile Technology SA | `featureScreens` in `content/projects.ts`: two App Store (FR) screenshots, cropped to the phone's screen, each captioned with its feature; the schema refuses a screen for a feature the role does not name, and still refuses a generic image |
+| Which usage numbers should we show for Bazzile? | "Google Play's public count" — "100K+ downloads on Google Play": publicly verifiable on the store page (the Play listing showed "100K+ Downloads" on 2026-09-30), clearly the app's scale, not a claim about our work. The 70,000 / 15,000 figures stay off the site | `publicStat`, linked to the Play listing with its source and the day it was read, through a per-instance exemption in `content/figure-labels.ts`; check 30's `bazzile-cuts` fails "70,000" and "15,000 active users" on `/` and /work |
+| Where should Bazzile be highlighted? | "/work + homepage proof" — a featured card on /work with the screenshots, plus a compact "Features we shipped inside other apps" tile in the homepage's proof section; the hero's proof line stays for work we fully built | /work: the feature work's own section after the client story, `#feature-work`, Bazzile featured; the homepage: the feature-work tile after the client story in `#recent-work`, before its Schedule a Call; the hero unchanged, and RUN 3 case (g) still refuses Bazzile on its proof line |
+
+Taken without asking, for the owner to see: the screens are cropped to the
+phone's screen (the store images' pink ground, French headlines and drawn
+phones are Bazzile's marketing, and on the graphite site they would out-shout
+every other screenshot); the tile's heading is /work's existing
+"Features we shipped into other companies’ apps" rather than a second
+wording; the feature work sits ABOVE Bolt Fusion projects on /work, as the
+highlight the owner asked for; and GodConnect Online, whose role names no
+features, stays a text card under Bazzile.
 
 ## Decided 2026-09-29: the TTouch Clothing projects (owner)
 

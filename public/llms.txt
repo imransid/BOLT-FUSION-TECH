@@ -148,7 +148,12 @@ named, and is not Bolt Fusion's product.
   a Swiss real-estate marketplace app based in Geneva. Features built by Bolt
   Fusion for Bazzile Technology SA, which owns the app: swipe-based browsing,
   Google Maps location matching and Firebase real-time sync in its React
-  Native app. Live. Jan 2025 – Jul 2025.
+  Native app. Live. Jan 2025 – Jul 2025. [Its card](/work#bazzile) shows the
+  two screens where our features live, swipe-based browsing and the map, from
+  Bazzile's own App Store screenshots. The app has
+  100K+ downloads on Google Play: the store's public install band for the
+  whole app, read 30 September 2026 — its reach, not a measure of our
+  features.
 - GodConnect Online (App Store:
   https://apps.apple.com/us/app/godconnect-online/id1518393186; Google Play:
   https://play.google.com/store/apps/details?id=com.godconnect.online): a

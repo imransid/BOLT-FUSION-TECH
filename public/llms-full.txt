@@ -177,7 +177,13 @@ professional agencies, are ranked by an AI matching model, and sync with most
 agency CRMs. Features built by Bolt Fusion for Bazzile Technology SA, which
 owns the app: swipe-based browsing, Google Maps location matching and Firebase
 real-time sync in its React Native app. Stack: React Native, Firebase,
-Redux-Saga, Reanimated, NestJS. Live. Jan 2025 – Jul 2025.
+Redux-Saga, Reanimated, NestJS. Live. Jan 2025 – Jul 2025. Its card on /work
+(https://boltfusiontech.com/work#bazzile) shows the two screens where our
+features live, swipe-based browsing and the map, from Bazzile's own App Store
+screenshots, each captioned with its feature; GodConnect Online's names no
+features, so it shows none. The app has 100K+ downloads on Google Play: the
+store's public install band for the whole app, read off its listing on 30
+September 2026 — its reach, not a measure of our features.
 
 **GodConnect Online** (App Store:
 https://apps.apple.com/us/app/godconnect-online/id1518393186; Google Play:
