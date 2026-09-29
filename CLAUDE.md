@@ -1170,7 +1170,17 @@ has a pause control.
     `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
     `{ paused }`: the drift reads the attribute; the scene stops its loop on
     the event and resumes on the next, and starts paused (its t = 0 frame
-    drawn, no loop) if the attribute is already set when it mounts.
+    drawn, no loop) if the attribute is already set when it mounts. **The
+    attribute is the button's one state** (2026-09-29): it reads
+    `html[data-motion]` (`useSyncExternalStore` over a MutationObserver on
+    `<html>`) and computes the next state from it. It kept a copy in React
+    state until then, which a client-side Back or Forward reset while the
+    attribute stayed: the page was paused, the button said "Pause motion"
+    with `aria-pressed="false"`, and its first press only changed the label
+    (the engineering review). Its state is said once, by the label ("Pause
+    motion" / "Resume motion"): `aria-pressed` went, since with a label that
+    changes a screen reader heard "Resume motion, toggle button, pressed".
+    Check 34 holds both at 390.
 - **The header's headroom** slide is a 0.25s transform; the drawer slides in
   over 0.28s.
 - **One reveal on every page** since 2026-09-16. The older one
@@ -2075,7 +2085,12 @@ Each rule is proven both ways, and each has its case in
   per width, at 1440 and 390. Without `data-scroll-behavior="smooth"` on
   `<html>` the new page's first frame was at 10201 and ran 0 reveals (the
   engineering review). RUN 2: `nav-smooth` and `nav-reveals`, one patch (the
-  attribute removed).
+  attribute removed). At 390, where the pause control shows for the poster's
+  drift, it also presses Pause, goes Back to /capabilities and Forward to /
+  (both client-side): `html[data-motion]` must still be "paused", the
+  remounted control must read "Resume motion", and it carries no
+  `aria-pressed`. RUN 2: `toggle-local` and `toggle-pressed`, one patch (the
+  control back on a React state of its own, with `aria-pressed`).
 - **35, new — the Signal's traces settle lit.** At 1440, on a fresh / and a
   fresh /engineering read down at reading speed, and on / after 34's
   navigation, 3s after the reading: every station of every hook drawn at that
