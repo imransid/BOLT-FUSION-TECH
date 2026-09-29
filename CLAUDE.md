@@ -1855,7 +1855,12 @@ identity at scroll 0, opening with the scroll, frozen by Pause motion,
 reassembled at the top), `reload` (a page loaded mid-scroll starts on the
 poster, then opens) and `watchdog` (each step a fade). It takes over the
 scene's clock on fresh, unscrolled pages and scrolls them itself, so nothing
-viewport-triggered is already over. Against a local build: `node
+viewport-triggered is already over. It pins the field at 0,200 above the page
+— the field AND `.bf-hero__stage`, the isolating ancestor its z-index lives
+in: when the IA put `#recent-work` straight under the hero, the explode and
+reload checks, which scroll, read the write-ups' screenshots painting over the
+pinned field as 32 scene failures (found at the merge, 2026-09-29; a fixture
+error, not the scene's). Against a local build: `node
 scripts/probe-scene.mjs --base http://localhost:<port> [--only a,b] [--json
 <file>]` (SwiftShader; `--gpu` for the machine's GPU, where the poster
 comparisons print the cross-rasteriser diff instead of failing); about a

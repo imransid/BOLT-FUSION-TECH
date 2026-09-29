@@ -194,8 +194,15 @@ function clockHook() {
   window.__bfQueued = () => queue.length;
 }
 
-/* the field fixed at `left`,200: at the left edge, or at 760 where it leaves the hero's calls to action uncovered */
+/* the field fixed at `left`,200: at the left edge, or at 760 where it leaves the hero's calls to action uncovered.
+   Its z-index works inside .bf-hero__stage, which isolates (the radial light
+   behind the field), so the stage is lifted too: without it, content after
+   the hero that positions itself paints over the fixed field once the page
+   scrolls — since the 2026-09-28 IA, #recent-work's write-up screenshots
+   start 755px down at 1440, and the explode and reload checks, which scroll,
+   read them as the scene (the merge, 2026-09-29). */
 const fieldCss = (w, left = 0) =>
+  ".bf-hero__stage{z-index:9999!important}" +
   `[data-hero-field]{position:fixed!important;left:${left}px!important;top:200px!important;margin:0!important;z-index:9999!important;` +
   `box-sizing:content-box!important;width:${w}px!important;height:560px!important;max-width:none!important;border:0!important;border-radius:0!important;flex:none!important}` +
   "[data-hero-field] canvas{transition:none!important}";
