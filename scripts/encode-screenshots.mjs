@@ -33,11 +33,19 @@ const SCREENSHOTS = [
   "/projects/ttouch-wholesale.webp",
   "/projects/sudarshini-signin.webp",
   "/projects/ttouch-employee-verification.webp",
+  /* Bazzile's feature screens (2026-09-30): two of its App Store (FR)
+     screenshots, cropped to the phone's screen — the swipe cards and the map. */
+  "/projects/bazzile-swipe-browsing.webp",
+  "/projects/bazzile-map-matching.webp",
 ];
 const OUT = "/projects/opt";
 /* 640 for phones; the full width (capped at 1280) for everything larger. The
    frames these sit in are at most about 700 CSS px wide, so 1280 covers 2x. */
 const TARGETS = [640, 1280];
+/* A phone's screen, portrait (2026-09-30): drawn at most about 300 CSS px
+   wide — beside a card's text on /work, smaller on the homepage — so 320 and
+   640 cover 1x and 2x, and nothing wider is made. */
+const PORTRAIT_TARGETS = [320, 640];
 
 mkdirSync(path.join(ROOT, "public", OUT), { recursive: true });
 const manifest = {};
@@ -45,7 +53,8 @@ for (const src of SCREENSHOTS) {
   const file = path.join(ROOT, "public", src);
   if (!existsSync(file)) throw new Error(`${src} is listed but public${src} does not exist`);
   const { width, height } = await sharp(file).metadata();
-  const widths = [...new Set(TARGETS.map((w) => Math.min(w, width)))].sort((a, b) => a - b);
+  const targets = height > width ? PORTRAIT_TARGETS : TARGETS;
+  const widths = [...new Set(targets.map((w) => Math.min(w, width)))].sort((a, b) => a - b);
   const base = path.basename(src).replace(/\.[a-z0-9]+$/i, "");
   for (const w of widths) {
     await sharp(file).resize({ width: w }).avif({ quality: 50, effort: 4 }).toFile(path.join(ROOT, "public", OUT, `${base}-${w}.avif`));

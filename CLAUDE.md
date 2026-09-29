@@ -2876,7 +2876,9 @@ off the path removes the failure for good, and serves the images faster.
 3. Run `node scripts/encode-screenshots.mjs`.
 4. Commit `public/projects/opt/` and `lib/screenshots.json`.
 
-The script writes 640w plus the full width, capped at 1280. `ScreenImage`
+The script writes 640w plus the full width, capped at 1280 — and for a phone's
+screen, portrait (Bazzile's feature screens, 2026-09-30), 320w and 640w: it is
+drawn at most about 240 CSS px wide, so nothing wider is made. `ScreenImage`
 throws on a screenshot that has no encodes, so a missing entry fails the build
 rather than falling back to the optimizer. `next/image` remains only in
 `components/site/home/Team.tsx`, for the engineers' photos when they are uploaded.

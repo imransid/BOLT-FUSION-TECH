@@ -115,5 +115,23 @@
       1280
     ],
     "base": "/projects/opt/ttouch-employee-verification"
+  },
+  "/projects/bazzile-swipe-browsing.webp": {
+    "width": 880,
+    "height": 1760,
+    "widths": [
+      320,
+      640
+    ],
+    "base": "/projects/opt/bazzile-swipe-browsing"
+  },
+  "/projects/bazzile-map-matching.webp": {
+    "width": 880,
+    "height": 1760,
+    "widths": [
+      320,
+      640
+    ],
+    "base": "/projects/opt/bazzile-map-matching"
   }
 }
