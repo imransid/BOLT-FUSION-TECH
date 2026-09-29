@@ -92,11 +92,11 @@ function Row({ c, n }: { c: Capability; n: number }) {
  * The Service JSON-LD is tied to this section (app/page.tsx): one node per
  * capability, emitted when the ledger renders.
  *
- * On a phone the ledger ends in a Schedule a Call (2026-09-29, the merge):
- * the one primary between how we work's and the final call's, which were
- * about 7,500px apart at 390 — having read what we engineer, the next step is
- * one tap away. From 768px it is not shown (app/site.css): the header carries
- * Schedule a Call from 520px and the page is shorter.
+ * The ledger ends in a Schedule a Call (on a phone since the merge,
+ * 2026-09-29; at every width since fix pass B): having read what we
+ * engineer, the next step is one tap away. On a phone how we work's and the
+ * final call's were about 7,500px apart; at 1440 six viewports in a row
+ * showed none on the way down (verify-site check 36).
  */
 export default function WhatWeEngineer() {
   const h = engineering.headings.whatWeEngineer;

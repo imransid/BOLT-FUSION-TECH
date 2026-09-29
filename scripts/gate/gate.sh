@@ -10,7 +10,7 @@
 # RUN 1  a FRESH copy of HEAD ($SP/g1-copy), installed and built, served fresh
 #        on :3465 (a long-lived `next start` once hung an optimizer request —
 #        CLAUDE.md, check 10); the load average printed; the full suite with
-#        --repo, all 35 checks, and scripts/probe-scene.mjs (the hero scene's
+#        --repo, all 36 checks, and scripts/probe-scene.mjs (the hero scene's
 #        pixels over time, every check; 2026-09-29). Every failing finding is
 #        real: there is no pending allowance.
 # then   scripts/gate/gate-proof.sh — RUN 2 and RUN 3 on :3466, with RUN 1's
@@ -29,7 +29,7 @@ mkdir -p "$SP"
 R=$SP/g1-copy
 OUT=$SP/g1-out
 PORT=3465
-CHECKS=35
+CHECKS=36
 REAL=0; SRV=
 mkdir -p $OUT
 load() { uptime | sed 's/.*load averages*: //'; }

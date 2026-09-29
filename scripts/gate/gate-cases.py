@@ -105,7 +105,7 @@ class Stage:
         """a throwaway client component in components/site, mounted on the homepage"""
         self.write(f"components/site/{name}.tsx", source)
         self.rep("app/page.tsx", 'import SiteShell from "@/components/site/SiteShell";\n', f'import SiteShell from "@/components/site/SiteShell";\nimport {name} from "@/components/site/{name}";\n')
-        self.rep("app/page.tsx", '      <SiteShell ground="graphite">\n', f'      <SiteShell ground="graphite">\n        <{name} />\n')
+        self.rep("app/page.tsx", '      <SiteShell ground="graphite" headerCtaQuiet>\n', f'      <SiteShell ground="graphite" headerCtaQuiet>\n        <{name} />\n')
 
     def flush(self):
         for p, s in self.files.items():
@@ -435,6 +435,26 @@ def p_toc_first_tier(s):
           "                      {[c.evidence[0]].map((e) => (\n                        <TierChip key={e.tier} tier={e.tier} />\n")
 
 
+def p_reach_desktop(s):
+    """36: the ledger's Schedule a Call hidden from 768px again — at 1440 the
+    ledger, how we build, the industries, the insights and the FAQ show none
+    on the way down"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: 36, the ledger's call phone-only again */\n@media (min-width: 768px) { .bf-ledger6__cta { display: none; } }\n")
+
+
+def p_header_loud(s):
+    """36: the header's Schedule a Call never steps down — filled beside the
+    hero's on the first screen"""
+    s.rep("components/site/HeaderCtaQuiet.tsx", "    const apply = () => cta.toggleAttribute(\"data-quiet\", seen.size > 0);\n",
+          "    const apply = () => cta.toggleAttribute(\"data-quiet\", false); // THROWAWAY misuse\n")
+    s.rep("components/site/Header.tsx", ' data-quiet={ctaQuiet ? "" : undefined}>', ">")
+
+
+def p_footer_filled(s):
+    """36: the footer's Schedule a Call filled again — beside the close's"""
+    s.rep("components/site/Footer.tsx", 'className="bf-btn bf-btn--ghost bf-btn--sm" data-cta="schedule"', 'className="bf-btn bf-btn--primary bf-btn--sm" data-cta="schedule"')
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -682,6 +702,9 @@ CASES = [
     ["story-shot-foreign", "the client-story band's Sudarshini tile shows OPAL's screenshot", 9, r'^/ @\d+: the client story "ttouch-clothing" — the tile of "Sudarshini" shows /projects/opt/opal-\d+\.(?:avif|webp), which is not its screenshot in content/projects\.ts', p_story_shot_foreign, {}],
     ["toc-first-tier", "/capabilities' contents row shows each capability's first tier alone — ERP without Capable (Full ERP)", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows ERP & enterprise systems as \"[^\"]*Proven[^\"]*\", without Capable — its evidence is Proven \(HR, payroll and a wholesale back office\) and Capable \(Full ERP\)", p_toc_first_tier, {}],
     ["toc-bare-tier", "/capabilities' contents row shows a tier without its scope — ERP's Proven bare", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows the Proven tier of ERP & enterprise systems as \"[^\"]*\", without its scope \"HR, payroll and a wholesale back office\"", None, {"from": "toc-first-tier"}],
+    ["reach-desktop", "the ledger's Schedule a Call hidden from 768px — a long run of viewports with none at 1440", 36, r"^/ @1440: \d+ viewports in a row, scrollY \d+–\d+, show no Schedule a Call on the way down — at most 4", p_reach_desktop, {}],
+    ["header-loud", "the header's Schedule a Call never steps down — two primaries on the first screen (1440)", 36, r"^/ @1440: two primary Schedule a Calls in one view at scrollY 0 \(scrolling down\) — [^—]*the header's", p_header_loud, {}],
+    ["footer-filled", "the footer's Schedule a Call filled again — two primaries at the end of the page", 36, r"^/ @(?:1440|390): two primary Schedule a Calls in one view at scrollY \d+ \(scrolling (?:down|up)\) — [^—]*the footer's", p_footer_filled, {}],
     ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case

@@ -1,5 +1,6 @@
 import { engineering } from "@/content/engineering";
 import { pages } from "@/content/pages";
+import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 
 import Cta from "../Cta";
 import SectionHead from "../SectionHead";
@@ -16,6 +17,10 @@ import SectionHead from "../SectionHead";
  * The heading is /industries' own for this group (content/pages.ts). A
  * capability's evidence written as "#pos" lands on its ledger row on this
  * page (components/site/home/WhatWeEngineer).
+ *
+ * Below 1025px it ends in a Schedule a Call (2026-09-29, fix pass B): the
+ * ledger's and the close's were six phone screens apart, and the header
+ * carries none below 520px (app/site.css; verify-site check 36).
  */
 export default function Industries() {
   const h = engineering.headings.industries;
@@ -46,6 +51,11 @@ export default function Industries() {
             </li>
           ))}
         </ul>
+        <p className="bf-actions bf-inds__cta">
+          <Cta href={SCHEDULE_HREF} cta="schedule">
+            {SCHEDULE_LABEL}
+          </Cta>
+        </p>
       </div>
     </section>
   );

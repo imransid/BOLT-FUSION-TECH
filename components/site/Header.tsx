@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { SiteContent } from "@/content/site-schema";
 
 import HeadroomController from "./HeadroomController";
+import HeaderCtaQuiet from "./HeaderCtaQuiet";
 import Logo from "./Logo";
 import MobileDrawer from "./MobileDrawer";
 
@@ -20,8 +21,13 @@ import MobileDrawer from "./MobileDrawer";
  *
  * The logo links home with <Link prefetch={false}>: eslint's
  * no-html-link-for-pages wants a literal "/" as a Link (verify-site check 24).
+ *
+ * One primary in view (2026-09-29, fix pass B): while a filled Schedule a
+ * Call in the page is on screen, the header's steps down to the ghost
+ * treatment (HeaderCtaQuiet). `ctaQuiet` sends it quiet from the server, on a
+ * page whose own call is on the first screen.
  */
-export default function Header({ navigation, current }: { navigation: SiteContent["navigation"]; current?: string }) {
+export default function Header({ navigation, current, ctaQuiet = false }: { navigation: SiteContent["navigation"]; current?: string; ctaQuiet?: boolean }) {
   return (
     <header id="masthead" className="bf-header headroom headroom--top headroom--pinned headroom--not-bottom">
       <div className="bf-header__bar">
@@ -42,13 +48,14 @@ export default function Header({ navigation, current }: { navigation: SiteConten
         </nav>
 
         <div className="bf-header__end">
-          <a href={navigation.cta.href} className="bf-btn bf-btn--primary bf-btn--sm bf-header__cta" data-cta="schedule">
+          <a href={navigation.cta.href} className="bf-btn bf-btn--primary bf-btn--sm bf-header__cta" data-cta="schedule" data-quiet={ctaQuiet ? "" : undefined}>
             {navigation.cta.label}
           </a>
           <MobileDrawer links={navigation.links} cta={navigation.cta} current={current} />
         </div>
       </div>
       <HeadroomController targetId="masthead" />
+      <HeaderCtaQuiet targetId="masthead" />
     </header>
   );
 }

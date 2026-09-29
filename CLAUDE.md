@@ -73,7 +73,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; on a phone, a Schedule a Call after it); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; a Schedule a Call after it, at every width since fix pass B); how we build; the industries with delivered work (below 1025px, a Schedule a Call after them); the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
@@ -446,11 +446,14 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   (1px lines at 4%) sits behind the hero field and the system map only.
 - **Breakpoints:** `≤767`, `768–1024`, `≥1025`, plus the header's own: `1200`
   (the full navigation ↔ the drawer) and `520` (below it the header's Schedule a
-  Call moves into the drawer). No horizontal scroll at any width. The button
+  Call moves into the drawer; from it, it steps down to a ghost while one in
+  the page is on screen — *Buttons*). No horizontal scroll at any width. The button
   stays in the drawer below 520px, measured 2026-09-28: at 360 the bar leaves
   89px between the lockup (171px) and the menu button with 12px gaps, and the
   button is 133px (about 105px even at 13px) — it does not fit, so the phone's
-  primaries are in the page instead: after the proof, and after how we work.
+  primaries are in the page instead: after the proof, after how we work,
+  after the ledger and, since fix pass B (2026-09-29), after the industries
+  (below 1025px only).
 - **Sections** (`.bf-section`): full bleed, a hairline on top, 72px of padding on
   phones, 96 from 768, 128 from 1025. **The homepage's rhythm (2026-09-28)** is
   its own (`#hero ~ .bf-section`): 56 / 64 / 80px of padding (phone / tablet /
@@ -500,6 +503,17 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   of identical cards.
 - **Buttons** (`components/site/Cta.tsx`): Barlow 600, square-cut (2px).
   `primary` is white on the button fill, one per view; `ghost` a steel outline;
+  **one filled Schedule a Call in view, the header's included** (2026-09-29,
+  fix pass B; the design review — the header's and the hero's were both
+  filled on every first screen from 520px, and the close's and the footer's
+  354px apart): the footer's is the ghost on every page, and while a filled
+  one in the page is on screen the header's steps down to the ghost
+  treatment (`data-quiet`, `components/site/HeaderCtaQuiet.tsx`: an
+  IntersectionObserver inset by the header's height, re-read after a
+  client-side navigation; the same box, so nothing shifts; no transition under
+  reduced motion). The server sends it quiet on `/` (`SiteShell`'s
+  `headerCtaQuiet`), whose hero call is on the first screen, and filled on
+  every other page. Verify-site check 36;
   `quiet` a brand-blue text link with an arrow. `data-cta` marks the calls to
   action the suite follows: `schedule` on every Schedule a Call, `explore` on
   Explore Our Capabilities, `project` on Tell Us About Your Project.
@@ -545,8 +559,16 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   01's seven links pushed the label onto a line of its own and left
   GodConnect alone on a third — the design review; at 1440 row 01 is now the
   five products over the two feature-work links);
-  on a phone it ends in a primary Schedule a Call (`.bf-ledger6__cta`, not
-  shown from 768px, where the header carries one — the merge, 2026-09-29).
+  it ends in a primary Schedule a Call (`.bf-ledger6__cta`: on a phone since
+  the merge, 2026-09-29, and at every width since fix pass B — at 1440 six
+  viewports in a row, from how we work's call to the close's, showed none on
+  the way down, where headroom has put the header's away; the design and
+  honesty reviews). Below 1025px the industries end in one too
+  (`.bf-inds__cta`): the ledger's and the close's were 5,055px apart at 390,
+  six phone screens. Measured (fix pass B): the page's Schedule a Calls at
+  466, 2587, 4530, 7622 and 10,813 at 1440 (the longest gap 3,191px), and at
+  594, 3518, 7073, 10,034, 12,754 and 15,169 at 390 (3,555; the footer's ghost
+  at 15,515); the page is 11,467px at 1440 and 16,378 at 390.
   *How we work* is a spec sheet (`.bf-hww`): the head beside the headcount, the
   four terms on one ruled row, the engagement models as a table beside the
   lines under it, and the pilot on its own surface plate, its three stations on
@@ -1885,7 +1907,7 @@ plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
   all (`gsap-reduced`): the loader checks its gate before any import.
 
 **The gate (2026-09-16).** RUN 1 builds a fresh copy of HEAD, serves it fresh and
-runs all 34 checks with `--repo`: every failing finding is real. RUN 2 applies
+runs every check with `--repo` (36 since fix pass B, 2026-09-29): every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
 a pattern that matches the clean build proves nothing. RUN 3 builds eleven
@@ -2263,6 +2285,23 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   one of the capability's later tiers' scopes — POS's set to "Point of sale"
   is refused in the schema's words, proven by loading the patched content
   with the real zod.
+- **36, new — Schedule a Call within reach, one primary in view.** A fresh
+  `/` under reduced motion (the header's slide is dropped there, so its state
+  is its state at once), at 1440x900 and 390x844, read a viewport at a time
+  and, after each step, 60px back up (headroom pins the header): no view may
+  show two filled Schedule a Calls — the header's counts while it is on
+  screen and filled — and no more than `REACH_MAX_RUN` (4) viewports in a
+  row on the way down, where the header is unpinned, may show no Schedule a
+  Call at all (the footer's ghost counts). At 1440 six viewports in a row
+  showed none, from how we work's call to the close's, and the header's and
+  the hero's were both filled on the first screen (the design and honesty
+  reviews). Measured on the fixed page: 3 at most at both widths (the
+  longest gaps 3,191px at 1440, the ledger's call to the close's, and 3,555
+  at 390, the proof's to how we work's, 4.2 phone screens); four, because a
+  run of five needs two calls about five viewports apart, whatever the phase
+  of the steps. RUN 2: `reach-desktop` (the ledger's call phone-only again),
+  `header-loud` (the header's call never steps down) and `footer-filled`
+  (the footer's filled again). The gate expects 36 checks.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

@@ -25,15 +25,19 @@ export default function SiteShell({
   children,
   current,
   ground = "graphite",
+  headerCtaQuiet = false,
 }: {
   children: ReactNode;
   current?: string;
   ground?: "graphite";
+  /** The header's Schedule a Call starts quiet: the page has its own on the
+   *  first screen (the homepage's hero). components/site/HeaderCtaQuiet. */
+  headerCtaQuiet?: boolean;
 }) {
   const { navigation, footer } = siteContent;
   return (
     <>
-      <Header navigation={navigation} current={current} />
+      <Header navigation={navigation} current={current} ctaQuiet={headerCtaQuiet} />
       <main id="main" className={ground === "graphite" ? "bf-main" : undefined}>
         {children}
       </main>

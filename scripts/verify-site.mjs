@@ -218,6 +218,25 @@ const HOOK_SETTLE_MS = 3000;
    the rail and the close's hooks and no hero */
 const HOOK_ROUTES = ["/engineering"];
 const LAB_WATCH_MS = 5500; /* past the CSS flow's three 1.6s passes and the Signal's 1.4s sketch */
+/* 36 (2026-09-29, fix pass B; the design and honesty reviews) — Schedule a
+   Call within reach, and one primary in view. On a fresh / read down a
+   viewport at a time, and after each step 60px back up (headroom pins the
+   header): no view shows two filled Schedule a Calls — the header's counts
+   while it is on screen and filled — and no more than REACH_MAX_RUN viewports
+   in a row on the way down, where the header is unpinned, show none at all
+   (the footer's, a ghost, counts: it is a Schedule a Call). At 1440 six
+   viewports in a row showed none, from how we work's call to the close's, and
+   the header's and the hero's were both filled on the first screen. */
+const REACH_PROFILES = [
+  { label: "1440", viewport: { width: 1440, height: 900 } },
+  { label: "390", viewport: { width: 390, height: 844 }, phone: true },
+];
+/* Four: a run of five empty viewports needs two calls about five viewports
+   apart, whatever the phase of the steps. Measured on the fixed page: the
+   longest run is 3 at 1440 (the ledger's call to the close's, 3,191px) and 3
+   at 390 (the proof's to how we work's, 3,555px — 4.2 phone screens, a run
+   of 4 at another phase); on the page the reviews read it was 6 at 1440. */
+const REACH_MAX_RUN = 4;
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
    targets). Measured on / as the Phase 1 baseline was (scratchpad perf.mjs): a
@@ -480,6 +499,53 @@ async function visitNavBack(browser) {
   const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
   await ctx.close();
   return { clicked, live, perSec, signal };
+}
+/* 36 — a fresh / under reduced motion (the header's slide is dropped there,
+   so its state is its state at once), read a viewport at a time */
+async function visitReach(browser, prof) {
+  const ctx = await browser.newContext({ viewport: prof.viewport, reducedMotion: "reduce", ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(1000);
+  const read = (dir) =>
+    page.evaluate((dir) => {
+      const vh = innerHeight;
+      const header = document.querySelector("header#masthead");
+      const hb = header ? header.getBoundingClientRect() : null;
+      const headerOn = Boolean(hb && hb.bottom > 1);
+      const top = headerOn ? hb.bottom : 0;
+      const box = (el, from) => {
+        const r = el.getBoundingClientRect();
+        const s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none" && r.bottom > from && r.top < vh;
+      };
+      const filled = (el) => {
+        const bg = getComputedStyle(el).backgroundColor;
+        return bg !== "transparent" && !/^rgba\(.*,\s*0\)$/.test(bg);
+      };
+      const name = (el) => (el.closest("header#masthead") ? "the header's" : el.closest("footer") ? "the footer's" : `#${el.closest("section[id]")?.id ?? "?"}'s`);
+      const calls = [...document.querySelectorAll('[data-cta="schedule"]')].filter((el) => !el.closest("[hidden]"));
+      const inPage = calls.filter((el) => !el.closest("header#masthead") && box(el, top));
+      const hdr = calls.filter((el) => el.closest("header#masthead") && headerOn && box(el, 0));
+      return { y: Math.round(scrollY), dir, inPage: inPage.map(name), filled: [...hdr, ...inPage].filter(filled).map(name).sort() };
+    }, dir);
+  const steps = [];
+  let last = -1;
+  for (let y = 0; ; y += prof.viewport.height) {
+    await page.evaluate((yy) => window.scrollTo({ top: yy, behavior: "instant" }), y);
+    await page.waitForTimeout(350);
+    const down = await read("down");
+    if (down.y === last) break;
+    last = down.y;
+    await page.evaluate(() => window.scrollBy({ top: -60, behavior: "instant" }));
+    await page.waitForTimeout(350);
+    const up = await read("up");
+    steps.push({ down, up });
+    if (down.y + prof.viewport.height >= (await page.evaluate(() => document.documentElement.scrollHeight))) break;
+  }
+  await ctx.close();
+  return { label: prof.label, height: prof.viewport.height, steps };
 }
 /* 35 — a fresh load of `route` read down at reading speed, then the hooks' state once it has settled */
 async function visitHooks(browser, route, w) {
@@ -3612,6 +3678,13 @@ if (want(35))
     process.stderr.write(`  the Signal's hooks, read down ${route} @1440\n`);
     hookRuns.push(await visitHooks(browser, route, 1440).catch((e) => ({ route, width: 1440, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
   }
+/* 36 ── Schedule a Call within reach, one primary in view */
+const reachRuns = [];
+if (want(36) && ROUTES.includes("/"))
+  for (const prof of REACH_PROFILES) {
+    process.stderr.write(`  Schedule a Call within reach on / @${prof.label}, a viewport at a time\n`);
+    reachRuns.push(await visitReach(browser, prof).catch((e) => ({ label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
 let faqRun = null;
 if (want(14)) {
   process.stderr.write("  opening every FAQ answer on /\n");
@@ -5848,6 +5921,45 @@ check(
       I.push(`${at}: ${lit} of ${stops} stations lit at rest — ${each}`);
     }
     if (!reads.length) F.push("no run at >=1025px read the Signal's hooks — unsure is a failure");
+  },
+);
+
+/* 36 — Schedule a Call within reach, one primary in view */
+check(
+  36,
+  `Schedule a Call within reach on /: never two filled ones in one view, the header's included, and never more than ${REACH_MAX_RUN} viewports in a row without one on the way down`,
+  "two primaries in one view — the header's and the hero's on the first screen, the close's and the footer's at the end; long stretches with no Schedule a Call on screen (six viewports in a row at 1440, from how we work's call to the close's)",
+  (F, I) => {
+    if (ROUTES.includes("/") && !reachRuns.length) F.push("/ was not read a viewport at a time — unsure is a failure");
+    for (const r of reachRuns) {
+      const at = `/ @${r.label}`;
+      if (r.error) {
+        F.push(`${at}: the run did not finish (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.steps.length) {
+        F.push(`${at}: no viewport was read — unsure is a failure`);
+        continue;
+      }
+      const said = new Set();
+      for (const st of r.steps)
+        for (const v of [st.down, st.up])
+          if (v.filled.length > 1 && !said.has(v.filled.join())) {
+            said.add(v.filled.join());
+            F.push(`${at}: two primary Schedule a Calls in one view at scrollY ${v.y} (scrolling ${v.dir}) — ${v.filled.join(", ")}; one primary in view at a time (CLAUDE.md, Buttons)`);
+          }
+      let run = [];
+      let worst = [];
+      for (const st of r.steps) {
+        if (st.down.inPage.length) run = [];
+        else run.push(st.down.y);
+        if (run.length > worst.length) worst = [...run];
+      }
+      if (worst.length > REACH_MAX_RUN)
+        F.push(`${at}: ${worst.length} viewports in a row, scrollY ${worst[0]}–${worst.at(-1) + r.height}, show no Schedule a Call on the way down — at most ${REACH_MAX_RUN}`);
+      const with1 = r.steps.filter((st) => st.down.inPage.length).map((st) => `${st.down.y} (${[...new Set(st.down.inPage)].join(", ")})`);
+      I.push(`${at}: ${r.steps.length} viewports read; a Schedule a Call on screen on the way down at ${with1.join(", ") || "none"}; the longest run without one: ${worst.length}`);
+    }
   },
 );
 

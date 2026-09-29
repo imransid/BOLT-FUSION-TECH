@@ -599,6 +599,26 @@ html {
   .bf-header__cta { display: inline-flex; }
 }
 
+/* One primary in view (2026-09-29, fix pass B; the design review): while a
+   filled Schedule a Call in the page is on screen, the header's is the ghost
+   (components/site/HeaderCtaQuiet sets data-quiet). The same box — both
+   variants carry a 1px border — so nothing shifts; under reduced motion the
+   swap has no transition. */
+.bf-header__cta[data-quiet] {
+  border-color: var(--bf-steel);
+  background-color: transparent;
+  color: var(--bf-text);
+}
+
+.bf-header__cta[data-quiet]:hover {
+  border-color: var(--bf-text);
+  background-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-header__cta { transition: none; }
+}
+
 .bf-header__burger {
   display: inline-flex;
   align-items: center;
@@ -5629,17 +5649,20 @@ button.bf-map__btn[aria-pressed="true"] {
   border-top: 1px solid var(--bf-line-strong);
 }
 
-/* The ledger's own Schedule a Call, on a phone only (the merge, 2026-09-29):
-   the one primary between how we work's and the final call's, 7,471px apart
-   at 390 before it. From 768px the header carries Schedule a Call and the
-   page is a third as long, so it is not shown. One primary in view at a
-   time: the nearest others are thousands of pixels away. */
+/* The ledger's own Schedule a Call, at every width since 2026-09-29 (fix pass
+   B; the design and honesty reviews): on a phone from the merge, where how we
+   work's and the final call's were 7,471px apart at 390; on a desktop too
+   since six viewports in a row at 1440 — the ledger, how we build, the
+   industries, the insights and the FAQ — showed none on the way down, where
+   headroom has put the header's away. One primary in view at a time: the
+   nearest others are thousands of pixels away, and the header's steps down
+   while this one is on screen (HeaderCtaQuiet). */
 .bf-ledger6__cta {
   margin-top: 32px;
 }
 
-@media (min-width: 768px) {
-  .bf-ledger6__cta { display: none; }
+@media (min-width: 1025px) {
+  .bf-ledger6__cta { margin-top: 40px; }
 }
 
 .bf-cap6 {
@@ -5863,6 +5886,20 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-inds__head .bf-head {
   margin-bottom: 0;
+}
+
+/* The industries' own Schedule a Call, below 1025px (2026-09-29, fix pass B;
+   the honesty review): the ledger's and the close's were 5,055px apart at
+   390, six phone screens of how we build, the industries, the insights and
+   the FAQ with no call on them (the header carries none below 520px). From
+   1025px the ledger's and the close's are 3,100px apart and it is not
+   shown. */
+.bf-inds__cta {
+  margin-top: 32px;
+}
+
+@media (min-width: 1025px) {
+  .bf-inds__cta { display: none; }
 }
 
 .bf-inds__head .bf-btn--quiet {

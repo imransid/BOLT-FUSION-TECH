@@ -124,7 +124,7 @@ export default function Home() {
           ),
         }}
       />
-      <SiteShell ground="graphite">
+      <SiteShell ground="graphite" headerCtaQuiet>
         {sectionOrder.map((id) =>
           isVisible(sectionVisibility, id) ? <Fragment key={id}>{renderSection(id, content)}</Fragment> : null,
         )}
