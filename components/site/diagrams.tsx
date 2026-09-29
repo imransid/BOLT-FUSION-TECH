@@ -252,7 +252,11 @@ function TillHub({ c }: { c: Capability }) {
    the machine's effect back on what the sensor sees. Drawn dashed, in steel:
    every connection is a dashed steel edge with a steel arrowhead, and none
    carries a flow line — no cyan anywhere, on any profile (2026-09-29). Where
-   the Signal runs it is sketched once in light steel, and never flows. */
+   the Signal runs it is sketched once in light steel, and never flows. It
+   carries no caption of its own: wherever it is drawn, its figcaption says
+   "Concept — not a shipped system" under it (the schema requires the caption
+   on a Lab diagram), and "concept: not a shipped system" inside the drawing
+   said it twice, in two styles, 58px apart (the design review, 2026-09-29). */
 function MachineLoop({ c }: { c: Capability }) {
   return (
     <Svg id="machine-loop" capability={c} flow={false}>
@@ -268,9 +272,6 @@ function MachineLoop({ c }: { c: Capability }) {
       <Wire id="machine-loop" d="M182 258H78V112" dashed flow={false} />
       <text x={90} y={190} className="dg-small" fontSize={14}>
         feedback
-      </text>
-      <text x={240} y={334} className="dg-small" textAnchor="middle" fontSize={14}>
-        concept: not a shipped system
       </text>
     </Svg>
   );

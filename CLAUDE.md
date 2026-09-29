@@ -513,7 +513,11 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   flow** (2026-09-29, the lead designer under the owner's honesty rule): its
   five connections are dashed steel edges with steel arrowheads, it has no
   `.dg-flow` and no flow arrowhead in its `<defs>` (`<Svg flow={false}>`), so
-  there is no cyan in its markup at all, on any profile. Labels are 15–17 units on a 480-unit drawing, legible at a
+  there is no cyan in its markup at all, on any profile. It carries no
+  caption inside the drawing (since 2026-09-29, fix pass B): its figcaption
+  says "Concept — not a shipped system" wherever it is drawn, and the
+  drawing's own "concept: not a shipped system" said it a second time, in a
+  second style, 58px above it (the design review). Labels are 15–17 units on a 480-unit drawing, legible at a
   phone's width at full size. **In the homepage's ledger (2026-09-28)** each is
   drawn at a compact size, measured: beside its row in a 440px column from
   1280px (the drawing 422px wide, labels 12.3–15.8px) and 420px at 1025–1279
