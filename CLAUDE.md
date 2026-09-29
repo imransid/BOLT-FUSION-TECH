@@ -827,7 +827,9 @@ has a pause control.
     after the reader's first key, press or scroll, so that input stands in for
     the entry, and one made before hydration — which no listener sees — is
     covered by giving up on the entry 3s after load: measured, a wheel 15ms
-    into the load and neither the scene nor the Signal ever started); then the scene's
+    into the load and neither the scene nor the Signal ever started — the
+    scene had no stand-ins until 2026-09-29, and now shares this wait,
+    `components/motion/lcp.ts`); then the scene's
     `data-scene-ready` or 3s (a desktop whose WebGL context is refused never
     gets the attribute; a page with no hero field skips it); then an idle
     callback (a 300ms timeout where `requestIdleCallback` is missing) — the
@@ -1355,7 +1357,16 @@ at the end, which means nobody has decided yet.
     client. While the conditions below hold, it waits for BOTH the first
     `largest-contentful-paint` entry (buffered) AND `load`, then an idle
     callback (a timeout where `requestIdleCallback` is missing), and only then
-    runs `import("./scene")`. The canvas goes inside `[data-hero-field]` with
+    runs `import("./scene")`. **The entry has two stand-ins** (2026-09-29,
+    `components/motion/lcp.ts`, the Signal loader's wait too): the browser
+    reports no LCP after the reader's first key, press, wheel turn, scroll or
+    touch, so that input stands in for it, and one made before hydration,
+    which no listener sees, is covered by giving up on the entry 3s after
+    load. Until then the scene waited for the entry alone, and a wheel, a key
+    or a click before the first paint (at 45-126ms, the first paint at
+    160-304ms) left it waiting for ever: 5 of 5 trials, no canvas after 25s,
+    while the Signal, which had the stand-ins, started (the engineering
+    review). Check 25 holds it (`/ @1440 input before first paint`). The canvas goes inside `[data-hero-field]` with
     the field's box (`position:absolute; inset:0`), `aria-hidden`, at opacity
     0. It fades in over 700ms once the first frame is drawn, and the field then
     carries `data-scene-ready`.
@@ -1580,7 +1591,12 @@ misuse fails — and every new rule has a misuse case in the gate's RUN 2.
   never requested at 390, 768 or 1024, as a phone, on a touch tablet, with
   Save-Data, under reduced motion or on another page; @react-three never. Every
   older hardening stays: every frame, workers, a frame that removes itself, the
-  first input, the 1024 run, both tablets, Save-Data, reduced motion.
+  first input, the 1024 run, both tablets, Save-Data, reduced motion. Since 2026-09-29 one more allowed profile, `/ @1440
+  input before first paint`: a wheel turn and a key every 20ms from the moment
+  the navigation commits, so the browser never reports an LCP entry — the
+  scene must still start. Its input must land before the first paint (no LCP
+  entry reported, up to three tries), or the path went untested and it fails
+  as unsure; the gate's `scene-lcp-only` case puts the entry-only wait back.
 - **28** — the hero contract is the owner's words: "Build what's next.", the
   support line "Software. Intelligence. Automation. Machines.", the body
   paragraph after it, and both calls to action, "Schedule a Call" to

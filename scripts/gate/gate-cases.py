@@ -326,6 +326,14 @@ def p_scene_static(s):
     s.rep("components/field/HeroScene.tsx", '      const mod = await import("./scene").catch(() => null);\n', "      const mod = vsSceneStatic;\n")
 
 
+def p_scene_lcp_only(s):
+    """25: the hero scene waits for an LCP entry alone again — the reader's
+    first input before the first paint, and no entry ever comes (the
+    engineering review, 2026-09-29: 5 of 5 trials, no scene)"""
+    s.rep("components/field/HeroScene.tsx", "      gate ??= Promise.all([lcpSeen(), loaded()]);\n",
+          '      gate ??= Promise.all([new Promise<void>((r) => new PerformanceObserver((l) => void (l.getEntries().length && r())).observe({ type: "largest-contentful-paint", buffered: true })), loaded()]); // THROWAWAY misuse\n')
+
+
 def p_scene_hides_poster(s):
     s.rep("components/field/HeroScene.tsx", '        canvas.style.opacity = "1";\n',
           '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster && window.innerWidth >= 1280) vsPoster.style.display = "none";\n')
@@ -569,6 +577,7 @@ CASES = [
     # new for the redesign (2026-09-16), one per new rule
     ["book-a-call", 'a "Book a call" label on the header button', 32, r"the header's primary button reads \"Book a call\" — it reads exactly \"Schedule a Call\"", p_book_a_call, {}],
     ["scene-coarse", "HeroScene allowed on a coarse pointer — a touch tablet gets WebGL (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): \d+ WebGL context request\(s\) — (?:[^;]*; )*webgl2 in the page", p_scene_coarse, {"needs": "scene"}],
+    ["scene-lcp-only", "the hero scene waits for an LCP entry alone — an input before the first paint, and it never starts (1440)", 25, r"^/ @1440 input before first paint: no WebGL context was created", p_scene_lcp_only, {}],
     ["scene-static", "the scene chunk imported statically — three.js in the initial JavaScript", 29, r"the scene chunk .* is requested at \d+ms, before the load event ended", p_scene_static, {"needs": "scene"}],
     ["scene-static-390", "the scene chunk imported statically — three.js requested at 390", 25, r"^/ @390\b[^:]*: requests .*a three\.js chunk", None, {"from": "scene-static", "needs": "scene"}],
     ["scene-hides-poster", "the poster display:none once the scene is ready (1440)", 28, r"@1440: after the settle the poster is not rendered \(display:none", p_scene_hides_poster, {"needs": "scene"}],

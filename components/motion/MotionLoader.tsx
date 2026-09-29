@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { loaded, lcpSeen } from "./lcp";
+
 /**
  * The Signal motion system's loader (owner, 2026-09-28; CLAUDE.md "Motion, as
  * built"). It renders NOTHING, and it is the ONE module that imports gsap —
@@ -22,7 +24,8 @@ import { useEffect } from "react";
  *      gsap chunk requested before loadEventEnd). The browser reports no LCP
  *      after the reader's first input, so that input stands in for the entry,
  *      and one made before hydration, which nothing here can see, is covered
- *      by giving up on the entry 3s after load;
+ *      by giving up on the entry 3s after load (./lcp.ts, the hero scene's
+ *      wait too);
  *   2. the hero scene's first frame (`data-scene-ready`) or 3s, whichever comes
  *      first — a desktop whose WebGL context is refused never gets the
  *      attribute; a page with no hero field skips the wait;
@@ -43,9 +46,6 @@ const FINE = "(pointer: fine)";
 const CALM = "(prefers-reduced-motion: no-preference)";
 const GATE = `${WIDE} and ${FINE} and ${CALM}`;
 const SCENE_WAIT_MS = 3000;
-/* no LCP entry this long after load means none is coming: an input before
-   hydration (a wheel, a key) ended LCP before any listener here could see it */
-const LCP_WAIT_MS = 3000;
 const IDLE_TIMEOUT_MS = 3000;
 /* what the engine animates; nothing in the hero ever does */
 const HOSTS = "[data-bf-flow], [data-bf-trace]";
@@ -59,39 +59,6 @@ const yieldTask = (): Promise<void> => {
   const s = (globalThis as { scheduler?: { yield?: () => Promise<void> } }).scheduler;
   return s?.yield ? s.yield() : sleep(0);
 };
-
-/* the reader's inputs after which the browser reports no more LCP entries */
-const INPUTS = ["keydown", "pointerdown", "wheel", "scroll", "touchstart"] as const;
-
-/** The first largest-contentful-paint entry, buffered (the scene's rule) — or
- *  the reader's first input: the browser stops reporting LCP at the first key,
- *  press or scroll, so an input before the first paint means no entry will
- *  ever come, and waiting for one would never load the Signal (measured: a
- *  wheel 15ms into the load, and neither the scene nor the Signal ever ran). */
-function firstLcp(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof PerformanceObserver === "undefined" || !PerformanceObserver.supportedEntryTypes?.includes("largest-contentful-paint")) return resolve();
-    /* a background tab reports no LCP: the first time it is shown stands in */
-    let hiddenEarly = document.visibilityState === "hidden";
-    const done = () => {
-      po.disconnect();
-      document.removeEventListener("visibilitychange", onVis);
-      for (const t of INPUTS) window.removeEventListener(t, done, true);
-      resolve();
-    };
-    const onVis = () => {
-      if (document.visibilityState === "hidden") hiddenEarly = true;
-      else if (hiddenEarly) done();
-    };
-    const po = new PerformanceObserver((l) => void (l.getEntries().length && done()));
-    po.observe({ type: "largest-contentful-paint", buffered: true });
-    document.addEventListener("visibilitychange", onVis);
-    for (const t of INPUTS) window.addEventListener(t, done, { capture: true, passive: true });
-  });
-}
-
-const loaded = () =>
-  new Promise<void>((r) => (document.readyState === "complete" ? r() : window.addEventListener("load", () => r(), { once: true })));
 
 /** The hero scene's first frame, or `ms`; no field on the page, no wait. */
 function sceneOr(ms: number): Promise<void> {
@@ -136,7 +103,7 @@ export default function MotionLoader() {
         offScroll = () => window.removeEventListener("scroll", on);
       });
       try {
-        await Promise.all([Promise.race([firstLcp(), loaded().then(() => sleep(LCP_WAIT_MS))]), loaded()]);
+        await Promise.all([lcpSeen(), loaded()]);
         await sleep(0); /* out of the load event: loadEventEnd is set before this runs */
         await Promise.race([sceneOr(SCENE_WAIT_MS), firstScroll]);
         await Promise.race([idle(), firstScroll]);

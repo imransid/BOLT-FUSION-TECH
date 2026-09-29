@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { loaded, lcpSeen } from "@/components/motion/lcp";
+
 import type { SceneHandle } from "./scene";
 
 /**
@@ -21,8 +23,12 @@ import type { SceneHandle } from "./scene";
  *
  * When they hold, it waits for BOTH the first `largest-contentful-paint` entry
  * (a buffered PerformanceObserver) AND the window's `load` event, then for an
- * idle callback (with a timeout fallback where requestIdleCallback is missing),
- * and only then imports `./scene`, a separate chunk that is never part of the
+ * idle callback (with a timeout fallback where requestIdleCallback is missing).
+ * The browser reports no LCP after the reader's first input, so that input,
+ * or 3s after load, stands in for the entry (components/motion/lcp.ts, the
+ * Signal's wait too): with the entry alone, a wheel, a key or a click before
+ * the first paint left the scene waiting for ever (2026-09-29). Then it
+ * imports `./scene`, a separate chunk that is never part of the
  * initial JavaScript. The canvas goes inside the page's `[data-hero-field]`,
  * absolutely positioned over the field's box, `aria-hidden`, at opacity 0. It
  * fades in once the scene's first frame is drawn, and the field gets
@@ -46,41 +52,6 @@ const FADE_MS = 700;
 
 type Connection = EventTarget & { saveData?: boolean };
 const connection = () => (navigator as Navigator & { connection?: Connection }).connection;
-
-/** The first largest-contentful-paint entry, buffered. */
-function firstLcp(): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof PerformanceObserver === "undefined" || !PerformanceObserver.supportedEntryTypes?.includes("largest-contentful-paint")) {
-      resolve(); // no LCP in this browser: the load event alone gates
-      return;
-    }
-    /* A tab loaded in the background reports no LCP at all. If the page was
-       hidden before its first entry, the first time it is shown stands in. */
-    let hiddenEarly = document.visibilityState === "hidden";
-    const done = () => {
-      po.disconnect();
-      document.removeEventListener("visibilitychange", onVisibility);
-      resolve();
-    };
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") hiddenEarly = true;
-      else if (hiddenEarly) done();
-    };
-    const po = new PerformanceObserver((list) => {
-      if (list.getEntries().length) done();
-    });
-    po.observe({ type: "largest-contentful-paint", buffered: true });
-    document.addEventListener("visibilitychange", onVisibility);
-  });
-}
-
-/** The window's load event (already over if the document is complete). */
-function loaded(): Promise<void> {
-  return new Promise((resolve) => {
-    if (document.readyState === "complete") resolve();
-    else window.addEventListener("load", () => resolve(), { once: true });
-  });
-}
 
 function idle(): Promise<void> {
   return new Promise((resolve) => {
@@ -119,7 +90,7 @@ export default function HeroScene() {
       if (current) return;
       const m: Mount = { dead: false };
       current = m;
-      gate ??= Promise.all([firstLcp(), loaded()]);
+      gate ??= Promise.all([lcpSeen(), loaded()]);
       await gate;
       await idle();
       if (m.dead) return;

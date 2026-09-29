@@ -94,7 +94,16 @@ const GL_EXTRA = [
   { width: 1180, height: 820, touch: true, label: "/ @1180x820 tablet (touch, coarse pointer)" },
   { width: 1366, height: 1024, touch: true, label: "/ @1366x1024 tablet (touch, coarse pointer)" },
   { width: 1440, saveData: true, label: "/ @1440 Save-Data" },
+  /* 2026-09-29 (the engineering review): the reader's first input made
+     BEFORE the first paint — a wheel and keys from the moment the navigation
+     commits. The browser then reports no LCP entry at all, and a scene that
+     waited for one never started (5 of 5 trials). The allowed profile, so
+     the positive case holds it: the scene must still start. */
+  { width: 1440, early: true, label: "/ @1440 input before first paint" },
 ];
+/* the early-input profile's tries: the input must land before the first
+   paint (no LCP entry reported), or the path went untested */
+const EARLY_TRIES = 3;
 /* SPEC §7 and PLAN.md §5.2: the whole scene chunk, three.js included. The
    15KB raw-WebGL2 renderer budget it replaces was reversed by the owner on
    2026-09-16 (CLAUDE.md, "Decided 2026-09-16"). Measured by gzipping each file
@@ -467,6 +476,15 @@ function workerGlHook() {
    on every same-site script on the wire — the page's own scripts ignore it */
 async function installGlHooks(ctx, prof = {}) {
   await ctx.addInitScript(glHook, workerGlHook.toString());
+  if (prof.early)
+    await ctx.addInitScript(() => {
+      window.__vsEarly = { lcp: 0, fcp: null, input: null };
+      new PerformanceObserver((l) => (window.__vsEarly.lcp += l.getEntries().length)).observe({ type: "largest-contentful-paint", buffered: true });
+      new PerformanceObserver((l) => {
+        for (const e of l.getEntries()) if (e.name === "first-contentful-paint") window.__vsEarly.fcp = Math.round(e.startTime);
+      }).observe({ type: "paint", buffered: true });
+      for (const t of ["keydown", "wheel"]) addEventListener(t, () => (window.__vsEarly.input ??= Math.round(performance.now())), { capture: true });
+    });
   if (prof.saveData)
     await ctx.addInitScript(() => {
       try {
@@ -592,7 +610,18 @@ async function visitGl(browser, route, prof) {
   await installGlHooks(ctx, prof);
   const page = await ctx.newPage();
   glTrace(prof.label, "goto");
-  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  if (prof.early) {
+    /* the input from the moment the navigation commits, for 400ms: a wheel
+       turn and a key every 20ms, before anything has painted */
+    await page.goto(BASE + route, { waitUntil: "commit", timeout: 120000 });
+    const t0 = Date.now();
+    while (Date.now() - t0 < 400) {
+      await page.mouse.wheel(0, 40).catch(() => {});
+      await page.keyboard.press("ArrowDown").catch(() => {});
+      await page.waitForTimeout(20);
+    }
+    await page.waitForLoadState("load", { timeout: 120000 });
+  } else await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(2500);
   glTrace(prof.label, "first input");
@@ -614,6 +643,7 @@ async function visitGl(browser, route, prof) {
     await page.waitForFunction(() => document.querySelector("[data-hero-field][data-scene-ready]"), null, { timeout: 12000 }).catch(() => {});
   glTrace(prof.label, "report");
   const r = await bounded(page.evaluate(glReport), 20000, { gl: null, scripts: [], error: "the page did not answer for 20s" });
+  if (prof.early) r.earlyPaint = await bounded(page.evaluate(() => window.__vsEarly || null), 5000, null);
   glTrace(prof.label, "frames");
   r.frames = await readFrameGl(page);
   r.input = input;
@@ -3279,7 +3309,11 @@ if (want(25)) {
   const glBrowser = await chromium.launch({ args: GL_ARGS });
   for (const [route, prof] of plan) {
     process.stderr.write(`  webgl ${prof.label}\n`);
-    glRuns[prof.label] = { route, ...prof, ...(await visitGl(glBrowser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+    /* the early profile retries until its input lands before the first paint */
+    for (let tries = 1; ; tries++) {
+      glRuns[prof.label] = { route, ...prof, tries, ...(await visitGl(glBrowser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+      if (!prof.early || !glRuns[prof.label].earlyPaint?.lcp || tries >= EARLY_TRIES) break;
+    }
   }
   await glBrowser.close();
 }
@@ -4510,6 +4544,14 @@ await (async () => {
     if (run.touch && run.pointer !== "coarse") F.push(`${run.label}: the tablet profile reports a ${run.pointer} pointer, not a coarse one — unsure is a failure`);
     if (run.saveData && !run.saveDataSeen) F.push(`${run.label}: the page does not see Save-Data (navigator.connection.saveData is false) — unsure is a failure`);
     if ("input" in run && !run.input) F.push(`${run.label}: no spot free of controls for the first pointer input — the input-triggered path went untested; unsure is a failure`);
+    /* the early profile proves something only if its input came before the
+       first paint, so that the browser never reported an LCP entry */
+    if (run.early) {
+      const e = run.earlyPaint;
+      if (!e) F.push(`${run.label}: the page did not report its paint timings — unsure is a failure`);
+      else if (e.lcp || e.input === null) F.push(`${run.label}: ${e.input === null ? "no input reached the page" : `the input (at ${e.input}ms) came after the first paint (${e.fcp}ms; ${e.lcp} LCP entr${e.lcp === 1 ? "y" : "ies"})`} in ${run.tries} tr${run.tries === 1 ? "y" : "ies"} — the path where no LCP entry ever comes went untested; unsure is a failure`);
+      else I.push(`${run.label}: the first input at ${e.input}ms, the first paint at ${e.fcp ?? "?"}ms, no LCP entry (${run.tries} tr${run.tries === 1 ? "y" : "ies"})${run.sceneReady ? " — the scene still started" : ""}`);
+    }
     /* the desktop profile must BE the allowed one, or the positive case is never tested */
     if (run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer !== "fine")
       F.push(`${run.label}: the desktop profile reports a ${run.pointer} pointer, not a fine one — the scene's own profile went untested; unsure is a failure`);
@@ -4651,7 +4693,7 @@ await (async () => {
   results.push({
     id: 25,
     title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load, and free of gsap; gsap (the Signal) only in that same profile, on any page, and on / it starts; every preloaded font is one its page renders",
-    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440; a scene chunk over 180KB, or requested before the load event; the scene importing gsap; gsap on a phone, a touch tablet or at 1024; a Signal that never starts; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
+    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440, or after the reader's first input came before the first paint (no LCP entry ever comes); a scene chunk over 180KB, or requested before the load event; the scene importing gsap; gsap on a phone, a touch tablet or at 1024; a Signal that never starts; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: I,
