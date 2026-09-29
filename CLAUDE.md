@@ -979,7 +979,8 @@ has a pause control.
     poster did not change. Paused, nothing answers: the loop has stopped.
   - **It opens as the hero scrolls away** (2026-09-28): an exploded view, the
     engineering drawing's own gesture for "how it is put together". Over the
-    first 55% of the hero's height of scroll (about 390px at 1440), plate i
+    first 36% of the field's height of scroll — 202px, the field being
+    560px tall at every desktop width — plate i
     lifts by (i + 1) x 0.13, the top die riding on the plate it is inlaid
     into; the inner tier rises with the plate its links leave from (plate 4,
     by 0.65), so no link detaches; the plinth, and the outer tier's links
@@ -989,8 +990,16 @@ has a pause control.
     2026-09-29, which flattened the swaying tiers into each other: the AI and
     the cloud touched). Scrolling back reassembles it. It follows the scroll damped (6 per second, about half a second
     behind), from the scene's own passive scroll listener, which reads only
-    `scrollY` — the hero's height is measured at mount and by the
-    ResizeObserver, never per frame or per scroll. No GSAP, no pin, no scroll
+    `scrollY` — the field's height is measured at mount and by the
+    ResizeObserver, never per frame or per scroll. **The span is the
+    field's, not the hero's** (the merge, 2026-09-29): it was 55% of the
+    hero's height, so it moved with a layout the scene does not own — the IA
+    stream's shorter hero floor took it from 393 to 375px — and at 375px the
+    stack was never seen fully open: at 1440x900 the field's top had scrolled
+    262px out of the viewport, and from three quarters of the opening on,
+    the top plates, which open the most, were above the screen's edge. At
+    202px the opened stack is whole on screen, its top plate about 80px under
+    the viewport's top (`.probe/merge/explode-view.mjs`). No GSAP, no pin, no scroll
     hijack: the page scrolls exactly as it would without it. It is identity
     at scroll 0, and like the charge it starts at 0 at mount and waits out
     the fade, so a page reloaded mid-scroll draws the poster first and then
@@ -1929,7 +1938,10 @@ three bump or a new import pushes it past 180KB, import from
 **Re-measured 2026-09-29, with the swaying tiers: 144,153 bytes, 140.8KB**
 gzipped at level 6 as served, 575KB raw, requested at 2.4s against a 245ms
 load event: 250 bytes less than the orbiting v2, which carried the rise
-shader for the inner tier's links and ring; 39.2KB of the 180KB left.
+shader for the inner tier's links and ring; 39.2KB of the 180KB left. At
+the merge (2026-09-29) the explode's span is read from the canvas instead of
+the hero: 25 bytes less (the chunk file at `gzip -6`: 143,438 → 143,413;
+574,670 → 574,608 raw).
 
 **Re-measured 2026-09-28, with the scene's v2** (the studio, the comets, the
 Lab robot, the fit-width camera and the watchdog's fades): **143,913 bytes,
@@ -2193,8 +2205,9 @@ as a solid, lit, connected peer with data flowing to it. So:
 3. **The exploded view** — the first scroll opens the core into an exploded
    engineering drawing, plate by plate, and scrolling back reassembles it:
    the structure of "one engineering system" shown the way engineers draw
-   it (*Motion, as built*). It lives in the first 390px or so of scroll,
-   while the hero leaves; the hero is NOT pinned to lengthen it — for a
+   it (*Motion, as built*). It lives in the first 202px of scroll — 36%
+   of the field's height, while the whole stack is still on screen (it was
+   55% of the hero's, about 390px, until the merge) — as the hero leaves; the hero is NOT pinned to lengthen it — for a
    buyer, delaying the proof below costs more than the effect earns. Its
    own passive scroll listener, no GSAP; identity at scroll 0, so no poster
    change; frozen by Pause motion.

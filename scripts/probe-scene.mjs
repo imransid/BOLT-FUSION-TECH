@@ -681,7 +681,8 @@ try {
       await advance(moved, sec);
       return diff(await grab(still), await grab(moved)).bigPct;
     };
-    const span = await moved.page.evaluate(() => document.querySelector("#hero").offsetHeight * 0.55);
+    /* the span is EXPLODE_SPAN (components/field/scene.ts) of the canvas's height — keep the two in step */
+    const span = await moved.page.evaluate(() => document.querySelector("[data-hero-field] canvas").clientHeight * 0.36);
     const opening = [];
     for (const f of [0, 0.25, 0.5, 0.75, 1]) {
       await moved.page.evaluate((y) => window.scrollTo(0, y), Math.round(span * f));
