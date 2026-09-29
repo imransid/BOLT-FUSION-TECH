@@ -674,6 +674,13 @@ def p_scene_gap(s):
     s.rep("components/field/scene.ts", "const EXPLODE_GAP = 0.13;", "const EXPLODE_GAP = 0.3;")
 
 
+def p_explode_span(s):
+    """view: the explode's span back to 36% of the field (202px) — the stack
+    finishes opening with its top modules under the pinned header and off
+    the screen (the design review, 2026-09-29)"""
+    s.rep("components/field/scene.ts", "const EXPLODE_SPAN = 0.16;", "const EXPLODE_SPAN = 0.36;")
+
+
 def p_scene_nohold(s):
     """reload: the exploded view starts where the scroll is at mount, so a
     page loaded mid-scroll draws an opened stack as its first frame"""
@@ -744,6 +751,7 @@ def p_poster_stale(s):
 # that the suite cannot see (CLAUDE.md, "The hero field").
 PROBE_CASES = [
     ["scene-gap", "the exploded view opened 0.3 a plate — the stack reaches the frame's edge", "probe:explode", r"^@660 fully open, [^:]*: the edge band is \d+ off the ground", p_scene_gap, {}],
+    ["explode-span", "the exploded view opens over 202px again — it finishes with its top under the pinned header", "probe:view", r"^the opened stack goes under the pinned header \(\d+px\) at scroll \d+px while it is only \d+% open — it opens fully only at scroll (?:1[6-9]\d|2\d\d)px", p_explode_span, {}],
     ["scene-nohold", "the exploded view starts from the scroll at mount — a mid-scroll reload opens before the fade", "probe:reload", r"^loaded mid-scroll, the first frame is not the poster", p_scene_nohold, {}],
     ["scene-nopause", "Pause motion ignored by the scene — the stack follows the scroll while paused", "probe:explode", r"^paused, the stack still moved with the scroll \([1-9]\d* draw calls", p_scene_nopause, {}],
     ["scene-nopause-charge", "Pause motion ignored by the scene — the charge answers a hover while paused", "probe:charge", r"^paused, the scene still answered the hover \([1-9]\d* draw calls", None, {"from": "scene-nopause"}],

@@ -49,8 +49,9 @@
  *  - A lost context stops the loop and calls `onLost`; nothing throws.
  *
  * IT OPENS AS THE HERO SCROLLS AWAY: an exploded view, the engineering
- * drawing's own gesture. Over the first 36% of the field's height of scroll
- * (202px: the field is 560px tall at every desktop width) each plate
+ * drawing's own gesture. Over the first 16% of the field's height of scroll
+ * (90px: the field is 560px tall at every desktop width, and the header stays
+ * pinned over the top 73px for the first 200px) each plate
  * lifts by its index x 0.13, the inner tier rises with the plate its links
  * leave from, the seams brighten in the opened gaps, and the camera lifts
  * its target and steps back a little to take it in; scrolling back
@@ -162,9 +163,9 @@ const HOLD_S = 0.75; // scene seconds after the first frame before the visitor's
 
 /* ── The exploded view: the hero scrolled away ── */
 const EXPLODE_GAP = 0.13; // world units each plate lifts, per index, when fully open (0.24 put the mobile in the edge band)
-const EXPLODE_SPAN = 0.36; // of the FIELD's height (560px on a desktop): the scroll over which it opens — 202px, so the opened stack is still wholly in view (at 0.55 of the hero, 375px, its top had left the viewport); never the hero's height, which is the page's layout and moved with it
+const EXPLODE_SPAN = 0.16; // of the FIELD's height (560px on a desktop): the scroll over which it opens — 90px, so it is fully open while the whole drawing is on screen below the header, which stays pinned for the first 200px (at 0.36, 202px, its top modules were under the header and off the screen as it finished opening: the design review, 2026-09-29); never the hero's height, which is the page's layout and moved with it
 const EXPLODE_EASE = 6; // per second: damped, about half a second behind the scroll
-const EXPLODE_TARGET = 0.25; // the camera's target rises this far with it (it does not tilt: lowering it 0.1 rad flattened the tiers into each other)
+const EXPLODE_TARGET = 0.53; // the camera's target rises this far with it, so the opened stack sits lower in the frame — its top 58px from the frame's top at 660 at worst, not 36, its bottom 44px (0.25 until 2026-09-29); it does not tilt: lowering it 0.1 rad flattened the tiers into each other
 const EXPLODE_BACK = 0.05; // and it steps back by this share of its distance: the opened stack is taller
 const EXPLODE_SEAM = 0.3; // the seams' mix toward pale blue, fully open
 const INNER_PLATE = 4; // the plate the inner tier's links leave from (its centre is INNER.from.y): the tier rises with it

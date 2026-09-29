@@ -1127,14 +1127,15 @@ has a pause control.
     poster did not change. Paused, nothing answers: the loop has stopped.
   - **It opens as the hero scrolls away** (2026-09-28): an exploded view, the
     engineering drawing's own gesture for "how it is put together". Over the
-    first 36% of the field's height of scroll — 202px, the field being
-    560px tall at every desktop width — plate i
+    first 16% of the field's height of scroll — 90px, the field being
+    560px tall at every desktop width (36%, 202px, until 2026-09-29) — plate i
     lifts by (i + 1) x 0.13, the top die riding on the plate it is inlaid
     into; the inner tier rises with the plate its links leave from (plate 4,
     by 0.65), so no link detaches; the plinth, and the outer tier's links
     that leave from it, never move. The seams mix 30% toward pale blue in the
-    opened gaps, and the camera lifts its target 0.25 and steps back 5% to
-    take in the taller stack; it no longer lowers (it did by 0.1 rad until
+    opened gaps, and the camera lifts its target 0.53 (0.25 until
+    2026-09-29), so the opened stack sits lower in the frame, and steps back
+    5% to take in the taller stack; it no longer lowers (it did by 0.1 rad until
     2026-09-29, which flattened the swaying tiers into each other: the AI and
     the cloud touched). Scrolling back reassembles it. It follows the scroll damped (6 per second, about half a second
     behind), from the scene's own passive scroll listener, which reads only
@@ -1146,8 +1147,22 @@ has a pause control.
     stack was never seen fully open: at 1440x900 the field's top had scrolled
     262px out of the viewport, and from three quarters of the opening on,
     the top plates, which open the most, were above the screen's edge. At
-    202px the opened stack is whole on screen, its top plate about 80px under
-    the viewport's top (`.probe/merge/explode-view.mjs`). No GSAP, no pin, no scroll
+    202px the core's top plate was about 80px under the viewport's top
+    (`.probe/merge/explode-view.mjs`) — but the inner tier sits above it, and
+    **the header stays pinned over the top 73px for the first 200px of
+    scroll**: as the stack finished opening, the cloud ring and the phone
+    were under the header and off the screen and the AI wireframe half cut
+    (the design review, 2026-09-29; on Metal at 1440x900 the drawing's top
+    was at 22px at a scroll of 140, under the 73px header, and above the
+    screen at 202). **So it opens over 90px, and sits lower as it opens**
+    (2026-09-29): fully open at a scroll of 90, the drawing's top is at 88-90px
+    in the viewport, below the header's 73, at 1025x768, 1280x720, 1366x768,
+    1440x900 and 1920x1080 alike (the field's top is at 113px at every
+    desktop width); scrolled on, it leaves as the page does. The frame's
+    margins fully open are 114, 107, 58 and 44px at 660 and 81, 75, 123 and
+    112 at 467 (left, right, top, bottom; the band the ground), and the
+    layout holds (robot to core 16.8px, AI to cloud 17.2px fully open).
+    `probe-scene` (view) holds it on the page as laid out. No GSAP, no pin, no scroll
     hijack: the page scrolls exactly as it would without it. It is identity
     at scroll 0, and like the charge it starts at 0 at mount and waits out
     the fade, so a page reloaded mid-scroll draws the poster first and then
@@ -1417,7 +1432,11 @@ at the end, which means nobody has decided yet.
     buffer and draws at t = 12s exactly the 60Hz frame (0.00% of pixels off),
     and, its control, an uneven cadence with no clock steps the buffer down.
     The clock's results are stood in for by the probe (a GPU of known speed,
-    whatever the machine's is). Testing each frame
+    whatever the machine's is): 1ms a frame on every page unless a check
+    says otherwise, since SwiftShader's real times on the few frames a
+    fast-forward draws could trip the watchdog at random, and a check not
+    about it would then compare a degraded scene with a whole one (a 0.34%
+    "did not reassemble" in the explode check, found while this was built). Testing each frame
     alone reset the count on every fast frame, and a slow device's uneven
     frames kept resetting it, so it never fired (probe 6e, 2026-09-16), which
     is why it reads running averages. Paused offscreen (IntersectionObserver) and
@@ -1499,8 +1518,10 @@ at the end, which means nobody has decided yet.
     68, 63, 120 and 126; the 16px band is the ground in every frame (within 0
     of #07090D). Fully exploded (the hero scrolled past the span, t = 3–103s
     every 10s and the four parallax extremes) the stack is taller and the
-    margins move to 111, 103, 36 and 61 at 660, and 79, 73, 107 and 123 at
-    467 — the band still the ground in every frame. Below 1025px the drifting
+    margins move to 114, 107, 58 and 44 at 660, and 81, 75, 123 and 112 at
+    467 — the band still the ground in every frame (111, 103, 36 and 61 at
+    660 until 2026-09-29, when the opened stack was lowered in the frame:
+    *Motion, as built*). Below 1025px the drifting
     poster keeps the band too (*Motion, as built*, the poster). The poster script
     refuses a capture whose 16px edge band is not the ground, and
     `scripts/probe-scene.mjs` fails any frame whose band is not. It is done in the scene itself:
@@ -2093,6 +2114,16 @@ rule's own finding — and each has its case in `scripts/gate/gate-cases.py`.
 adversarial reviews (design, honesty, engineering) of `redesign/motion-hire`.
 Each rule is proven both ways, and each has its case in
 `scripts/gate/gate-cases.py`.
+- **probe-scene: `watchdog` changed, `cadence` and `view` new.** `watchdog`'s
+  slow frames now cost the scene 30ms of its own work each (the rAF interval
+  alone no longer degrades anything), and a GPU clocked at 30ms a frame must
+  step the buffer down at a smooth 60Hz; `cadence` holds a steady 30Hz with
+  cheap work to the 60Hz frame, with and without a GPU clock, with an uneven
+  cadence as its control; `view` holds the exploded view fully open before
+  the drawing goes under the pinned header (*The hero field*; *Motion, as
+  built*). PROBE_CASES: `scene-gpu-blind`, `scene-cadence` and
+  `scene-cadence-safari`, `explode-span`. The probe's pages report a 1ms GPU
+  unless a check says otherwise.
 - **25, extended — an input before the first paint.** The profile `/ @1440
   input before first paint` (above, under 25): the scene must start although
   the browser reports no LCP entry. RUN 2: `scene-lcp-only`.
@@ -2147,7 +2178,10 @@ poster the browser draws under it, at 660, 536 and 467, DPR 1 and 2),
 before mount still starts on the poster), `explode` (the band fully open;
 identity at scroll 0, opening with the scroll, frozen by Pause motion,
 reassembled at the top), `reload` (a page loaded mid-scroll starts on the
-poster, then opens), `watchdog` (each step a fade, on frames that cost the
+poster, then opens), `view` (2026-09-29: on the page as laid out, with the
+header pinned over the first 200px of scroll, the stack is fully open before
+any of the drawing goes under the header — read 10px of scroll at a time, its
+opening from the scene's own objects), `watchdog` (each step a fade, on frames that cost the
 scene 30ms of work; and a GPU clocked slow steps it down at a smooth cadence)
 and `cadence` (2026-09-29: a steady 30Hz cadence with cheap work degrades
 nothing, with the GPU clocked and with no clock, and draws the 60Hz frame;

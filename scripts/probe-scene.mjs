@@ -60,6 +60,15 @@
  *               the same clock: identity at scroll 0, opening further at each
  *               quarter of the span, frozen while paused (no frame runs), and
  *               assembled again once back at the top.
+ *   view        the page as laid out (1440x1000; the header pinned while
+ *               scrollY <= 200): scrolled 10px at a time and held, the stack
+ *               must be fully open (its highest plate's lift, read from the
+ *               scene's own objects, at 98% of its lift far past the span)
+ *               before any of the drawing goes under the pinned header or
+ *               above the screen — it opens while the reader can see all of
+ *               it (the design review, 2026-09-29: at the 202px span its top
+ *               modules were under the header and off the screen as it
+ *               finished opening).
  *   reload      a page reloaded at scrollY 300: its first frame is still the
  *               poster, and 2.5s on it has opened (against a page loaded at
  *               the top, on the same clock).
@@ -257,9 +266,16 @@ const browser = await chromium.launch({
 });
 
 /** A fresh page with the scene drawn at t = 0 and its clock ours; `before(page)` runs after load; `init`'s keys are set on window before any page script (the watchdog's stand-ins). */
-async function open({ dpr = 1, width = 660, left = 0, css = "", before, init } = {}) {
+async function open({ dpr = 1, width = 660, left = 0, css = "", before, init, pinned = true } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: dpr, reducedMotion: "no-preference" });
-  if (init) await ctx.addInitScript((o) => Object.assign(window, o), init);
+  /* The GPU's clock reports a fast GPU (1ms a frame) unless a check says
+     otherwise. The scene's watchdog reads it, and SwiftShader's real times
+     (14-25ms a frame, and more under load) on the few frames the fast-forward
+     draws would otherwise trip it at random: one late reading is all a batch
+     of hundreds of synthetic frames sees, and a check that is not about the
+     watchdog would compare a degraded scene with a whole one (a 0.34% "did not
+     reassemble" in the explode check, 2026-09-29). */
+  await ctx.addInitScript((o) => Object.assign(window, o), { __bfGpuMs: 1, ...init });
   await ctx.addInitScript(clockHook);
   await ctx.addInitScript(captureHook);
   await ctx.addInitScript((css) => {
@@ -269,7 +285,7 @@ async function open({ dpr = 1, width = 660, left = 0, css = "", before, init } =
       s.textContent = css;
       document.head.append(s);
     });
-  }, fieldCss(width, left) + css);
+  }, (pinned ? fieldCss(width, left) : "[data-hero-field] canvas{transition:none!important}") + css);
   const page = await ctx.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
@@ -726,7 +742,7 @@ try {
       return diff(await grab(still), await grab(moved)).bigPct;
     };
     /* the span is EXPLODE_SPAN (components/field/scene.ts) of the canvas's height — keep the two in step */
-    const span = await moved.page.evaluate(() => document.querySelector("[data-hero-field] canvas").clientHeight * 0.36);
+    const span = await moved.page.evaluate(() => document.querySelector("[data-hero-field] canvas").clientHeight * 0.16);
     const opening = [];
     for (const f of [0, 0.25, 0.5, 0.75, 1]) {
       await moved.page.evaluate((y) => window.scrollTo(0, y), Math.round(span * f));
@@ -791,6 +807,66 @@ try {
       if (d1.bigPct < 5) fail(`2.5s after a mid-scroll load the stack has not opened (${d1.line} against an unscrolled page)`);
       await top.ctx.close();
     }
+    await p.ctx.close();
+  }
+
+  /* ── view: the exploded view opens fully while the whole drawing is on screen ── */
+  if (want("view")) {
+    begin("view", "view — on the page as laid out, the stack opens fully before any of it goes under the pinned header");
+    const p = await open({ width: 660, pinned: false });
+    /* the stack's opening, from the scene's own objects: its highest plate's height */
+    const lift = () =>
+      p.page.evaluate(() => {
+        const scene = (window.__bfScenes || []).find((x) => x.getObjectByName && x.getObjectByName("core"));
+        const core = scene?.getObjectByName("core");
+        return core ? Math.max(...core.children.map((c) => c.position.y)) : null;
+      });
+    const box = await p.page.evaluate(() => {
+      const f = document.querySelector("[data-hero-field]").getBoundingClientRect();
+      return { x: f.left, w: f.width, top: f.top + scrollY, vh: innerHeight };
+    });
+    const y0 = await lift();
+    const rows = [];
+    for (let sy = 0; sy <= 260; sy += 10) {
+      await p.page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), sy);
+      await p.page.waitForTimeout(80); // the scroll event lands (the scene reads scrollY in its listener)
+      await advance(p, 2); // the damped opening: e^-12, there
+      /* the header hidden for the read, so what is under it can be seen */
+      const hdr = await p.page.evaluate(() => {
+        const h = document.getElementById("masthead");
+        const b = Math.max(0, h.getBoundingClientRect().bottom);
+        h.style.visibility = "hidden";
+        return Math.round(b);
+      });
+      await p.page.waitForTimeout(60);
+      const png = await p.page.screenshot({ type: "png", clip: { x: box.x, y: 0, width: box.w, height: box.vh } });
+      await p.page.evaluate(() => (document.getElementById("masthead").style.visibility = ""));
+      const { data, info: px } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const k = px.width / box.w;
+      const fieldTop = box.top - sy;
+      let top = -1;
+      for (let y = Math.max(0, Math.round(fieldTop * k)); y < px.height && top < 0; y++)
+        for (let x = 0; x < px.width; x++) {
+          const i = (y * px.width + x) * 3;
+          if (Math.abs(data[i] - GROUND[0]) + Math.abs(data[i + 1] - GROUND[1]) + Math.abs(data[i + 2] - GROUND[2]) > 12) {
+            top = Math.round(y / k);
+            break;
+          }
+        }
+      rows.push({ sy, lift: await lift(), top, hdr, fieldTop });
+    }
+    const y1 = rows.at(-1).lift;
+    const pct = (r) => (y1 !== null && y0 !== null && y1 - y0 > 1e-6 ? (r.lift - y0) / (y1 - y0) : 0);
+    info(`scrolled 0-260px, held: ${rows.map((r) => `${r.sy}: ${Math.round(100 * pct(r))}% open, top ${r.top}${r.hdr ? ` (header ${r.hdr})` : ""}`).join("; ")}`);
+    const full = rows.find((r) => pct(r) >= 0.98);
+    const cut = rows.find((r) => r.top >= 0 && r.top < r.hdr);
+    if (y0 === null || y1 === null || !(y1 - y0 > 1e-6)) fail(`the stack's opening could not be read from the scene (lift ${y0} at the top, ${y1} past the span) — unsure is a failure`);
+    else if (!full) fail("the stack never opened fully by scroll 260px — unsure is a failure");
+    else {
+      info(`fully open at scroll ${full.sy}px: the drawing's top at ${full.top}px, the pinned header's bottom at ${full.hdr}px`);
+      if (cut && pct(cut) < 0.98) fail(`the opened stack goes under the pinned header (${cut.hdr}px) at scroll ${cut.sy}px while it is only ${Math.round(100 * pct(cut))}% open — it opens fully only at scroll ${full.sy}px, with its top cut off; it must open fully while the whole drawing is below the header`);
+    }
+    if (p.errors.length) fail(`page errors — ${p.errors.slice(0, 3).join(" | ")}`);
     await p.ctx.close();
   }
 
