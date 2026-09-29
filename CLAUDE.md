@@ -859,9 +859,17 @@ has a pause control.
     the server sent it. `<html data-bf-signal="live">` while it runs.
   - **The engine** (`signal.ts`, gsap passed in, so it imports only gsap's
     types) arms each host in page order, one per task, and only a host whose
-    trigger is still ahead: a diagram when 35% of it is in view, a hook when it
-    reaches 70% of the viewport's height, once it has stayed in view 150ms (a
-    fly-past spends nothing). A trigger's range ends when the host has left the
+    trigger is still ahead: a diagram when its centre reaches 70% of the
+    viewport's height, where the reader's eye is, a hook when its top
+    does, once it has stayed in view 150ms (a
+    fly-past spends nothing). A diagram started once 35% of it was in view
+    until 2026-09-29: at 1440x900 the software drawing began tracing with its
+    top at 779 of 900 (121px of its 335 on screen), AI at 739, ERP at 688, and
+    a trace that is over in 1.16s ran mostly below the fold (the design
+    review). Filmed since on fresh 1440 pages read down at reading speed:
+    every ledger diagram on / starts wholly in view, its centre at 63-66% of
+    the viewport (its top at 397-430); on /capabilities at 60-69%, 98-100%
+    in view. A trigger's range ends when the host has left the
     top of the viewport — for the sticky capability figures, when their
     column's bottom carries them off, not where their static box would be (a
     reader landing in the stuck stretch would otherwise look at a claimed

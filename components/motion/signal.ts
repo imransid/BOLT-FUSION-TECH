@@ -34,6 +34,8 @@ import type { ScrollTrigger as ScrollTriggerStatic } from "gsap/ScrollTrigger";
  *  that DrawSVG draws, since DrawSVG owns the dash pattern of what it draws.
  *
  * The rules it keeps (BRIEF §4.4–4.6):
+ *  · a diagram starts when its centre reaches 70% of the viewport's height, a
+ *    hook when its top does;
  *  · nothing is created before its trigger, and only for a host whose trigger
  *    is still ahead when the engine starts; a host already reached stays as
  *    the server drew it (a diagram's CSS flow already ran);
@@ -75,8 +77,14 @@ const HOOK_S: Record<string, number> = { rail: 1.2, pilot: 1.2, cta: 0.9 };
 const HOOK_DEFAULT_S = 1.2;
 const HOOK_HOLD_S = 0.4; /* a hook's trace holds this long once it has arrived… */
 const HOOK_FADE_S = 0.6; /* …then its overlay fades onto the lit drawing */
-/* where a sequence starts: a diagram once 35% of it is in view; a hook when it reaches 70% of the viewport's height */
-const FLOW_AT = 0.35;
+/* where a sequence starts: a diagram when its CENTRE reaches 70% of the
+   viewport's height, where the reader's eye is (it started once 35% of it
+   was in view until 2026-09-29: at 1440x900 the software drawing began
+   tracing with 121px of its 335 on screen, and the whole trace is 1.16s — a
+   reader who stopped with the row's heading low on the screen missed most of
+   it; the design review); a hook when it reaches 70% of the viewport's
+   height */
+const FLOW_AT = 0.7;
 const HOOK_AT = 0.7;
 const TOL = 6; /* user units: how near an edge's end must be to a node to join it */
 const DWELL_MS = 150; /* in view this long before a sequence starts */
@@ -480,7 +488,7 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
       const max = () => ScrollTrigger.maxScroll(window) - 1;
       const at = () => {
         const r = naturalRect(host);
-        const y = r.top + scrollY + (flow ? FLOW_AT * r.height - innerHeight : -HOOK_AT * innerHeight);
+        const y = r.top + scrollY + (flow ? r.height / 2 - FLOW_AT * innerHeight : -HOOK_AT * innerHeight);
         return Math.max(0, Math.min(y, max()));
       };
       /* the range ends when the host has left the top of the viewport: a
