@@ -5611,6 +5611,19 @@ button.bf-map__btn[aria-pressed="true"] {
   border-top: 1px solid var(--bf-line-strong);
 }
 
+/* The ledger's own Schedule a Call, on a phone only (the merge, 2026-09-29):
+   the one primary between how we work's and the final call's, 7,471px apart
+   at 390 before it. From 768px the header carries Schedule a Call and the
+   page is a third as long, so it is not shown. One primary in view at a
+   time: the nearest others are thousands of pixels away. */
+.bf-ledger6__cta {
+  margin-top: 32px;
+}
+
+@media (min-width: 768px) {
+  .bf-ledger6__cta { display: none; }
+}
+
 .bf-cap6 {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);

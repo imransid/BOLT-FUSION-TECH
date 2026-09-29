@@ -1,5 +1,6 @@
 import { engineering } from "@/content/engineering";
 import type { Capability } from "@/content/engineering-schema";
+import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 import { workLink } from "@/lib/work-links";
 
 import Cta from "../Cta";
@@ -90,6 +91,12 @@ function Row({ c, n }: { c: Capability; n: number }) {
  *
  * The Service JSON-LD is tied to this section (app/page.tsx): one node per
  * capability, emitted when the ledger renders.
+ *
+ * On a phone the ledger ends in a Schedule a Call (2026-09-29, the merge):
+ * the one primary between how we work's and the final call's, which were
+ * about 7,500px apart at 390 — having read what we engineer, the next step is
+ * one tap away. From 768px it is not shown (app/site.css): the header carries
+ * Schedule a Call from 520px and the page is shorter.
  */
 export default function WhatWeEngineer() {
   const h = engineering.headings.whatWeEngineer;
@@ -105,6 +112,11 @@ export default function WhatWeEngineer() {
             <Row key={c.id} c={c} n={i + 1} />
           ))}
         </ol>
+        <p className="bf-actions bf-ledger6__cta">
+          <Cta href={SCHEDULE_HREF} cta="schedule">
+            {SCHEDULE_LABEL}
+          </Cta>
+        </p>
       </div>
     </section>
   );
