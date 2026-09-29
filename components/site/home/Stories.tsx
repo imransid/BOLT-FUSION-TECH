@@ -107,24 +107,34 @@ function LanesBand({ story, title }: { story: Work; title: string }) {
   );
 }
 
-/** A client story as a band (2026-09-29): one client's systems, text only —
- *  who built them (the label every one of its cards on /work carries, from
- *  content/projects.ts), the story's title, each system's name over its
- *  tagline, and one link to the story on /work, where the screenshots are.
- *  No screenshot here: a /projects/ image off a /work card must link to a
- *  write-up (check 9), and the homepage's weight is budgeted (check 29).
- *  Each name opens the live system, in a new tab, as the hero's proof line
- *  does. The count in the link is the data's. `data-client-story`,
- *  `data-attribution` and `data-story-project` are verify-site check 9's: the
- *  label must be the kind's words for this client, and every name a
- *  published project of it. */
+/** A client story as a band (2026-09-29): one client's systems, shown
+ *  together straight after the pair of write-ups — since 2026-09-29, the
+ *  design and honesty reviews: the owner asked for these four to be
+ *  highlighted, and at the end of the proof, as a 22px text band under the
+ *  section's call to action, they were the smallest and last thing in it.
+ *
+ *  A surface plate: "Client story", who built the systems (the label every
+ *  one of its cards on /work carries, from content/projects.ts), the story's
+ *  title and intro, one link to the story on /work, and each system's real
+ *  screenshot — the one its /work card shows — over its name and tagline.
+ *  Each name opens the live system in a new tab, as the hero's proof line
+ *  does, and the whole tile is that link's target (its `::after`), so a tile
+ *  is one tab stop. The count in the link is the data's.
+ *
+ *  `data-client-story`, `data-attribution` and `data-story-project` are
+ *  verify-site check 9's: the label must be the kind's words for this client
+ *  where a reader can see it, every name a published project of it, and
+ *  every screenshot in the band the one of the project whose tile holds it.
+ *  The screenshots are lazy and in fixed 16:10 frames: nothing on the
+ *  homepage's LCP path, and no shift as they load (check 29). */
 function ClientStoryBand({ story }: { story: ClientStory }) {
   const members = clientStoryMembers(story);
   const titleId = `${story.id}-band-title`;
   return (
     <div className="bf-clientband" data-client-story={story.id} data-bf-reveal>
       <div className="bf-clientband__head">
-        <div>
+        <div className="bf-clientband__lede">
+          <p className="bf-eyebrow bf-clientband__eyebrow">Client story</p>
           <p className="bf-attr" data-attribution>
             {attribution(members[0])}
           </p>
@@ -132,15 +142,29 @@ function ClientStoryBand({ story }: { story: ClientStory }) {
             {story.title}
           </h3>
         </div>
-        <Cta href={`/work#${story.id}`} variant="quiet" className="bf-clientband__all">
-          See the {countWord(members.length)} systems
-        </Cta>
+        <div className="bf-clientband__aside">
+          <p className="bf-clientband__intro">{story.intro}</p>
+          <Cta href={`/work#${story.id}`} variant="quiet" className="bf-clientband__all">
+            See the {countWord(members.length)} systems
+          </Cta>
+        </div>
       </div>
       <ul className="bf-clientband__list" aria-labelledby={titleId}>
         {members.map((p) => {
           const live = p.links[0];
           return (
             <li key={p.id} className="bf-clientband__item" data-story-project={p.id}>
+              {p.image ? (
+                <div className="bf-clientband__shot">
+                  <ScreenImage
+                    src={p.image.src}
+                    alt={p.image.alt}
+                    fill
+                    sizes="(min-width: 1025px) 300px, (min-width: 768px) calc(50vw - 60px), calc(50vw - 36px)"
+                    className="bf-clientband__img"
+                  />
+                </div>
+              ) : null}
               <h4 className="bf-clientband__name">
                 {live ? (
                   <a href={live.href} target="_blank" rel="noopener noreferrer">
@@ -164,16 +188,15 @@ function ClientStoryBand({ story }: { story: ClientStory }) {
 /**
  * Engineering stories (SPEC §5), second on the homepage since 2026-09-28 — the
  * proof, straight after the hero (DECISIONS 2026-09-28, item 1): the two
- * write-ups side by side from 1025px, each with who built it; then the
- * section's own Schedule a Call and the link to all work — the contextual
- * primary right after the proof, which at 390 is about 2,000px after the
- * hero's rather than 4,700; then the restaurant search's three lanes and the
- * proof strip — "From systems we shipped." (SPEC §8b.1; never "Measured on…":
- * ~$0.001 is a target); then, since 2026-09-29, each client story as a band
- * (TTouch Clothing's four systems) — the proof chapter closes on a client with
- * several live systems, and the next section answers how to start. It sits
- * after the section's Schedule a Call, never before it, so it does not push
- * that button down a phone.
+ * write-ups side by side from 1025px, each with who built it; then each
+ * client story (TTouch Clothing's four systems, since 2026-09-29), with its
+ * screenshots; then the section's own Schedule a Call and the link to all
+ * work — the call follows the strongest proof; then the restaurant search's
+ * three lanes and the proof strip — "From systems we shipped." (SPEC §8b.1;
+ * never "Measured on…": ~$0.001 is a target). Until the design and honesty
+ * reviews of 2026-09-29 the client story was a text band after the proof
+ * strip, below the section's call, under a heading that said "Two
+ * products": the owner had asked for it to be highlighted.
  *
  * Its heading is the standard h2, not a chapter head: at 1440 it shares the
  * first screen with the h1, and two near-equal headlines there blurred which
@@ -210,6 +233,9 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
             <Story key={w.title} w={w} />
           ))}
         </div>
+        {clientStories.map((story) => (
+          <ClientStoryBand key={story.id} story={story} />
+        ))}
         <p className="bf-actions bf-proofsec__cta">
           <Cta href={SCHEDULE_HREF} cta="schedule">
             {SCHEDULE_LABEL}
@@ -220,9 +246,6 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
         </p>
         {laneStory ? <LanesBand story={laneStory} title={lanesTitle} /> : null}
         <ProofStrip id="proof-title" title={work.proofTitle} note={work.proofNote} />
-        {clientStories.map((story) => (
-          <ClientStoryBand key={story.id} story={story} />
-        ))}
       </div>
     </section>
   );

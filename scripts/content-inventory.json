@@ -350,12 +350,22 @@
         "include": "team-roster-cut"
       },
       {
-        "item": "Proof: the two write-ups",
-        "proves": "Real systems, each with a technical write-up",
-        "status": "required",
+        "item": "Proof: the section's old heading, \"Two products, two write-ups.\"",
+        "proves": "Nothing now: the section holds TTouch Clothing's four systems beside the pair, and four of its six systems have no write-up",
+        "status": "retired",
+        "retired": "reworded 2026-09-29 (the design and honesty reviews) — the client story moved up to follow the pair, and \"Two products\" and \"Each one has a full technical write-up\" were no longer true of the section",
         "needles": [
           "Two products, two write-ups.",
-          "Each one has a full technical write-up, not a screenshot and a sentence.",
+          "Each one has a full technical write-up, not a screenshot and a sentence."
+        ]
+      },
+      {
+        "item": "Proof: the two write-ups",
+        "proves": "Real systems, two with a technical write-up, under a heading true of every system in the section",
+        "status": "required",
+        "needles": [
+          "Built and shipped.",
+          "Two full technical write-ups, not a screenshot and a sentence — and the systems we built end to end for TTouch Clothing.",
           "WarmChats landing page: 'Turn new real estate leads into booked appoin",
           "Real estate, AI automation, microservices",
           "WarmChats — AI booking for real estate",
@@ -382,12 +392,15 @@
         ]
       },
       {
-        "item": "Proof: TTouch Clothing's four systems, as a band (2026-09-29)",
-        "proves": "One client, four live systems, each labelled as its /work card is — text only, each name linked to the live system, and one link to the story on /work",
+        "item": "Proof: TTouch Clothing's four systems, straight after the pair (2026-09-29)",
+        "proves": "One client, four live systems, labelled as their /work cards are, each with its real screenshot, its name linked to the live system, and one link to the story on /work — before the section's Schedule a Call since the design and honesty reviews",
         "status": "required",
         "needles": [
+          "Client story",
           "Delivered project: built by Bolt Fusion for TTouch Clothing",
           "Four systems for TTouch Clothing",
+          "TTouch Clothing is a fashion brand from Bangladesh. We built four of its systems end to end",
+          "All four are live.",
           "See the four systems",
           "Delivery Lens BD",
           "Courier-risk checks for online sellers",

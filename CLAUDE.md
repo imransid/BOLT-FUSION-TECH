@@ -73,7 +73,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`: the two write-ups side by side — on a phone each its outcome and its result — then a Schedule a Call, the restaurant search's three lanes, the proof strip and, since 2026-09-29, TTouch Clothing's client-story band); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; on a phone, a Schedule a Call after it); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; on a phone, a Schedule a Call after it); how we build; the industries with delivered work; the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
 | `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
@@ -269,8 +269,8 @@ does not state.
   together: `clientStories` in `content/projects.ts` holds its anchor, title
   and intro, and its members are computed — every published product project
   whose `client` is the story's, byte for byte. On /work it is a sub-group of
-  Bolt Fusion projects under its own h3; on the homepage, a band in the proof
-  (below). The build refuses a story with fewer than two members, a count in
+  Bolt Fusion projects under its own h3; on the homepage, a plate in the proof
+  straight after the pair of write-ups (below). The build refuses a story with fewer than two members, a count in
   its title or intro that is not its member count ("Four systems" cannot
   outlive a fifth card), and "live" said of a set whose members are not all
   live. It says "Four systems for TTouch Clothing", never "came back for
@@ -344,15 +344,28 @@ does not state.
   Go Style Business) — so "in production" is something a buyer can open and
   check. Delivery Lens BD replaces Go Style Business there only after TTouch
   fixes its demo's phone numbers and adds a privacy policy and terms (owner,
-  2026-09-29). After the proof strip, each client story is a band — TTouch
-  Clothing's label, the story's h3, the four names (each linking to the live
-  system) over their taglines, and "See the four systems" to
-  `/work#ttouch-clothing`, the count from the data; text only, since a
-  screenshot off a /work card must link to a write-up (check 9) and the
-  homepage's weight is budgeted (check 29). Check 9 reads the band
-  (`[data-client-story]`): its label must be the kind's words for its client,
-  where a reader can see it, and it must name every published product
-  project of that client and nothing else. "See all work (N projects)" counts
+  2026-09-29). **Straight after the pair of write-ups, each client story is a
+  plate** (2026-09-29, fix pass B, from the design and honesty reviews: the
+  owner asked for the four to be highlighted, and as a 22px text band after
+  the proof strip — below the section's Schedule a Call, under a heading that
+  said "Two products" — they were the smallest and last block of the proof):
+  "Client story", TTouch Clothing's label, the story's h3 and its intro, "See
+  the four systems" to `/work#ttouch-clothing` (the count from the data), and
+  the four systems, each its real screenshot — the one its /work card shows —
+  over its name, linking to the live system (the whole tile is the link's
+  target), and its tagline. The section's Schedule a Call follows it, so the
+  call comes after the strongest proof. The screenshots are lazy, in fixed
+  16:10 frames (nothing on the LCP path, no shift; check 29). Check 9 reads
+  the band (`[data-client-story]`): its label must be the kind's words for its
+  client, where a reader can see it; it must name every published product
+  project of that client and nothing else; and every project screenshot in it
+  must sit in the tile of a system it names and be that system's own, known by
+  the file it serves. The section's heading is "Built and shipped." (true of
+  every system in it; "Two products, two write-ups." and "Each one has a full
+  technical write-up" went, retired in check 30), and its lead keeps COPY.md's
+  words for the two write-ups: "Two full technical write-ups, not a screenshot
+  and a sentence — and the systems we built end to end for TTouch Clothing."
+  — for the owner to confirm. "See all work (N projects)" counts
   the published projects that are ours, from the data, the feature work
   included. The track record is not counted.
 - `llms.txt` and `llms-full.txt` credit every project as its card does.
@@ -525,14 +538,18 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   row. *The engineering stories* (`#recent-work`) are the pair of write-ups — on
   a phone each is its outcome and its result, the problem, the system and the
   engineering staying in the served HTML for the write-up to tell — then the
-  section's Schedule a Call, then the lanes band and the proof strip, whose
-  four figures are ruled rows on a phone, not boxed cards, then the
-  client-story band (`.bf-clientband`, 2026-09-29): TTouch Clothing's label
-  over the story's h3, "See the four systems" to `/work#ttouch-clothing`
-  beside them from 1025px, and one ruled row of the four names over their
-  taglines — four across from 1025px, two from 768px, one on phones — each
-  name a 44px link to the live system, set as the hero's proof line is. Text
-  only: no screenshot on the homepage.
+  client story (`.bf-clientband`, since 2026-09-29, fix pass B): a surface
+  plate, the eyebrow "Client story", TTouch Clothing's label and the story's h3
+  (28 / 30 / 34px: above the write-ups' 26, under the section's h2) beside
+  its intro and "See the four systems" from 1025px, over the four systems —
+  four across from 1025px, two across below it, phones included — each its
+  screenshot in a 16:10 frame, its name a 44px link to the live system whose
+  target is the whole tile, and its tagline; then the section's Schedule a
+  Call, then the lanes band and the proof strip, whose four figures are ruled
+  rows on a phone, not boxed cards. Measured: the plate is 511px tall at 1440
+  (at 2028), 1061 at 1024 and 865 at 390, and the section's Schedule a Call
+  at 2587 at 1440 and 3518 at 390 (2,924px after the hero's there). Until
+  then it was a text band after the proof strip, below the call.
 - **The system map** (`components/site/SystemMap.tsx`, a client component; on
   /capabilities after the six since 2026-09-28, the homepage's until then): the
   SVG is the picture for a pointer and is `aria-hidden`; the lists beside it
@@ -2117,6 +2134,16 @@ rule's own finding — and each has its case in `scripts/gate/gate-cases.py`.
   own OPAL named among TTouch's) and `story-missing` (Delivery Lens BD left out,
   from the same patch). Proven on a served build of the working tree with the
   three patches: all four findings, at 1440 and 390; the clean build passes.
+  **Its screenshots (fix pass B, 2026-09-29).** Since the band shows each
+  system's screenshot, check 9 no longer reads a band's screenshot as a card
+  of its own (which must link to a write-up): every project screenshot in a
+  `[data-client-story]` must sit inside a `[data-story-project]` tile, and be
+  that project's own screenshot in `content/projects.ts`, known by the file
+  it serves (`/projects/opt/<name>-<width>.<ext>` is `<name>`), under the
+  band's visible label. RUN 2: `story-shot-foreign` (Sudarshini's tile showing
+  OPAL's screenshot) and `story-shot-loose` (FanLock's screenshot in the
+  band's head), both proven on the working tree at 1440 with their own
+  findings; the clean tree passes at 1440 and 390.
 - **The build, three new refusals (RUN 3).** `clientStories` in
   `content/projects.ts`: (h) a story pointed at a client with one published
   product project — "a client story is a set"; (i) "Five systems" over four
@@ -2495,7 +2522,7 @@ claim that TTouch "came back"; no dates.
 | what | decided | where |
 |---|---|---|
 | /work | the four as a client story under their own h3, `#ttouch-clothing`, between the product cards and the feature work; each card the standard one, with a real screenshot and a live link | `motion-hire/projects` |
-| The homepage | a text band in `#recent-work`, after the proof strip, with one link to `/work#ttouch-clothing`; the hero's proof line unchanged | `motion-hire/projects` |
+| The homepage | a text band in `#recent-work`, after the proof strip, with one link to `/work#ttouch-clothing`; the hero's proof line unchanged. **Revised 2026-09-29 (fix pass B, the design and honesty reviews):** a plate straight after the pair of write-ups, before the section's Schedule a Call, with the four screenshots; the section's heading "Built and shipped." | `motion-hire/projects`, fix pass B |
 | Industries | Retail & commerce gains Sudarshini and TTouch Wholesale; HR gains TTouch Employee Verification; Logistics moves to delivered work on Delivery Lens BD, its first problem ("Orders shipped to customers who refuse them at the door") and first build ("Courier data and delivery-risk checks") written to what that product does; each evidence link lands on its card | `motion-hire/projects` |
 | Capabilities | Software engineering links Delivery Lens BD and Sudarshini; ERP's Proven scope is "HR, payroll and a wholesale back office" (Full ERP stays Capable, its line byte-identical); POS & commerce is Core for point of sale and Proven for "Online and wholesale commerce", with "Online stores" and "Wholesale ordering portals" in what it builds — still no payments or commerce integrations claimed; AI, Cloud and Robotics unchanged | `motion-hire/projects` |
 | /industries' layout | the homepage's industries grid rules were scoped to its section: they had laid /industries' rows out five to a row from 1025px | `motion-hire/projects` |

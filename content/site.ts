@@ -117,12 +117,23 @@ const raw: SiteContentInput = {
   recentWorks: {
     // The engineering stories (owner's redesign, 2026-09-16; SPEC §5): the two
     // write-ups in the problem / system / engineering / result shape, then the
-    // proof strip. The title, subtitle, cards' words and alt texts are COPY.md
-    // §4's, unchanged; the story lines are the write-ups' and llms-full.txt's
-    // own words. No result that is not real, and every figure labelled.
+    // client story and the proof strip. The cards' words and alt texts are
+    // COPY.md §4's, unchanged; the story lines are the write-ups' and
+    // llms-full.txt's own words. No result that is not real, and every figure
+    // labelled.
+    //
+    // The title and subtitle were COPY.md §4's — "Two products, two
+    // write-ups." and "Each one has a full technical write-up, not a
+    // screenshot and a sentence." — until 2026-09-29, when TTouch Clothing's
+    // four systems moved up beside the pair (the design and honesty reviews):
+    // the section holds six systems, and four have no write-up. The title is
+    // true of every one of them — built by us, and shipped (the proof strip's
+    // "From systems we shipped."; "running" would claim more than the
+    // restaurant search's write-up says) — and the subtitle keeps COPY.md's
+    // words for the two it describes. For the owner to confirm.
     eyebrow: "Engineering stories",
-    title: "Two products, two write-ups.",
-    subtitle: "Each one has a full technical write-up, not a screenshot and a sentence.",
+    title: "Built and shipped.",
+    subtitle: "Two full technical write-ups, not a screenshot and a sentence — and the systems we built end to end for TTouch Clothing.",
     items: [
       {
         src: "/projects/warmchats-ai-booking.png",

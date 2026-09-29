@@ -1418,6 +1418,9 @@ function collectInPage() {
   }));
   const cardEls = new Map();
   for (const img of projImgs) {
+    /* a screenshot in a client story's band is its member's, and the band's
+       own rule reads it (below, 2026-09-29): the band is no card */
+    if (img.closest("[data-client-story]")) continue;
     /* a card marked with its kind is its own root — a feature-work card's name
        is an h4, and the walk would climb past it to the sub-group's h3 —
        otherwise the nearest box holding a heading */
@@ -1480,12 +1483,20 @@ function collectInPage() {
   /* 9 ── a client story shown as a band (2026-09-29, the homepage's
      `[data-client-story]`): no card, so no kind marker, but a label all the
      same — who built the systems it names — and the projects it names
-     (`[data-story-project]`), each with its links. */
+     (`[data-story-project]`), each with its links; and, since the band shows
+     them (2026-09-29, the design review), every project screenshot in it,
+     with the name of the member whose tile holds it. A screenshot is known
+     by the file it SERVES — /projects/opt/<name>-<width>.<ext> is <name> —
+     not by an attribute the page could set to anything. */
+  const shotName = (src) => src.replace(/^.*?\/projects\/(?:opt\/)?/, "").replace(/[?#].*$/, "").replace(/(?:-\d+)?\.(?:avif|webp|png|jpe?g)$/i, "");
   const clientStoryBands = [...document.querySelectorAll("[data-client-story]")].map((band) => {
     const label = band.querySelector("[data-attribution]");
     return {
       id: band.getAttribute("data-client-story"),
       label: label ? { text: flat(label), seen: readable(label) } : null,
+      shots: [...band.querySelectorAll("img")]
+        .filter((i) => /\/projects\//.test(srcOf(i)))
+        .map((i) => ({ src: srcOf(i).replace(location.origin, ""), name: shotName(srcOf(i)), loaded: i.complete && i.naturalWidth > 0, member: i.closest("[data-story-project]")?.getAttribute("data-story-project") ?? null })),
       names: [...band.querySelectorAll("[data-story-project]")].map((n) => ({
         id: n.getAttribute("data-story-project"),
         text: flat(n.querySelector("h2, h3, h4, h5, h6") || n).replace(/\s*\(opens in a new tab\)$/, "").slice(0, 60),
@@ -4029,7 +4040,22 @@ await (async () => {
         }
       }
       if (members) for (const p of members) if (!band.names.some((n) => n.id === p.id)) F.push(`${where} leaves out "${p.name}", a published product project of ${client}`);
-      I.push(`${route}: client story "${band.id}" — "${band.label?.text ?? "no label"}"; ${band.names.map((n) => n.text).join(", ") || "no names"}`);
+      /* its screenshots (2026-09-29): each inside the tile of a system it
+         names, and that system's own screenshot in content/projects.ts — the
+         one its /work card shows. A screenshot off a /work card must
+         otherwise link to a write-up (above): in a band it is known by the
+         tile that holds it, under the band's label, instead. */
+      const baseName = (src) => String(src || "").replace(/^.*\//, "").replace(/\.(?:avif|webp|png|jpe?g)$/i, "");
+      for (const sh of band.shots || []) {
+        if (!sh.member) {
+          F.push(`${where} shows a screenshot (${sh.src}) outside the tile of any system it names — a screenshot in the band is the one of the system whose tile holds it`);
+          continue;
+        }
+        const p = projectsTs ? projectsTs.find((x) => x.id === sh.member) : null;
+        if (p && baseName(p.image?.src) !== sh.name)
+          F.push(`${where} — the tile of "${p.name}" shows ${sh.src}, which is not its screenshot in content/projects.ts (${p.image?.src ?? "it has none"})`);
+      }
+      I.push(`${route}: client story "${band.id}" — "${band.label?.text ?? "no label"}"; ${band.names.map((n) => n.text).join(", ") || "no names"}; ${(band.shots || []).length} screenshot(s)`);
     }
   }
   for (const r of sitemapWork) if (!linkedFromIndex.has(r)) F.push(`${r} is published in the sitemap but no project card links to it`);
@@ -4037,7 +4063,7 @@ await (async () => {
   results.push({
     id: 9,
     title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
-    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot; a client story's band whose label is missing, hidden or not its client's, or that names a project that is not that client's, or leaves one out",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot; a client story's band whose label is missing, hidden or not its client's, that names a project that is not that client's, or leaves one out, or that shows a screenshot outside its systems' tiles or another project's in one",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: [...new Set(I)],

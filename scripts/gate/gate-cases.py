@@ -416,6 +416,17 @@ def p_story_members(s):
     s.rep("components/site/home/Stories.tsx", "        {members.map((p) => {\n", '        {[...members.slice(1), ...projects.filter((x) => x.id === "opal")].map((p) => {\n')
 
 
+def p_story_shot_foreign(s):
+    """9: the band's Sudarshini tile shows another project's screenshot (OPAL's)"""
+    s.rep("components/site/home/Stories.tsx", "                    src={p.image.src}\n", '                    src={p.id === "sudarshini" ? "/projects/opal.webp" : p.image.src}\n')
+
+
+def p_story_shot_loose(s):
+    """9: a screenshot in the band outside every system's tile"""
+    s.rep("components/site/home/Stories.tsx", '        <div className="bf-clientband__aside">\n',
+          '        <div className="bf-clientband__aside">\n          <ScreenImage src="/projects/fanlock.webp" alt="" sizes="300px" />\n')
+
+
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
@@ -659,6 +670,9 @@ CASES = [
     ["story-hidden", "the client-story band's label hidden (sr-only)", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label ".*" is not visible', p_story_hidden, {}],
     ["story-foreign", "the client-story band names our own OPAL as TTouch Clothing's", 9, r'^/ @\d+: the client story "ttouch-clothing" names "OPAL", which is not a published product project of TTouch Clothing', p_story_members, {}],
     ["story-missing", "the client-story band leaves out one of TTouch Clothing's systems", 9, r'^/ @\d+: the client story "ttouch-clothing" leaves out "Delivery Lens BD", a published product project of TTouch Clothing', None, {"from": "story-foreign"}],
+    # new at fix pass B (2026-09-29): the band shows each system's screenshot
+    ["story-shot-foreign", "the client-story band's Sudarshini tile shows OPAL's screenshot", 9, r'^/ @\d+: the client story "ttouch-clothing" — the tile of "Sudarshini" shows /projects/opt/opal-\d+\.(?:avif|webp), which is not its screenshot in content/projects\.ts', p_story_shot_foreign, {}],
+    ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more

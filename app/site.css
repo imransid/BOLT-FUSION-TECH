@@ -6189,111 +6189,151 @@ rect.bf-trace__stop {
   }
 }
 
-/* ── The client story on the homepage: a band in the proof ───────────────── *
-   Text only, after the proof strip (Stories.tsx): the label over the title,
-   "See the four systems" beside them from 1025px, then one ruled row of the
-   four names over their taglines — four across from 1025px, two from 768px,
-   one on phones. Each name is a 44px link, set like the hero's proof line. The
-   last row draws no rule of its own: the next section's hairline is its floor. */
+/* ── The client story on the homepage: a plate in the proof ──────────────── *
+   Straight after the pair of write-ups, before the section's Schedule a Call
+   (2026-09-29, the design and honesty reviews: as a 22px text band after the
+   proof strip it was the smallest and last block of the proof). A surface
+   plate — the pilot's family, a set of four — with the eyebrow, the label and
+   the title (28 / 30 / 34px: above the write-ups' 26, under the section's
+   h2) beside the intro and "See the four systems" from 1025px, over the four
+   systems: each its screenshot in a 16:10 frame, its name — a 44px link to the
+   live system, the whole tile its target — and its tagline. Four across from
+   1025px, two across below that, phones included. */
 .bf-clientband {
-  margin-top: 64px;
-  padding-top: 28px;
-  border-top: 1px solid var(--bf-line-strong);
+  margin-top: 56px;
+  padding: 28px 20px 24px;
+  background-color: var(--bf-surface);
+  border: 1px solid var(--bf-line);
 }
 
-.bf-clientband__head {
-  display: grid;
-  gap: 4px;
-  margin-bottom: 16px;
+@media (min-width: 768px) {
+  .bf-clientband { padding: 36px 32px 28px; }
 }
 
-.bf-clientband__head .bf-attr {
+@media (min-width: 1025px) {
+  .bf-clientband {
+    margin-top: 64px;
+    padding: 40px 40px 32px;
+  }
+}
+
+.bf-clientband__eyebrow {
+  margin-bottom: 12px;
+}
+
+.bf-clientband__lede .bf-attr {
   margin-bottom: 6px;
-}
-
-.bf-clientband__head .bf-btn--quiet {
-  justify-self: start;
-  margin-top: 0;
 }
 
 .bf-clientband__title {
   font-family: var(--bf-font-heading);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
   color: var(--bf-text);
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__title { font-size: 30px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__title { font-size: 34px; letter-spacing: -0.02em; }
+}
+
+.bf-clientband__intro {
+  margin-top: 14px;
+  max-width: 62ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-clientband__aside .bf-btn--quiet {
+  margin-top: 6px;
 }
 
 @media (min-width: 1025px) {
   .bf-clientband__head {
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: 56px;
     align-items: end;
-    column-gap: 48px;
-    margin-bottom: 20px;
+  }
+
+  .bf-clientband__intro {
+    margin-top: 0;
+    font-size: 17px;
   }
 }
 
 .bf-clientband__list {
   display: grid;
-  border-top: 1px solid var(--bf-line);
-}
-
-.bf-clientband__item {
-  min-width: 0;
-  padding: 6px 0 16px;
-  border-bottom: 1px solid var(--bf-line);
-}
-
-.bf-clientband__item:last-child {
-  border-bottom: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 12px;
+  margin-top: 24px;
 }
 
 @media (min-width: 768px) {
-  .bf-clientband__list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 32px;
-  }
-
-  .bf-clientband__item:nth-child(odd):nth-last-child(2) {
-    border-bottom: 0;
-  }
+  .bf-clientband__list { gap: 28px 24px; margin-top: 32px; }
 }
 
 @media (min-width: 1025px) {
   .bf-clientband__list {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    column-gap: 0;
-  }
-
-  .bf-clientband__item {
-    padding: 10px 22px 4px;
-    border-bottom: 0;
-    border-left: 1px solid var(--bf-line);
-  }
-
-  .bf-clientband__item:first-child {
-    padding-left: 0;
-    border-left: 0;
+    gap: 24px;
+    margin-top: 36px;
   }
 }
 
+/* The tile is the name's link target: its ::after covers the tile, so the
+   screenshot opens the live system too, and the tile is one tab stop. */
+.bf-clientband__item {
+  position: relative;
+  min-width: 0;
+}
+
+.bf-clientband__shot {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--bf-line-strong);
+  background-color: var(--bf-raised);
+}
+
+.bf-clientband__img {
+  object-fit: cover;
+  object-position: 50% 0;
+  transition: transform 0.4s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .bf-clientband__item:hover .bf-clientband__img { transform: scale(1.03); }
+}
+
 .bf-clientband__name {
+  margin-top: 8px;
   font-family: var(--bf-font-heading);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
   color: var(--bf-text);
 }
 
-/* A name that wraps ("TTouch Employee Verification" in a quarter of the row)
-   starts on the same line as its neighbours: its 44px box grows down from a
-   fixed top, as the industries' links do. */
+@media (min-width: 768px) {
+  .bf-clientband__name { margin-top: 10px; font-size: 18px; }
+}
+
+/* A name that wraps ("TTouch Employee Verification") starts on the same line
+   as its neighbours: its 44px box grows down from a fixed top, as the
+   industries' links do. */
 .bf-clientband__name a {
   display: inline-flex;
   align-items: flex-start;
   gap: 5px;
   min-height: 44px;
-  padding-block: 12px 8px;
+  padding-block: 10px 8px;
   color: var(--bf-text);
   text-decoration: underline;
   text-decoration-color: var(--bf-line-strong);
@@ -6301,7 +6341,14 @@ rect.bf-trace__stop {
   text-underline-offset: 5px;
 }
 
-.bf-clientband__name a:hover {
+.bf-clientband__name a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.bf-clientband__item:hover .bf-clientband__name a,
+.bf-clientband__name a:focus-visible {
   text-decoration-color: var(--bf-brand);
 }
 
@@ -6314,15 +6361,12 @@ rect.bf-trace__stop {
 }
 
 .bf-clientband__line {
-  margin-top: -2px;
-  font-size: 15px;
+  margin-top: -4px;
+  font-size: 14px;
   line-height: 1.5;
   color: var(--bf-soft);
 }
 
-@media (max-width: 767px) {
-  .bf-clientband {
-    margin-top: 48px;
-    padding-top: 24px;
-  }
+@media (min-width: 768px) {
+  .bf-clientband__line { font-size: 15px; }
 }
