@@ -758,11 +758,18 @@ html {
 
 /* The headline: two lines that never break inside ("Build" / "what's
    next."), upper case by CSS with the sentence-case source, tight tracking.
-   Sized so the longer line fits its column at every width: the column is
-   about 400px at 1025 and 640px at 1440. */
+   It is the largest type on the page at every width, and it never gets
+   smaller as the window gets wider (2026-09-29, the design review: it was
+   72px on a tablet and 52px at 1025, and at 1440 66px against 63px chapter
+   heads). The longer line, "WHAT'S NEXT.", is 6.06 times the font size wide:
+   below 1025 the text has the whole width, so 11.5vw up to 64px (45px at
+   390, 64 from 557 to 1024); from 1025 it is 68px while the text column is
+   its 420px floor (to 1232, where the 660px field is full width) and then
+   grows with the column to 84px (75px at 1280, 84 from 1345) — 509px of a
+   524px column at 1440. */
 .bf-hero__title {
   font-family: var(--bf-font-heading);
-  font-size: clamp(40px, 11.5vw, 72px);
+  font-size: clamp(40px, 11.5vw, 64px);
   font-weight: 700;
   line-height: 0.94;
   letter-spacing: -0.02em;
@@ -770,10 +777,11 @@ html {
   color: var(--bf-text);
 }
 
-/* Sized so "what's next." fits the text column beside a 660px field: 66px at
-   1440 in a 524px column, 47px at 1025 in 420px. */
+/* Sized so "what's next." fits the text column beside the field, with room
+   to spare: 412px in 420 at 1025–1232, 455px in 468 at 1280, 509px in 524
+   at 1440. */
 @media (min-width: 1025px) {
-  .bf-hero__title { font-size: clamp(52px, 4.6vw, 68px); }
+  .bf-hero__title { font-size: clamp(68px, calc(15.4vw - 122px), 84px); }
 }
 
 .bf-hero__line {
@@ -4756,11 +4764,14 @@ button.bf-map__btn[aria-pressed="true"] {
    Three chapter heads — how we work, what we engineer and the close — and
    every other h2 at 40px, the proof's included: it shares the first screen
    with the h1 at 1440, and a second headline there blurred which one leads.
-   A chapter head is 4.4vw capped at 64px (63px at 1440, 56px from 1273) and
-   never reaches the h1, which is 4.6vw capped at 68px, floor 52: under 1273
-   the chapter follows the h1 down rather than hold 56 above it (48px at
-   1025, where the h1 is 52). It was 16 h2s at 48px, and a final title (72px)
-   larger than the h1 (66px). */
+   A chapter head is a clear step under the h1 at every width, at most 0.72
+   of it (2026-09-29, the design review): 32px on a phone (the h1 41–45),
+   44px on a tablet (64), and 48px from 1025 rising to 56 from 1436 (the h1
+   68 → 84: 48 against 68 at 1232, 50 against 75 at 1280, 56 against 84 at
+   1440). Until then it was 4.4vw capped at 64px, 63px at 1440 against a 66px
+   h1, and 48px on a tablet under a 72px h1 that was larger than any
+   desktop's. It was 16 h2s at 48px, and a final title (72px) larger than the
+   h1 (66px), before 2026-09-28. */
 #hero ~ .bf-section .bf-h2 {
   font-size: 28px;
   line-height: 1.12;
@@ -4779,19 +4790,22 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
-#hero ~ .bf-section .bf-head--chapter .bf-h2 {
-  font-size: 36px;
+#hero ~ .bf-section .bf-head--chapter .bf-h2,
+#hero ~ .bf-final .bf-final__title {
+  font-size: 32px;
   line-height: 1.04;
   letter-spacing: -0.02em;
 }
 
 @media (min-width: 768px) {
-  #hero ~ .bf-section .bf-head--chapter .bf-h2 { font-size: 48px; }
+  #hero ~ .bf-section .bf-head--chapter .bf-h2,
+  #hero ~ .bf-final .bf-final__title { font-size: 44px; }
 }
 
 @media (min-width: 1025px) {
-  #hero ~ .bf-section .bf-head--chapter .bf-h2 {
-    font-size: clamp(48px, 4.4vw, 64px);
+  #hero ~ .bf-section .bf-head--chapter .bf-h2,
+  #hero ~ .bf-final .bf-final__title {
+    font-size: clamp(48px, 3.9vw, 56px);
     line-height: 1.02;
     letter-spacing: -0.025em;
   }
@@ -4801,8 +4815,9 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: 18px;
 }
 
-/* The close is a chapter head too, and never larger than the h1 on any page:
-   40 → 60px (the h1 is 45px at 390, 52–66px from 1025, 72px on an inner page). */
+/* The close never is larger than the h1 on any page: 40 → 60px (an inner
+   page's h1 is 72px). On the homepage it is a chapter head, and takes the
+   chapter heads' sizes (above). */
 .bf-final__title {
   font-size: clamp(40px, 4.4vw, 60px);
   line-height: 1.02;

@@ -423,7 +423,8 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   industries row) draws no bottom rule: the next section's hairline is its
   floor, where a rule of its own drew two floors 80px apart.
 - **The hero's first screen (2026-09-28), measured.** At 1440x900 the proof
-  line is at 585–677px and the first write-up at 913. Below 1025px the field
+  line is at 602–694px (585–677 until the h1 grew to 84px, 2026-09-29) and
+  the first write-up at 913. Below 1025px the field
   sits above the text (SPEC §7) as a band — it was 4:3 and 16:9, and took the
   whole first screen at 1024x768 (the h1 at 701px) — and the poster is
   contained in it like everywhere else (*The hero field*), so the band's height
@@ -449,10 +450,10 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   motion); the proof line's three items sit in one row at every width, each a
   44px link over its client. Measured: at 390x844 the h1 at 289, Schedule a
   Call at 584 and the whole proof line at 745–832 — inside the first screen;
-  at 412x915 by 823 and at 768x1024 by 1003 (both 10px lower under reduced
+  at 412x915 by 823 and at 768x1024 by 988 (both 10px lower under reduced
   motion, still inside); at 375x812 the names, their clients just
   under the fold; at 1024x768 and 360x740 the h1 and Schedule a Call are in the
-  first screen and the proof line starts under it (798 and 716px). A phone
+  first screen and the proof line starts under it (783 and 716px). A phone
   browser's own bars take more of those heights than the lab viewport does.
   Cards only where the content is a set (/work's projects; a write-up's
   services and stack groups; the homepage's pair of write-ups); everything else
@@ -729,24 +730,35 @@ are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3
 - Barlow 700 for the H1 and every H2, tracking −0.02em (−0.015em at 32px). The
   hero's H1 is upper case by `text-transform` over its sentence-case source
   ("Build what's next."), set as two lines that never break inside ("Build" /
-  "what's next.") so check 7 never sees an orphaned last word:
-  `clamp(40px, 11.5vw, 72px)` below 1025px and `clamp(52px, 4.6vw, 68px)` from it,
-  sized so the longer line fits its column at every width. Negative tracking is
-  not tracked-out capitals.
+  "what's next.") so check 7 never sees an orphaned last word. **It is the
+  largest type on the page at every width, and never gets smaller as the
+  window widens** (2026-09-29, the design review): `clamp(40px, 11.5vw, 64px)`
+  below 1025px (41px at 360, 45 at 390, 64 from 557 to 1024) and
+  `clamp(68px, calc(15.4vw - 122px), 84px)` from it — 68px while the text
+  column is its 420px floor (1025–1232, where the field reaches 660), then
+  growing with the column: 75px at 1280, 84 from 1345. "WHAT'S NEXT." is
+  6.06 times the font size wide, so it takes 412 of 420px at 1025–1232, 455
+  of 468 at 1280 and 509 of 524 at 1440, clear of the field (check 28). Until
+  then it was `clamp(40px, 11.5vw, 72px)` and `clamp(52px, 4.6vw, 68px)`: 72px
+  on a tablet and 52 at 1025, a 28% drop across one pixel, and at 1440 66px
+  set 401px wide in a 524px column. Negative tracking is not tracked-out
+  capitals.
 - H2s are 48px from 768 and 32 below; Barlow 600 for H3 and H4 (22 and 18);
   buttons in Barlow 600.
-- **The homepage's hierarchy (2026-09-28).** It had 16 h2s at 48px and a final
-  title (72px) larger than the h1 (66px). Now three **chapter heads** — how
-  we work, what we engineer and the close (`.bf-head--chapter`, and
-  `.bf-final__title`) — are 36 / 48px on a phone and a tablet and
-  `clamp(48px, 4.4vw, 64px)` from 1025: 63px at 1440, 56 from 1273, and always
-  under the h1 (`clamp(52px, 4.6vw, 68px)`), so below 1273px they follow it
-  down rather than hold DECISIONS' 56 above it (48px at 1025, where the h1 is
-  52). Every other h2 on the homepage is 28 / 34 / 40px — the proof's too
-  ("Two products, two write-ups."): it shares the first screen with the h1 at
-  1440, and as a 60px chapter head it read as a second headline. The final
-  call to action's title is `clamp(40px, 4.4vw, 60px)` on every page, never
-  above that page's h1. Inner pages keep 48px h2s.
+- **The homepage's hierarchy (2026-09-28; the steps re-set 2026-09-29).** It
+  had 16 h2s at 48px and a final title (72px) larger than the h1 (66px). Now
+  three **chapter heads** — how we work, what we engineer and the close
+  (`.bf-head--chapter`, and on `/` the `.bf-final__title`) — are a clear step
+  under the h1 at every width, at most 0.72 of it: 32px on a phone (the h1
+  41–45), 44 on a tablet (64) and `clamp(48px, 3.9vw, 56px)` from 1025 (48
+  against 68 to 1232, 50 against 75 at 1280, 56 against 84 from 1436). Until
+  2026-09-29 they were 36 / 48 / `clamp(48px, 4.4vw, 64px)`: 63px at 1440
+  against a 66px h1, four headlines within 10% of each other (the design
+  review). Every other h2 on the homepage is 28 / 34 / 40px — the proof's too:
+  it shares the first screen with the h1 at 1440, and as a 60px chapter head
+  it read as a second headline. The final call to action's title is
+  `clamp(40px, 4.4vw, 60px)` on the inner pages, never above that page's h1.
+  Inner pages keep 48px h2s.
 - Jost for text: 16px on 1.65, leads 18 on 1.6, lines at most 62–68ch.
 - Machine values — figures, stack names, stage numbers — in Barlow 500 with
   `tabular-nums`.
@@ -1358,7 +1370,7 @@ at the end, which means nobody has decided yet.
   drawn at the band's height x 1.18 and never over 660px wide: `sizes` is
   660px from 768 up, and phones take the 660 file at every density. Contained, the
   poster's box is still the field's, which is all check 28 reads, and at 1025
-  it paints 467x396 against the h1's 420x98.
+  it paints 467x396 against the h1's 420x128 (its lines 412px wide).
   - **A re-rendered poster gets a new file name.** `/hero/*` is served
     `public, max-age=31536000, immutable` (`next.config.ts`, un-hashed /public
     assets): a browser that has the old file never asks again. The scene's
@@ -2510,7 +2522,7 @@ the hiring terms were only on /about, and "pilot" appeared nowhere on `/`.
 | The FAQ | four buyer objections first — who writes the code, the overlap, who owns the IP, can we start small — in words the site already publishes; "4–8 hours of overlap … Two-week" has its own exemption, since FAQPage carries it. "Can we start small?" ends at the pilot's terms ("Two weeks. Fixed price. Full IP. No obligation.") | `motion-hire/ia` |
 | /contact | the `.bf-project` class collision fixed; two columns from 1025px with the calendar in the first viewport, after the h1 on a phone; check 32 holds the form at 480px or wider at 1440. The panel's own Schedule a Call (a jump to the calendar beside it) went, and so did the calendar's blurb, "Or grab an open slot below…", whose "Or" answered it (a cut item in the inventory) | `motion-hire/ia` |
 | Mobile | no header Schedule a Call below 520px: it does not fit at 360 (measured, *Design language*); contextual primaries after the proof and after how we work instead — and, at the merge (2026-09-29, the lead designer), ONE more on phones only, after the ledger (`.bf-ledger6__cta`, ≤767px, `data-cta="schedule"` to /contact#schedule): how we work's and the final call's were 7,471px apart at 390; now 2,748 and 4,803 — 2,946 and 5,070 on the merged tree with the client-story band and Logistics (6,700, 9,646 and 14,716 down the page) — one primary in view at a time; no sticky bar. The proof's comes straight after the pair of write-ups, each a phone card of its outcome and result: 1,974px after the hero's at 390, where it was 4,667, and `#recent-work` 3,256px tall there (from 4,412; 3,796 with the client-story band, which puts the proof's call 4,142px above how we work's, from 3,601). The ledger shows no diagram below 768px, where its labels would fall under 13px | `motion-hire/ia` |
-| Hierarchy and rhythm | three chapter heads, `clamp(48px, 4.4vw, 64px)` from 1025 — 63px at 1440, inside DECISIONS' 56–64 from 1273, and under the h1 below that, where 56 would have put them above it — every other homepage h2 at 40px, the proof's included, since it shares the first screen with the h1; the final title never above the h1; chips at 12px/600; related sections' padding 80px on a desktop (DECISIONS' 64–80), 64 on a tablet and 56 on a phone, and 128px only above a chapter; 44px hit areas on the homepage's inline links, the hero's proof line at every width; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
+| Hierarchy and rhythm | three chapter heads, `clamp(48px, 4.4vw, 64px)` from 1025 — 63px at 1440, inside DECISIONS' 56–64 from 1273, and under the h1 below that, where 56 would have put them above it (re-set 2026-09-29 after the design review: the h1 68–84px from 1025 and 64 on a tablet, monotonic, and the chapter heads 48–56 / 44 / 32, at most 0.72 of it — *Type*) — every other homepage h2 at 40px, the proof's included, since it shares the first screen with the h1; the final title never above the h1; chips at 12px/600; related sections' padding 80px on a desktop (DECISIONS' 64–80), 64 on a tablet and 56 on a phone, and 128px only above a chapter; 44px hit areas on the homepage's inline links, the hero's proof line at every width; the hero's full-width hairline "false floor" removed | `motion-hire/ia` |
 | Honesty cleanup | NIdle Finishing's only proof link 301s to a bare PNG: removed, and the card held back until a working link exists (*Projects and attribution*). The rest of the brief's row 14 is the owner's | `motion-hire/ia` |
 
 **The motion system, "Signal"** (DECISIONS item 9; BRIEF §4; the MOTION
