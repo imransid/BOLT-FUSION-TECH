@@ -5696,7 +5696,7 @@ check(
       }
       if (r.fromY < 2000) F.push(`${at}: ${NAV_FROM} was left at scrollY ${r.fromY}, not deep in the page — the stale offset went untested; unsure is a failure`);
       if (r.firstY > 1 || r.maxY > 1)
-        F.push(`${at}: the new page's first frame is at scrollY ${r.firstY} (${NAV_FROM} was left at ${r.fromY}; the highest after it ${r.maxY}, 0 only after ${r.toZero < 0 ? "none of" : r.toZero} of ${r.frames} frames) — a client-side navigation starts the new page at its top at once: Next turns smooth scrolling off for a route change only under html[data-scroll-behavior="smooth"]`);
+        F.push(`${at}: the new page's first frame is at scrollY ${r.firstY} (${NAV_FROM} was left at ${r.fromY}; the highest after it ${r.maxY}; ${r.toZero < 0 ? `not at 0 in any of the ${r.frames} frames watched` : `at 0 only after ${r.toZero} of ${r.frames} frames`}) — a client-side navigation starts the new page at its top at once: Next turns smooth scrolling off for a route change only under html[data-scroll-behavior="smooth"]`);
       if (!r.ref.revealed) F.push(`${at}: a fresh load of / read down ran no reveal (${r.ref.total} marked) — the comparison proves nothing; unsure is a failure`);
       else if (r.nav.revealed < r.ref.revealed)
         F.push(`${at}: after the navigation, ${r.nav.revealed} of ${r.nav.total} reveals ran as / was read down, against ${r.ref.revealed} of ${r.ref.total} on a fresh load — the new page's reveals were judged at the old page's offset`);

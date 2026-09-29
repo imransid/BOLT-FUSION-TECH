@@ -2113,7 +2113,13 @@ rule's own finding — and each has its case in `scripts/gate/gate-cases.py`.
 **Checks changed in the motion fix pass (2026-09-29).** From the three
 adversarial reviews (design, honesty, engineering) of `redesign/motion-hire`.
 Each rule is proven both ways, and each has its case in
-`scripts/gate/gate-cases.py`.
+`scripts/gate/gate-cases.py`: on a clean copy of HEAD checks 21, 23, 24, 25,
+28, 29, 31, 34 and 35 and every probe check pass; on a copy with every case
+applied (one build, as RUN 2 builds it), all 34 cases of checks 25, 34, 35
+and the probe fail with their own findings, none of which the clean build
+has (`gate-expect.mjs`). `scene-lcp-only` reads the missing first frame
+(`never got data-scene-ready`), not a missing context: the misuse build
+carries cases that ask for WebGL contexts of their own.
 - **probe-scene: `watchdog` changed, `cadence` and `view` new.** `watchdog`'s
   slow frames now cost the scene 30ms of its own work each (the rAF interval
   alone no longer degrades anything), and a GPU clocked at 30ms a frame must

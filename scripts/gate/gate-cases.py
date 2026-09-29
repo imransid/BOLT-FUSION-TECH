@@ -612,7 +612,9 @@ CASES = [
     # new for the redesign (2026-09-16), one per new rule
     ["book-a-call", 'a "Book a call" label on the header button', 32, r"the header's primary button reads \"Book a call\" — it reads exactly \"Schedule a Call\"", p_book_a_call, {}],
     ["scene-coarse", "HeroScene allowed on a coarse pointer — a touch tablet gets WebGL (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): \d+ WebGL context request\(s\) — (?:[^;]*; )*webgl2 in the page", p_scene_coarse, {"needs": "scene"}],
-    ["scene-lcp-only", "the hero scene waits for an LCP entry alone — an input before the first paint, and it never starts (1440)", 25, r"^/ @1440 input before first paint: no WebGL context was created", p_scene_lcp_only, {}],
+    # its finding is the missing first frame, not a missing context: the
+    # misuse build carries cases that ask for WebGL contexts of their own
+    ["scene-lcp-only", "the hero scene waits for an LCP entry alone — an input before the first paint, and it never starts (1440)", 25, r"^/ @1440 input before first paint: \[data-hero-field\] never got data-scene-ready", p_scene_lcp_only, {}],
     ["scene-static", "the scene chunk imported statically — three.js in the initial JavaScript", 29, r"the scene chunk .* is requested at \d+ms, before the load event ended", p_scene_static, {"needs": "scene"}],
     ["scene-static-390", "the scene chunk imported statically — three.js requested at 390", 25, r"^/ @390\b[^:]*: requests .*a three\.js chunk", None, {"from": "scene-static", "needs": "scene"}],
     ["scene-hides-poster", "the poster display:none once the scene is ready (1440)", 28, r"@1440: after the settle the poster is not rendered \(display:none", p_scene_hides_poster, {"needs": "scene"}],
