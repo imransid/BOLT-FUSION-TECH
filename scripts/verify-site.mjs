@@ -1523,6 +1523,9 @@ function collectInPage() {
     const st = getComputedStyle(el);
     return r.width >= 24 && r.height >= 10 && st.clip === "auto" && (!st.clipPath || st.clipPath === "none");
   };
+  /* a screenshot is known by the file it SERVES — /projects/opt/<name>-<width>.<ext>
+     is <name> — not by an attribute the page could set to anything */
+  const shotName = (src) => src.replace(/^.*?\/projects\/(?:opt\/)?/, "").replace(/[?#].*$/, "").replace(/(?:-\d+)?\.(?:avif|webp|png|jpe?g)$/i, "");
   const cardRoots = new Set(document.querySelectorAll("[data-project-kind]"));
   if (location.pathname.replace(/\/$/, "") === "/work")
     for (const h of document.querySelectorAll("main h3, main h4")) {
@@ -1546,6 +1549,16 @@ function collectInPage() {
       builtAt: fact("[data-built-at]"),
       role: fact("[data-role]"),
       images: [...c.querySelectorAll("img")].map((i) => ({ src: srcOf(i).replace(location.origin, "").replace(/[&?]w=.*$/, ""), loaded: i.complete && i.naturalWidth > 0 })),
+      /* every project screenshot on the card, with the feature-screen figure
+         that holds it (2026-09-30) and that figure's caption, as a reader
+         sees it */
+      screens: [...c.querySelectorAll("img")]
+        .filter((i) => /\/projects\//.test(srcOf(i)))
+        .map((i) => {
+          const fig = i.closest("[data-feature-screen]");
+          const cap = fig ? fig.querySelector("figcaption") : null;
+          return { src: srcOf(i).replace(location.origin, ""), name: shotName(srcOf(i)), screen: Boolean(fig && c.contains(fig)), caption: cap ? { text: flat(cap), seen: readable(cap) } : null };
+        }),
       links: [...c.querySelectorAll("a[href]")].map((a) => ({ href: a.href, text: flat(a).slice(0, 40) })),
     };
   });
@@ -1555,10 +1568,8 @@ function collectInPage() {
      same — who built the systems it names — and the projects it names
      (`[data-story-project]`), each with its links; and, since the band shows
      them (2026-09-29, the design review), every project screenshot in it,
-     with the name of the member whose tile holds it. A screenshot is known
-     by the file it SERVES — /projects/opt/<name>-<width>.<ext> is <name> —
-     not by an attribute the page could set to anything. */
-  const shotName = (src) => src.replace(/^.*?\/projects\/(?:opt\/)?/, "").replace(/[?#].*$/, "").replace(/(?:-\d+)?\.(?:avif|webp|png|jpe?g)$/i, "");
+     with the name of the member whose tile holds it, known by the file it
+     serves (shotName, above). */
   const clientStoryBands = [...document.querySelectorAll("[data-client-story]")].map((band) => {
     const label = band.querySelector("[data-attribution]");
     return {
@@ -3996,8 +4007,21 @@ check(
    whole label is known: the client after "for", the employer after "at".
    A project with `scope: "features"` (decided 2026-09-16) is feature work inside
    another company's app: "features built by Bolt Fusion for ‹client›", never
-   "built by Bolt Fusion", and no screenshot. content/projects.ts is read raw,
-   so a product project carries no scope at all. */
+   "built by Bolt Fusion". content/projects.ts is read raw, so a product
+   project carries no scope at all. Its card never shows a view of the whole
+   app; since 2026-09-30 (the owner, with Bazzile's permission) it may show
+   its feature screens — each one of its `featureScreens`, in a captioned
+   figure whose visible caption names that screen's feature, one of the
+   features its role names (FEATURES_OF, below: the suite's own reading). */
+/* The features a role names: the list after its colon — "Features in the
+   React Native app: swipe-based browsing, Google Maps location matching and
+   Firebase real-time sync" names three, "Feature work in the React Native
+   app" none. Written here, not imported from content/schema.ts. */
+const FEATURES_OF = (role) => {
+  const r = String(role || "");
+  const colon = r.indexOf(":");
+  return colon < 0 ? [] : r.slice(colon + 1).split(/,\s*|\s+and\s+/).map((f) => f.trim()).filter(Boolean);
+};
 const ATTRIBUTION = {
   "case-study": { starts: "Case study: built by Bolt Fusion", full: (p) => `Case study: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}` },
   project: {
@@ -4080,8 +4104,35 @@ await (async () => {
         if (features && /built by Bolt Fusion/i.test(c.label.text) && !/\bfeatures\b/i.test(c.label.text))
           F.push(`${at(k)}: ${name} is feature work inside ${client}'s app, and its label says "built by Bolt Fusion" without "features" — it claims the whole app`);
       }
-      if (features && c.images.length)
-        F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${c.images[0].src}) — the app's UI belongs to the client, and showing it needs their permission`);
+      /* feature work's screenshots (2026-09-30): only its feature screens,
+         each captioned, where a reader sees it, with the feature it shows —
+         one its role names, and that screen's own in content/projects.ts.
+         Until then any screenshot on a feature-work card failed. */
+      if (features) {
+        const named = FEATURES_OF(entry?.role ?? c.role?.text);
+        const own = entry?.featureScreens || [];
+        const shotOf = (src) => String(src || "").replace(/^.*\//, "").replace(/\.(?:avif|webp|png|jpe?g)$/i, "");
+        for (const sh of c.screens || []) {
+          const mine = own.find((x) => shotOf(x.image?.src) === sh.name);
+          if (!sh.screen) {
+            F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${sh.src}) outside its feature screens — it shows only the screens where our features live, each in its captioned figure (data-feature-screen), never a view of the whole app`);
+            continue;
+          }
+          if (entry && !mine) {
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is not one of its feature screens in content/projects.ts (${own.map((x) => x.image?.src).join(", ") || "it has none"})`);
+            continue;
+          }
+          if (!sh.caption || !sh.caption.text || !sh.caption.seen) {
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} has no visible caption${sh.caption?.text ? ` (its caption "${sh.caption.text}" is not visible)` : ""} — each screen is captioned with the feature it shows`);
+            continue;
+          }
+          const says = named.filter((f) => sh.caption.text.toLowerCase().includes(f.toLowerCase()));
+          if (!says.length)
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is captioned "${sh.caption.text}", which names none of the features its role names (${named.map((f) => `"${f}"`).join(", ") || "it names none"})`);
+          else if (mine && !says.some((f) => f.toLowerCase() === String(mine.feature).trim().toLowerCase()))
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is captioned "${sh.caption.text}", and it is the screen of "${mine.feature}" in content/projects.ts`);
+        }
+      }
       /* what we built — on a track record, the engineer's role — and the employer */
       const fact = (f, what, wanted) => {
         if (!f || !f.text) return void F.push(`${at(k)}: ${name} (${c.kind}) does not name ${what}`);
@@ -4102,7 +4153,7 @@ await (async () => {
       if (c.kind === "case-study" && !writeups.length) F.push(`${at(k)}: ${name} is a case study and links to no write-up`);
       if (c.kind !== "case-study" && writeups.length) F.push(`${at(k)}: ${name} (${c.kind}) links to ${new URL(writeups[0].href).pathname} — only a case study has a write-up`);
       for (const l of c.links) if (!isSameSite(l.href) && !l.href.startsWith("https://")) F.push(`${at(k)}: ${name} links to ${l.href}, which is not https`);
-      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s), ${c.links.length} link(s)`);
+      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s)${features && (c.screens || []).length ? ` — feature screens: ${c.screens.map((x) => `${x.name} "${x.caption?.text ?? "no caption"}"`).join(", ")}` : ""}, ${c.links.length} link(s)`);
     }
     if (route === "/work" && projectsTs)
       for (const p of projectsTs) if (p.state === "published" && !shown.has(p.id)) F.push(`${at(k)}: "${p.name}" is published in content/projects.ts and has no card on /work`);
@@ -4162,7 +4213,7 @@ await (async () => {
   results.push({
     id: 9,
     title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
-    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot; a client story's band whose label is missing, hidden or not its client's, that names a project that is not that client's, or leaves one out, or that shows a screenshot outside its systems' tiles or another project's in one",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app (on /work and on the homepage's feature-work tile), or shown with a screenshot that is not one of its feature screens, or a feature screen without a visible caption naming its own feature, one its role names; a client story's band whose label is missing, hidden or not its client's, that names a project that is not that client's, or leaves one out, or that shows a screenshot outside its systems' tiles or another project's in one",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: [...new Set(I)],

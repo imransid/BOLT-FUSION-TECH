@@ -19,11 +19,16 @@ import { z } from "zod";
  *   (Bazzile Technology SA) and GodConnect Online (GodConnect LTD), delivered
  *   through Bolt Fusion as features inside those companies' apps. We did not
  *   build the apps, so the label is "features built by Bolt Fusion for …",
- *   never "built by Bolt Fusion". Text cards with their store links: the apps'
- *   UI is the clients', so no screenshot without their permission. GodConnect's
- *   role says only "feature work": the portfolio does not say which features
- *   were ours. Bazzile's "70,000 downloads" is the client's growth, not ours,
- *   and is not shown (check 30 fails it on /work).
+ *   never "built by Bolt Fusion". The apps' UI is the clients', so a card
+ *   never shows a generic screenshot of the app. Since 2026-09-30 (the owner,
+ *   with Bazzile's permission) Bazzile's card shows its feature screens — two
+ *   of its App Store screenshots, only the screens where our features live,
+ *   each captioned with its feature — and Google Play's public install band,
+ *   linked to the listing. GodConnect's role says only "feature work": the
+ *   portfolio does not say which features were ours, so it has no screens and
+ *   stays a text card. Bazzile's "70,000 downloads" and "15,000 active users"
+ *   are the client's growth, not ours, and are never shown (check 30 fails
+ *   them on / and /work).
  * - In-house: OPAL. The card uses a real screenshot of the live store. Its old
  *   asset, an AI-generated mockup banned by PLAN.md, was deleted on 2026-09-16
  *   so nothing can reuse it.
@@ -301,6 +306,44 @@ export const projects: Project[] = parseContent(
       status: "live",
       period: "Jan 2025 – Jul 2025",
       stack: ["React Native", "Firebase", "Redux-Saga", "Reanimated", "NestJS"],
+      /* The owner, 2026-09-30: "Yes, show our feature screens" — Bazzile's own
+         App Store (FR) screenshots, only the two where our features live (the
+         listing-detail and favourites screens are not features we claim, and
+         the fifth shows a face). Each is cropped to the phone's screen: the
+         store image's pink ground, French headline and drawn phone are
+         Bazzile's marketing around it. */
+      featureScreens: [
+        {
+          feature: "swipe-based browsing",
+          caption: "Swipe-based browsing",
+          image: {
+            src: "/projects/bazzile-swipe-browsing.webp",
+            alt: "Bazzile's swipe browsing, from its App Store screenshots: a listing card over the map, with dismiss and like buttons beneath it — a feature Bolt Fusion built",
+            width: 880,
+            height: 1760,
+          },
+        },
+        {
+          feature: "Google Maps location matching",
+          caption: "Google Maps location matching",
+          image: {
+            src: "/projects/bazzile-map-matching.webp",
+            alt: "Bazzile's map, from its App Store screenshots: listings pinned by price across Paris, with the matched listing's card below — the Google Maps location matching Bolt Fusion built",
+            width: 880,
+            height: 1760,
+          },
+        },
+      ],
+      /* The owner, 2026-09-30: "Google Play's public count" — the install band
+         the Play listing shows (read that day: "100K+ Downloads"), the app's
+         reach and not a claim about our work. The owner's own 70,000 and
+         15,000 stay off the site. */
+      publicStat: {
+        text: "100K+ downloads on Google Play",
+        href: "https://play.google.com/store/apps/details?id=com.bazzile.app",
+        source: "The whole app’s install count on its Google Play listing — its reach, not a measure of our features",
+        read: "2026-09-30",
+      },
       links: [
         { label: "App Store", href: "https://apps.apple.com/fr/app/bazzile/id1622224603" },
         { label: "Google Play", href: "https://play.google.com/store/apps/details?id=com.bazzile.app" },
@@ -412,6 +455,17 @@ export const projectSections: ProjectSection[] = parseContent(
   ],
   "projects.ts (sections)",
 );
+
+/** Feature work's own words (2026-09-30): /work's section — straight after
+ *  the client stories, Bazzile first and featured with its screens — and the
+ *  homepage's tile in the proof. The title is the sub-group heading /work
+ *  has carried since 2026-09-16. Never "built by": the apps are the clients'. */
+export const featureWork = {
+  id: "feature-work",
+  eyebrow: "Feature work",
+  title: "Features we shipped into other companies’ apps",
+  intro: "Features we built inside apps other companies own. The apps are theirs: each card names the company and only the features that were ours.",
+} as const;
 
 /* ── client stories (2026-09-29) ─────────────────────────────────────────── */
 

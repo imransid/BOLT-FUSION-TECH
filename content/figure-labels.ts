@@ -138,6 +138,13 @@ const labels: FigureLabel[] = [
   /* /work's feature work (content/projects.ts) and the llms files: GodConnect
      Online's years, a span of years joined by a spaced dash. */
   { text: "2023 – 2024", exempt: "The years Bolt Fusion shipped feature work into GodConnect LTD's GodConnect Online app: a date range, not a performance claim" },
+  /* Bazzile's public install band (the owner, 2026-09-30: "Google Play's
+     public count"), on /work's card, the homepage's feature-work tile and the
+     llms files — content/projects.ts, `publicStat`, linked to the listing. */
+  {
+    text: "100K+ downloads on Google Play",
+    exempt: "The install band Google Play publicly shows for Bazzile Technology SA's app, read off its store listing on 2026-09-30: the reach of the client's whole app, not a measurement of the features Bolt Fusion built",
+  },
 
   /* /work/warmchats — hardcoded in its component; the copy lock yields to the label rule. */
   { text: "follows up 24/7", status: "target", source: WARMCHATS },

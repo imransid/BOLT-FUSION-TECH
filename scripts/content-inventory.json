@@ -161,6 +161,18 @@
           "came back"
         ]
       }
+    ],
+    "bazzile-cuts": [
+      {
+        "item": "Bazzile's download and user figures",
+        "proves": "Nothing about us: the client's growth, not Bolt Fusion's work (owner, 2026-09-16 and 2026-09-30)",
+        "status": "cut",
+        "cut": "the owner, 2026-09-16: Bazzile's 70,000 downloads are the client's growth, not ours — never shown; and 2026-09-30: its 70,000 downloads and 15,000 active users in France stay off the site, which shows only Google Play's public count",
+        "needles": [
+          "70,000",
+          "15,000 active users"
+        ]
+      }
     ]
   },
   "routes": {
@@ -876,6 +888,7 @@
           "The systems, and how they were built.",
           "Two write-ups so far. Each one covers the actual architecture —",
           "Then the four systems we built end to end for TTouch Clothing, all four live.",
+          "Then the features we shipped into other companies’ apps.",
           "Below them: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
         ]
       },
@@ -990,15 +1003,21 @@
         ]
       },
       {
-        "item": "Bolt Fusion feature work: Bazzile, GodConnect Online",
-        "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion",
+        "item": "Bolt Fusion feature work: Bazzile, featured with its screens, and GodConnect Online",
+        "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion. Since 2026-09-30 (the owner) its own section straight after the client story, /work#feature-work: Bazzile first, with the two screens where our features live, each captioned with its feature, and Google Play's public install band with its source; GodConnect Online, whose role names no features, a text card",
         "status": "required",
         "needles": [
+          "Feature work",
           "Features we shipped into other companies’ apps",
+          "Features we built inside apps other companies own. The apps are theirs: each card names the company and only the features that were ours.",
           "Bazzile",
           "Delivered project: features built by Bolt Fusion for Bazzile Technology SA",
           "A Swiss real-estate marketplace app based in Geneva: listings come only from professional agencies, are ranked by an AI matching model, and sync with most agency CRMs.",
           "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+          "Swipe-based browsing",
+          "Google Maps location matching",
+          "100K+ downloads on Google Play",
+          "The whole app’s install count on its Google Play listing — its reach, not a measure of our features. Read 30 September 2026.",
           "Jan 2025 – Jul 2025",
           "App Store",
           "Redux-Saga",
@@ -1012,14 +1031,7 @@
         ]
       },
       {
-        "item": "Bazzile's download and user figures",
-        "proves": "Nothing about us: the client's growth, not Bolt Fusion's work (owner, 2026-09-16)",
-        "status": "cut",
-        "cut": "the owner, 2026-09-16: Bazzile's 70,000 downloads are the client's growth, not ours — never shown",
-        "needles": [
-          "70,000",
-          "15,000 active users"
-        ]
+        "include": "bazzile-cuts"
       },
       {
         "item": "In-house products: OPAL",

@@ -81,7 +81,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 | `/about` | who we are; the team (the Team section: 15+ developers, no one named, no Person node — on the homepage since 2026-09-28 only its headcount, in how we work); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
 | `/insights` | the index of the articles | `content/insights.ts`, `content/pages.ts` · static |
 | `/insights/[slug]` | an article (`generateStaticParams`, `dynamicParams = false`): the sections in reading order, code in Barlow 500, each "diagram" an ordered flow, related work; Article JSON-LD | `content/insights.ts` · SSG |
-| `/work` | every approved project, labelled by who built it: the write-ups, then TTouch Clothing's four systems as a client story in its own section (`#ttouch-clothing`, since 2026-09-29; its own h2 since fix pass B), Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
+| `/work` | every approved project, labelled by who built it: the write-ups, then TTouch Clothing's four systems as a client story in its own section (`#ttouch-clothing`, since 2026-09-29; its own h2 since fix pass B), then the feature work in its own section (`#feature-work`, since 2026-09-30: Bazzile featured with the screens where our features live, GodConnect Online a text card), Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
@@ -186,7 +186,15 @@ fails `next build` with the file named:
   (`clientStories`, 2026-09-29: a title and an intro; its members are computed
   from `client`, never stored) and refuses one with fewer than two members, a
   count in its words that is not its member count, or "live" said of a set
-  whose members are not all live (the gate's RUN 3, cases h–j).
+  whose members are not all live (the gate's RUN 3, cases h–j). Since
+  2026-09-30 a feature-work project may carry `featureScreens` and a
+  `publicStat` (*Projects and attribution*); the schema refuses a screen whose
+  feature is not one of the features its role names (case l), a screen whose
+  caption does not name its feature — a missing caption included (m) —
+  feature screens on a project that is not feature work or whose role names
+  no features (n: GodConnect Online), a generic `image` on feature work (o),
+  and a public figure that is not read off one of the project's own listings
+  and named by it (p).
   `services.ts` (the engagement models) and `pilot.ts` (which carries COPY.md
   §7's title and body since 2026-09-16) left the homepage on 2026-09-16 and
   render on /about — and, since 2026-09-28, in the homepage's how we work too; `process.ts`'s three steps gave way to the six stages on the
@@ -241,7 +249,7 @@ does not state.
 |---|---|---|---|---|
 | `case-study` | a Bolt Fusion project with a write-up here: WarmChats, restaurant search | "Case study: built by Bolt Fusion [for ‹client›]" | its write-up (required), and the live product | a real screenshot |
 | `project` | a Bolt Fusion delivery: FanLock, Balanzify, Go Style Business, and TTouch Clothing's four systems — Delivery Lens BD, TTouch Wholesale, Sudarshini, TTouch Employee Verification (2026-09-29) | "Delivered project: built by Bolt Fusion [for ‹client›]" | the live product, or none | a real screenshot of the live site |
-| `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **none** — the app's UI is the client's |
+| `project`, `scope: "features"` | features Bolt Fusion built inside an app another company owns: Bazzile (Bazzile Technology SA), GodConnect Online (GodConnect LTD) | "Delivered project: features built by Bolt Fusion for ‹client›" — never "built by Bolt Fusion" | its store listings | **never a generic screenshot** — the app's UI is the client's. Since 2026-09-30, with the client's permission, its **feature screens**: only the screens where our features live, each tied to a feature its role names and captioned with it (Bazzile's two; GodConnect's role names none, so it has none) |
 | `in-house` | a product we built for ourselves: OPAL | "In-house product: our own, not built for a client" | the live product, or none | a real screenshot of the live site |
 | `track-record` | work one of our engineers shipped at a previous employer: Go Smart (Brain Station 23); NIdle Finishing (Intellier) is held back (below) | "Track record: built by our engineer at ‹employer›, not by Bolt Fusion" | store listings and public proof | **none** — the product is someone else's |
 
@@ -294,22 +302,64 @@ does not state.
   companies' apps. We did not build those apps, so their label is "features
   built by Bolt Fusion for ‹client›", never "built by Bolt Fusion", which would
   claim the whole app. `scope: "features"` is allowed on kind `project` only
-  (left out, it is `"product"`). The schema requires its `client` and refuses
-  an image: the app's UI belongs to the client, and a screenshot needs their
-  permission, which is a separate decision. It may be published without the
-  screenshot a product project needs, as a text card with its store links. Its
-  role names only features the portfolio says were ours: Bazzile's three, and
-  for GodConnect just "Feature work in the React Native app", because the
-  portfolio does not say which features were ours. Bazzile's "70,000
-  downloads" is the client's growth, not ours. It is never shown, and check 30
-  fails it on /work.
+  (left out, it is `"product"`). The schema requires its `client`. It may be
+  published without the screenshot a product project needs, as a text card
+  with its store links. Its role names only features the portfolio says were
+  ours: Bazzile's three, and for GodConnect just "Feature work in the React
+  Native app", because the portfolio does not say which features were ours.
+- **Its screens: only where our features live (owner, 2026-09-30; *Decided
+  2026-09-30*).** Until 2026-09-30 the schema refused any image on feature
+  work — "a screenshot needs their permission, which is a separate decision".
+  The owner made that decision for Bazzile ("Yes, show our feature screens"),
+  and the blanket refusal became a precise rule. A feature-work card still
+  never shows a generic `image` — a view of the whole app claims all of it
+  (the schema refuses one, RUN 3 case o) — but it may carry `featureScreens`:
+  the client's own published screenshots of ONLY the screens where our
+  features live, each tied to one feature its role names (`roleFeatures` in
+  `content/schema.ts`: the list after the role's colon) and captioned with
+  it. The schema refuses a screen for a feature the role does not name (case
+  l), a caption that does not name its feature, an empty or missing one
+  included (m), and feature screens on a project whose role names no features
+  or that is not feature work (n) — so GodConnect Online, whose role names
+  none, has no screens and stays a text card. Bazzile's two are its App Store
+  (FR) screenshots "Une multitude d'offres" (the swipe cards, with the dismiss
+  and like buttons: swipe-based browsing) and "Une carte interactive" (the map
+  with price pins: Google Maps location matching), cropped to the phone's
+  screen — the store image's pink ground, French headline and drawn phone are
+  Bazzile's marketing around it (cut inside the measured bezel — 888x1776 at
+  199,637 of the swipe image and 928x1856 at 179,600 of the map's, both
+  1290x2796 — and scaled to 880x1760, 1:2). The listing-detail and favourites
+  screenshots are not features we claim, and the fifth shows a face; none of
+  them is used. Their alt text says what each screen shows, that it is from
+  Bazzile's App Store screenshots, and that the feature is one Bolt Fusion
+  built — and carries no figure (check 8 reads alt text).
+- **Its public figure: the store's count, never ours (owner, 2026-09-30).**
+  Bazzile's card shows "100K+ downloads on Google Play" — the install band the
+  Play listing shows (read 2026-09-30), the reach of the client's whole app,
+  not a claim about our work — as `publicStat`: its text, the listing it is
+  read off (one of the project's own `links`, and named in the text; the
+  schema refuses one that is not, case p), what it counts ("The whole app’s
+  install count on its Google Play listing — its reach, not a measure of our
+  features") and the day it was read. The figure and its source are one link
+  to the listing (`PublicStat` in `components/site/FeatureScreens.tsx`), in a
+  neutral hairline box, never a shipped/target chip or colour. Check 8 passes
+  it through a per-instance exemption in `content/figure-labels.ts` whose
+  reason says it is the store's public install band for the client's app, not
+  a measurement of Bolt Fusion's work — never by category. The owner's own
+  figures — "passed 70,000 downloads in France in twelve months, with around
+  15,000 active users there" — are the client's growth, not ours, and never
+  appear: check 30's `bazzile-cuts` set fails "70,000" and "15,000 active
+  users" on /work.
 - **The label sits directly above the project's name on every card,** the
   case-study rows included, in the brand blue — never a shipped/target colour.
   Verify-site check 9 holds its own copy of the labels and fails a card on
   /work whose label is missing, hidden, somewhere else or not its kind's; a
   track-record card without its employer and role, or with a screenshot; a
   feature-work card whose label says "built by Bolt Fusion" without "features",
-  or that shows any screenshot; a card not in `projects.ts`, or a published
+  or that shows a screenshot outside its captioned
+  feature screens, a feature screen that is not one of its own, or one
+  without a visible caption naming its own feature, one its role names (until
+  2026-09-30: any screenshot at all); a card not in `projects.ts`, or a published
   project with no card; a card image that does not load; and a card that is not
   a case study linking to a write-up. It reads an h3 on /work as a group's
   heading, not a card's, when the h3's parent holds the cards.
@@ -331,7 +381,10 @@ does not state.
   sign-in page. Its first capture, a product page's details panel cropped
   from DPR 3, was about 2.5 times the other three's scale and showed a price
   and a SKU, which its alt text read out (the design and honesty reviews);
-  it was never deployed, and its files are deleted. Never a
+  it was never deployed, and its files are deleted. Bazzile's two feature
+  screens (2026-09-30) are the one exception to "captured from the live
+  site": they are the client's own App Store screenshots, used with its
+  permission, cropped to the phone's screen (above). Never a
   mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
   2026-09-16.
 - **/work is a section per kind,** in `projectSections` order, **and a section
@@ -344,11 +397,28 @@ does not state.
   from its members, and "all … live" only while every one is), then "Below
   them: the other products…". The track-record section says what it means:
   "Work our engineers shipped at previous employers — credited to them, not
-  claimed as ours." Inside Bolt Fusion projects the product cards not in a
-  story come first. Under them is a sub-group headed
-  by its own h3, "Features we shipped into other companies’ apps", whose cards
-  have h4 names so the outline nests. Every card carries its project's id, so
-  evidence links land on the card itself (`/work#sudarshini`). Every grid, that one included, fills
+  claimed as ours." Bolt Fusion projects shows the product cards not in a
+  story. **The feature work is its own section straight after the client
+  stories** (2026-09-30, the owner: "add this project with screen shot best
+  highlight way"; until then an h3 sub-group at the foot of Bolt Fusion
+  projects, with h4 names): `.bf-featwork`, anchored at `/work#feature-work`,
+  the eyebrow "Feature work", the h2 "Features we shipped into other
+  companies’ apps" and its intro ("Features we built inside apps other
+  companies own. The apps are theirs: each card names the company and only
+  the features that were ours.") beside it from 1025px, as the client story's
+  head is. Then each feature-work project with screens as a featured card
+  (`.bf-feat`, full width): its two screens on the ground beside the text —
+  half and half from 1025px, 5:7 from 768px, over the text on a phone — each a
+  phone's screen in a fixed 1:2 frame (a black bezel and a hairline ring: the
+  one rounded object on the site, because it is a phone), the second set
+  lower, over its caption; then the label, the name (an h3), the summary, the
+  public figure, what we built, the status, the dates, the stack and the store
+  links. The page head's lede says "Then the features we shipped into other
+  companies’ apps." after the client story's sentence. Under the featured
+  card the text cards (GodConnect Online), a lone one with its facts beside its
+  words from 1025px. Every card carries its project's id, so
+  evidence links land on the card itself (`/work#sudarshini`, `/work#bazzile`).
+  Every grid fills
   its rows: three across from 1025px, two across from 768px, one on phones; a
   set that divides by neither is one column, and a card alone lays its
   screenshot beside its text.
@@ -727,8 +797,12 @@ needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
   `.bf-eyebrow` / `.bf-h2` / `.bf-h4` / `.bf-lead`, `.bf-head--chapter`,
   `.bf-actions`, `.bf-btn--*`, `.bf-cap6` (a ledger row), `.bf-hww` (how we
   work's spec sheet), `.bf-inds` (a ruled grid), `.bf-clientband` (a client
-  story on the homepage), `.bf-subgroup` (/work's feature-work
-  sub-group), `.bf-clientstory` (/work's client-story section), `.bf-stages` (a rail), `.bf-strata`,
+  story on the homepage), `.bf-clientstory` (/work's client-story section),
+  `.bf-featwork` / `.bf-feat` (/work's feature-work section and its featured
+  card, 2026-09-30; `.bf-subgroup`, the sub-group it replaced, went),
+  `.bf-screens` /
+  `.bf-screen` (feature screens, in `components/site/FeatureScreens.tsx`, with
+  `PublicStat`'s `.bf-pubstat`), `.bf-stages` (a rail), `.bf-strata`,
   `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
   `.bf-pagehead` (a page's h1 block), `.bf-prose` (an article, the privacy
   policy), `.bf-form` / `.bf-field`, the `data-bf-reveal` / `data-bf-flow`
@@ -757,7 +831,7 @@ the write-ups — then the footer. No light bands, no navy panels.
 | `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
 | `/insights` | page head · the articles as a ledger (date, author, title, dek, capabilities) · final call to action |
 | `/insights/[slug]` | page head (back link, h1, dek, author, date) · the sections in reading order, beside related work, capabilities and more insights · final call to action |
-| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · the client story (since fix pass B, 2026-09-29, its own section: "Client story", the h2 "Four systems for TTouch Clothing" and its intro over four h3 cards, two across, at `#ttouch-clothing`) · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
+| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · the client story (since fix pass B, 2026-09-29, its own section: "Client story", the h2 "Four systems for TTouch Clothing" and its intro over four h3 cards, two across, at `#ttouch-clothing`) · the feature work (since 2026-09-30 its own section, `#feature-work`: "Feature work", the h2 and its intro, Bazzile's featured card with its two screens beside the text, GodConnect Online's text card) · Bolt Fusion projects (three cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
 | `/work/warmchats` | page head with the screenshot · executive summary and the numbers · how it works · the product · architecture beside the full stack · outcome · call to action and the sign-off |
 | `/work/restaurant-search` | page head with the system image · executive summary and the KPIs · the three lanes · the stack beside the bounded contexts · call to action |
 | `/privacy-policy` | page head with the date · the policy as legal prose |
@@ -774,10 +848,12 @@ the write-ups — then the footer. No light bands, no navy panels.
 - **/work's contract with check 9 is unchanged:** every card is an `<li>` marked
   `data-project-kind` (`-scope`, `-id`), and since 2026-09-29 carrying its
   project's `id`; its `[data-attribution]` label, in the
-  brand blue, is directly followed by its name (an h3, or an h4 under the
-  feature work's sub-group h3); `data-role`, `data-built-at` and
-  `data-project-status` sit on the facts; each figure is a `[data-metric]` row
-  with its own chip; and no other h3 or h4 is on the page. Grids fill their rows:
+  brand blue, is directly followed by its name (an h3; the feature work's
+  sub-group h3 and its h4 names went on 2026-09-30); `data-role`,
+  `data-built-at` and `data-project-status` sit on the facts; each figure is a
+  `[data-metric]` row with its own chip; a feature-work card's screenshots are
+  its `[data-feature-screen]` figures, each over its caption; and no other h3
+  or h4 is on the page. Grids fill their rows:
   three across from 1025px; a set of two, two across from 768px; a set of three,
   and a lone card, one to a row from 768px (a lone card at every width above
   that) with the screenshot beside the text; one column on phones.
@@ -1663,7 +1739,11 @@ at the end, which means nobody has decided yet.
   four unlabelled figures in the architecture lanes survived because check 8
   only saw standalone figures. Check 8 now reads every figure in the visible
   text: each carries its own chip, or is a spec or term exempted per instance
-  with its own reason — never by category.
+  with its own reason — never by category. A public figure about a client's
+  app is exempted the same way, per instance: Bazzile's "100K+ downloads on
+  Google Play" (2026-09-30) is the store's public install band for the
+  client's whole app, linked to its listing, not a measurement of our work
+  (*Projects and attribution*).
   Enforced at build time in `/content/metrics.ts`, by the site-content schema
   for the case-study KPIs, by the KPI type in the WarmChats component, and by
   `content/figure-labels.ts` for in-sentence labels and exemptions. *Holds* on
@@ -1920,7 +2000,7 @@ plugin by `(x=window.gsap)&&x.registerPlugin`, the engine by `data-bf-signal`.
 runs every check with `--repo` (36 since fix pass B, 2026-09-29): every failing finding is real. RUN 2 applies
 every misuse case to another copy in one build; each must fail its own check
 with its own finding, and that finding must not already be on RUN 1's report —
-a pattern that matches the clean build proves nothing. RUN 3 builds eleven
+a pattern that matches the clean build proves nothing. RUN 3 builds sixteen
 kinds of bad content — a figure KPI with no status, a capability KPI with one,
 an exemption with an empty reason, a capability tier outside proven, core,
 capable and lab, a named roster put back in the team (2026-09-24), since
@@ -1928,7 +2008,8 @@ capable and lab, a named roster put back in the team (2026-09-24), since
 named on the hero's proof line, and since 2026-09-29 a client story with one
 member, one whose title's count is wrong, and one that says it is live while
 a member is not, and since fix pass B a capability's `workScope` set to its
-first tier's scope — and requires the schema's own refusal in the
+first tier's scope, and since 2026-09-30 five for feature work's screens and
+its public figure (cases l–p, below) — and requires the schema's own refusal in the
 build log: a build that fails for another reason is unsure. The suite's `--only` list for RUN 2 is
 derived from the case table: a hand-written list once omitted check 9, and its
 case could not fail. A case whose target does not exist yet names the wave that
@@ -2314,6 +2395,49 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   bring the run back under the limit — the ledger's alone makes it 5),
   `header-loud` (the header's call never steps down) and `footer-filled`
   (the footer's filled again). The gate expects 36 checks.
+
+**Checks changed for Bazzile's feature screens (2026-09-30).** The owner
+allowed the screens where our features live and Google Play's public count
+(*Decided 2026-09-30*), so the rule that failed any screenshot on a
+feature-work card became a precise one. Each rule is proven both ways — the
+working tree passes; a copy with every case applied (one build, as RUN 2
+builds it) fails each with its own finding, none of which the clean build has
+(`gate-expect.mjs`) — and each has its case in `scripts/gate/gate-cases.py`.
+The old rule had no case, so none is retired.
+- **9, changed — feature screens, not no screenshots.** On a feature-work
+  card (by `content/projects.ts` or its own marker), every project
+  screenshot must sit in a `[data-feature-screen]` figure (else "shows a
+  screenshot … outside its feature screens"), be one of its project's
+  `featureScreens`, known by the file it serves (else "is not one of its
+  feature screens in content/projects.ts"), and have a visible caption (else
+  "has no visible caption", with "(its caption … is not visible)" when it is
+  there but hidden) that names one of the features its role names — the
+  suite's own reading, `FEATURES_OF`: the list after the role's colon (else
+  "names none of the features its role names") — and that screen's own
+  feature (else "and it is the screen of …"). RUN 2: `feat-generic` (a
+  screenshot of the app outside the figures on /work's card),
+  `feat-cap-words` and `feat-cap-swapped` (one patch: /work's swipe screen
+  captioned "Listing details", its map screen "Swipe-based browsing").
+- **8, unchanged, and its case** — "100K+ downloads on Google Play" passes
+  only through its per-instance exemption in `content/figure-labels.ts`
+  (the store's public install band for the client's app, not a measurement
+  of our work), on /work. RUN 2:
+  `pubstat-bare` (the figure rendered without `<FigureText>`): '"100K+" has no
+  shipped/target label'.
+- **30** — the `bazzile-cuts` set ("70,000", "15,000 active users"), cut on
+  /work since 2026-09-16; /work's feature-work item holds the new needles
+  (the section's words, the captions, the figure and its source line), and
+  its page head the new lede sentence.
+- **The build, five new refusals (RUN 3)** in `content/projects.ts`, each in
+  the schema's words: (l) Bazzile's swipe screen tied to "listing detail
+  pages" — "is for "listing detail pages", which is not one of the features
+  its role names"; (m) the map screen's caption left out — "is captioned "",
+  which does not name its feature"; (n) feature screens on GodConnect Online
+  — "carries feature screens, and its role names no features"; (o) a generic
+  `image` on Bazzile — "a generic screenshot of the app claims all of it";
+  (p) the Google Play figure linked to the App Store listing — "its "App
+  Store" listing, which the figure does not name". Each proven by loading the
+  patched content with the real zod.
 
 **Anything triggered by entering the viewport** — lazy images, web-font loads,
 reveals, count-ups — must be measured on a fresh page scrolled at reading

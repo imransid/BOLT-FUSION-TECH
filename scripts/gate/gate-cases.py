@@ -598,6 +598,31 @@ def p_scene_share(s):
         "export default function VsSceneShare() {\n  useEffect(() => {\n    const t = setTimeout(() => void import(\"./VsSceneShareMod\"), 1500);\n    return () => clearTimeout(t);\n  }, []);\n  return null;\n}\n"))
 
 
+# ── new for Bazzile's feature screens (2026-09-30), one per new rule ──────
+
+WORK = "app/work/page.tsx"
+
+
+def p_feat_generic(s):
+    """9: a generic screenshot of the app on Bazzile's /work card, outside its
+    captioned feature screens"""
+    s.rep(WORK, '      <div className="bf-feat__media">\n',
+          '      <div className="bf-feat__media">\n        <ScreenImage src="/projects/bazzile-swipe-browsing.webp" alt="" sizes="300px" />\n')
+
+
+def p_feat_captions(s):
+    """9: /work's feature screens captioned wrong — the swipe screen with no
+    feature of the role ("Listing details"), the map screen with the swipe
+    screen's feature"""
+    s.rep(WORK, '        <FeatureScreens p={p} sizes=',
+          '        <FeatureScreens p={{ ...p, featureScreens: p.featureScreens.map((x, i) => ({ ...x, caption: i === 0 ? "Listing details" : "Swipe-based browsing" })) }} sizes=')
+
+
+def p_pubstat_bare(s):
+    """8: the public figure rendered without its exemption"""
+    s.rep("components/site/FeatureScreens.tsx", "        <FigureText text={s.text} />\n", "        {s.text}\n")
+
+
 # ── the table: [key, the case, its check, the finding it must print (a JS
 #    regex), its patch (None: the finding comes from the named case's patch),
 #    options] ─────────────────────────────────────────────────────────────────
@@ -708,6 +733,11 @@ CASES = [
     ["header-loud", "the header's Schedule a Call never steps down — two primaries on the first screen (1440)", 36, r"^/ @1440: two primary Schedule a Calls in one view at scrollY 0 \(scrolling down\) — [^—]*the header's", p_header_loud, {}],
     ["footer-filled", "the footer's Schedule a Call filled again — two primaries at the end of the page", 36, r"^/ @(?:1440|390): two primary Schedule a Calls in one view at scrollY \d+ \(scrolling (?:down|up)\) — [^—]*the footer's", p_footer_filled, {}],
     ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
+    # new for Bazzile's feature screens and its public install count (2026-09-30), one per new rule
+    ["feat-generic", "a generic screenshot of Bazzile's app on its /work card, outside its feature screens", 9, r'^/work @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app and shows a screenshot \(/projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp)\) outside its feature screens', p_feat_generic, {}],
+    ["feat-cap-words", "a /work feature screen captioned with no feature its role names (\"Listing details\")", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp) is captioned "Listing details", which names none of the features its role names', p_feat_captions, {}],
+    ["feat-cap-swapped", "a /work feature screen captioned with the other screen's feature (the map as swipe browsing)", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-map-matching-\d+\.(?:avif|webp) is captioned "Swipe-based browsing", and it is the screen of "Google Maps location matching"', None, {"from": "feat-cap-words"}],
+    ["pubstat-bare", "Bazzile's Google Play figure without its exemption", 8, r'"100K\+" has no shipped/target label', p_pubstat_bare, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
@@ -901,6 +931,43 @@ def b_j(s):
     s.rep("content/projects.ts", '      client: "TTouch Clothing",\n      status: "live",\n      stack: ["Next.js", "Node.js"],\n', '      client: "TTouch Clothing",\n      status: "in-production",\n      stack: ["Next.js", "Node.js"],\n')
 
 
+def b_l(s):
+    """(l) a feature screen for a feature its role does not name: Bazzile's
+    swipe screen tied to "listing detail pages" (2026-09-30: only the screens
+    where our features live, each one of the role's features)"""
+    s.rep("content/projects.ts", '          feature: "swipe-based browsing",\n          caption: "Swipe-based browsing",\n', '          feature: "listing detail pages",\n          caption: "Listing detail pages",\n')
+
+
+def b_m(s):
+    """(m) a feature screen with no caption: the map screen's left out
+    (2026-09-30: each screen is captioned with its feature)"""
+    s.rep("content/projects.ts", '          caption: "Google Maps location matching",\n', "")
+
+
+def b_n(s):
+    """(n) feature screens on a card whose role names no features: GodConnect
+    Online, "Feature work in the React Native app" (2026-09-30: a screen is
+    tied to one of the features the role names, and this one names none)"""
+    s.rep("content/projects.ts", '      role: "Feature work in the React Native app",\n',
+          '      role: "Feature work in the React Native app",\n      featureScreens: [{ feature: "community groups", caption: "Community groups", image: { src: "/projects/bazzile-map-matching.webp", alt: "A screen of the GodConnect Online app for this case", width: 880, height: 1760 } }],\n')
+
+
+def b_o(s):
+    """(o) a generic screenshot on a feature-work card: Bazzile given an
+    `image` (2026-09-30: the screens where our features live, never a view of
+    the whole app)"""
+    s.rep("content/projects.ts", "      publicStat: {\n",
+          '      image: { src: "/projects/bazzile-swipe-browsing.webp", alt: "The Bazzile app, as a generic screenshot for this case", width: 880, height: 1760 },\n      publicStat: {\n')
+
+
+def b_p(s):
+    """(p) Bazzile's public figure linked to its App Store listing while it
+    says Google Play (2026-09-30: read off one of its own listings, and it
+    says which)"""
+    s.rep("content/projects.ts", '        href: "https://play.google.com/store/apps/details?id=com.bazzile.app",\n        source:',
+          '        href: "https://apps.apple.com/fr/app/bazzile/id1622224603",\n        source:')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
@@ -916,6 +983,12 @@ BAD = [
     ["j", "a client story that says it is live while a member is in production", "content/projects.ts", b_j, [r"its intro says the set is live, and Delivery Lens BD is not"]],
     # new at fix pass B (2026-09-29), one per new build-time rule
     ["k", "POS's linked work scoped to its first tier (point of sale), which it does not evidence", "content/engineering.ts", b_k, [r"engineering\.ts failed validation", r"POS & commerce.{1,2}: workScope .{1,2}Point of sale.{1,2} is not the scope of one of its later tiers"]],
+    # new for Bazzile's feature screens and its public install count (2026-09-30), one per new build-time rule
+    ["l", "a feature screen for a feature Bazzile's role does not name (listing detail pages)", "content/projects.ts", b_l, [r"projects\.ts failed validation", r"the screen /projects/bazzile-swipe-browsing\.webp is for .{1,2}listing detail pages.{1,2}, which is not one of the features its role names"]],
+    ["m", "a feature screen with no caption (Bazzile's map)", "content/projects.ts", b_m, [r"projects\.ts failed validation", r"the screen /projects/bazzile-map-matching\.webp is captioned .{1,4}, which does not name its feature"]],
+    ["n", "feature screens on GodConnect Online, whose role names no features", "content/projects.ts", b_n, [r"projects\.ts failed validation", r"GodConnect Online.{1,2} carries feature screens, and its role names no features"]],
+    ["o", "a generic screenshot on a feature-work card (Bazzile)", "content/projects.ts", b_o, [r"projects\.ts failed validation", r"Bazzile.{1,2} is feature work inside Bazzile Technology SA's app: a generic screenshot of the app claims all of it"]],
+    ["p", "Bazzile's Google Play figure linked to its App Store listing", "content/projects.ts", b_p, [r"projects\.ts failed validation", r"its public figure .{1,2}100K\+ downloads on Google Play.{1,2} links to https://apps\.apple\.com/fr/app/bazzile/id1622224603, its .{1,2}App Store.{1,2} listing, which the figure does not name"]],
 ]
 
 
