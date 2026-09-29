@@ -341,6 +341,13 @@ def p_nav_smooth(s):
     s.rep("app/layout.tsx", '      data-scroll-behavior="smooth"\n', "")
 
 
+def p_st_awake(s):
+    """34: the Signal's teardown leaves ScrollTrigger enabled — its own rAF
+    loop runs on, about 62 a second, on a page with nothing to trace (the
+    engineering review, 2026-09-29)"""
+    s.rep("components/motion/signal.ts", "    ScrollTrigger.disable();\n    asleep = true;\n", "    asleep = false; // THROWAWAY misuse: ScrollTrigger's own loop left running\n")
+
+
 def p_toggle_local(s):
     """34: the pause control back on a state of its own, with aria-pressed —
     the page stays paused across Back and Forward, and the remounted control
@@ -639,6 +646,7 @@ CASES = [
     ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
     # new at the fix pass (2026-09-29): a client-side navigation starts at the top, and its reveals run
     ["nav-smooth", "no data-scroll-behavior on <html> — a client-side navigation smooth-scrolls the new page up from the old offset", 34, r"^@1440: the new page's first frame is at scrollY [1-9]\d*", p_nav_smooth, {}],
+    ["st-awake", "the Signal's teardown leaves ScrollTrigger's loop running — an idle /work wakes ~62 times a second", 34, r"^@1440 on /work after the Signal ran on /engineering, the idle page still asks for \d+ animation frames a second", p_st_awake, {}],
     ["toggle-local", "the pause control keeps its own state — paused across Back and Forward, it reads \"Pause motion\"", 34, r'^@390: after Back and Forward the page is paused \(html\[data-motion="paused"\]\) and its pause control reads "Pause motion"', p_toggle_local, {}],
     ["toggle-pressed", "the pause control says its state twice — aria-pressed beside a changing label", 34, r'^@390: the pause control carries aria-pressed="false" beside a label that changes', None, {"from": "toggle-local"}],
     ["hook-blink", "the Signal's hooks settle back to the hollow drawing — the payoff a blink", 35, r"^/engineering @1440 a fresh load: read down at reading speed, 0 of \d+ stations of the Signal's hooks are lit at rest", p_hook_blink, {}],

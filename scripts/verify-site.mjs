@@ -433,6 +433,50 @@ const revealCount = () => {
     });
   return { total: all.length, revealed: all.filter((e) => e.classList.contains("bf-revealed")).length, hooks, signal: document.documentElement.getAttribute("data-bf-signal") };
 };
+/* 34 (2026-09-29) — the Signal's teardown leaves nothing running:
+   /engineering (the Signal live, no hero scene) → /work (nothing to trace),
+   client-side through Next's own router, the one a <Link> drives; then every
+   requestAnimationFrame the page asks for in a second, idle. ScrollTrigger's
+   own loop ran on at 64-67 a second on /work after the engine had stopped
+   (the engineering review). Not through / and its logo: the gate's
+   signal-dead case kills the engine on / */
+async function visitNavBack(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });
+  await ctx.addInitScript(() => {
+    const raf = window.requestAnimationFrame.bind(window);
+    window.__vsRaf = 0;
+    window.requestAnimationFrame = (f) => {
+      window.__vsRaf++;
+      return raf(f);
+    };
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/engineering`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => document.documentElement.getAttribute("data-bf-signal") === "live", null, { timeout: 30000 }).catch(() => {});
+  const live = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  await page.waitForTimeout(1000);
+  const clicked = await page.evaluate(() => {
+    const r = window.next?.router;
+    if (!r?.push) return false;
+    r.push("/work");
+    return true;
+  });
+  if (!clicked) {
+    await ctx.close();
+    return { clicked };
+  }
+  await page.waitForFunction(() => location.pathname === "/work" && document.querySelector("main#main"), null, { timeout: 30000 });
+  await page.waitForTimeout(2000);
+  const perSec = await page.evaluate(async () => {
+    const n0 = window.__vsRaf;
+    await new Promise((r) => setTimeout(r, 1000));
+    return window.__vsRaf - n0;
+  });
+  const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  await ctx.close();
+  return { clicked, live, perSec, signal };
+}
 /* 35 — a fresh load of `route` read down at reading speed, then the hooks' state once it has settled */
 async function visitHooks(browser, route, w) {
   const ctx = await browser.newContext({ viewport: { width: w, height: 900 }, reducedMotion: "no-preference" });
@@ -3519,6 +3563,11 @@ if (want(34) || want(35))
     process.stderr.write(`  a client-side navigation ${NAV_FROM} → / @${w}\n`);
     navRuns.push(await visitNav(browser, w).catch((e) => ({ width: w, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
   }
+let navBack = null;
+if (want(34)) {
+  process.stderr.write("  /engineering → /work @1440, client-side: what is left running\n");
+  navBack = await visitNavBack(browser).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
+}
 /* 35 ── the hooks on a page beside / */
 const hookRuns = [];
 if (want(35))
@@ -5662,6 +5711,18 @@ check(
         I.push(`${at}: Pause, then Back and Forward: html[data-motion] ${t.motion ? `"${t.motion}"` : "unset"}, the control reads "${t.label}"${t.pressed !== null ? `, aria-pressed="${t.pressed}"` : ""}`);
       }
       I.push(`${at}: ${NAV_FROM} left at scrollY ${r.fromY}; the new page's first frame at ${r.firstY}, the highest after it ${r.maxY} (${r.frames} frames); reveals ${r.nav.revealed}/${r.nav.total} after the navigation, ${r.ref.revealed}/${r.ref.total} on a fresh load${r.width >= 1025 ? `; the Signal ${r.signal || "not running"}` : ""}`);
+    }
+    /* the Signal's teardown: nothing left asking for frames on an idle page */
+    const b = navBack;
+    if (b) {
+      if (b.error) F.push(`@1440 /engineering → /work: the run failed (${b.error}) — unsure is a failure`);
+      else if (b.live !== "live") F.push("@1440 /engineering: the Signal never started — its teardown went untested; unsure is a failure");
+      else if (!b.clicked) F.push("@1440 /engineering: Next's router (window.next.router) is not there — the client-side navigation went untested; unsure is a failure");
+      else {
+        if (b.signal) F.push(`@1440 on /work after /engineering: html[data-bf-signal] is still "${b.signal}" — the Signal stops with the page it ran on`);
+        if (b.perSec > 5) F.push(`@1440 on /work after the Signal ran on /engineering, the idle page still asks for ${b.perSec} animation frames a second — nothing moves there, and the Signal's teardown leaves no loop running (ScrollTrigger's own, until it is disabled)`);
+        I.push(`@1440 /engineering (the Signal live) → /work, client-side: ${b.perSec} animation frame request(s) in a second, idle`);
+      }
     }
   },
 );

@@ -243,7 +243,20 @@ function topologyOrder(svg: SVGSVGElement): { edge: SVGGeometryElement; from: SV
     .map((x) => ({ edge: x.e, from: ends[x.i].from >= 0 ? shapes[ends[x.i].from] : null }));
 }
 
+/* ScrollTrigger runs a requestAnimationFrame loop of its own (_rafBugFix, a
+   Firefox repaint workaround) for as long as it is ENABLED, whether or not a
+   trigger is left: about 62 wake-ups a second on every page once gsap has
+   arrived, and on after the engine stopped — a client-side navigation to
+   /work, which has nothing to trace, kept 64-67 a second (the engineering
+   review, 2026-09-29). The engine's stop disables it; the next start, on the
+   next page with something to trace, enables it again. */
+let asleep = false;
+
 export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps): () => void {
+  if (asleep) {
+    ScrollTrigger.enable();
+    asleep = false;
+  }
   const root = document.documentElement;
   const running = new Set<Seq>();
   const played = new WeakSet<Element>();
@@ -576,5 +589,8 @@ export function startSignal({ gsap, ScrollTrigger, gate, yieldTask }: SignalDeps
     ScrollTrigger.removeEventListener("refresh", unsmooth);
     keep.kill();
     root.style.removeProperty("scroll-behavior");
+    /* nothing of ours is left: no loop either */
+    ScrollTrigger.disable();
+    asleep = true;
   };
 }

@@ -883,7 +883,7 @@ has a pause control.
     and end is all a refresh would do; a probe that prepends 3000px to main
     and then scrolls to the first diagram's new place sees it trace there
     (and not, with the ResizeObserver stubbed out).
-  - **Two things ScrollTrigger does to the page, undone in the engine.** It
+  - **Three things ScrollTrigger does to the page, undone in the engine.** It
     forgets the page's scroll position when the last trigger on it is killed,
     and a media change then refreshes from the top: when the gate stopped
     holding (a window narrowed to 1000px) the revert killed every trigger and
@@ -893,7 +893,19 @@ has a pause control.
     1440). And each refresh writes `scroll-behavior:
     smooth` back INLINE on `<html>`, which would outlive the stylesheet's own
     guard (smooth only under no-preference motion) once reduced motion is
-    asked for; the engine removes it after each refresh.
+    asked for; the engine removes it after each refresh. And it runs a
+    `requestAnimationFrame` loop of its own (`_rafBugFix`, a Firefox repaint
+    workaround) for as long as it is enabled, with triggers or without: about
+    62 wake-ups a second, which ran on after the engine had stopped — 64-67 a
+    second on /work after a client-side navigation there (the engineering
+    review, 2026-09-29). The engine's stop now calls `ScrollTrigger.disable()`
+    and the next start `enable()`: measured, 0 a second on /work after
+    /engineering, and the triggers the same on every return. While the engine
+    runs, the loop is gsap's documented behaviour and stays (about 60 a
+    second on an idle /capabilities). `enable()` registers three gsap media
+    listeners and one orientation context again each time — gsap's own, one
+    set more per return to a page with something to trace. Check 34 holds
+    the teardown (`/engineering → /work`).
   - **Trace → flow, on every `[data-bf-flow]` diagram** (/, /capabilities):
     each `.dg-edge` is cloned into a brand-blue 2px overlay with butt caps,
     placed just under its cyan `.dg-flow` twin so nothing on screen is covered,
@@ -2090,7 +2102,13 @@ Each rule is proven both ways, and each has its case in
   (both client-side): `html[data-motion]` must still be "paused", the
   remounted control must read "Resume motion", and it carries no
   `aria-pressed`. RUN 2: `toggle-local` and `toggle-pressed`, one patch (the
-  control back on a React state of its own, with `aria-pressed`).
+  control back on a React state of its own, with `aria-pressed`). And at
+  1440, /engineering (the Signal live) → /work through Next's own router
+  (`window.next.router.push`, what a `<Link>` drives; not through / and the
+  logo, since the gate's `signal-dead` case kills the engine on /): once
+  idle, /work may ask for at most 5 animation frames a second — measured 0;
+  ScrollTrigger's loop kept 64-67. RUN 2: `st-awake` (the teardown's
+  `ScrollTrigger.disable()` removed).
 - **35, new — the Signal's traces settle lit.** At 1440, on a fresh / and a
   fresh /engineering read down at reading speed, and on / after 34's
   navigation, 3s after the reading: every station of every hook drawn at that
