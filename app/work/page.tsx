@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 
 import { alt as ogAlt } from "../opengraph-image";
 
@@ -13,7 +14,7 @@ import ScreenImage from "@/components/site/ScreenImage";
 import SectionHead from "@/components/site/SectionHead";
 import SiteShell from "@/components/site/SiteShell";
 import StatusChip from "@/components/site/StatusChip";
-import { clientStories, clientStoryMembers, metrics, projectSections, projects, type Project } from "@/content";
+import { clientStories, clientStoryMembers, countWord, metrics, projectSections, projects, type Project } from "@/content";
 import { getSiteUrl } from "@/lib/site-url";
 
 /**
@@ -110,7 +111,7 @@ function ProjectGrid({ items, headingLevel, labelledBy }: { items: Project[]; he
 /** The feature-work sub-group's heading. Plain words: what these cards are. */
 const FEATURES_TITLE = "Features we shipped into other companies’ apps";
 
-/** A client story's eyebrow: what the sub-group is, in sentence case. */
+/** A client story's eyebrow: what the section is, in sentence case. */
 const STORY_EYEBROW = "Client story";
 
 /** A write-up's row: the screenshot, then the label, the name, the figures and
@@ -177,6 +178,11 @@ export default function WorkIndexPage() {
   const sections = projectSections
     .map((s) => ({ ...s, items: published.filter((p) => p.kind === s.kind) }))
     .filter((s) => s.items.length > 0);
+  /* the client stories and their members (content/projects.ts computes
+     them): each is its own section after the case studies, and its members
+     leave the product grid below */
+  const stories = clientStories.map((story) => ({ story, members: clientStoryMembers(story) }));
+  const inStory = new Set(stories.flatMap((x) => x.members.map((p) => p.id)));
   const site = getSiteUrl().toString();
 
   const graph = {
@@ -215,61 +221,73 @@ export default function WorkIndexPage() {
             covers the actual architecture — constraints, decisions, tradeoffs, and what we&rsquo;d change. Not a
             screenshot and a paragraph.
           </p>
+          {/* The client stories, named where the page says what is on it
+              (2026-09-29, the design review: the lede never mentioned the
+              four TTouch systems). The count is the data's, and "live" is
+              said only of a set whose members all are, as the story's own
+              intro may (content/projects.ts). */}
           <p className="bf-lead">
-            Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers
-            shipped at previous employers. Every card says who built it.
+            {stories.map(({ story, members }) => (
+              <Fragment key={story.id}>
+                Then the {countWord(members.length)} systems we built end to end for {story.client}
+                {members.every((m) => m.status === "live") ? `, all ${countWord(members.length)} live` : ""}.{" "}
+              </Fragment>
+            ))}
+            {stories.length ? "Below them" : "Below the write-ups"}: the other products we built, for clients and for
+            ourselves, and what our engineers shipped at previous employers. Every card says who built it.
           </p>
         </PageHead>
 
         {sections.map((s) => {
           /* a client story takes its members out of the product grid — only a
              story that is a set: projects.ts refuses one with fewer than two */
-          const stories = s.kind === "project" ? clientStories.map((story) => ({ story, members: clientStoryMembers(story) })) : [];
-          const inStory = new Set(stories.flatMap((x) => x.members.map((p) => p.id)));
           const products = s.items.filter((p) => p.scope !== "features" && !inStory.has(p.id));
           const features = s.items.filter((p) => p.scope === "features");
           const featuresId = `${s.id}-features-title`;
           return (
-            <section key={s.id} id={s.id} className="bf-section" aria-labelledby={`${s.id}-title`}>
-              <div className="bf-wrap">
-                <SectionHead id={`${s.id}-title`} title={s.title} lead={s.intro ?? undefined} />
-                {s.kind === "case-study" ? (
-                  <ul className="bf-work">
-                    {s.items.map((p) => (
-                      <CaseStudyRow key={p.id} p={p} />
-                    ))}
-                  </ul>
-                ) : (
-                  <>
-                    {products.length > 0 ? <ProjectGrid items={products} /> : null}
-                    {/* The heading's parent holds the cards it heads: verify-site
-                        check 9 reads such a heading as a group's, not a card's. */}
-                    {stories.map(({ story, members }) => (
-                      <div key={story.id} id={story.id} className="bf-subgroup bf-subgroup--client">
-                        <p className="bf-eyebrow bf-subgroup__eyebrow" data-bf-reveal>
-                          {STORY_EYEBROW}
-                        </p>
-                        <h3 id={`${story.id}-title`} className="bf-subgroup__title" data-bf-reveal>
-                          {story.title}
-                        </h3>
-                        <p className="bf-lead bf-subgroup__intro" data-bf-reveal>
-                          {story.intro}
-                        </p>
-                        <ProjectGrid items={members} headingLevel={4} labelledBy={`${story.id}-title`} />
+            <Fragment key={s.id}>
+              <section id={s.id} className="bf-section" aria-labelledby={`${s.id}-title`}>
+                <div className="bf-wrap">
+                  <SectionHead id={`${s.id}-title`} title={s.title} lead={s.intro ?? undefined} />
+                  {s.kind === "case-study" ? (
+                    <ul className="bf-work">
+                      {s.items.map((p) => (
+                        <CaseStudyRow key={p.id} p={p} />
+                      ))}
+                    </ul>
+                  ) : (
+                    <>
+                      {products.length > 0 ? <ProjectGrid items={products} /> : null}
+                      {/* The heading's parent holds the cards it heads: verify-site
+                          check 9 reads such a heading as a group's, not a card's. */}
+                      {features.length > 0 ? (
+                        <div className="bf-subgroup">
+                          <h3 id={featuresId} className="bf-subgroup__title" data-bf-reveal>
+                            {FEATURES_TITLE}
+                          </h3>
+                          <ProjectGrid items={features} headingLevel={4} labelledBy={featuresId} />
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                </div>
+              </section>
+              {/* Each client story is its own section straight after the case
+                  studies (2026-09-29, the design review: as an h3 inside
+                  "Bolt Fusion projects" it sat at screen 4 of 9 at 1440): the
+                  eyebrow, its h2 and intro beside it from 1025px, over its
+                  members' cards, two across, with h3 names. */}
+              {s.kind === "case-study"
+                ? stories.map(({ story, members }) => (
+                    <section key={story.id} id={story.id} className="bf-section bf-clientstory" aria-labelledby={`${story.id}-title`}>
+                      <div className="bf-wrap">
+                        <SectionHead id={`${story.id}-title`} eyebrow={STORY_EYEBROW} title={story.title} lead={story.intro} className="bf-clientstory__head" />
+                        <ProjectGrid items={members} labelledBy={`${story.id}-title`} />
                       </div>
-                    ))}
-                    {features.length > 0 ? (
-                      <div className="bf-subgroup">
-                        <h3 id={featuresId} className="bf-subgroup__title" data-bf-reveal>
-                          {FEATURES_TITLE}
-                        </h3>
-                        <ProjectGrid items={features} headingLevel={4} labelledBy={featuresId} />
-                      </div>
-                    ) : null}
-                  </>
-                )}
-              </div>
-            </section>
+                    </section>
+                  ))
+                : null}
+            </Fragment>
           );
         })}
 

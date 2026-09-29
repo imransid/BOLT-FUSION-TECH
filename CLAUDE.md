@@ -81,7 +81,7 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 | `/about` | who we are; the team (the Team section: 15+ developers, no one named, no Person node — on the homepage since 2026-09-28 only its headcount, in how we work); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
 | `/insights` | the index of the articles | `content/insights.ts`, `content/pages.ts` · static |
 | `/insights/[slug]` | an article (`generateStaticParams`, `dynamicParams = false`): the sections in reading order, code in Barlow 500, each "diagram" an ordered flow, related work; Article JSON-LD | `content/insights.ts` · SSG |
-| `/work` | every approved project, labelled by who built it: the write-ups, Bolt Fusion projects (with TTouch Clothing's four systems as a client story, `#ttouch-clothing`, since 2026-09-29), in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
+| `/work` | every approved project, labelled by who built it: the write-ups, then TTouch Clothing's four systems as a client story in its own section (`#ttouch-clothing`, since 2026-09-29; its own h2 since fix pass B), Bolt Fusion projects, in-house products and our engineers' track record (`app/work/page.tsx`; *Projects and attribution*) | `/content/projects.ts` |
 | `/work/warmchats` | WarmChats case study — `components/case-studies/WarmChatsCaseStudy.tsx` | **hardcoded in the component** |
 | `/work/restaurant-search` | restaurant search case study — `components/CaseStudy.tsx` | `/content/site.ts`, `caseStudy` block |
 | `/privacy-policy` | privacy policy | hardcoded |
@@ -268,9 +268,12 @@ does not state.
 - **A client story (2026-09-29)** is one client's product projects shown
   together: `clientStories` in `content/projects.ts` holds its anchor, title
   and intro, and its members are computed — every published product project
-  whose `client` is the story's, byte for byte. On /work it is a sub-group of
-  Bolt Fusion projects under its own h3; on the homepage, a plate in the proof
-  straight after the pair of write-ups (below). The build refuses a story with fewer than two members, a count in
+  whose `client` is the story's, byte for byte. On /work it is its own
+  section straight after the case studies, under its own h2 (an h3 sub-group
+  inside Bolt Fusion projects until fix pass B, 2026-09-29: at 1440 it sat at
+  screen 4 of 9, and the page's lede never named it — the design review); on
+  the homepage, a plate in the proof straight after the pair of write-ups
+  (below). The build refuses a story with fewer than two members, a count in
   its title or intro that is not its member count ("Four systems" cannot
   outlive a fifth card), and "live" said of a set whose members are not all
   live. It says "Four systems for TTouch Clothing", never "came back for
@@ -320,14 +323,18 @@ does not state.
   it was never deployed, and its files are deleted. Never a
   mockup: OPAL's old AI-generated asset, banned by PLAN.md, was deleted on
   2026-09-16.
-- **/work is four sections,** one per kind, in `projectSections` order. The
-  track-record section says what it means: "Work our engineers shipped at
-  previous employers — credited to them, not claimed as ours." Inside Bolt
-  Fusion projects the product cards come first. Under them each client story
-  is a sub-group (`.bf-subgroup--client`, anchored at its id,
-  `/work#ttouch-clothing`): the eyebrow "Client story", its h3 and its intro —
-  beside the h3 from 1025px — over its members' cards, two across, with h4
-  names. Under that is a sub-group headed
+- **/work is a section per kind,** in `projectSections` order, **and a section
+  per client story straight after the case studies** (fix pass B,
+  2026-09-29): `.bf-clientstory`, anchored at its id,
+  `/work#ttouch-clothing` — the eyebrow "Client story", its h2 and its intro
+  (beside the h2 from 1025px) over its members' cards, two across, with h3
+  names. The page head's second lede names it, from the data: "Then the four
+  systems we built end to end for TTouch Clothing, all four live." (the count
+  from its members, and "all … live" only while every one is), then "Below
+  them: the other products…". The track-record section says what it means:
+  "Work our engineers shipped at previous employers — credited to them, not
+  claimed as ours." Inside Bolt Fusion projects the product cards not in a
+  story come first. Under them is a sub-group headed
   by its own h3, "Features we shipped into other companies’ apps", whose cards
   have h4 names so the outline nests. Every card carries its project's id, so
   evidence links land on the card itself (`/work#sudarshini`). Every grid, that one included, fills
@@ -667,8 +674,8 @@ needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
   `.bf-eyebrow` / `.bf-h2` / `.bf-h4` / `.bf-lead`, `.bf-head--chapter`,
   `.bf-actions`, `.bf-btn--*`, `.bf-cap6` (a ledger row), `.bf-hww` (how we
   work's spec sheet), `.bf-inds` (a ruled grid), `.bf-clientband` (a client
-  story on the homepage), `.bf-subgroup` / `.bf-subgroup--client` (/work's
-  sub-groups), `.bf-stages` (a rail), `.bf-strata`,
+  story on the homepage), `.bf-subgroup` (/work's feature-work
+  sub-group), `.bf-clientstory` (/work's client-story section), `.bf-stages` (a rail), `.bf-strata`,
   `.bf-build`, `.bf-evidence`, `.bf-honesty`, `.bf-concept`, `.bf-cap__plate`,
   `.bf-pagehead` (a page's h1 block), `.bf-prose` (an article, the privacy
   policy), `.bf-form` / `.bf-field`, the `data-bf-reveal` / `data-bf-flow`
@@ -697,7 +704,7 @@ the write-ups — then the footer. No light bands, no navy panels.
 | `/about` | page head (the company line, the canonical description) · who we are · the team (the homepage's section) · where our engineers work · how we work with clients (the tagline, four terms, the engagement models table, the line under it, the operating detail, the pilot and its button) · what we won't do · final call to action |
 | `/insights` | page head · the articles as a ledger (date, author, title, dek, capabilities) · final call to action |
 | `/insights/[slug]` | page head (back link, h1, dek, author, date) · the sections in reading order, beside related work, capabilities and more insights · final call to action |
-| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · Bolt Fusion projects (three cards, then the client story — "Four systems for TTouch Clothing", an eyebrow, h3 and intro over four h4 cards, two across, at `#ttouch-clothing` — then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
+| `/work` | page head (the title, its two leads) · case studies (rows: the screenshot beside the label, name, summary, facts, figures, stack, links and "Read the write-up") · the client story (since fix pass B, 2026-09-29, its own section: "Client story", the h2 "Four systems for TTouch Clothing" and its intro over four h3 cards, two across, at `#ttouch-clothing`) · Bolt Fusion projects (three cards, then the feature-work sub-group, an h3 over two h4 cards) · in-house products (one card, its screenshot beside its text) · our engineers' track record (one text card: Go Smart; NIdle Finishing is held back) · the closing call to action |
 | `/work/warmchats` | page head with the screenshot · executive summary and the numbers · how it works · the product · architecture beside the full stack · outcome · call to action and the sign-off |
 | `/work/restaurant-search` | page head with the system image · executive summary and the KPIs · the three lanes · the stack beside the bounded contexts · call to action |
 | `/privacy-policy` | page head with the date · the policy as legal prose |
@@ -714,8 +721,8 @@ the write-ups — then the footer. No light bands, no navy panels.
 - **/work's contract with check 9 is unchanged:** every card is an `<li>` marked
   `data-project-kind` (`-scope`, `-id`), and since 2026-09-29 carrying its
   project's `id`; its `[data-attribution]` label, in the
-  brand blue, is directly followed by its name (an h3, or an h4 under a
-  sub-group's h3 — the client story's or the feature work's); `data-role`, `data-built-at` and
+  brand blue, is directly followed by its name (an h3, or an h4 under the
+  feature work's sub-group h3); `data-role`, `data-built-at` and
   `data-project-status` sit on the facts; each figure is a `[data-metric]` row
   with its own chip; and no other h3 or h4 is on the page. Grids fill their rows:
   three across from 1025px; a set of two, two across from 768px; a set of three,
@@ -2521,7 +2528,7 @@ claim that TTouch "came back"; no dates.
 
 | what | decided | where |
 |---|---|---|
-| /work | the four as a client story under their own h3, `#ttouch-clothing`, between the product cards and the feature work; each card the standard one, with a real screenshot and a live link | `motion-hire/projects` |
+| /work | the four as a client story under their own h3, `#ttouch-clothing`, between the product cards and the feature work; each card the standard one, with a real screenshot and a live link. **Revised 2026-09-29 (fix pass B, the design review):** its own section and h2 straight after the case studies, named in the page's lede | `motion-hire/projects`, fix pass B |
 | The homepage | a text band in `#recent-work`, after the proof strip, with one link to `/work#ttouch-clothing`; the hero's proof line unchanged. **Revised 2026-09-29 (fix pass B, the design and honesty reviews):** a plate straight after the pair of write-ups, before the section's Schedule a Call, with the four screenshots; the section's heading "Built and shipped." | `motion-hire/projects`, fix pass B |
 | Industries | Retail & commerce gains Sudarshini and TTouch Wholesale; HR gains TTouch Employee Verification; Logistics moves to delivered work on Delivery Lens BD, its first problem ("Orders shipped to customers who refuse them at the door") and first build ("Courier data and delivery-risk checks") written to what that product does; each evidence link lands on its card | `motion-hire/projects` |
 | Capabilities | Software engineering links Delivery Lens BD and Sudarshini; ERP's Proven scope is "HR, payroll and a wholesale back office" (Full ERP stays Capable, its line byte-identical); POS & commerce is Core for point of sale and Proven for "Online and wholesale commerce", with "Online stores" and "Wholesale ordering portals" in what it builds — still no payments or commerce integrations claimed; AI, Cloud and Robotics unchanged | `motion-hire/projects` |

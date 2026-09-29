@@ -874,7 +874,17 @@
         "needles": [
           "The systems, and how they were built.",
           "Two write-ups so far. Each one covers the actual architecture —",
-          "Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
+          "Then the four systems we built end to end for TTouch Clothing, all four live.",
+          "Below them: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
+        ]
+      },
+      {
+        "item": "The page head's old second lede, which did not name the client story",
+        "proves": "Nothing now: the lede names TTouch Clothing's four systems, straight after the write-ups",
+        "status": "retired",
+        "retired": "reworded 2026-09-29 (fix pass B, the design review) — \"Below the write-ups: the other products…\" never mentioned the client story, which moved to its own section after the case studies",
+        "needles": [
+          "Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers."
         ]
       },
       {
@@ -950,7 +960,7 @@
       },
       {
         "item": "Bolt Fusion projects: TTouch Clothing's four systems, as one client story (2026-09-29)",
-        "proves": "Four full builds the owner confirmed on 2026-09-29 — design, app, backend and database — each labelled built by Bolt Fusion for TTouch Clothing, which owns them (Sudarshini is a TTouch brand), under their own h3 at /work#ttouch-clothing",
+        "proves": "Four full builds the owner confirmed on 2026-09-29 — design, app, backend and database — each labelled built by Bolt Fusion for TTouch Clothing, which owns them (Sudarshini is a TTouch brand), in their own section and h2 straight after the case studies at /work#ttouch-clothing (an h3 inside Bolt Fusion projects until fix pass B)",
         "status": "required",
         "needles": [
           "Client story",

@@ -6144,48 +6144,29 @@ rect.bf-trace__stop {
 
 /* ── motion-hire: projects (2026-09-29) ── */
 /* ── TTouch Clothing's four systems: a client story on /work ─────────────── *
-   A sub-group of Bolt Fusion projects under its own h3, like the feature work
-   under it: the eyebrow, the h3 and the intro are the sub-group's own children,
-   so check 9 reads the h3 as the group's heading. From 1025px the head is two
-   columns — the title beside the intro — over the grid of four, two across. */
-.bf-subgroup--client .bf-subgroup__eyebrow {
-  margin-bottom: 10px;
-}
-
-.bf-subgroup--client .bf-subgroup__title {
-  margin-bottom: 0;
-}
-
-.bf-subgroup__intro {
-  margin-top: 12px;
-  margin-bottom: 32px;
-  max-width: 68ch;
-}
-
+   Its own section straight after the case studies (2026-09-29, fix pass B;
+   the design review: as an h3 sub-group inside Bolt Fusion projects it sat at
+   screen 4 of 9 at 1440): the eyebrow, the h2 and the intro — beside the h2
+   from 1025px — over its members' cards, two across. */
 @media (min-width: 1025px) {
-  .bf-subgroup--client {
+  .bf-clientstory__head {
     display: grid;
+    max-width: none;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     grid-template-areas:
       "eyebrow intro"
-      "title intro"
-      "grid grid";
-    grid-template-rows: auto 1fr auto;
+      "title intro";
+    grid-template-rows: auto 1fr;
     column-gap: 64px;
   }
 
-  .bf-subgroup--client > .bf-subgroup__eyebrow { grid-area: eyebrow; }
-  .bf-subgroup--client > .bf-subgroup__title { grid-area: title; }
+  .bf-clientstory__head > .bf-eyebrow { grid-area: eyebrow; }
+  .bf-clientstory__head > .bf-h2 { grid-area: title; }
 
-  .bf-subgroup--client > .bf-subgroup__intro {
+  .bf-clientstory__head > .bf-lead {
     grid-area: intro;
     align-self: end;
     margin: 0;
-  }
-
-  .bf-subgroup--client > .bf-projects {
-    grid-area: grid;
-    margin-top: 40px;
   }
 }
 
