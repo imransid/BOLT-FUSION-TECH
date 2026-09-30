@@ -692,9 +692,13 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   figure from 768px and over them on a phone; then the section's Schedule a
   Call, then the lanes band and the proof strip, whose four figures are ruled
   rows on a phone, not boxed cards. Measured: the plate is 511px tall at 1440
-  (at 2028), 1061 at 1024 and 865 at 390, and the section's Schedule a Call
-  at 2587 at 1440 and 3518 at 390 (2,924px after the hero's there). Until
-  then it was a text band after the proof strip, below the call.
+  (at 2028), 1061 at 1024 and 865 at 390; the feature-work tile after it
+  (2026-09-30) 418px at 1440 (at 2563), 606 at 1024 and 1000 at 390; and the
+  section's Schedule a Call at 3029 at 1440 and 4543 at 390, 3,949px after
+  the hero's there (2587 and 3518 before the tile). The page is 11,908px at
+  1440 and 17,403 at 390; /work's Bazzile card is 661px tall at 1440 (its
+  section at 4306) and 1,248 at 390. Until then the client story was a text
+  band after the proof strip, below the call.
 - **The system map** (`components/site/SystemMap.tsx`, a client component; on
   /capabilities after the six since 2026-09-28, the homepage's until then): the
   SVG is the picture for a pointer and is `aria-hidden`; the lists beside it
@@ -2412,7 +2416,12 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   the hero's were both filled on the first screen (the design and honesty
   reviews). Measured on the fixed page: 3 at most at both widths (the
   longest gaps 3,191px at 1440, the ledger's call to the close's, and 3,555
-  at 390, the proof's to how we work's, 4.2 phone screens); four, because a
+  at 390, the proof's to how we work's, 4.2 phone screens). **Since the
+  feature-work tile (2026-09-30): 2 at 1440 and 4 at 390 — at the limit.**
+  On a phone the tile (1000px) put the proof's call at 4543, 3,949px after
+  the hero's (from 2,924), so viewports 844–3376 show none; anything more in
+  the proof before its call on a phone makes a run of five and fails. Four,
+  because a
   run of five needs two calls about five viewports apart, whatever the phase
   of the steps. RUN 2: `reach-desktop` (the ledger's call phone-only again,
   and how we work's hidden with it, so no other patch in the misuse build can
@@ -2452,7 +2461,12 @@ The old rule had no case, so none is retired.
   patch: the tile's label "Delivered project: built by Bolt Fusion for Bazzile
   Technology SA", sr-only). /work's figures take the screenshot and caption
   cases on its card and the tile the rest on its own, so no case's damage
-  hides another's.
+  hides another's. The 2026-09-16 case `feature-label` (Bazzile's label
+  overclaiming, patched in `attribution()`) is re-anchored onto /work's
+  finding, with the same meaning: the tile prints the same words for /, and
+  a case must not pass on another case's damage. Proven on a misuse build of
+  this HEAD with every case applied: all 35 cases of checks 8, 9 and 30 fail
+  with their own findings, none of them on the clean build.
 - **8, unchanged, and its case** — "100K+ downloads on Google Play" passes
   only through its per-instance exemption in `content/figure-labels.ts`
   (the store's public install band for the client's app, not a measurement

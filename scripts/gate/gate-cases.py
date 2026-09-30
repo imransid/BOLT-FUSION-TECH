@@ -703,7 +703,10 @@ CASES = [
     ["k12-dynamic", "K12: a dynamic subpath import of framer-motion", 31, r"repository: components/site/StatusChip\.tsx holds a package of the retired design", p_k12_dynamic, {}],
     ["k12-package", "K12: a retired package in package.json", 31, r'repository: package\.json lists "framer-motion"', p_k12_package, {}],
     ["k12-tailwind", "K12: @tailwind in a stylesheet", 31, r"repository: app/site\.css holds Tailwind", p_k12_tailwind, {}],
-    ["feature-label", "a feature-work label that overclaims (Bazzile)", 9, r'"Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feature_label, {"reanchor": "pages"}],
+    # re-anchored 2026-09-30 onto /work (same meaning: its card's label): the
+    # homepage's feature-work tile carries Bazzile's label too, and its own
+    # case (feat-tile-overclaim) prints the same words for /
+    ["feature-label", "a feature-work label that overclaims (Bazzile, /work)", 9, r'^/work @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feature_label, {"reanchor": "pages"}],
     # new for the redesign (2026-09-16), one per new rule
     ["book-a-call", 'a "Book a call" label on the header button', 32, r"the header's primary button reads \"Book a call\" — it reads exactly \"Schedule a Call\"", p_book_a_call, {}],
     ["scene-coarse", "HeroScene allowed on a coarse pointer — a touch tablet gets WebGL (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): \d+ WebGL context request\(s\) — (?:[^;]*; )*webgl2 in the page", p_scene_coarse, {"needs": "scene"}],
