@@ -98,6 +98,15 @@ export default function RootLayout({
          would resolve against an undefined variable and the whole site would
          render in the system font (verify-site checks 1 and 2). */
       className={`${barlow.variable} ${jost.variable}`}
+      /* app/site.css scrolls <html> smoothly (under no-preference motion), and
+         Next 16 turns that off for a route change ONLY where this attribute
+         says so. Without it a client-side navigation — the header's logo, Back
+         and Forward after it — smooth-scrolled the NEW page up from the old
+         offset (10201 → 0 over about 27 frames), and every reveal on it was
+         measured at that stale offset and skipped: 0 of 39 against 37 on a
+         fresh load (the engineering review, 2026-09-29; verify-site check
+         34). A same-page anchor still scrolls smoothly. */
+      data-scroll-behavior="smooth"
     >
       <body>
         {/* The first stop on every page: past the header to the page's own

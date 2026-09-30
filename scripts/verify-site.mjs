@@ -94,7 +94,16 @@ const GL_EXTRA = [
   { width: 1180, height: 820, touch: true, label: "/ @1180x820 tablet (touch, coarse pointer)" },
   { width: 1366, height: 1024, touch: true, label: "/ @1366x1024 tablet (touch, coarse pointer)" },
   { width: 1440, saveData: true, label: "/ @1440 Save-Data" },
+  /* 2026-09-29 (the engineering review): the reader's first input made
+     BEFORE the first paint — a wheel and keys from the moment the navigation
+     commits. The browser then reports no LCP entry at all, and a scene that
+     waited for one never started (5 of 5 trials). The allowed profile, so
+     the positive case holds it: the scene must still start. */
+  { width: 1440, early: true, label: "/ @1440 input before first paint" },
 ];
+/* the early-input profile's tries: the input must land before the first
+   paint (no LCP entry reported), or the path went untested */
+const EARLY_TRIES = 3;
 /* SPEC §7 and PLAN.md §5.2: the whole scene chunk, three.js included. The
    15KB raw-WebGL2 renderer budget it replaces was reversed by the owner on
    2026-09-16 (CLAUDE.md, "Decided 2026-09-16"). Measured by gzipping each file
@@ -111,6 +120,29 @@ const glAllowed = (run) => run.route === "/" && run.width >= 1025 && !run.reduce
 const THREE_CODE = /WebGLRenderer|three\.module|__THREE__|#include <begin_vertex>/;
 const REACT_THREE_CODE = /@react-three|react-three-fiber|__r3f/;
 const GL_CALL_CODE = /getContext\(\s*["'`](?:webgl2?|experimental-webgl)["'`]|WebGL2RenderingContext/;
+/* THE SIGNAL MOTION SYSTEM (owner, 2026-09-28; CLAUDE.md "Motion, as built"):
+   gsap 3.15.0 — core, ScrollTrigger and DrawSVGPlugin — and the engine that
+   drives them, loaded after the load event on a desktop that allows motion
+   (components/motion/MotionLoader.tsx). Known by what their code carries under
+   Turbopack's minifier, read off the production build's chunks on 2026-09-28:
+   the core by its "GreenSock" globals and its "gsap.com" help links; a plugin
+   by how it finds the core, `(x=window.gsap)&&x.registerPlugin`; the engine
+   (components/motion/signal.ts) by its own `data-bf-signal`. The names below
+   only label a chunk in a finding. */
+const GSAP_CODE = /GreenSock|gsap\.com|window\.gsap\)&&[\w$]+\.registerPlugin|data-bf-signal/;
+const GSAP_PARTS = [
+  ["gsap core", /GreenSock|gsap\.com/],
+  ["ScrollTrigger", /scrollerProxy/],
+  ["DrawSVGPlugin", /name:"drawSVG"/],
+  ["the Signal engine", /data-bf-signal/],
+];
+const gsapParts = (t) => {
+  const names = GSAP_PARTS.filter(([, re]) => re.test(t)).map(([n]) => n);
+  return names.length ? names : ["a gsap plugin"];
+};
+/* the one profile the Signal loads in, on any page: >=1025px, a FINE pointer,
+   no touch, no Save-Data, no reduced motion */
+const gsapAllowed = (run) => run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer === "fine";
 
 /* 12 — the canonical company description, word for word (owner, 2026-09-16;
    COPY.md, "Company description — canonical"). Written HERE, as check 9 writes
@@ -142,6 +174,9 @@ const CTA_WORDS = {
   project: { text: "Tell Us About Your Project", path: "/contact", hash: "#project" },
 };
 const BOOK_A_CALL = /\bbook\s+a\s+call\b/i;
+/* 32 (2026-09-28) — the project form on /contact, at 1440: never narrower
+   than this. It rendered 203px wide there (a class collision). */
+const PROJECT_FORM_MIN = 480;
 
 /* 33 — the honesty contract (SPEC §8b.7, binding, verbatim): robotics is Lab,
    and says so where it is shown. The tiers and their labels (CLAUDE.md,
@@ -149,6 +184,59 @@ const BOOK_A_CALL = /\bbook\s+a\s+call\b/i;
 const ROBOTICS_HONESTY =
   "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.";
 const TIER_LABELS = { proven: "Proven", core: "Core", capable: "Capable", lab: "Lab" };
+/* 33 (2026-09-29, the lead designer under the owner's honesty rule) — the Lab
+   drawing (a diagram with a concept node: robotics) shows NO cyan and never
+   flows, on any profile. Read on every visit (its markup, painted or in its
+   <defs>), and on fresh pages scrolled to it where each motion system runs:
+   a desktop with a fine pointer (the Signal's sketch), a touch tablet and a
+   phone (the CSS flow). */
+const LAB_PROFILES = [
+  { label: "1440 desktop (fine pointer)", viewport: { width: 1440, height: 900 } },
+  { label: "1180x820 tablet (touch, coarse pointer)", viewport: { width: 1180, height: 820 }, touch: true, dpr: 2 },
+  { label: "390 phone (touch)", viewport: { width: 390, height: 844 }, touch: true, dpr: 3 },
+];
+const LAB_ROUTES = ["/", "/capabilities"];
+
+/* 34 (2026-09-29, the engineering review) — a client-side navigation: from
+   the bottom of a long page, the header's logo (the site's one client-side
+   link, <Link> to /; Back and Forward after it are client-side too). The new
+   page must start at its top AT ONCE — app/site.css scrolls <html> smoothly,
+   and Next 16 turns that off for a route change only under
+   html[data-scroll-behavior="smooth"] — and its reveals, and at >=1025px the
+   Signal, must run on it as on a fresh load. */
+const NAV_FROM = "/capabilities";
+const NAV_WIDTHS = [1440, 390];
+/* 35 (2026-09-29, the design review) — the Signal's payoff: a hook's trace
+   SETTLES LIT. Read on the same two runs as 34 (a fresh / read down, and / after
+   the navigation), at >=1025px where the Signal runs, once everything read
+   has had time to finish: every station of every hook drawn at this width is
+   lit, the host carries data-bf-traced, and no overlay is left. Settling back
+   to the hollow drawing made each payoff a blink: the pilot's three stations
+   lit for 0.3s, the close's one for 267ms. */
+const HOOK_SETTLE_MS = 3000;
+/* 35 — beside /, fresh and after the navigation (34's runs): a page with
+   the rail and the close's hooks and no hero */
+const HOOK_ROUTES = ["/engineering"];
+const LAB_WATCH_MS = 5500; /* past the CSS flow's three 1.6s passes and the Signal's 1.4s sketch */
+/* 36 (2026-09-29, fix pass B; the design and honesty reviews) — Schedule a
+   Call within reach, and one primary in view. On a fresh / read down a
+   viewport at a time, and after each step 60px back up (headroom pins the
+   header): no view shows two filled Schedule a Calls — the header's counts
+   while it is on screen and filled — and no more than REACH_MAX_RUN viewports
+   in a row on the way down, where the header is unpinned, show none at all
+   (the footer's, a ghost, counts: it is a Schedule a Call). At 1440 six
+   viewports in a row showed none, from how we work's call to the close's, and
+   the header's and the hero's were both filled on the first screen. */
+const REACH_PROFILES = [
+  { label: "1440", viewport: { width: 1440, height: 900 } },
+  { label: "390", viewport: { width: 390, height: 844 }, phone: true },
+];
+/* Four: a run of five empty viewports needs two calls about five viewports
+   apart, whatever the phase of the steps. Measured on the fixed page: the
+   longest run is 3 at 1440 (the ledger's call to the close's, 3,191px) and 3
+   at 390 (the proof's to how we work's, 3,555px — 4.2 phone screens, a run
+   of 4 at another phase); on the page the reviews read it was 6 at 1440. */
+const REACH_MAX_RUN = 4;
 
 /* 29 — the performance budget, from the approved plan (CLAUDE.md, Performance
    targets). Measured on / as the Phase 1 baseline was (scratchpad perf.mjs): a
@@ -318,7 +406,11 @@ function loadContent(rel) {
     const file = fileURLToPath(new URL(`../${rel}`, import.meta.url));
     const js = ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
     const mod = { exports: {} };
-    const stubs = { "./schema": { parseContent: (_schema, data) => data, metricSchema: null }, zod: { z: new Proxy({}, { get: () => () => null }) } };
+    const stubs = {
+      "./schema": { parseContent: (_schema, data) => data, metricSchema: null },
+      "./engineering-schema": { engineeringSchema: null },
+      zod: { z: new Proxy({}, { get: () => () => null }) },
+    };
     new Function("module", "exports", "require", js)(mod, mod.exports, (id) => {
       if (id in stubs) return stubs[id];
       throw new Error(`it imports "${id}", which the suite does not load`);
@@ -341,6 +433,231 @@ async function readingSpeedScroll(page) {
       await new Promise((r) => setTimeout(r, 150));
     }
   });
+}
+
+/* 34 — the reveals of a page: how many there are, and how many have run;
+   35 — and each Signal hook outside the hero: drawn at this width, its
+   stations and how many are lit, traced, overlays left */
+const revealCount = () => {
+  const all = [...document.querySelectorAll("[data-bf-reveal]")];
+  const hooks = [...document.querySelectorAll("[data-bf-trace]")]
+    .filter((h) => !h.closest("#hero"))
+    .map((h) => {
+      const svg = h.querySelector("svg.bf-trace");
+      const stops = [...h.querySelectorAll("[data-bf-trace-stop]")];
+      return {
+        name: h.getAttribute("data-bf-trace"),
+        shown: Boolean(svg) && getComputedStyle(svg).display !== "none" && h.getClientRects().length > 0,
+        stops: stops.length,
+        lit: stops.filter((x) => x.hasAttribute("data-bf-lit")).length,
+        traced: h.hasAttribute("data-bf-traced"),
+        overlays: h.querySelectorAll(".bf-signal-trace").length,
+      };
+    });
+  return { total: all.length, revealed: all.filter((e) => e.classList.contains("bf-revealed")).length, hooks, signal: document.documentElement.getAttribute("data-bf-signal") };
+};
+/* 34 (2026-09-29) — the Signal's teardown leaves nothing running:
+   /engineering (the Signal live, no hero scene) → /work (nothing to trace),
+   client-side through Next's own router, the one a <Link> drives; then every
+   requestAnimationFrame the page asks for in a second, idle. ScrollTrigger's
+   own loop ran on at 64-67 a second on /work after the engine had stopped
+   (the engineering review). Not through / and its logo: the gate's
+   signal-dead case kills the engine on / */
+async function visitNavBack(browser) {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "no-preference" });
+  await ctx.addInitScript(() => {
+    const raf = window.requestAnimationFrame.bind(window);
+    window.__vsRaf = 0;
+    window.requestAnimationFrame = (f) => {
+      window.__vsRaf++;
+      return raf(f);
+    };
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/engineering`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => document.documentElement.getAttribute("data-bf-signal") === "live", null, { timeout: 30000 }).catch(() => {});
+  const live = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  await page.waitForTimeout(1000);
+  const clicked = await page.evaluate(() => {
+    const r = window.next?.router;
+    if (!r?.push) return false;
+    r.push("/work");
+    return true;
+  });
+  if (!clicked) {
+    await ctx.close();
+    return { clicked };
+  }
+  await page.waitForFunction(() => location.pathname === "/work" && document.querySelector("main#main"), null, { timeout: 30000 });
+  await page.waitForTimeout(2000);
+  const perSec = await page.evaluate(async () => {
+    const n0 = window.__vsRaf;
+    await new Promise((r) => setTimeout(r, 1000));
+    return window.__vsRaf - n0;
+  });
+  const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  await ctx.close();
+  return { clicked, live, perSec, signal };
+}
+/* 36 — a fresh / under reduced motion (the header's slide is dropped there,
+   so its state is its state at once), read a viewport at a time */
+async function visitReach(browser, prof) {
+  const ctx = await browser.newContext({ viewport: prof.viewport, reducedMotion: "reduce", ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(1000);
+  const read = (dir) =>
+    page.evaluate((dir) => {
+      const vh = innerHeight;
+      const header = document.querySelector("header#masthead");
+      const hb = header ? header.getBoundingClientRect() : null;
+      const headerOn = Boolean(hb && hb.bottom > 1);
+      const top = headerOn ? hb.bottom : 0;
+      const box = (el, from) => {
+        const r = el.getBoundingClientRect();
+        const s = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && s.visibility !== "hidden" && s.display !== "none" && r.bottom > from && r.top < vh;
+      };
+      const filled = (el) => {
+        const bg = getComputedStyle(el).backgroundColor;
+        return bg !== "transparent" && !/^rgba\(.*,\s*0\)$/.test(bg);
+      };
+      const name = (el) => (el.closest("header#masthead") ? "the header's" : el.closest("footer") ? "the footer's" : `#${el.closest("section[id]")?.id ?? "?"}'s`);
+      const calls = [...document.querySelectorAll('[data-cta="schedule"]')].filter((el) => !el.closest("[hidden]"));
+      const inPage = calls.filter((el) => !el.closest("header#masthead") && box(el, top));
+      const hdr = calls.filter((el) => el.closest("header#masthead") && headerOn && box(el, 0));
+      return { y: Math.round(scrollY), dir, inPage: inPage.map(name), filled: [...hdr, ...inPage].filter(filled).map(name).sort() };
+    }, dir);
+  const steps = [];
+  let last = -1;
+  for (let y = 0; ; y += prof.viewport.height) {
+    await page.evaluate((yy) => window.scrollTo({ top: yy, behavior: "instant" }), y);
+    await page.waitForTimeout(350);
+    const down = await read("down");
+    if (down.y === last) break;
+    last = down.y;
+    await page.evaluate(() => window.scrollBy({ top: -60, behavior: "instant" }));
+    await page.waitForTimeout(350);
+    const up = await read("up");
+    steps.push({ down, up });
+    if (down.y + prof.viewport.height >= (await page.evaluate(() => document.documentElement.scrollHeight))) break;
+  }
+  await ctx.close();
+  return { label: prof.label, height: prof.viewport.height, steps };
+}
+/* 35 — a fresh load of `route` read down at reading speed, then the hooks' state once it has settled */
+async function visitHooks(browser, route, w) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: 900 }, reducedMotion: "no-preference" });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}${route}`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(HOOK_SETTLE_MS);
+  const st = await page.evaluate(revealCount);
+  await ctx.close();
+  return { route, width: w, st };
+}
+/* 34 — a fresh load of / read down at reading speed (the reference), then a
+   page read to the end of NAV_FROM that follows the header's logo to /: its
+   scroll position on every frame after the click, then the same reading
+   down. Two fresh contexts. */
+async function visitNav(browser, w) {
+  const phone = w < 768;
+  const mk = () => browser.newContext({ viewport: { width: w, height: phone ? 844 : 900 }, reducedMotion: "no-preference", ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
+  const fresh = await mk();
+  const fp = await fresh.newPage();
+  await fp.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await fp.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await fp.waitForTimeout(1500);
+  await readingSpeedScroll(fp);
+  await fp.waitForTimeout(HOOK_SETTLE_MS);
+  const ref = await fp.evaluate(revealCount);
+  await fresh.close();
+
+  const ctx = await mk();
+  /* every frame's scroll position, page and whether the new page is there */
+  await ctx.addInitScript(() => {
+    const log = [];
+    Object.defineProperty(window, "__vsNav", { value: log });
+    const tick = () => {
+      log.push({ y: Math.round(scrollY), path: location.pathname, hero: Boolean(document.getElementById("hero")) });
+      if (log.length > 4000) log.splice(0, 1000);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}${NAV_FROM}`, { waitUntil: "load", timeout: 120000 });
+  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await page.waitForTimeout(1500);
+  const fromY = await page.evaluate(() => Math.round(scrollY));
+  const clicked = await page.evaluate(() => {
+    window.__vsNav.length = 0;
+    const a = document.querySelector('#masthead a[href="/"]');
+    if (!a) return false;
+    a.click();
+    return true;
+  });
+  if (!clicked) {
+    await ctx.close();
+    return { width: w, ref, clicked };
+  }
+  await page.waitForFunction(() => location.pathname === "/" && document.getElementById("hero"), null, { timeout: 30000 });
+  await page.waitForTimeout(1200);
+  const log = await page.evaluate(() => window.__vsNav.slice());
+  const i = log.findIndex((f) => f.path === "/" && f.hero);
+  const frames = i < 0 ? [] : log.slice(i);
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(HOOK_SETTLE_MS);
+  const nav = await page.evaluate(revealCount);
+  const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
+  /* the pause control across Back and Forward (2026-09-29, the engineering
+     review): on a phone, where it shows for the poster's drift, Pause — then
+     Back to NAV_FROM and Forward to /, both client-side; the page stays
+     paused, and the remounted control must say so */
+  let toggle = null;
+  if (phone) {
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.waitForTimeout(400);
+    const btn = page.locator(".bf-motion-toggle[data-ready]");
+    if (!(await btn.isVisible().catch(() => false))) toggle = { hidden: true };
+    else {
+      const before = (await btn.textContent())?.trim();
+      await btn.click();
+      await page.waitForTimeout(300);
+      const pausedAt = await page.evaluate(() => document.documentElement.dataset.motion || null);
+      await page.goBack({ waitUntil: "commit" });
+      await page.waitForFunction((p) => location.pathname === p, NAV_FROM, { timeout: 30000 });
+      await page.waitForTimeout(600);
+      await page.goForward({ waitUntil: "commit" });
+      await page.waitForFunction(() => location.pathname === "/" && document.querySelector("#hero .bf-motion-toggle[data-ready]"), null, { timeout: 30000 });
+      await page.waitForTimeout(600);
+      toggle = await page.evaluate(() => {
+        const b = document.querySelector("#hero .bf-motion-toggle");
+        return { motion: document.documentElement.dataset.motion || null, label: b?.textContent?.trim() || null, pressed: b?.getAttribute("aria-pressed") ?? null };
+      });
+      Object.assign(toggle, { before, pausedAt });
+    }
+  }
+  await ctx.close();
+  return {
+    width: w,
+    ref,
+    clicked,
+    fromY,
+    frames: frames.length,
+    firstY: frames.length ? frames[0].y : null,
+    maxY: frames.length ? Math.max(...frames.map((f) => f.y)) : null,
+    toZero: frames.findIndex((f) => f.y === 0),
+    nav,
+    signal,
+    toggle,
+  };
 }
 
 /* 25 ── every WebGL context a page asks for. Installed as an init script, so it
@@ -428,6 +745,15 @@ function workerGlHook() {
    on every same-site script on the wire — the page's own scripts ignore it */
 async function installGlHooks(ctx, prof = {}) {
   await ctx.addInitScript(glHook, workerGlHook.toString());
+  if (prof.early)
+    await ctx.addInitScript(() => {
+      window.__vsEarly = { lcp: 0, fcp: null, input: null };
+      new PerformanceObserver((l) => (window.__vsEarly.lcp += l.getEntries().length)).observe({ type: "largest-contentful-paint", buffered: true });
+      new PerformanceObserver((l) => {
+        for (const e of l.getEntries()) if (e.name === "first-contentful-paint") window.__vsEarly.fcp = Math.round(e.startTime);
+      }).observe({ type: "paint", buffered: true });
+      for (const t of ["keydown", "wheel"]) addEventListener(t, () => (window.__vsEarly.input ??= Math.round(performance.now())), { capture: true });
+    });
   if (prof.saveData)
     await ctx.addInitScript(() => {
       try {
@@ -529,6 +855,8 @@ function glReport() {
     field: Boolean(field),
     fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
     sceneReady: Boolean(field && field.hasAttribute("data-scene-ready")),
+    /* 25 (2026-09-28): the Signal engine's own evidence that it started */
+    signal: document.documentElement.getAttribute("data-bf-signal"),
     loadEnd: nav ? nav.loadEventEnd : 0,
     scripts: performance
       .getEntriesByType("resource")
@@ -551,7 +879,18 @@ async function visitGl(browser, route, prof) {
   await installGlHooks(ctx, prof);
   const page = await ctx.newPage();
   glTrace(prof.label, "goto");
-  await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+  if (prof.early) {
+    /* the input from the moment the navigation commits, for 400ms: a wheel
+       turn and a key every 20ms, before anything has painted */
+    await page.goto(BASE + route, { waitUntil: "commit", timeout: 120000 });
+    const t0 = Date.now();
+    while (Date.now() - t0 < 400) {
+      await page.mouse.wheel(0, 40).catch(() => {});
+      await page.keyboard.press("ArrowDown").catch(() => {});
+      await page.waitForTimeout(20);
+    }
+    await page.waitForLoadState("load", { timeout: 120000 });
+  } else await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(2500);
   glTrace(prof.label, "first input");
@@ -573,6 +912,7 @@ async function visitGl(browser, route, prof) {
     await page.waitForFunction(() => document.querySelector("[data-hero-field][data-scene-ready]"), null, { timeout: 12000 }).catch(() => {});
   glTrace(prof.label, "report");
   const r = await bounded(page.evaluate(glReport), 20000, { gl: null, scripts: [], error: "the page did not answer for 20s" });
+  if (prof.early) r.earlyPaint = await bounded(page.evaluate(() => window.__vsEarly || null), 5000, null);
   glTrace(prof.label, "frames");
   r.frames = await readFrameGl(page);
   r.input = input;
@@ -767,9 +1107,11 @@ async function visitLcp(browser, prof) {
     const above = h1Box ? vis.btm <= h1Box.t + 1 : null;
     const where = h1Box ? `the visible poster spans x ${Math.round(vis.l)}–${Math.round(vis.r)}, y ${Math.round(vis.t)}–${Math.round(vis.btm)}; the h1's lines x ${Math.round(h1Box.l)}–${Math.round(h1Box.r)}, y ${Math.round(h1Box.t)}–${Math.round(h1Box.b)}` : "no h1";
     const badCanvases = [...document.querySelectorAll("canvas")].filter((c) => !field?.contains(c) || !same(c)).map((c) => `${tag(c)} ${c.offsetWidth}x${c.offsetHeight}${field?.contains(c) ? " inside the field, not its box" : " outside [data-hero-field]"}`);
-    /* H4: how far the chosen file is stretched to cover the field. The file's
+    /* H4: how far the chosen file is stretched to fill the field. The file's
        own width is its srcset `w` descriptor — naturalWidth is density-corrected
-       by `sizes` for a srcset image, and says nothing about the file. */
+       by `sizes` for a srcset image, and says nothing about the file. The drawn
+       width follows the poster's own object-fit: `cover` fills the larger of
+       the two axes, `contain` (>=1025px since 2026-09-28) the smaller. */
     let fileW = 0;
     for (const s of [...(p.parentElement?.querySelectorAll("source") || []), p])
       for (const c of (s.getAttribute("srcset") || "").split(",")) {
@@ -777,7 +1119,8 @@ async function visitLcp(browser, prof) {
         if (u && d && /^\d+w$/.test(d) && new URL(u, location.href).href === p.currentSrc) fileW = parseInt(d, 10);
       }
     const aspect = p.naturalWidth && p.naturalHeight ? p.naturalWidth / p.naturalHeight : 0;
-    const needW = field && aspect ? Math.max(field.clientWidth, field.clientHeight * aspect) * devicePixelRatio : 0;
+    const fit = getComputedStyle(p).objectFit;
+    const needW = field && aspect ? (fit === "contain" ? Math.min : Math.max)(field.clientWidth, field.clientHeight * aspect) * devicePixelRatio : 0;
     out.state = {
       rendered: !why,
       why,
@@ -794,6 +1137,7 @@ async function visitLcp(browser, prof) {
       fieldCanvases: field ? field.querySelectorAll("canvas").length : 0,
       badCanvases,
       upscale: needW && fileW ? +(needW / fileW).toFixed(2) : null,
+      fit,
       natural: fileW || "?",
       dpr: devicePixelRatio,
     };
@@ -868,6 +1212,87 @@ async function perfRun(browser, prof) {
   });
   await ctx.close();
   return r;
+}
+
+/* 29 (2026-09-28) ── CLS WHILE READING. The runs above hold still, and a
+   layout shift a visitor meets while scrolling — a block inserted as a section
+   nears, a pin's spacer arriving with a lazy chunk, a late split — never
+   happens in them; scrolling is not recent input, so every such shift counts
+   against a real visitor (web.dev, CLS). One fresh run per profile, throttled
+   as above, scrolled at reading speed from the top to the bottom, then 1.5s to
+   settle; the shifts are summed as in perfRun, and the largest are named. On
+   the desktop profile this is also where the Signal arrives mid-scroll: the
+   first scroll starts its loader. */
+async function perfScrollRun(browser, prof) {
+  const ctx = await browser.newContext({ viewport: prof.viewport, ...(prof.phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 3 } : {}) });
+  const page = await ctx.newPage();
+  const cdp = await ctx.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: prof.cpu });
+  if (prof.net) {
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", prof.net);
+  }
+  await page.addInitScript(() => {
+    const p = (window.__vsScrollCls = { cls: 0, shifts: [] });
+    const name = (n) => (n && n.nodeType === 1 ? `${n.tagName.toLowerCase()}${n.id ? "#" + n.id : ""}${n.getAttribute("class") ? "." + n.getAttribute("class").split(" ")[0] : ""}` : "(removed)");
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) {
+        if (e.hadRecentInput) continue;
+        p.cls += e.value;
+        p.shifts.push({ value: e.value, at: Math.round(e.startTime), y: Math.round(window.scrollY), nodes: (e.sources || []).map((x) => name(x.node)).slice(0, 3) });
+      }
+    }).observe({ type: "layout-shift", buffered: true });
+  });
+  await page.goto(`${BASE}/`, { waitUntil: "load", timeout: 120000 });
+  await readingSpeedScroll(page);
+  await page.waitForTimeout(1500);
+  const r = await page.evaluate(() => {
+    const p = window.__vsScrollCls;
+    return { cls: p.cls, shifts: [...p.shifts].sort((a, b) => b.value - a.value).slice(0, 3), height: document.documentElement.scrollHeight, signal: document.documentElement.getAttribute("data-bf-signal") };
+  });
+  await ctx.close();
+  return r;
+}
+
+/* 33 (2026-09-29) ── cyan in a drawing: every element whose stroke, fill or
+   stop colour is the flow colour (--bf-flow, resolved in the page) or any
+   saturated cyan (hue 160-195 degrees). Self-contained: it runs in the
+   browser, installed as window.__bfLabCyan before the collector and the Lab
+   probe call it. */
+function labCyanIn(svg) {
+  const probe = document.createElement("span");
+  probe.style.color = "var(--bf-flow)";
+  document.body.append(probe);
+  const flow = getComputedStyle(probe).color;
+  probe.remove();
+  const rgb = (v) => {
+    const m = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/.exec(v || "");
+    return m && (m[4] === undefined || +m[4] > 0.05) ? [+m[1], +m[2], +m[3]] : null;
+  };
+  const cyanish = ([R, G, B]) => {
+    const [r, g, b] = [R / 255, G / 255, B / 255];
+    const max = Math.max(r, g, b);
+    const d = max - Math.min(r, g, b);
+    if (max < 0.45 || d / max < 0.45) return false;
+    let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+    return h >= 160 && h <= 195;
+  };
+  const out = [];
+  for (const el of [svg, ...svg.querySelectorAll("*")]) {
+    const cs = getComputedStyle(el);
+    for (const prop of ["stroke", "fill", "stop-color"]) {
+      const v = cs.getPropertyValue(prop);
+      const c = rgb(v);
+      if (c && (v === flow || cyanish(c))) {
+        const cls = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
+        out.push(`${el.tagName.toLowerCase()}${cls.length ? "." + cls.join(".") : ""} ${prop} ${v}`);
+        break;
+      }
+    }
+  }
+  return out;
 }
 
 /* ── in-page collector (runs in the browser) ─────────────────────────────── */
@@ -1031,12 +1456,17 @@ function collectInPage() {
   const fontPreloads = [...document.querySelectorAll('link[rel="preload"][as="font"]')].map((l) => l.getAttribute("href"));
 
   /* stamp text-bearing elements so the CDP pass can ask which platform font
-     actually rendered them — getComputedStyle only says what was asked for */
+     actually rendered them — getComputedStyle only says what was asked for.
+     Only text the browser renders: an element inside a closed <details> has a
+     box (an inline one even reports a size) but is never painted, so CDP names
+     no font for it, and "?" read as a fallback (2026-09-28: the first figure
+     wrapper inside an FAQ answer). checkVisibility() is false there. */
   let stamped = 0;
   for (const el of document.body.querySelectorAll("*")) {
     if (el.closest("script, style, noscript, template, svg")) continue;
     if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
     if (!visible(el)) continue;
+    if (typeof el.checkVisibility === "function" && !el.checkVisibility()) continue;
     el.setAttribute("data-vs-t", String(stamped));
     if (++stamped >= 1200) break;
   }
@@ -1058,6 +1488,9 @@ function collectInPage() {
   }));
   const cardEls = new Map();
   for (const img of projImgs) {
+    /* a screenshot in a client story's band is its member's, and the band's
+       own rule reads it (below, 2026-09-29): the band is no card */
+    if (img.closest("[data-client-story]")) continue;
     /* a card marked with its kind is its own root — a feature-work card's name
        is an h4, and the walk would climb past it to the sub-group's h3 —
        otherwise the nearest box holding a heading */
@@ -1090,6 +1523,9 @@ function collectInPage() {
     const st = getComputedStyle(el);
     return r.width >= 24 && r.height >= 10 && st.clip === "auto" && (!st.clipPath || st.clipPath === "none");
   };
+  /* a screenshot is known by the file it SERVES — /projects/opt/<name>-<width>.<ext>
+     is <name> — not by an attribute the page could set to anything */
+  const shotName = (src) => src.replace(/^.*?\/projects\/(?:opt\/)?/, "").replace(/[?#].*$/, "").replace(/(?:-\d+)?\.(?:avif|webp|png|jpe?g)$/i, "");
   const cardRoots = new Set(document.querySelectorAll("[data-project-kind]"));
   if (location.pathname.replace(/\/$/, "") === "/work")
     for (const h of document.querySelectorAll("main h3, main h4")) {
@@ -1113,7 +1549,41 @@ function collectInPage() {
       builtAt: fact("[data-built-at]"),
       role: fact("[data-role]"),
       images: [...c.querySelectorAll("img")].map((i) => ({ src: srcOf(i).replace(location.origin, "").replace(/[&?]w=.*$/, ""), loaded: i.complete && i.naturalWidth > 0 })),
+      /* every project screenshot on the card, with the feature-screen figure
+         that holds it (2026-09-30) and that figure's caption, as a reader
+         sees it */
+      screens: [...c.querySelectorAll("img")]
+        .filter((i) => /\/projects\//.test(srcOf(i)))
+        .map((i) => {
+          const fig = i.closest("[data-feature-screen]");
+          const cap = fig ? fig.querySelector("figcaption") : null;
+          return { src: srcOf(i).replace(location.origin, ""), name: shotName(srcOf(i)), screen: Boolean(fig && c.contains(fig)), caption: cap ? { text: flat(cap), seen: readable(cap) } : null };
+        }),
       links: [...c.querySelectorAll("a[href]")].map((a) => ({ href: a.href, text: flat(a).slice(0, 40) })),
+    };
+  });
+
+  /* 9 ── a client story shown as a band (2026-09-29, the homepage's
+     `[data-client-story]`): no card, so no kind marker, but a label all the
+     same — who built the systems it names — and the projects it names
+     (`[data-story-project]`), each with its links; and, since the band shows
+     them (2026-09-29, the design review), every project screenshot in it,
+     with the name of the member whose tile holds it, known by the file it
+     serves (shotName, above). */
+  const clientStoryBands = [...document.querySelectorAll("[data-client-story]")].map((band) => {
+    const label = band.querySelector("[data-attribution]");
+    return {
+      id: band.getAttribute("data-client-story"),
+      label: label ? { text: flat(label), seen: readable(label) } : null,
+      shots: [...band.querySelectorAll("img")]
+        .filter((i) => /\/projects\//.test(srcOf(i)))
+        .map((i) => ({ src: srcOf(i).replace(location.origin, ""), name: shotName(srcOf(i)), loaded: i.complete && i.naturalWidth > 0, member: i.closest("[data-story-project]")?.getAttribute("data-story-project") ?? null })),
+      names: [...band.querySelectorAll("[data-story-project]")].map((n) => ({
+        id: n.getAttribute("data-story-project"),
+        text: flat(n.querySelector("h2, h3, h4, h5, h6") || n).replace(/\s*\(opens in a new tab\)$/, "").slice(0, 60),
+        seen: readable(n),
+        links: [...n.querySelectorAll("a[href]")].map((a) => a.href),
+      })),
     };
   });
 
@@ -1291,6 +1761,16 @@ function collectInPage() {
         .filter((a) => !a.closest("nav") && new URL(a.href, location.href).pathname !== "/")
         .map((a) => ({ text: flatText(a), href: a.getAttribute("href"), abs: a.href, cta: a.getAttribute("data-cta"), shown: visible(a) }))
     : null;
+  /* 32 (2026-09-28) ── the project form where "Tell Us About Your Project"
+     lands: its rendered width. It rendered 203px wide at 1440 in a panel whose
+     heading touched its border — /work's card rule (.bf-project) won over the
+     contact wrapper's, which had the same name — and nothing measured it. */
+  const projectForm = (() => {
+    const f = document.querySelector("#project .bf-form");
+    if (!f) return null;
+    const r = f.getBoundingClientRect();
+    return { width: Math.round(r.width), shown: visible(f), box: describe(f.parentElement || f) };
+  })();
   const bookCall = [];
   {
     const BOOK = /\bbook\s+a\s+call\b/i;
@@ -1332,6 +1812,40 @@ function collectInPage() {
     shown: visible(t),
     where: sectionOf(t),
   }));
+  /* 33 (2026-09-29, fix pass B) ── a capability's tiers wherever they stand
+     for the capability: a box of tier chips with no words of its own (a
+     concept tag aside), inside that capability's [data-capability] or in a
+     link to its section (/capabilities' contents row). A chip beside an
+     item's own words ("Online stores" in what we build) is that item's, and
+     not read here. */
+  const tierGroups = [];
+  for (const g of new Set([...document.querySelectorAll("[data-tier]")].map((t) => t.parentElement).filter(Boolean))) {
+    const bare = g.cloneNode(true);
+    bare.querySelectorAll("[data-tier], .bf-concept").forEach((x) => x.remove());
+    if ((bare.textContent || "").trim()) continue;
+    const link = g.closest("a[href]");
+    const hash = link ? new URL(link.getAttribute("href"), location.href).hash.slice(1) : "";
+    const cap = g.closest("[data-capability]")?.getAttribute("data-capability") || hash || null;
+    if (!cap) continue;
+    tierGroups.push({
+      cap,
+      via: g.closest("[data-capability]") ? "section" : "link",
+      where: `${sectionOf(g) || "the page"}${link ? ` (the link to #${hash})` : ""}`,
+      chips: [...g.children].filter((c) => c.matches("[data-tier]")).map((t) => ({ tier: t.getAttribute("data-tier"), text: (t.innerText || t.textContent || "").replace(/\s+/g, " ").trim(), seen: seenByReader(t) })),
+    });
+  }
+  /* 33 (2026-09-29) ── the Lab drawing: every diagram holding a concept node,
+     its flow lines, and every element in it — painted or in its <defs> — whose
+     stroke, fill or stop colour is cyan, the colour of data flow */
+  const labDrawings = [...document.querySelectorAll("svg")]
+    .filter((s) => s.querySelector(".dg-node--concept"))
+    .map((s) => ({
+      id: [...s.classList].find((c) => c.startsWith("bf-dg--")) || describe(s),
+      where: sectionOf(s),
+      shown: visible(s),
+      flows: s.querySelectorAll(".dg-flow").length,
+      cyan: typeof window.__bfLabCyan === "function" ? window.__bfLabCyan(s) : null,
+    }));
 
   /* 18 ── the logotype scope: how many elements carry it, and how many render */
   const logos = [...document.querySelectorAll("[data-logotype]")];
@@ -1366,7 +1880,7 @@ function collectInPage() {
     .filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name))
     .map((e) => e.name);
 
-  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, bookCall, capabilities, tierChips };
+  return { visibleTexts, undefinedUses, fontsDeclared, fontsLoaded, fontFiles, fontPreloads, stampedInfo, images, cards: [...cardEls.values()], projectCards, clientStoryBands, jsonld, links, ids, headings, meta, metaStrings, allImages, fontFaces, fontFaceRules, stuckHidden, scripts, people, design, logotypeCount, ctas, headerButtons, projectForm, bookCall, capabilities, tierChips, tierGroups, labDrawings };
 }
 
 /* 8, 10 (K10) ── THE FIGURE GRAMMAR: which numbers in a string are figures, and
@@ -2415,9 +2929,75 @@ async function visitFocusBack(browser, route, width) {
   return stops;
 }
 
-/* 21 ── reduced motion requested: what is still moving */
+/* 21 ── reduced motion requested: what is still moving.
+   getAnimations() sees CSS animations and transitions only; motion a script
+   writes — gsap's tweens, an rAF loop — is invisible to it (three live gsap
+   tweens read 0). So an init script, in place before any page script, counts
+   per element the changes a script makes to what motion is made of, in three
+   kinds (2026-09-28, the Signal):
+     style   an inline transform, translate, scale, rotate, opacity or stroke dash;
+     custom  any inline CSS custom property — `--x` feeding
+             `transform: translateX(var(--x))` moves what it feeds;
+     attr    an SVG motion attribute — transform, opacity, the stroke dash, a
+             position (x, y, cx, cy, r, x1…y2) or a shape (d, points): gsap's
+             attr plugin, a hand-rolled draw-on.
+   The first version watched the six inline properties alone; a custom
+   property and two attributes, each written 120 times, went unseen. */
+function scriptMotionHook() {
+  const PROPS = ["transform", "translate", "scale", "rotate", "opacity", "stroke-dashoffset", "stroke-dasharray"];
+  const ATTRS = ["transform", "opacity", "stroke-dashoffset", "stroke-dasharray", "x", "y", "cx", "cy", "r", "x1", "y1", "x2", "y2", "d", "points"];
+  const log = new Map();
+  Object.defineProperty(window, "__vsScriptMotion", { value: log });
+  const probe = document.createElement("div");
+  const motion = (style) => PROPS.map((p) => style.getPropertyValue(p)).join("|");
+  const custom = (style) => {
+    const o = new Map();
+    for (let i = 0; i < style.length; i++) if (style[i].startsWith("--")) o.set(style[i], style.getPropertyValue(style[i]));
+    return o;
+  };
+  const last = new WeakMap();
+  const ids = new WeakMap();
+  let uid = 0;
+  const name = (el) => `${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${el.getAttribute("class") ? "." + el.getAttribute("class").split(" ")[0] : ""}`;
+  const count = (el, via, what) => {
+    if (!ids.has(el)) ids.set(el, ++uid);
+    const k = `${ids.get(el)}|${via}`;
+    const e = log.get(k) || { el: name(el), via, n: 0, what: [] };
+    e.n++;
+    for (const w of what) if (!e.what.includes(w)) e.what.push(w);
+    log.set(k, e);
+  };
+  new MutationObserver((recs) => {
+    for (const r of recs) {
+      const el = r.target;
+      const a = r.attributeName;
+      if (!last.has(el)) last.set(el, new Map());
+      const seen = last.get(el);
+      if (a === "style") {
+        if (!el.style) continue;
+        if (!seen.has("style")) {
+          probe.setAttribute("style", r.oldValue || "");
+          seen.set("style", { motion: motion(probe.style), custom: custom(probe.style) });
+        }
+        const was = seen.get("style");
+        const now = { motion: motion(el.style), custom: custom(el.style) };
+        seen.set("style", now);
+        if (now.motion !== was.motion) count(el, "style", []);
+        const moved = [...new Set([...was.custom.keys(), ...now.custom.keys()])].filter((k) => was.custom.get(k) !== now.custom.get(k));
+        if (moved.length) count(el, "custom", moved);
+      } else {
+        if (!seen.has(a)) seen.set(a, r.oldValue);
+        const now = el.getAttribute(a);
+        if (now === seen.get(a)) continue;
+        seen.set(a, now);
+        count(el, "attr", [a]);
+      }
+    }
+  }).observe(document, { attributes: true, attributeFilter: ["style", ...ATTRS], attributeOldValue: true, subtree: true });
+}
 async function visitReduced(browser, route) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
+  await ctx.addInitScript(scriptMotionHook);
   const page = await ctx.newPage();
   await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
@@ -2446,8 +3026,12 @@ async function visitReduced(browser, route) {
     }
   }
   const n = canvases.length;
+  /* every element a script moved, and every script the page requested (check
+     21 classifies them: gsap is never requested under reduced motion) */
+  const scripted = await page.evaluate(() => [...(window.__vsScriptMotion || new Map()).values()].sort((a, b) => b.n - a.n));
+  const scripts = await page.evaluate(() => performance.getEntriesByType("resource").filter((e) => e.initiatorType === "script" || /\.js(\?|$)/.test(e.name)).map((e) => e.name));
   await ctx.close();
-  return { anims, canvasMoving, canvases: n };
+  return { anims, canvasMoving, canvases: n, scripted, scripts };
 }
 
 /* 23 ── a full-page capture with every time-driven thing pinned */
@@ -2547,6 +3131,7 @@ async function visit(browser, route, width) {
   await page.waitForTimeout(1700); /* reveals that fired at the end of the scroll finish */
   const glData = await page.evaluate(glReport); /* before the contrast pass draws its own canvas */
   glData.frames = await readFrameGl(page);
+  await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`); /* check 33's cyan reader, for the collector */
   const data = await page.evaluate(collectInPage);
   data.glData = glData;
   data.stalled = stalled;
@@ -2640,6 +3225,80 @@ async function visit(browser, route, width) {
    Each is brought into view, so anything that reveals on entry inside it has
    played before the text is read. readFigures is evaluated with the grammar,
    tokenizeFigures, as its argument. */
+/* 33 (2026-09-29) ── the Lab drawing over time, on a FRESH page nobody has
+   scrolled: the page is scrolled to the drawing here, at reading speed, so the
+   CSS flow and the Signal's sketch are triggered while this watches — on a
+   settled page they would already be over, and "it never flowed" would be a
+   fact about the probe. Every 100ms for LAB_WATCH_MS once it is in view: any
+   animation or transition running on the drawing's own elements (the engine's
+   overlays, .bf-signal-*, and its masks are the sketch, not the drawing), any
+   own element whose stroke-dashoffset moves (a flow written by script), and
+   any cyan painted in it, overlays included. */
+async function visitLab(browser, route, prof) {
+  const ctx = await browser.newContext({
+    viewport: prof.viewport,
+    reducedMotion: "no-preference",
+    ...(prof.touch ? { isMobile: true, hasTouch: true, deviceScaleFactor: prof.dpr || 2 } : {}),
+  });
+  try {
+    const page = await ctx.newPage();
+    await page.goto(BASE + route, { waitUntil: "load", timeout: 120000 });
+    await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`);
+    const found = await page.evaluate(() => {
+      const shown = (s) => s.getClientRects().length > 0 && s.getBoundingClientRect().width > 0 && getComputedStyle(s).visibility !== "hidden";
+      const svg = [...document.querySelectorAll("svg")].find((s) => s.querySelector(".dg-node--concept") && shown(s));
+      if (!svg) return null;
+      const own = (el) => !(el.getAttribute("class") || "").split(/\s+/).some((c) => c.startsWith("bf-signal")) && !el.closest("mask");
+      const name = (el) => `${el.tagName.toLowerCase()}${(el.getAttribute("class") || "").trim() ? "." + el.getAttribute("class").trim().split(/\s+/).join(".") : ""}`;
+      const lab = (window.__bfLab = { samples: 0, anims: [], moved: [], cyan: [], flowing: false, sketch: 0, inView: false, top: Math.round(svg.getBoundingClientRect().top + scrollY) });
+      const add = (list, v) => list.length < 12 && !list.includes(v) && list.push(v);
+      const dash = new Map();
+      let from = null;
+      const tick = () => {
+        const r = svg.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) {
+          lab.inView = true;
+          from ??= performance.now();
+        }
+        if (from === null) return;
+        for (const a of svg.getAnimations({ subtree: true })) {
+          const t = a.effect && a.effect.target;
+          if (a.playState === "running" && t && own(t)) add(lab.anims, `${name(t)} (${a.animationName || a.transitionProperty || "animation"})`);
+        }
+        for (const el of svg.querySelectorAll("path, line, polyline, polygon, rect, circle, ellipse")) {
+          if (!own(el)) continue;
+          const d = getComputedStyle(el).strokeDashoffset;
+          if (!dash.has(el)) dash.set(el, d);
+          else if (dash.get(el) !== d) add(lab.moved, `${name(el)} (${dash.get(el)} -> ${d})`);
+        }
+        for (const c of window.__bfLabCyan(svg)) add(lab.cyan, c);
+        if (svg.closest("[data-bf-flow]")?.classList.contains("bf-flowing")) lab.flowing = true;
+        lab.sketch = Math.max(lab.sketch, svg.querySelectorAll(".bf-signal-trace").length);
+        lab.samples++;
+      };
+      window.__bfLabTimer = setInterval(tick, 100);
+      return { top: lab.top, height: Math.round(svg.getBoundingClientRect().height) };
+    });
+    if (!found) return { route, label: prof.label, rendered: false };
+    /* reading speed, to the drawing's middle; then watch */
+    const aim = Math.max(0, found.top + found.height / 2 - prof.viewport.height / 2);
+    await page.evaluate(async (aim) => {
+      for (let y = scrollY; y < aim; y = Math.min(aim, y + 120)) {
+        window.scrollTo(0, Math.min(aim, y + 120));
+        await new Promise((r) => setTimeout(r, 90));
+      }
+    }, aim);
+    await page.waitForTimeout(LAB_WATCH_MS);
+    const out = await page.evaluate(() => {
+      clearInterval(window.__bfLabTimer);
+      return window.__bfLab;
+    });
+    return { route, label: prof.label, rendered: true, ...out };
+  } finally {
+    await ctx.close();
+  }
+}
+
 async function readFiguresIn(page) {
   const opened = await page.evaluate(() => {
     const all = [...document.querySelectorAll("details")];
@@ -2877,6 +3536,7 @@ const GL_ARGS = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-s
 /* 29 runs first, before anything else loads the machine or the browser. One
    unthrottled load warms the server; it is not measured. */
 const perfRuns = {};
+const perfScroll = {};
 const perfLoad = { before: os.loadavg()[0], after: 0 };
 if (want(29)) {
   process.stderr.write("  performance: one unmeasured load to warm the server\n");
@@ -2890,6 +3550,10 @@ if (want(29)) {
       perfRuns[name].push(await perfRun(browser, prof).catch((e) => ({ error: String(e?.message || e).slice(0, 200) })));
     }
   }
+  for (const [name, prof] of Object.entries(PERF_PROFILES)) {
+    process.stderr.write(`  performance ${name}: CLS during a reading-speed scroll\n`);
+    perfScroll[name] = await perfScrollRun(browser, prof).catch((e) => ({ error: String(e?.message || e).slice(0, 200) }));
+  }
   perfLoad.after = os.loadavg()[0];
 }
 /* 29 (2026-09-16) ── every same-site script the performance runs requested, by
@@ -2901,7 +3565,7 @@ for (const r of Object.values(perfRuns).flat())
   for (const s of r.scripts || [])
     if (isSameSite(s.url) && !perfKinds.has(s.url)) {
       const t = (await http(toBase(s.url))).text || "";
-      perfKinds.set(s.url, { scene: THREE_CODE.test(t) || GL_CALL_CODE.test(t) || REACT_THREE_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
+      perfKinds.set(s.url, { scene: THREE_CODE.test(t) || GL_CALL_CODE.test(t) || REACT_THREE_CODE.test(t), gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], gz: gzipSync(Buffer.from(t)).length });
     }
 let heroRun = null;
 const lcpRuns = [];
@@ -2958,7 +3622,11 @@ if (want(25)) {
   const glBrowser = await chromium.launch({ args: GL_ARGS });
   for (const [route, prof] of plan) {
     process.stderr.write(`  webgl ${prof.label}\n`);
-    glRuns[prof.label] = { route, ...prof, ...(await visitGl(glBrowser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+    /* the early profile retries until its input lands before the first paint */
+    for (let tries = 1; ; tries++) {
+      glRuns[prof.label] = { route, ...prof, tries, ...(await visitGl(glBrowser, route, prof).catch((e) => ({ gl: null, scripts: [], error: String(e?.message || e).slice(0, 160) }))) };
+      if (!prof.early || !glRuns[prof.label].earlyPaint?.lcp || tries >= EARLY_TRIES) break;
+    }
   }
   await glBrowser.close();
 }
@@ -2993,6 +3661,40 @@ if (want(23))
     })().catch((e) => ({
       error: String(e?.message || e).split("\n")[0].slice(0, 200),
     }));
+  }
+/* 33 (2026-09-29) ── the Lab drawing, watched on fresh pages at each profile */
+const labRuns = [];
+if (want(33))
+  for (const route of LAB_ROUTES.filter((r) => ROUTES.includes(r)))
+    for (const prof of LAB_PROFILES) {
+      process.stderr.write(`  the Lab drawing on ${route} @${prof.label}\n`);
+      labRuns.push(await visitLab(browser, route, prof).catch((e) => ({ route, label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+    }
+/* 34 ── a client-side navigation, and what runs on the page it lands on */
+const navRuns = [];
+if (want(34) || want(35))
+  for (const w of NAV_WIDTHS) {
+    process.stderr.write(`  a client-side navigation ${NAV_FROM} → / @${w}\n`);
+    navRuns.push(await visitNav(browser, w).catch((e) => ({ width: w, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
+let navBack = null;
+if (want(34)) {
+  process.stderr.write("  /engineering → /work @1440, client-side: what is left running\n");
+  navBack = await visitNavBack(browser).catch((e) => ({ error: String(e?.message || e).split("\n")[0].slice(0, 200) }));
+}
+/* 35 ── the hooks on a page beside / */
+const hookRuns = [];
+if (want(35))
+  for (const route of HOOK_ROUTES.filter((r) => ROUTES.includes(r))) {
+    process.stderr.write(`  the Signal's hooks, read down ${route} @1440\n`);
+    hookRuns.push(await visitHooks(browser, route, 1440).catch((e) => ({ route, width: 1440, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
+/* 36 ── Schedule a Call within reach, one primary in view */
+const reachRuns = [];
+if (want(36) && ROUTES.includes("/"))
+  for (const prof of REACH_PROFILES) {
+    process.stderr.write(`  Schedule a Call within reach on / @${prof.label}, a viewport at a time\n`);
+    reachRuns.push(await visitReach(browser, prof).catch((e) => ({ label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
   }
 let faqRun = null;
 if (want(14)) {
@@ -3305,8 +4007,21 @@ check(
    whole label is known: the client after "for", the employer after "at".
    A project with `scope: "features"` (decided 2026-09-16) is feature work inside
    another company's app: "features built by Bolt Fusion for ‹client›", never
-   "built by Bolt Fusion", and no screenshot. content/projects.ts is read raw,
-   so a product project carries no scope at all. */
+   "built by Bolt Fusion". content/projects.ts is read raw, so a product
+   project carries no scope at all. Its card never shows a view of the whole
+   app; since 2026-09-30 (the owner, with Bazzile's permission) it may show
+   its feature screens — each one of its `featureScreens`, in a captioned
+   figure whose visible caption names that screen's feature, one of the
+   features its role names (FEATURES_OF, below: the suite's own reading). */
+/* The features a role names: the list after its colon — "Features in the
+   React Native app: swipe-based browsing, Google Maps location matching and
+   Firebase real-time sync" names three, "Feature work in the React Native
+   app" none. Written here, not imported from content/schema.ts. */
+const FEATURES_OF = (role) => {
+  const r = String(role || "");
+  const colon = r.indexOf(":");
+  return colon < 0 ? [] : r.slice(colon + 1).split(/,\s*|\s+and\s+/).map((f) => f.trim()).filter(Boolean);
+};
 const ATTRIBUTION = {
   "case-study": { starts: "Case study: built by Bolt Fusion", full: (p) => `Case study: built by Bolt Fusion${p.client ? ` for ${p.client}` : ""}` },
   project: {
@@ -3323,11 +4038,15 @@ await (async () => {
   const sitemapWork = ROUTES.filter((r) => /^\/work\/.+/.test(r));
   const linkedFromIndex = new Set();
   let projectsTs = null;
+  let storiesTs = null;
   try {
     projectsTs = loadContent("content/projects.ts").projects;
     if (!Array.isArray(projectsTs)) throw new Error("it exports no projects array");
+    storiesTs = loadContent("content/projects.ts").clientStories;
+    if (!Array.isArray(storiesTs)) throw new Error("it exports no clientStories array");
   } catch (e) {
     projectsTs = null;
+    storiesTs = null;
     F.push(`content/projects.ts could not be read (${e.message}) — the cards on /work cannot be checked against it; unsure is a failure`);
   }
   const writeupOf = (href) => isSameSite(href) && /^\/work\/.+/.test(new URL(href).pathname);
@@ -3385,8 +4104,35 @@ await (async () => {
         if (features && /built by Bolt Fusion/i.test(c.label.text) && !/\bfeatures\b/i.test(c.label.text))
           F.push(`${at(k)}: ${name} is feature work inside ${client}'s app, and its label says "built by Bolt Fusion" without "features" — it claims the whole app`);
       }
-      if (features && c.images.length)
-        F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${c.images[0].src}) — the app's UI belongs to the client, and showing it needs their permission`);
+      /* feature work's screenshots (2026-09-30): only its feature screens,
+         each captioned, where a reader sees it, with the feature it shows —
+         one its role names, and that screen's own in content/projects.ts.
+         Until then any screenshot on a feature-work card failed. */
+      if (features) {
+        const named = FEATURES_OF(entry?.role ?? c.role?.text);
+        const own = entry?.featureScreens || [];
+        const shotOf = (src) => String(src || "").replace(/^.*\//, "").replace(/\.(?:avif|webp|png|jpe?g)$/i, "");
+        for (const sh of c.screens || []) {
+          const mine = own.find((x) => shotOf(x.image?.src) === sh.name);
+          if (!sh.screen) {
+            F.push(`${at(k)}: ${name} is feature work inside ${client}'s app and shows a screenshot (${sh.src}) outside its feature screens — it shows only the screens where our features live, each in its captioned figure (data-feature-screen), never a view of the whole app`);
+            continue;
+          }
+          if (entry && !mine) {
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is not one of its feature screens in content/projects.ts (${own.map((x) => x.image?.src).join(", ") || "it has none"})`);
+            continue;
+          }
+          if (!sh.caption || !sh.caption.text || !sh.caption.seen) {
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} has no visible caption${sh.caption?.text ? ` (its caption "${sh.caption.text}" is not visible)` : ""} — each screen is captioned with the feature it shows`);
+            continue;
+          }
+          const says = named.filter((f) => sh.caption.text.toLowerCase().includes(f.toLowerCase()));
+          if (!says.length)
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is captioned "${sh.caption.text}", which names none of the features its role names (${named.map((f) => `"${f}"`).join(", ") || "it names none"})`);
+          else if (mine && !says.some((f) => f.toLowerCase() === String(mine.feature).trim().toLowerCase()))
+            F.push(`${at(k)}: ${name} — the feature screen ${sh.src} is captioned "${sh.caption.text}", and it is the screen of "${mine.feature}" in content/projects.ts`);
+        }
+      }
       /* what we built — on a track record, the engineer's role — and the employer */
       const fact = (f, what, wanted) => {
         if (!f || !f.text) return void F.push(`${at(k)}: ${name} (${c.kind}) does not name ${what}`);
@@ -3407,17 +4153,67 @@ await (async () => {
       if (c.kind === "case-study" && !writeups.length) F.push(`${at(k)}: ${name} is a case study and links to no write-up`);
       if (c.kind !== "case-study" && writeups.length) F.push(`${at(k)}: ${name} (${c.kind}) links to ${new URL(writeups[0].href).pathname} — only a case study has a write-up`);
       for (const l of c.links) if (!isSameSite(l.href) && !l.href.startsWith("https://")) F.push(`${at(k)}: ${name} links to ${l.href}, which is not https`);
-      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s), ${c.links.length} link(s)`);
+      I.push(`${route}: ${name} — ${c.kind}${features ? " (features)" : ""}: "${c.label?.text ?? "no label"}"${c.builtAt?.text ? `; built at ${c.builtAt.text}` : ""}; ${c.images.length} image(s)${features && (c.screens || []).length ? ` — feature screens: ${c.screens.map((x) => `${x.name} "${x.caption?.text ?? "no caption"}"`).join(", ")}` : ""}, ${c.links.length} link(s)`);
     }
     if (route === "/work" && projectsTs)
       for (const p of projectsTs) if (p.state === "published" && !shown.has(p.id)) F.push(`${at(k)}: "${p.name}" is published in content/projects.ts and has no card on /work`);
+
+    /* a client story as a band (2026-09-29): its label is the kind's words for
+       its client — written here, as every card's are — where a reader can see
+       it, and it names every published product project of that client, and
+       nothing else, each linking out over https to that project's own link */
+    for (const band of v.clientStoryBands || []) {
+      const where = `${at(k)}: the client story "${band.id}"`;
+      const story = storiesTs ? storiesTs.find((st) => st.id === band.id) : null;
+      if (storiesTs && !story) {
+        F.push(`${where} is not a client story in content/projects.ts`);
+        continue;
+      }
+      const client = story?.client ?? null;
+      const expected = client ? ATTRIBUTION.project.full({ client, scope: "product" }) : null;
+      if (!band.label) F.push(`${where} carries no attribution label [data-attribution] — a reader cannot tell who built its systems`);
+      else {
+        if (!band.label.seen) F.push(`${where} — its label "${band.label.text}" is not visible`);
+        if (expected ? band.label.text !== expected : !ATTRIBUTION.project.starts.some((st) => band.label.text.startsWith(st)))
+          F.push(`${where} — its label reads "${band.label.text}"; it reads "${expected ?? "Delivered project: built by Bolt Fusion for …"}"`);
+      }
+      const members =
+        projectsTs && client ? projectsTs.filter((p) => p.state === "published" && p.kind === "project" && (p.scope ?? "product") === "product" && p.client === client) : null;
+      for (const n of band.names) {
+        const p = projectsTs ? projectsTs.find((x) => x.id === n.id) : null;
+        if (projectsTs && !p) F.push(`${where} names "${n.text}" (data-story-project="${n.id ?? ""}"), which is not a project in content/projects.ts`);
+        else if (p && members && !members.includes(p)) F.push(`${where} names "${p.name}", which is not a published product project of ${client}`);
+        if (!n.seen) F.push(`${where} — "${n.text}" is not visible`);
+        for (const l of n.links) {
+          if (!l.startsWith("https://")) F.push(`${where} — "${n.text}" links to ${l}, which is not https`);
+          else if (p && !(p.links || []).some((x) => x.href === l)) F.push(`${where} — "${n.text}" links to ${l}, which is not one of its links in content/projects.ts`);
+        }
+      }
+      if (members) for (const p of members) if (!band.names.some((n) => n.id === p.id)) F.push(`${where} leaves out "${p.name}", a published product project of ${client}`);
+      /* its screenshots (2026-09-29): each inside the tile of a system it
+         names, and that system's own screenshot in content/projects.ts — the
+         one its /work card shows. A screenshot off a /work card must
+         otherwise link to a write-up (above): in a band it is known by the
+         tile that holds it, under the band's label, instead. */
+      const baseName = (src) => String(src || "").replace(/^.*\//, "").replace(/\.(?:avif|webp|png|jpe?g)$/i, "");
+      for (const sh of band.shots || []) {
+        if (!sh.member) {
+          F.push(`${where} shows a screenshot (${sh.src}) outside the tile of any system it names — a screenshot in the band is the one of the system whose tile holds it`);
+          continue;
+        }
+        const p = projectsTs ? projectsTs.find((x) => x.id === sh.member) : null;
+        if (p && baseName(p.image?.src) !== sh.name)
+          F.push(`${where} — the tile of "${p.name}" shows ${sh.src}, which is not its screenshot in content/projects.ts (${p.image?.src ?? "it has none"})`);
+      }
+      I.push(`${route}: client story "${band.id}" — "${band.label?.text ?? "no label"}"; ${band.names.map((n) => n.text).join(", ") || "no names"}; ${(band.shots || []).length} screenshot(s)`);
+    }
   }
   for (const r of sitemapWork) if (!linkedFromIndex.has(r)) F.push(`${r} is published in the sitemap but no project card links to it`);
   for (const p of linkedFromIndex) if (!sitemapWork.includes(p)) F.push(`${p} is linked as a write-up but missing from the sitemap`);
   results.push({
     id: 9,
     title: "Every published project shows a loaded screenshot and a working write-up link; every card on /work says who built it",
-    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app, or shown with a screenshot",
+    catches: "a project presented as shipped with nothing behind it; an employer's product presented as ours — a card with no attribution label, one that is hidden or not its kind's, a track record without its employer and role or with a screenshot; feature work in a client's app labelled as if we built the app (on /work and on the homepage's feature-work tile), or shown with a screenshot that is not one of its feature screens, or a feature screen without a visible caption naming its own feature, one its role names; a client story's band whose label is missing, hidden or not its client's, that names a project that is not that client's, or leaves one out, or that shows a screenshot outside its systems' tiles or another project's in one",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: [...new Set(I)],
@@ -3975,8 +4771,20 @@ check(
   },
 );
 
-/* 21 */
-check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions", (F, I) => {
+/* 21 — and, since the Signal (2026-09-28), nothing a script moves: an element
+   whose inline transform, opacity or stroke dash, inline custom property, or
+   SVG motion attribute changes SCRIPT_MOTION_MAX or more times under reduced
+   motion is animated by script — one finding per kind; and gsap is never
+   requested there at all (MotionLoader checks the gate before any import). */
+const SCRIPT_MOTION_MAX = 5;
+const reducedKinds = new Map();
+for (const r of Object.values(reducedRuns))
+  for (const u of r.scripts || [])
+    if (isSameSite(u) && !reducedKinds.has(u)) {
+      const t = (await http(toBase(u))).text || "";
+      reducedKinds.set(u, { gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], gz: gzipSync(Buffer.from(t)).length });
+    }
+check(21, "With reduced motion requested, nothing keeps moving — no CSS animation, no canvas, nothing a script moves, and no gsap requested", "CLAUDE.md: prefers-reduced-motion respected globally, no exceptions; motion written by script (gsap, an rAF loop) — inline styles, custom properties, SVG attributes — which getAnimations() cannot see", (F, I) => {
   for (const [route, r] of Object.entries(reducedRuns)) {
     if (r.error) {
       F.push(`${route}: the reduced-motion run did not finish (${r.error}) — unsure is a failure`);
@@ -3987,7 +4795,18 @@ check(21, "With reduced motion requested, nothing keeps moving", "CLAUDE.md: pre
     if (loops.length) F.push(`${route}: ${loops.length} looping animation(s) still running — ${[...new Set(loops.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (late.length) F.push(`${route}: ${late.length} animation(s) still running 2.5s after load — ${[...new Set(late.map((a) => `${a.name} on ${a.el}`))].slice(0, 4).join(", ")}`);
     if (r.canvasMoving) F.push(`${route}: the WebGL canvas is still animating`);
-    I.push(`${route}: ${r.canvases} canvas element(s)`);
+    const moved = (via) => (r.scripted || []).filter((x) => x.via === via && x.n >= SCRIPT_MOTION_MAX);
+    const eg = (xs, what) => xs.slice(0, 4).map((x) => `${x.el} (${x.n} changes${what ? ` to ${x.what.join(", ")}` : ""})`).join(", ");
+    const style = moved("style");
+    if (style.length) F.push(`${route}: ${style.length} element(s) animated by script under reduced motion — e.g. ${eg(style, false)} to an inline transform, opacity or stroke dash; under reduced motion nothing moves`);
+    const custom = moved("custom");
+    if (custom.length) F.push(`${route}: ${custom.length} element(s) animated by script through a CSS custom property under reduced motion — e.g. ${eg(custom, true)}; a custom property moves whatever reads it, and under reduced motion nothing moves`);
+    const attr = moved("attr");
+    if (attr.length) F.push(`${route}: ${attr.length} element(s) animated by script through an SVG attribute under reduced motion — e.g. ${eg(attr, true)}; under reduced motion nothing moves`);
+    const g = (r.scripts || []).filter((u) => reducedKinds.get(u)?.gsap);
+    if (g.length) F.push(`${route}: ${g.length} GSAP script(s) requested under reduced motion — ${g.map((u) => `${short(u)} (${reducedKinds.get(u).parts.join(", ")})`).join(", ")} — the Signal checks the gate before any import, and gsap is never requested there`);
+    const few = (r.scripted || []).filter((x) => x.n < SCRIPT_MOTION_MAX);
+    I.push(`${route}: ${r.canvases} canvas element(s); ${(r.scripts || []).length} script(s), ${g.length ? `${g.length} of them gsap` : "none of them gsap"}; ${few.length ? `${few.length} element(s) with an inline motion style, custom property or SVG motion attribute set by script fewer than ${SCRIPT_MOTION_MAX} times (e.g. ${few.slice(0, 3).map((x) => `${x.el} ${x.via} ${x.n}x`).join(", ")})` : "no inline motion style, custom property or SVG motion attribute set by any script"}`);
   }
 });
 
@@ -4074,7 +4893,10 @@ await (async () => {
   const kind = async (url) => {
     if (!kinds.has(url)) {
       const t = (await http(toBase(url))).text || "";
-      kinds.set(url, { three: THREE_CODE.test(t), r3f: REACT_THREE_CODE.test(t), gl: GL_CALL_CODE.test(t), gz: gzipSync(Buffer.from(t)).length });
+      /* every dynamic import's chunk list, as Turbopack writes it:
+         Promise.all(["static/chunks/<hash>.js", …].map(…)) */
+      const lists = [...t.matchAll(/Promise\.all\(\[((?:"[^"\]]+\.js",?)+)\]\.map\(/g)].map((m) => [...m[1].matchAll(/"([^"]+\.js)"/g)].map((x) => `${BASE}/_next/${x[1]}`));
+      kinds.set(url, { three: THREE_CODE.test(t), r3f: REACT_THREE_CODE.test(t), gl: GL_CALL_CODE.test(t), gsap: GSAP_CODE.test(t), parts: GSAP_CODE.test(t) ? gsapParts(t) : [], lists, gz: gzipSync(Buffer.from(t)).length });
     }
     return kinds.get(url);
   };
@@ -4082,12 +4904,20 @@ await (async () => {
   /* THE SCENE CHUNK (2026-09-16): every same-site script the allowed profile
      requests on / that no other profile of / requests — what the one allowed
      profile adds is the scene's own code, whatever the bundler names it — and
-     every script that is three.js or asks for a WebGL context. */
+     every script that is three.js or asks for a WebGL context.
+     THE SIGNAL (2026-09-28): gsap loads in exactly the scene's profile too —
+     >=1025px, a fine pointer, no Save-Data, no reduced motion — so its chunks
+     are known by their code (GSAP_CODE) and left out of the scene: they are
+     the motion system's, not the scene's, and counted as the scene they would
+     put it at about 190KB. A three.js chunk that carries GSAP is the scene
+     importing gsap, and fails. */
   const home = runs.filter((r) => r.route === "/" && Array.isArray(r.scripts));
   const urlsOf = (r) => (r.scripts || []).filter((s) => isSameSite(s.url)).map((s) => s.url);
   const otherUrls = new Set(home.filter((r) => !glAllowed(r)).flatMap(urlsOf));
   const sceneOnly = new Set(home.filter(glAllowed).flatMap(urlsOf).filter((u) => !otherUrls.has(u)));
   const sceneUrls = new Set();
+  const gsapUrls = new Map();
+  const gsapInScene = new Set();
   let allowedRuns = 0;
   for (const run of runs) {
     if (!Array.isArray(run.gl)) {
@@ -4108,6 +4938,14 @@ await (async () => {
     if (run.touch && run.pointer !== "coarse") F.push(`${run.label}: the tablet profile reports a ${run.pointer} pointer, not a coarse one — unsure is a failure`);
     if (run.saveData && !run.saveDataSeen) F.push(`${run.label}: the page does not see Save-Data (navigator.connection.saveData is false) — unsure is a failure`);
     if ("input" in run && !run.input) F.push(`${run.label}: no spot free of controls for the first pointer input — the input-triggered path went untested; unsure is a failure`);
+    /* the early profile proves something only if its input came before the
+       first paint, so that the browser never reported an LCP entry */
+    if (run.early) {
+      const e = run.earlyPaint;
+      if (!e) F.push(`${run.label}: the page did not report its paint timings — unsure is a failure`);
+      else if (e.lcp || e.input === null) F.push(`${run.label}: ${e.input === null ? "no input reached the page" : `the input (at ${e.input}ms) came after the first paint (${e.fcp}ms; ${e.lcp} LCP entr${e.lcp === 1 ? "y" : "ies"})`} in ${run.tries} tr${run.tries === 1 ? "y" : "ies"} — the path where no LCP entry ever comes went untested; unsure is a failure`);
+      else I.push(`${run.label}: the first input at ${e.input}ms, the first paint at ${e.fcp ?? "?"}ms, no LCP entry (${run.tries} tr${run.tries === 1 ? "y" : "ies"})${run.sceneReady ? " — the scene still started" : ""}`);
+    }
     /* the desktop profile must BE the allowed one, or the positive case is never tested */
     if (run.route === "/" && run.width >= 1025 && !run.reduced && !run.phone && !run.touch && !run.saveData && run.pointer !== "fine")
       F.push(`${run.label}: the desktop profile reports a ${run.pointer} pointer, not a fine one — the scene's own profile went untested; unsure is a failure`);
@@ -4135,6 +4973,22 @@ await (async () => {
     for (const sc of (run.scripts || []).filter((x) => isSameSite(x.url))) {
       const k = await kind(sc.url);
       if (k.r3f) F.push(`${run.label}: requests ${short(sc.url)}, a @react-three chunk — the scene is three.js core, never React Three Fiber (SPEC §7)`);
+      if (k.gsap && (k.three || k.gl) && !gsapInScene.has(sc.url)) {
+        gsapInScene.add(sc.url);
+        F.push(`${run.label}: ${short(sc.url)} is the hero scene's ${k.three ? "three.js " : ""}chunk and carries GSAP (${k.parts.join(", ")}) — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+      }
+      /* the Signal's chunks are its own, never the scene's (above) */
+      if (k.gsap && !k.three && !k.gl) {
+        if (!gsapUrls.has(sc.url)) gsapUrls.set(sc.url, { ...k, start: sc.start, loadEnd: run.loadEnd });
+        if (!gsapAllowed(run)) {
+          const gwhy = run.reduced ? "never under reduced motion"
+            : run.saveData ? "never with Save-Data on"
+            : run.phone || run.touch || run.pointer !== "fine" ? `never on a touch device — a ${run.pointer || "coarse"} pointer at ${run.width}px gets the CSS motion`
+            : `never at ${run.width}px — phones and tablets get the CSS motion`;
+          F.push(`${run.label}: requests the GSAP chunk ${short(sc.url)} (${k.parts.join(", ")}, ${kb(k.gz)} gzipped) — the Signal loads gsap only at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion; ${gwhy}`);
+        }
+        continue;
+      }
       const scene = k.three || k.gl || sceneOnly.has(sc.url);
       if (!scene) continue;
       found.push(`${short(sc.url)} ${kb(k.gz)} gzipped at ${Math.round(sc.start)}ms${k.three ? " (three.js)" : k.gl ? " (asks for WebGL)" : " (only in this profile)"}`);
@@ -4158,11 +5012,40 @@ await (async () => {
         if (!run.sceneReady) F.push(`${run.label}: [data-hero-field] never got data-scene-ready — the scene did not draw its first frame`);
       }
     }
+    /* THE SIGNAL'S POSITIVE CASE (2026-09-28): where gsap is allowed, on /,
+       the engine starts — html[data-bf-signal="live"]. Every "never" rule
+       passes on a motion system that is silently dead. */
+    const gsapN = (run.scripts || []).filter((x) => isSameSite(x.url) && kinds.get(x.url)?.gsap).length;
+    if (run.route === "/" && gsapAllowed(run) && run.signal !== "live")
+      F.push(`${run.label}: the Signal never started (no html[data-bf-signal="live"]; ${gsapN} GSAP script(s) requested) — at >=1025px with a fine pointer the homepage's diagrams and rails trace, and a motion system that never starts is silently dead`);
     I.push(
-      `${run.label}: ${reqs.length} WebGL request(s)${reqs.length ? ` (${reqs.filter((g) => g.granted).length} granted)` : ""} (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s)${run.fieldCanvases ? `, ${run.fieldCanvases} in the field` : ""}${run.sceneReady ? ", data-scene-ready" : ""}, ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${allowed ? " — the allowed profile" : ""}${found.length ? `; scene ${found.join(", ")}` : ", no scene chunk"}`,
+      `${run.label}: Signal ${run.signal || "not running"}, ${gsapN} GSAP script(s); ${reqs.length} WebGL request(s)${reqs.length ? ` (${reqs.filter((g) => g.granted).length} granted)` : ""} (page, workers and ${(run.frames || []).length} frame(s)), ${run.canvases} canvas element(s)${run.fieldCanvases ? `, ${run.fieldCanvases} in the field` : ""}${run.sceneReady ? ", data-scene-ready" : ""}, ${(run.scripts || []).length} script(s), a ${run.pointer} pointer${run.saveDataSeen ? ", Save-Data on" : ""}${"input" in run ? ", after a first input" : ""}${allowed ? " — the allowed profile" : ""}${found.length ? `; scene ${found.join(", ")}` : ", no scene chunk"}`,
     );
   }
   if (!allowedRuns) F.push("no run of / at >=1025px with a fine pointer, no touch, no Save-Data and no reduced motion was made — the scene's positive case went untested; unsure is a failure");
+  /* THE SCENE'S CHUNK GROUP (2026-09-28). Turbopack gives a module that two
+     imports share a chunk of its own, so a scene that imports the gsap the
+     Signal also imports carries no GSAP code itself: its import loads gsap's
+     chunk beside it. So every dynamic import's chunk list is read from the
+     code, and one that loads a three.js chunk and a GSAP chunk together — or a
+     three.js chunk whose own import loads a GSAP chunk — is the scene
+     importing gsap too. Each LIST is judged on its own: Turbopack keeps every
+     import's list in one small loader chunk, so the Signal's own list for gsap
+     core sits beside the scene's, sharing the core's chunk; a check that
+     remembered "this chunk and that gsap chunk" once missed the scene's list
+     behind the Signal's (the scene-share misuse, 2026-09-29). */
+  for (const [u, k] of [...kinds]) {
+    for (const list of k.lists) {
+      const ks = [];
+      for (const c of list) ks.push([c, await kind(c)]);
+      const threeIn = ks.filter(([, x]) => x.three || x.gl);
+      const gsapIn = ks.filter(([, x]) => x.gsap && !x.three && !x.gl);
+      for (const [g, x] of gsapIn) {
+        if (k.three || k.gl) F.push(`${short(u)}, the hero scene's chunk, imports the GSAP chunk ${short(g)} (${x.parts.join(", ")}) — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+        else if (threeIn.length) F.push(`the hero scene's import loads the GSAP chunk ${short(g)} (${x.parts.join(", ")}) together with ${threeIn.map(([c]) => short(c)).join(", ")} — the scene never imports gsap; the Signal loads it on its own, after load (components/motion)`);
+      }
+    }
+  }
   /* the scene chunk's weight: every scene script the allowed profile requested, once each */
   if (sceneUrls.size) {
     let total = 0;
@@ -4175,6 +5058,11 @@ await (async () => {
     if (total > SCENE_MAX_GZ) F.push(`the scene chunk is ${kb(total)} gzipped (${parts.join(", ")}) — the budget is ${kb(SCENE_MAX_GZ)} for the script that asks for the context and the three.js code it imports`);
     I.push(`the scene chunk: ${kb(total)} gzipped in ${sceneUrls.size} file(s) — ${parts.join(", ")}; the budget is ${kb(SCENE_MAX_GZ)}`);
   }
+  if (gsapUrls.size) {
+    const total = [...gsapUrls.values()].reduce((a, k) => a + k.gz, 0);
+    const alone = [...gsapUrls.keys()].filter((u) => sceneOnly.has(u)).length;
+    I.push(`the Signal's chunks, left out of the scene (${alone} of them requested by the scene's profile of / alone): ${kb(total)} gzipped in ${gsapUrls.size} file(s) — ${[...gsapUrls].map(([u, k]) => `${short(u)} ${k.parts.join(" + ")} ${kb(k.gz)} at ${Math.round(k.start)}ms (load ${Math.round(k.loadEnd)}ms)`).join(", ")}`);
+  } else I.push("the Signal's chunks: no run requested gsap");
   /* Every font a page preloads is one THAT page renders — read per route, from
      the preload links present once the page has settled (a prefetched route's
      payload can add some), against the page's own @font-face rules and faces. */
@@ -4198,8 +5086,8 @@ await (async () => {
   }
   results.push({
     id: 25,
-    title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load; every preloaded font is one its page renders",
-    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440; a scene chunk over 180KB, or requested before the load event; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
+    title: "WebGL only in the homepage hero's scene — at >=1025px with a fine pointer, no touch, no Save-Data, no reduced motion — and there it runs; three.js nowhere else; the scene chunk at most 180KB gzipped, after load, and free of gsap; gsap (the Signal) only in that same profile, on any page, and on / it starts; every preloaded font is one its page renders",
+    catches: "a canvas or three.js on a phone, a touch tablet, at 1024, with Save-Data, under reduced motion or on another page; a scene that is silently dead at 1440, or after the reader's first input came before the first paint (no LCP entry ever comes); a scene chunk over 180KB, or requested before the load event; the scene importing gsap; gsap on a phone, a touch tablet or at 1024; a Signal that never starts; a preloaded font nothing uses — Instrument Sans once, then the other design's faces on / through the 404's root layout and on the inner pages through a prefetch of /",
     status: F.length ? "FAIL" : "PASS",
     findings: [...new Set(F)],
     info: I,
@@ -4506,7 +5394,7 @@ check(
       if (r.width < 1025 && st.above === false) F.push(`/ ${r.label}: the poster is not above the headline — below 1025px the field sits above the text (${st.where})`);
       for (const c of st.badCanvases) F.push(`/ ${r.label}: a canvas ${c} — any canvas sits inside [data-hero-field] with the field's box`);
       I.push(
-        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to cover the field`,
+        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to ${st.fit === "contain" ? "fit (contain)" : "cover"} the field`,
       );
     }
   },
@@ -4515,8 +5403,8 @@ check(
 /* 29 */
 check(
   29,
-  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005, initial JavaScript at most 260KB gzipped — the hero's scene loads after load and is not initial JavaScript",
-  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift; the 3D scene imported statically, so three.js lands in the initial JavaScript",
+  "The performance budget on /: mobile lab LCP at most 1.5s and blocking at most 150ms, desktop LCP at most 0.5s, CLS under 0.005 at rest and during a reading-speed scroll, initial JavaScript at most 260KB gzipped — the hero's scene and gsap load after load and are not initial JavaScript",
+  "a homepage grown heavier or slower: font preloads competing with the LCP poster on a phone link, a large synchronous script or import, a layout shift at rest or while reading; the 3D scene or gsap imported statically, so three.js or gsap lands in the initial JavaScript",
   (F, I) => {
     const med = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
     I.push(`machine load average (1 min): ${perfLoad.before.toFixed(2)} before the runs, ${perfLoad.after.toFixed(2)} after — the timings need a quiet machine`);
@@ -4544,6 +5432,15 @@ check(
       if (lcp > lcpMax) F.push(`${prof.label}: LCP ${ms(lcp)}ms, over the ${lcpMax}ms budget (runs ${each("lcp", ms)}; ${els})`);
       if (name === "mobile" && tbt > BUDGET.mobileTbt) F.push(`${prof.label}: blocking time ${ms(tbt)}ms, over the ${BUDGET.mobileTbt}ms budget (runs ${each("tbt", ms)})`);
       if (cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(cls)} — the budget is 0.00, and ${BUDGET.cls} or more fails (runs ${each("cls", c3)})`);
+      /* the same line, while reading (perfScrollRun) */
+      const sc = perfScroll[name];
+      if (!sc) F.push(`${prof.label}: no reading-speed scroll run was made — unsure is a failure`);
+      else if (sc.error) F.push(`${prof.label}: the reading-speed scroll run failed (${sc.error}) — unsure is a failure`);
+      else {
+        const top = sc.shifts.map((x) => `${x.value.toFixed(4)} at ${x.at}ms, scrollY ${x.y}${x.nodes.length ? ` (${x.nodes.join(", ")})` : ""}`).join("; ");
+        if (sc.cls >= BUDGET.cls) F.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll — the budget is 0.00, and ${BUDGET.cls} or more fails; the largest: ${top}`);
+        I.push(`${prof.label}: CLS ${c3(sc.cls)} during a reading-speed scroll down ${sc.height}px${top ? ` — ${top}` : ", no shift"}${name === "desktop" ? `; the Signal ${sc.signal || "did not run"}` : ""}`);
+      }
       if (js > BUDGET.initialJs) F.push(`${prof.label}: initial JavaScript ${k1(js)}KB gzipped transferred, over the ${BUDGET.initialJs / 1024}KB budget (runs ${each("jsInitial", k1)})`);
       /* THE SCENE AND THE BUDGET (2026-09-16). Initial JavaScript is what is
          requested by the end of the load event (perfRun); the hero's scene
@@ -4564,6 +5461,25 @@ check(
         late.size
           ? `${prof.label}: scene chunk(s) requested after load, so not initial JavaScript: ${[...late].map(([u, k]) => `${short(u)} ${k1(k.gz)}KB gzipped at ${ms(k.start)}ms (load ${ms(k.load)}ms)`).join(", ")}`
           : `${prof.label}: no scene chunk requested in the ${ms(4000)}ms after load — the scene runs only at >=1025px with a fine pointer, after load`,
+      );
+      /* THE SIGNAL AND THE BUDGET (2026-09-28): gsap is imported after the
+         load event, in stages, on a desktop that allows motion — never initial
+         JavaScript. A GSAP chunk requested before the load event ended fails,
+         with its size; a three.js chunk carrying gsap is the scene's finding
+         (above, and check 25). */
+      const gEarly = new Map();
+      const gLate = new Map();
+      for (const r of runs)
+        for (const s of r.scripts || []) {
+          const k = perfKinds.get(s.url);
+          if (!k?.gsap || k.scene) continue;
+          (s.start <= r.load ? gEarly : gLate).set(s.url, { ...k, start: s.start, load: r.load });
+        }
+      for (const [u, k] of gEarly) F.push(`${prof.label}: the GSAP chunk ${short(u)} (${k.parts.join(", ")}, ${k1(k.gz)}KB gzipped) is requested at ${ms(k.start)}ms, before the load event ended (${ms(k.load)}ms) — it would be initial JavaScript; the Signal imports gsap after load (components/motion/MotionLoader.tsx)`);
+      I.push(
+        gLate.size
+          ? `${prof.label}: GSAP chunk(s) requested after load, so not initial JavaScript: ${[...gLate].map(([u, k]) => `${short(u)} (${k.parts.join(", ")}) ${k1(k.gz)}KB gzipped at ${ms(k.start)}ms (load ${ms(k.load)}ms)`).join(", ")}`
+          : `${prof.label}: no GSAP chunk requested in the ${ms(4000)}ms after load${name === "mobile" ? " — the Signal never loads on a phone" : ""}`,
       );
     }
   },
@@ -4726,7 +5642,21 @@ check(
           }
         }
       }
-      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned; three.js imported by ${threeFiles.join(", ") || "nothing"}`);
+      /* gsap (the Signal, owner 2026-09-28): ONLY under components/motion/, and
+         only components/motion/MotionLoader.tsx imports it — dynamically,
+         after load and behind its one gate; a type-only import is erased. A
+         static import puts gsap in the initial JavaScript of every page that
+         renders it; a second loader is a second gate to keep in step; gsap in
+         the scene's module busts the scene's 180KB (check 25). */
+      const GSAP_SPEC = /^(?:gsap|@gsap\/[\w.-]+)(?:\/|$)/;
+      const LOADER = "components/motion/MotionLoader.tsx";
+      const gsapUses = [...texts].flatMap(([f, t]) => specsOf(t).filter((s) => GSAP_SPEC.test(s.spec)).map((s) => ({ f, ...s })));
+      for (const u of gsapUses) {
+        if (!u.f.startsWith("components/motion/")) F.push(`repository: ${u.f} imports "${u.spec}"${u.how === "type" ? " (its types)" : ""} — gsap belongs to the Signal motion system under components/motion/ and nowhere else`);
+        else if (u.how === "static") F.push(`repository: ${u.f} imports "${u.spec}" statically — gsap is imported dynamically, after load, so it is never initial JavaScript`);
+        else if (u.how === "dynamic" && u.f !== LOADER) F.push(`repository: ${u.f} imports "${u.spec}" dynamically — gsap is imported by ${LOADER} alone, behind its one gate`);
+      }
+      I.push(`repository: ${src.length} source file(s) and ${fonts.length} font file(s) scanned; three.js imported by ${threeFiles.join(", ") || "nothing"}; gsap imported by ${[...new Set(gsapUses.map((u) => `${u.f} (${u.how})`))].join(", ") || "nothing"}`);
     }
   },
 );
@@ -4820,11 +5750,23 @@ await (async () => {
   const contact = await http(toBase("/contact"));
   if (contact.status !== 200) F.push(`/contact answers ${contact.status || contact.error} — every Schedule a Call goes nowhere`);
   else for (const id of ["schedule", "project"]) if (!new RegExp(`\\sid="${id}"`).test(contact.html || "")) F.push(`/contact has no element with id="${id}" — /contact#${id} goes nowhere`);
+  /* (f) the project form is usable where it lands (2026-09-28): at 1440 it is
+     at least PROJECT_FORM_MIN wide. It rendered 203px wide there — a class
+     collision with /work's card, which no check measured. */
+  const cv = visits["/contact@1440"];
+  if (ROUTES.includes("/contact") && WIDTHS.includes(1440)) {
+    if (!cv) F.push("/contact @1440 was not visited — the project form's width cannot be read; unsure is a failure");
+    else if (!cv.projectForm) F.push("/contact @1440: there is no #project .bf-form — Tell Us About Your Project lands on no form");
+    else if (!cv.projectForm.shown) F.push("/contact @1440: the project form (#project .bf-form) is not visible");
+    else if (cv.projectForm.width < PROJECT_FORM_MIN)
+      F.push(`/contact @1440: the project form (#project .bf-form) is ${cv.projectForm.width}px wide — at 1440 it is at least ${PROJECT_FORM_MIN}px, or the step where a visitor writes to us reads as broken (in ${cv.projectForm.box})`);
+    else I.push(`/contact @1440: the project form is ${cv.projectForm.width}px wide (at least ${PROJECT_FORM_MIN}px)`);
+  }
   I.push(`calls to action followed: ${Object.entries(count).map(([kind, n]) => `${kind} ×${n}`).join(", ") || "none"}; "Book a call" searched in ${ROUTES.length} served page(s), every rendered visit, the 404 and the llms files`);
   results.push({
     id: 32,
-    title: "\"Schedule a Call\" everywhere: no page says \"Book a call\"; the header's button and every schedule call to action read \"Schedule a Call\" and go to /contact#schedule; / carries Explore Our Capabilities and Tell Us About Your Project",
-    catches: "the retired \"Book a call\" coming back — on a button, in an attribute, in the JSON-LD or the llms files; a call to action relabelled, or pointing somewhere else; a Schedule a Call that lands on nothing",
+    title: "\"Schedule a Call\" everywhere: no page says \"Book a call\"; the header's button and every schedule call to action read \"Schedule a Call\" and go to /contact#schedule; / carries Explore Our Capabilities and Tell Us About Your Project; the project form on /contact is at least 480px wide at 1440",
+    catches: "the retired \"Book a call\" coming back — on a button, in an attribute, in the JSON-LD or the llms files; a call to action relabelled, or pointing somewhere else; a Schedule a Call that lands on nothing; the project form on /contact collapsed to a sliver (it rendered 203px wide at 1440)",
     status: F.length ? "FAIL" : "PASS",
     findings: F,
     info: I,
@@ -4837,10 +5779,11 @@ await (async () => {
    a figure's label — it carries no data-status, which check 8 reads as one. */
 check(
   33,
-  "The honesty contract: every capability shows its evidence tier; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status",
-  "a capability shown with no evidence tier; robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label",
+  "The honesty contract: every capability shows its evidence tier — every one of them, each with its scope, wherever its tiers are shown; robotics shows its Lab chip and its honesty line, verbatim and visible; no tier chip carries data-status; the Lab drawing carries no cyan and no .dg-flow, and never animates a flow, on any profile",
+  "a capability shown with no evidence tier, or with only its first, or with a bare tier whose scope says what it covers (ERP's \"Proven\" without \"HR, payroll and a wholesale back office\" claims full ERP); robotics' honesty line removed, hidden or reworded, or its Lab chip gone; a tier chip carrying data-status, so check 8 would read it as a figure's shipped/target label; data drawn flowing through the robotics concept — a cyan flow line or arrowhead in the Lab drawing, or a flow running on it on a phone, a touch tablet or a desktop",
   (F, I) => {
     const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    let capsTs;
     const said = new Set();
     const once = (key, line) => {
       if (said.has(key)) return;
@@ -4871,6 +5814,202 @@ check(
         else if (t.shown && !new RegExp(`(^|[^\\p{L}])${TIER_LABELS[t.tier]}([^\\p{L}]|$)`, "u").test(t.text)) once(`lbl|${route}|${t.tier}|${t.text}`, `${at(k)}: a [data-tier="${t.tier}"] chip reads "${t.text}" — it says "${TIER_LABELS[t.tier]}"`);
       }
       I.push(`${at(k)}: ${caps.length} capability section(s)${caps.length ? ` (${caps.map((c) => `${c.id}: ${c.tiers.filter((t) => t.seen).map((t) => t.tier).join("+") || "no tier seen"}`).join(", ")})` : ""}; ${(v.tierChips || []).length} tier chip(s)${robotics.length ? `; the robotics honesty line ${robotics.some((c) => c.honesty.some((x) => x.seen && norm(x.text) === norm(ROBOTICS_HONESTY))) ? "shown, verbatim" : "NOT shown verbatim"}` : ""}`);
+      /* every tier, with its scope (2026-09-29, fix pass B): where a
+         capability's tiers are shown for it, all of them are, each saying its
+         scope where content/engineering.ts gives one. /capabilities' contents
+         row showed only the first, bare — ERP read as a plain "Proven", which
+         the ledger, the llms files and the JSON-LD all deny ("full ERP is
+         designed but not yet delivered") (the honesty review). */
+      if (capsTs === undefined) {
+        try {
+          capsTs = loadContent("content/engineering.ts").engineering.capabilities;
+          if (!Array.isArray(capsTs)) throw new Error("it exports no capabilities");
+        } catch (e) {
+          capsTs = null;
+          F.push(`content/engineering.ts could not be read (${e.message}) — a capability's tiers cannot be checked against it; unsure is a failure`);
+        }
+      }
+      for (const g of v.tierGroups || []) {
+        const c = capsTs ? capsTs.find((x) => x.id === g.cap) : null;
+        if (!c) continue;
+        const want = c.evidence.map((e) => `${TIER_LABELS[e.tier] ?? e.tier}${e.scope ? ` (${e.scope})` : ""}`).join(" and ");
+        const shownTiers = g.chips.filter((t) => t.seen);
+        const missing = c.evidence.filter((e) => !shownTiers.some((t) => t.tier === e.tier));
+        if (missing.length)
+          once(`tiers|${route}|${g.where}|${c.id}`, `${at(k)}: ${g.where} shows ${c.name} as ${shownTiers.map((t) => `"${t.text}"`).join(" and ") || "nothing a reader can see"}, without ${missing.map((e) => TIER_LABELS[e.tier] ?? e.tier).join(" or ")} — its evidence is ${want}, and every tier is shown where its tiers are`);
+        for (const e of c.evidence) {
+          if (!e.scope) continue;
+          const chip = shownTiers.find((t) => t.tier === e.tier);
+          if (chip && !norm(chip.text).includes(norm(e.scope)))
+            once(`scope|${route}|${g.where}|${c.id}|${e.tier}`, `${at(k)}: ${g.where} shows the ${TIER_LABELS[e.tier] ?? e.tier} tier of ${c.name} as "${chip.text}", without its scope "${e.scope}" — a bare "${TIER_LABELS[e.tier] ?? e.tier}" claims the whole capability`);
+        }
+      }
+      if ((v.tierGroups || []).length) I.push(`${at(k)}: ${(v.tierGroups || []).length} capability tier group(s) read for every tier and its scope (${[...new Set((v.tierGroups || []).map((g) => g.via))].join(", ")})`);
+      /* robotics honesty (2026-09-29): the Lab drawing, as served and painted */
+      const labs = v.labDrawings || [];
+      if (route === "/capabilities" && robotics.length && !labs.length) F.push(`${at(k)}: /capabilities shows robotics but no Lab drawing (an svg with .dg-node--concept) was found — the no-cyan rule tested nothing; unsure is a failure`);
+      for (const d of labs) {
+        const tag = `the Lab drawing (${d.id}${d.where ? ` in ${d.where}` : ""})`;
+        if (d.cyan === null) once(`labnull|${route}`, `${at(k)}: ${tag} could not be read for cyan — unsure is a failure`);
+        if (d.flows) once(`labflow|${route}|${d.id}`, `${at(k)}: ${tag} carries ${d.flows} flow line(s) (.dg-flow) — robotics is Lab: nothing flows in a system that has not shipped, and its connections are dashed steel`);
+        if (d.cyan && d.cyan.length) once(`labcyan|${route}|${d.id}`, `${at(k)}: ${tag} is painted cyan — ${d.cyan.slice(0, 3).join("; ")}${d.cyan.length > 3 ? ` (+${d.cyan.length - 3})` : ""} — cyan is data flow, and the Lab drawing shows none`);
+      }
+      if (labs.length) I.push(`${at(k)}: ${labs.length} Lab drawing(s) in the page, ${labs.filter((d) => d.shown).length} shown — ${labs.reduce((n, d) => n + d.flows, 0)} flow line(s), ${labs.reduce((n, d) => n + (d.cyan ? d.cyan.length : 0), 0)} cyan element(s)`);
+    }
+    /* robotics honesty over time: fresh pages, scrolled to the drawing where each motion system runs */
+    const labSeen = new Map(LAB_PROFILES.map((p) => [p.label, 0]));
+    for (const r of labRuns) {
+      const where = `${r.route} @${r.label}`;
+      if (r.error) {
+        F.push(`${where}: the Lab drawing's run failed (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.rendered) {
+        I.push(`${where}: no Lab drawing is shown here`);
+        continue;
+      }
+      if (!r.inView || r.samples < 20) {
+        F.push(`${where}: the Lab drawing was never watched in view (${r.samples} sample(s)) — the rule tested nothing; unsure is a failure`);
+        continue;
+      }
+      labSeen.set(r.label, labSeen.get(r.label) + 1);
+      if (r.anims.length) F.push(`${where}: the Lab drawing animates — ${r.anims.slice(0, 3).join("; ")} — robotics is Lab: it never flows, on any profile`);
+      if (r.moved.length) F.push(`${where}: a line of the Lab drawing moves its dashes — ${r.moved.slice(0, 3).join("; ")} — robotics is Lab: it never flows, on any profile`);
+      if (r.cyan.length) F.push(`${where}: the Lab drawing is painted cyan while it is read — ${r.cyan.slice(0, 3).join("; ")} — cyan is data flow, and the Lab drawing shows none`);
+      I.push(`${where}: watched ${r.samples} x 100ms in view (the drawing at ${r.top}px${r.flowing ? ", .bf-flowing landed" : ""}${r.sketch ? `, the Signal's sketch drew ${r.sketch} steel stroke(s) over it` : ""}) — ${r.anims.length} animation(s), ${r.moved.length} moving line(s), ${r.cyan.length} cyan element(s)`);
+    }
+    for (const [label, n] of labSeen) if (!n && labRuns.length) F.push(`@${label}: no route showed the Lab drawing in view — robotics' no-flow rule was not tested on this profile; unsure is a failure`);
+  },
+);
+
+/* 34 — a client-side navigation starts the new page at its top, and runs its motion */
+check(
+  34,
+  "A client-side navigation starts the new page at its top, at once, and its reveals — and at >=1025px the Signal — run on it as on a fresh load; a pause survives Back and Forward, and the pause control says so",
+  "the new page smooth-scrolling up from the old one's offset after the header's logo (html scroll-behavior: smooth without data-scroll-behavior, which Next 16 needs to turn it off for a route change), and every reveal measured at that stale offset and skipped — 0 of 39 from the bottom of /capabilities; a pause control that forgets the page is paused when it remounts, and says so twice (aria-pressed and its label)",
+  (F, I) => {
+    for (const r of navRuns) {
+      const at = `@${r.width}`;
+      if (r.error) {
+        F.push(`${at}: the navigation run failed (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.clicked) {
+        F.push(`${at}: no link to / in the header (#masthead a[href="/"]) — the client-side navigation went untested; unsure is a failure`);
+        continue;
+      }
+      if (!r.frames) {
+        F.push(`${at}: no frame showed the new page after the logo was followed — unsure is a failure`);
+        continue;
+      }
+      if (r.fromY < 2000) F.push(`${at}: ${NAV_FROM} was left at scrollY ${r.fromY}, not deep in the page — the stale offset went untested; unsure is a failure`);
+      if (r.firstY > 1 || r.maxY > 1)
+        F.push(`${at}: the new page's first frame is at scrollY ${r.firstY} (${NAV_FROM} was left at ${r.fromY}; the highest after it ${r.maxY}; ${r.toZero < 0 ? `not at 0 in any of the ${r.frames} frames watched` : `at 0 only after ${r.toZero} of ${r.frames} frames`}) — a client-side navigation starts the new page at its top at once: Next turns smooth scrolling off for a route change only under html[data-scroll-behavior="smooth"]`);
+      if (!r.ref.revealed) F.push(`${at}: a fresh load of / read down ran no reveal (${r.ref.total} marked) — the comparison proves nothing; unsure is a failure`);
+      else if (r.nav.revealed < r.ref.revealed)
+        F.push(`${at}: after the navigation, ${r.nav.revealed} of ${r.nav.total} reveals ran as / was read down, against ${r.ref.revealed} of ${r.ref.total} on a fresh load — the new page's reveals were judged at the old page's offset`);
+      if (r.width >= 1025 && r.signal !== "live") F.push(`${at}: after the navigation the Signal never started on / (no html[data-bf-signal="live"]) — each page's motion starts on that page`);
+      const t = r.toggle;
+      if (t?.hidden) F.push(`${at}: the hero's pause control is not shown — its state across Back and Forward went untested; unsure is a failure`);
+      else if (t) {
+        if (t.before !== "Pause motion" || t.pausedAt !== "paused") F.push(`${at}: pressing the pause control ("${t.before}") left html[data-motion] ${t.pausedAt ? `"${t.pausedAt}"` : "unset"} — the page did not pause; the rest went untested`);
+        else if (t.motion !== "paused") F.push(`${at}: after Back and Forward the page is no longer paused (html[data-motion] unset) — a pause lasts until the reader resumes`);
+        else if (t.label !== "Resume motion") F.push(`${at}: after Back and Forward the page is paused (html[data-motion="paused"]) and its pause control reads "${t.label}" — the control shows the state it controls`);
+        if (t.pressed !== null) F.push(`${at}: the pause control carries aria-pressed="${t.pressed}" beside a label that changes — its state is said twice ("Resume motion, pressed")`);
+        I.push(`${at}: Pause, then Back and Forward: html[data-motion] ${t.motion ? `"${t.motion}"` : "unset"}, the control reads "${t.label}"${t.pressed !== null ? `, aria-pressed="${t.pressed}"` : ""}`);
+      }
+      I.push(`${at}: ${NAV_FROM} left at scrollY ${r.fromY}; the new page's first frame at ${r.firstY}, the highest after it ${r.maxY} (${r.frames} frames); reveals ${r.nav.revealed}/${r.nav.total} after the navigation, ${r.ref.revealed}/${r.ref.total} on a fresh load${r.width >= 1025 ? `; the Signal ${r.signal || "not running"}` : ""}`);
+    }
+    /* the Signal's teardown: nothing left asking for frames on an idle page */
+    const b = navBack;
+    if (b) {
+      if (b.error) F.push(`@1440 /engineering → /work: the run failed (${b.error}) — unsure is a failure`);
+      else if (b.live !== "live") F.push("@1440 /engineering: the Signal never started — its teardown went untested; unsure is a failure");
+      else if (!b.clicked) F.push("@1440 /engineering: Next's router (window.next.router) is not there — the client-side navigation went untested; unsure is a failure");
+      else {
+        if (b.signal) F.push(`@1440 on /work after /engineering: html[data-bf-signal] is still "${b.signal}" — the Signal stops with the page it ran on`);
+        if (b.perSec > 5) F.push(`@1440 on /work after the Signal ran on /engineering, the idle page still asks for ${b.perSec} animation frames a second — nothing moves there, and the Signal's teardown leaves no loop running (ScrollTrigger's own, until it is disabled)`);
+        I.push(`@1440 /engineering (the Signal live) → /work, client-side: ${b.perSec} animation frame request(s) in a second, idle`);
+      }
+    }
+  },
+);
+
+/* 35 — the Signal's hooks settle lit */
+check(
+  35,
+  "The Signal's traces settle lit: read down at >=1025px, every station of every hook drawn there stays lit, its line traced, no overlay left — on a fresh load and after a client-side navigation",
+  "a payoff that blinks: the hook's stations lit only while the trace passes and then all hollow again — the pilot's three for 0.3s, the close's one for 267ms (the design review, 2026-09-29)",
+  (F, I) => {
+    const reads = [];
+    for (const r of navRuns) {
+      if (r.width < 1025 || r.error || !r.clicked) continue; /* 34 reports a run that failed */
+      reads.push([`/ @${r.width} a fresh load`, r.ref], [`/ @${r.width} after the navigation`, r.nav]);
+    }
+    for (const r of hookRuns) {
+      if (r.error) F.push(`${r.route} @${r.width}: the run failed (${r.error}) — unsure is a failure`);
+      else reads.push([`${r.route} @${r.width} a fresh load`, r.st]);
+    }
+    for (const [at, st] of reads) {
+      if (!st) continue;
+      if (st.signal !== "live") {
+        F.push(`${at}: the Signal is not running (no html[data-bf-signal="live"]) — its traces went untested; unsure is a failure`);
+        continue;
+      }
+      const shown = st.hooks.filter((h) => h.shown);
+      if (!shown.length) {
+        F.push(`${at}: no Signal hook is drawn here — the rule tested nothing; unsure is a failure`);
+        continue;
+      }
+      const stops = shown.reduce((n, h) => n + h.stops, 0);
+      const lit = shown.reduce((n, h) => n + h.lit, 0);
+      const each = shown.map((h) => `${h.name} ${h.lit}/${h.stops}${h.traced ? ", traced" : ""}${h.overlays ? `, ${h.overlays} overlay(s)` : ""}`).join("; ");
+      if (lit < stops) F.push(`${at}: read down at reading speed, ${lit} of ${stops} stations of the Signal's hooks are lit at rest (${each}) — a trace settles lit: every station it reached stays lit`);
+      const untraced = shown.filter((h) => !h.traced).map((h) => h.name);
+      if (untraced.length) F.push(`${at}: the hook(s) ${untraced.join(", ")} did not settle traced (no data-bf-traced) — the line a trace ran along stays brand blue`);
+      const left = shown.filter((h) => h.overlays).map((h) => `${h.name} ${h.overlays}`);
+      if (left.length) F.push(`${at}: an overlay is still on the hook(s) ${left.join(", ")} ${HOOK_SETTLE_MS}ms after the reading — a sequence ends within 5s`);
+      I.push(`${at}: ${lit} of ${stops} stations lit at rest — ${each}`);
+    }
+    if (!reads.length) F.push("no run at >=1025px read the Signal's hooks — unsure is a failure");
+  },
+);
+
+/* 36 — Schedule a Call within reach, one primary in view */
+check(
+  36,
+  `Schedule a Call within reach on /: never two filled ones in one view, the header's included, and never more than ${REACH_MAX_RUN} viewports in a row without one on the way down`,
+  "two primaries in one view — the header's and the hero's on the first screen, the close's and the footer's at the end; long stretches with no Schedule a Call on screen (six viewports in a row at 1440, from how we work's call to the close's)",
+  (F, I) => {
+    if (ROUTES.includes("/") && !reachRuns.length) F.push("/ was not read a viewport at a time — unsure is a failure");
+    for (const r of reachRuns) {
+      const at = `/ @${r.label}`;
+      if (r.error) {
+        F.push(`${at}: the run did not finish (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      if (!r.steps.length) {
+        F.push(`${at}: no viewport was read — unsure is a failure`);
+        continue;
+      }
+      const said = new Set();
+      for (const st of r.steps)
+        for (const v of [st.down, st.up])
+          if (v.filled.length > 1 && !said.has(v.filled.join())) {
+            said.add(v.filled.join());
+            F.push(`${at}: two primary Schedule a Calls in one view at scrollY ${v.y} (scrolling ${v.dir}) — ${v.filled.join(", ")}; one primary in view at a time (CLAUDE.md, Buttons)`);
+          }
+      let run = [];
+      let worst = [];
+      for (const st of r.steps) {
+        if (st.down.inPage.length) run = [];
+        else run.push(st.down.y);
+        if (run.length > worst.length) worst = [...run];
+      }
+      if (worst.length > REACH_MAX_RUN)
+        F.push(`${at}: ${worst.length} viewports in a row, scrollY ${worst[0]}–${worst.at(-1) + r.height}, show no Schedule a Call on the way down — at most ${REACH_MAX_RUN}`);
+      const with1 = r.steps.filter((st) => st.down.inPage.length).map((st) => `${st.down.y} (${[...new Set(st.down.inPage)].join(", ")})`);
+      I.push(`${at}: ${r.steps.length} viewports read; a Schedule a Call on screen on the way down at ${with1.join(", ") || "none"}; the longest run without one: ${worst.length}`);
     }
   },
 );

@@ -455,7 +455,6 @@ html {
 
 /* Text links in running copy. */
 .bf-evidence__work a,
-.bf-ledger a,
 .bf-project__fallback a,
 .bf-calendar__note a,
 .bf-proof__source {
@@ -466,7 +465,6 @@ html {
 }
 
 .bf-evidence__work a:hover,
-.bf-ledger a:hover,
 .bf-project__fallback a:hover,
 .bf-calendar__note a:hover,
 .bf-proof__source:hover {
@@ -599,6 +597,26 @@ html {
 
 @media (min-width: 520px) {
   .bf-header__cta { display: inline-flex; }
+}
+
+/* One primary in view (2026-09-29, fix pass B; the design review): while a
+   filled Schedule a Call in the page is on screen, the header's is the ghost
+   (components/site/HeaderCtaQuiet sets data-quiet). The same box — both
+   variants carry a 1px border — so nothing shifts; under reduced motion the
+   swap has no transition. */
+.bf-header__cta[data-quiet] {
+  border-color: var(--bf-steel);
+  background-color: transparent;
+  color: var(--bf-text);
+}
+
+.bf-header__cta[data-quiet]:hover {
+  border-color: var(--bf-text);
+  background-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-header__cta { transition: none; }
 }
 
 .bf-header__burger {
@@ -743,9 +761,9 @@ html {
 
 /* The field is the poster's own 660 x 560 from 1280px up — the width `sizes`
    declares and the scene is composed for — and as close to it as the grid
-   allows below that (about 527px at 1025), where `cover` crops it. The text
-   column keeps at least 420px, so the headline holds its two lines and the
-   body stays inside 68ch. */
+   allows below that (467px at 1025), where the poster is contained, as the
+   scene draws it (.bf-hero__poster below). The text column keeps at least
+   420px, so the headline holds its two lines and the body stays inside 68ch. */
 @media (min-width: 1025px) {
   .bf-hero__inner {
     grid-template-columns: minmax(420px, 1fr) minmax(0, 660px);
@@ -760,11 +778,18 @@ html {
 
 /* The headline: two lines that never break inside ("Build" / "what's
    next."), upper case by CSS with the sentence-case source, tight tracking.
-   Sized so the longer line fits its column at every width: the column is
-   about 400px at 1025 and 640px at 1440. */
+   It is the largest type on the page at every width, and it never gets
+   smaller as the window gets wider (2026-09-29, the design review: it was
+   72px on a tablet and 52px at 1025, and at 1440 66px against 63px chapter
+   heads). The longer line, "WHAT'S NEXT.", is 6.06 times the font size wide:
+   below 1025 the text has the whole width, so 11.5vw up to 64px (45px at
+   390, 64 from 557 to 1024); from 1025 it is 68px while the text column is
+   its 420px floor (to 1232, where the 660px field is full width) and then
+   grows with the column to 84px (75px at 1280, 84 from 1345) — 509px of a
+   524px column at 1440. */
 .bf-hero__title {
   font-family: var(--bf-font-heading);
-  font-size: clamp(40px, 11.5vw, 72px);
+  font-size: clamp(40px, 11.5vw, 64px);
   font-weight: 700;
   line-height: 0.94;
   letter-spacing: -0.02em;
@@ -772,10 +797,11 @@ html {
   color: var(--bf-text);
 }
 
-/* Sized so "what's next." fits the text column beside a 660px field: 66px at
-   1440 in a 524px column, 47px at 1025 in 420px. */
+/* Sized so "what's next." fits the text column beside the field, with room
+   to spare: 412px in 420 at 1025–1232, 455px in 468 at 1280, 509px in 524
+   at 1440. */
 @media (min-width: 1025px) {
-  .bf-hero__title { font-size: clamp(52px, 4.6vw, 68px); }
+  .bf-hero__title { font-size: clamp(68px, calc(15.4vw - 122px), 84px); }
 }
 
 .bf-hero__line {
@@ -855,9 +881,9 @@ html {
   .bf-hero__field { aspect-ratio: 16 / 9; }
 }
 
-/* 560px tall beside the text, never wider than the poster is drawn (660px),
-   so the poster is drawn exactly 660px wide at every desktop width — what
-   `sizes` in components/site/home/Hero.tsx says (H4). */
+/* 560px tall beside the text, never wider than the poster's 660px, so the
+   contained poster is drawn at most 660px wide (467px at 1025, exactly 660
+   from 1280) — what `sizes` in components/site/home/Hero.tsx says (H4). */
 @media (min-width: 1025px) {
   .bf-hero__field {
     aspect-ratio: auto;
@@ -879,26 +905,37 @@ html {
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: cover;
+  object-fit: contain;
   object-position: 50% 50%;
 }
 
+/* The poster is CONTAINED at every width (2026-09-29): the whole 660x560
+   frame is drawn, and the field's ground fills the rest, which is the
+   poster's own edge colour, so the field shows no box. Covering a 4:3 or
+   16:9 field with the 660:560 frame cut the scene's top and bottom off at
+   768-1024px, the Lab robot included, and brought it 4.5px from the edge at
+   390 (the adversarial review). */
+
 /* The drift: below 1025px, or on a coarse pointer, where the 3D scene never
-   mounts. Transform only — the frame's size never changes, so no layout shift
-   — none under reduced motion, and paused by the hero's pause control. It
-   runs only once that control is ready (`data-ready`, set after hydration):
-   without JavaScript there is no pause control, so nothing moves (WCAG 2.2.2).
-   The poster holds the drift's first frame until then, so starting it moves
+   mounts. A pure translate, no scale — a scaled poster pushes the frame's
+   edges past the field's, which is what cut it — small enough that the
+   frame's ground margin keeps the 16px band ground at both ends of it, at
+   390, 768 and 1024 (scripts/probe-scene.mjs, the `poster` check). Transform
+   only — the frame's size never changes, so no layout shift — none under
+   reduced motion, and paused by the hero's pause control. It runs only once
+   that control is ready (`data-ready`, set after hydration): without
+   JavaScript there is no pause control, so nothing moves (WCAG 2.2.2). The
+   poster holds the drift's first frame until then, so starting it moves
    nothing. */
 @keyframes bf-field-drift {
-  from { transform: scale(1.1) translate3d(-2.5%, -1.5%, 0); }
-  to   { transform: scale(1.1) translate3d(2.5%, 1.5%, 0); }
+  from { transform: translate3d(-2.5%, -1.2%, 0); }
+  to   { transform: translate3d(2.5%, 1.2%, 0); }
 }
 
 @media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
   (prefers-reduced-motion: no-preference) and (pointer: coarse) {
   .bf-hero__poster {
-    transform: scale(1.1) translate3d(-2.5%, -1.5%, 0);
+    transform: translate3d(-2.5%, -1.2%, 0);
   }
 
   .bf-hero:has(.bf-motion-toggle[data-ready]) .bf-hero__poster {
@@ -950,72 +987,6 @@ html[data-motion="paused"] .bf-hero__poster {
 /* Under reduced motion nothing moves, the button never shows, and it keeps no space. */
 @media (prefers-reduced-motion: reduce) {
   .bf-motion-toggle { display: none; }
-}
-
-/* ── What we engineer: the index ────────────────────────────────────────── *
-   A ruled grid — the cells share hairlines — not a row of cards. */
-.bf-index {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1px;
-  background-color: var(--bf-line);
-  border: 1px solid var(--bf-line);
-}
-
-@media (min-width: 768px) {
-  .bf-index { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1025px) {
-  .bf-index { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-.bf-index__cell {
-  display: flex;
-  background-color: var(--bf-ground);
-}
-
-.bf-index__link {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  padding: 28px;
-  color: inherit;
-}
-
-.bf-index__link:hover {
-  background-color: var(--bf-surface);
-}
-
-.bf-index__link:focus-visible {
-  outline-offset: -3px;
-}
-
-.bf-index__glyph {
-  width: 28px;
-  height: 28px;
-  color: var(--bf-brand);
-}
-
-.bf-index__name {
-  margin-top: 4px;
-  font-family: var(--bf-font-heading);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--bf-text);
-}
-
-.bf-index__job {
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--bf-soft);
-}
-
-.bf-index__tier {
-  margin-top: auto;
-  padding-top: 8px;
 }
 
 /* ── Evidence tiers: a THIRD visual family ──────────────────────────────── *
@@ -1611,73 +1582,6 @@ button.bf-map__btn[aria-pressed="true"] {
   vertical-align: middle;
 }
 
-/* ── Industries: a ledger ───────────────────────────────────────────────── */
-.bf-ledger {
-  border-top: 1px solid var(--bf-line);
-}
-
-.bf-ledger__row {
-  display: grid;
-  gap: 16px 32px;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--bf-line);
-}
-
-@media (min-width: 768px) {
-  .bf-ledger__row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .bf-ledger__name {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 1025px) {
-  .bf-ledger__row {
-    grid-template-columns: minmax(0, 4fr) minmax(0, 5fr) minmax(0, 4fr);
-  }
-
-  .bf-ledger__name {
-    grid-column: auto;
-  }
-}
-
-.bf-ledger__name {
-  font-family: var(--bf-font-heading);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--bf-text);
-}
-
-.bf-ledger__label {
-  margin-bottom: 6px;
-  font-family: var(--bf-font-heading);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--bf-muted);
-}
-
-.bf-ledger__list {
-  display: grid;
-  gap: 4px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--bf-soft);
-}
-
-.bf-ledger__none,
-.bf-ledger__note {
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--bf-muted);
-}
-
-.bf-ledger__note {
-  margin-top: 6px;
-}
-
 /* ── How we build: six stages on one rail ───────────────────────────────── */
 .bf-stages {
   display: grid;
@@ -1817,10 +1721,6 @@ button.bf-map__btn[aria-pressed="true"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 64px;
     align-items: start;
-  }
-
-  .bf-story--flip .bf-story__shot {
-    order: 2;
   }
 
   .bf-story__shot {
@@ -2454,13 +2354,17 @@ button.bf-map__btn[aria-pressed="true"] {
   color: var(--bf-muted);
 }
 
-.bf-project {
+/* The project form's wrapper on /contact. It was `.bf-project` until
+   2026-09-28 — the name of /work's project card, whose rule comes later and
+   won: the form rendered 203px wide in a bordered panel (verify-site check 32
+   now holds it at 480px or wider at 1440). */
+.bf-contact-project {
   display: grid;
   gap: 16px;
 }
 
 @media (min-width: 1025px) {
-  .bf-project {
+  .bf-contact-project {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: 72px;
     align-items: start;
@@ -2705,6 +2609,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-toc__tier {
   grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* How we approach it: not a sequence, so not numbered — a short brand rule. */
@@ -4165,25 +4072,6 @@ button.bf-map__btn[aria-pressed="true"] {
   }
 }
 
-.bf-subgroup {
-  margin-top: 72px;
-  padding-top: 40px;
-  border-top: 1px solid var(--bf-line);
-}
-
-.bf-subgroup__title {
-  margin-bottom: 24px;
-  font-family: var(--bf-font-heading);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--bf-text);
-}
-
-@media (min-width: 768px) {
-  .bf-subgroup__title { font-size: 26px; }
-}
-
 /* ── The write-ups ──────────────────────────────────────────────────────── */
 .bf-shot {
   min-width: 0;
@@ -4696,4 +4584,2183 @@ button.bf-map__btn[aria-pressed="true"] {
 
 @media (min-width: 1025px) {
   .bf-notfound .bf-pagehead { padding-block: 160px 200px; }
+}
+
+/* ── motion-hire: IA ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE 2026-09-28 REDESIGN, IA STREAM — the owner: "make it easy for clients to
+   hire". New rules only, in this block (DECISIONS 2026-09-28, "The interfaces
+   between the streams"); the motion and scene streams append their own blocks
+   after it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── /contact: the h1 and the calendar side by side ─────────────────────── *
+   From 1025px: the head and what happens next on the left, the calendar on
+   the right, in the first viewport. Below that, one column in the DOM's order
+   — the h1, the calendar straight after it, then the rest. */
+.bf-contact {
+  padding-block: 40px 72px;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact { padding-block: 56px 112px; }
+}
+
+.bf-contact__grid {
+  display: grid;
+  grid-template-areas: "head" "cal" "next";
+  gap: 40px;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact__grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "head cal"
+      "next cal";
+    column-gap: 72px;
+    row-gap: 40px;
+    align-items: start;
+  }
+}
+
+.bf-contact__head { grid-area: head; min-width: 0; }
+.bf-contact__cal { grid-area: cal; min-width: 0; }
+.bf-contact__next { grid-area: next; min-width: 0; }
+
+/* One card, never three (2026-09-29, fix pass B; the design review). Given an
+   iframe wider than about 630px, Calendly draws its desktop layout — its own
+   grey page around its own white card — so at 768–1024, where the calendar
+   had the whole column (an 896px iframe at 1024), our white paper held a
+   grey field holding a white card; at 672px it still did. At most 660px (the
+   iframe 612–616px), it draws the single card it draws beside the head from
+   1025px (a 627px iframe at 1440). The project form under it keeps the same
+   right edge. */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .bf-contact__cal .bf-calendar { max-width: 660px; }
+  #project .bf-form { max-width: 660px; }
+}
+
+/* From 1025px the project form runs to its column's edge, level with the
+   calendar card's above it (it stopped at 640px, 41px short at 1440). */
+@media (min-width: 1025px) {
+  #project .bf-form { max-width: none; }
+}
+
+.bf-contact .bf-status-line {
+  margin-bottom: 4px;
+}
+
+.bf-contact__title {
+  max-width: 13ch;
+}
+
+@media (min-width: 1025px) {
+  .bf-contact__title { font-size: clamp(44px, 4.2vw, 58px); }
+}
+
+.bf-contact__calhead {
+  margin-bottom: 20px;
+}
+
+.bf-contact__h2 {
+  font-family: var(--bf-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+.bf-contact__next > .bf-lead {
+  margin-top: 0;
+}
+
+/* A label, not a headline: the h2 over the terms reads like an eyebrow. */
+.bf-contact__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 36px;
+  margin-bottom: 4px;
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bf-muted);
+}
+
+.bf-contact__label::before {
+  content: "";
+  flex: none;
+  width: 18px;
+  height: 1px;
+  background-color: var(--bf-brand);
+}
+
+.bf-contact__terms {
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-contact__term {
+  display: grid;
+  gap: 2px 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+@media (min-width: 560px) {
+  .bf-contact__term { grid-template-columns: 150px minmax(0, 1fr); }
+}
+
+.bf-contact__term dt {
+  font-family: var(--bf-font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--bf-text);
+}
+
+.bf-contact__term dd {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-contact__next .bf-actions {
+  margin-top: 28px;
+}
+
+/* ── The homepage's rhythm (2026-09-28, DECISIONS item 7) ────────────────── *
+   Every section was 128px above and below with a hairline — 17 identical
+   intervals. Now a related section's padding is 80px on a desktop (DECISIONS:
+   64–80px, in place of the uniform 128), 64px on a tablet and 56px on a
+   phone, and only a chapter — how we work, what we engineer and the close —
+   takes more air above it (88 / 104 / 128px). Scoped to the homepage by
+   `#hero ~`: HowWeBuild and FinalCta render on inner pages too. */
+#hero ~ .bf-section {
+  padding-block: 56px;
+}
+
+@media (min-width: 768px) {
+  #hero ~ .bf-section { padding-block: 64px; }
+}
+
+@media (min-width: 1025px) {
+  #hero ~ .bf-section { padding-block: 80px; }
+}
+
+#hero ~ #how-we-work,
+#hero ~ #what-we-engineer,
+#hero ~ #contact {
+  padding-top: 88px;
+}
+
+@media (min-width: 768px) {
+  #hero ~ #how-we-work,
+  #hero ~ #what-we-engineer,
+  #hero ~ #contact { padding-top: 104px; }
+}
+
+@media (min-width: 1025px) {
+  #hero ~ #how-we-work,
+  #hero ~ #what-we-engineer,
+  #hero ~ #contact { padding-top: 128px; }
+
+  #hero ~ #contact { padding-bottom: 128px; }
+}
+
+/* The proof comes straight after the hero, with no full-width hairline
+   between them: that rule read as the page's floor, a "false floor" under
+   the first screen. The proof's heading now crosses the fold. */
+#hero + #recent-work {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+@media (min-width: 1025px) {
+  #hero + #recent-work { padding-top: 16px; }
+}
+
+/* ── The homepage's hierarchy ───────────────────────────────────────────── *
+   Three chapter heads — how we work, what we engineer and the close — and
+   every other h2 at 40px, the proof's included: it shares the first screen
+   with the h1 at 1440, and a second headline there blurred which one leads.
+   A chapter head is a clear step under the h1 at every width, at most 0.72
+   of it (2026-09-29, the design review): 32px on a phone (the h1 41–45),
+   44px on a tablet (64), and 48px from 1025 rising to 56 from 1436 (the h1
+   68 → 84: 48 against 68 at 1232, 50 against 75 at 1280, 56 against 84 at
+   1440). Until then it was 4.4vw capped at 64px, 63px at 1440 against a 66px
+   h1, and 48px on a tablet under a 72px h1 that was larger than any
+   desktop's. It was 16 h2s at 48px, and a final title (72px) larger than the
+   h1 (66px), before 2026-09-28. */
+#hero ~ .bf-section .bf-h2 {
+  font-size: 28px;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+@media (min-width: 768px) {
+  #hero ~ .bf-section .bf-h2 { font-size: 34px; }
+}
+
+@media (min-width: 1025px) {
+  #hero ~ .bf-section .bf-h2 {
+    font-size: 40px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+}
+
+#hero ~ .bf-section .bf-head--chapter .bf-h2,
+#hero ~ .bf-final .bf-final__title {
+  font-size: 32px;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+  #hero ~ .bf-section .bf-head--chapter .bf-h2,
+  #hero ~ .bf-final .bf-final__title { font-size: 44px; }
+}
+
+@media (min-width: 1025px) {
+  #hero ~ .bf-section .bf-head--chapter .bf-h2,
+  #hero ~ .bf-final .bf-final__title {
+    font-size: clamp(48px, 3.9vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+  }
+}
+
+#hero ~ .bf-section .bf-head--chapter .bf-lead {
+  margin-top: 18px;
+}
+
+/* The close never is larger than the h1 on any page: 40 → 60px (an inner
+   page's h1 is 72px). On the homepage it is a chapter head, and takes the
+   chapter heads' sizes (above). */
+.bf-final__title {
+  font-size: clamp(40px, 4.4vw, 60px);
+  line-height: 1.02;
+}
+
+/* Chips at 12–13px and 600: the figure's shipped/target label is the brand's
+   trust mechanism, and at 11px it was the smallest text on the page. */
+[data-status] > .bf-figchip {
+  font-size: 12px;
+}
+
+.bf-concept {
+  font-weight: 600;
+}
+
+/* 44px hit areas on the homepage's inline links, without changing how they
+   look: the links in a row of evidence, the proof strip's sources, the
+   hero's proof line (WCAG 2.2 SC 2.5.5; 21 of them were 20–22px tall). */
+#recent-work .bf-proof__source {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* ── The hero's microcopy and proof line (2026-09-28, DECISIONS item 2) ──── *
+   Under the calls to action, inside the text column: what the first call is,
+   then three shipped products with their attribution — a column rule above
+   them, never a full-width one. The three sit in one row at every width, each
+   a name with its client under it: 52px tall on a phone, where a stack of
+   three rows took 134px and fell below the first screen. */
+.bf-hero__micro {
+  margin-top: 16px;
+  max-width: 56ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--bf-muted);
+}
+
+.bf-hero__proof {
+  margin-top: 28px;
+  padding-top: 16px;
+  max-width: 560px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-hero__proof-label {
+  font-family: var(--bf-font-heading);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--bf-muted);
+}
+
+.bf-hero__proof-list {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  column-gap: 28px;
+  margin-top: 4px;
+}
+
+.bf-hero__proof-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* The name is the link, and its box is 44px tall at every width (WCAG 2.2
+   SC 2.5.5); the client under it rises into the box's lower half, so the
+   line stays as short as the text. A product without a write-up links to
+   itself, live, in a new tab, and says so with the arrow. */
+.bf-hero__proof-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  font-family: var(--bf-font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--bf-text);
+  text-decoration: underline;
+  text-decoration-color: var(--bf-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.bf-hero__proof-name:hover {
+  text-decoration-color: var(--bf-brand);
+}
+
+.bf-hero__proof-out {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  color: var(--bf-muted);
+}
+
+.bf-hero__proof-for {
+  margin-top: -9px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--bf-muted);
+}
+
+@media (max-width: 559px) {
+  .bf-hero__micro { font-size: 14px; }
+  .bf-hero__proof-list { column-gap: 14px; }
+  .bf-hero__proof-name { font-size: 15px; gap: 3px; }
+  .bf-hero__proof-out { width: 10px; height: 10px; }
+  .bf-hero__proof-for { font-size: 12px; }
+}
+
+/* ── The first screen below 1025px (2026-09-28) ──────────────────────────── *
+   The field sits above the text there (SPEC §7; verify-site check 28). At its
+   4:3 and 16:9 it took the whole first screen at 1024x768 — the h1 at 701px —
+   and put the proof line at 945px at 390x844. Now it is a band, and the
+   poster is CONTAINED in it, as at every width (.bf-hero__poster): its
+   660x560 frame is drawn at the band's height, x 1.18 wide, so the band's
+   height IS the scene's size. The band takes what the first screen leaves
+   under it (2026-09-29, the merge): never less than 22vh on a phone and 40vh
+   on a tablet (the heights the fold was measured at), more where the text
+   leaves room — `100svh` less the text's height at 390 (658px) or at 768
+   (600px) — and never more than 260px on a phone or 560px, the frame's own
+   height, on a tablet, so it is never drawn over 660px wide (`sizes`, H4).
+   So at 390x844, 375x812, 360x740 and 1024x768 it is what the fold allows
+   (186, 179, 163 and 307px), and on a tall phone or a portrait tablet the
+   scene grows into the room: 257px at 412x915, the whole 660x560 frame at
+   820x1180 and 1024x1366, where it was 188 and 420. The spacing tightens with
+   it, and the pause control shares the headline's first line (below).
+   Measured with the h1, Schedule a Call and the proof line's names all inside
+   the first screen at 390x844, 412x915 and 768x1024 (under reduced motion
+   too); at 1024x768 the h1 and both calls to action are, and the proof line
+   starts 30px under the fold. The first declaration is the fallback for a
+   browser without `svh`. */
+@media (max-width: 1024px) {
+  #hero.bf-hero { padding-top: 16px; }
+  .bf-hero__inner { gap: 24px; }
+  .bf-hero__support { margin-top: 20px; }
+  .bf-hero .bf-actions { margin-top: 28px; }
+  .bf-hero__micro { margin-top: 12px; }
+  .bf-hero__proof { margin-top: 20px; padding-top: 12px; }
+}
+
+@media (max-width: 767px) {
+  .bf-hero__field {
+    aspect-ratio: auto;
+    height: clamp(160px, 22vh, 188px);
+    height: clamp(160px, max(22vh, 100svh - 658px), 260px);
+  }
+
+  .bf-hero__support { margin-top: 16px; }
+
+  .bf-hero__body {
+    font-size: 16px;
+    line-height: 1.55;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .bf-hero__field {
+    aspect-ratio: auto;
+    height: clamp(260px, 40vh, 420px);
+    height: clamp(260px, max(40vh, 100svh - 600px), 560px);
+  }
+}
+
+.bf-hero__body {
+  text-wrap: pretty;
+}
+
+/* The pause control keeps its place under the field's right edge, and the
+   headline's first line ("Build", one short word) rises into that row beside
+   it, 14px under the field: the row was 42px of empty ground. Only where the
+   control is laid out — under reduced motion it keeps no space (above), and
+   the h1 sits the grid's gap under the field. It is lifted over the h1's box
+   so it stays the thing a tap on it reaches. */
+@media (prefers-reduced-motion: no-preference) and (max-width: 1024px) {
+  .bf-hero__media {
+    gap: 14px;
+    margin-bottom: -56px;
+  }
+
+  .bf-motion-toggle {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ── The engineering stories, compact (#recent-work) ────────────────────── *
+   The proof, second: the head with its link to every case study, the two
+   write-ups side by side from 1025px — a pair, so each is a card — then the
+   section's own Schedule a Call straight after them, then the restaurant
+   search's lanes and the proof strip. On a phone each write-up is its
+   outcome and its result; the problem, the system and the engineering are
+   the write-up's own, one tap away. */
+.bf-proofsec__head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 36px;
+}
+
+.bf-proofsec__head .bf-head {
+  margin-bottom: 0;
+}
+
+.bf-proofsec__aside .bf-lead {
+  margin-top: 14px;
+}
+
+.bf-proofsec__head .bf-btn--quiet {
+  margin-top: 4px;
+}
+
+@media (min-width: 1025px) {
+  .bf-proofsec__head {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    align-items: end;
+    column-gap: 48px;
+    margin-bottom: 36px;
+  }
+
+  .bf-proofsec__aside .bf-lead {
+    margin-top: 0;
+  }
+}
+
+/* The hero's own floor, tightened on the homepage's rhythm: the proof follows
+   the calls to action and the proof line, not a second screen of ground. */
+@media (min-width: 1025px) {
+  #hero.bf-hero { padding-bottom: 40px; }
+}
+
+#recent-work .bf-stories {
+  display: grid;
+  gap: 56px;
+}
+
+@media (min-width: 1025px) {
+  #recent-work .bf-stories {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 48px;
+    align-items: start;
+  }
+}
+
+#recent-work .bf-story {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+@media (min-width: 1025px) {
+  #recent-work .bf-story__shot {
+    position: relative;
+    top: auto;
+  }
+}
+
+#recent-work .bf-story__text {
+  padding-top: 22px;
+}
+
+#recent-work .bf-story__title {
+  margin-top: 0;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  #recent-work .bf-story__title { font-size: 26px; }
+}
+
+#recent-work .bf-story__stack {
+  margin-top: 6px;
+}
+
+#recent-work .bf-story__outcome {
+  margin-top: 12px;
+  font-size: 16px;
+}
+
+#recent-work .bf-story__steps {
+  margin-top: 20px;
+}
+
+#recent-work .bf-story__step {
+  padding: 12px 0;
+}
+
+@media (min-width: 768px) {
+  #recent-work .bf-story__step { grid-template-columns: 116px minmax(0, 1fr); }
+}
+
+#recent-work .bf-story .bf-btn--quiet {
+  margin-top: 16px;
+}
+
+/* On a phone the story is the outcome and the result (above): the steps
+   stay in the served HTML — check 30's story shape, the architecture's
+   problem line — and are the write-up's words, which "Read the case study"
+   opens. At 390 the cards were 1,171 and 1,090px tall; now 677 and 644. */
+@media (max-width: 767px) {
+  #recent-work .bf-story__step:not([data-step="result"]) { display: none; }
+  #recent-work .bf-story__steps { margin-top: 16px; }
+}
+
+#recent-work .bf-proofsec__cta {
+  margin-top: 40px;
+}
+
+@media (min-width: 1025px) {
+  #recent-work .bf-proofsec__cta { margin-top: 48px; }
+}
+
+/* The restaurant search's lanes, as a band under the pair. */
+.bf-lanesband {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--bf-line-strong);
+}
+
+.bf-lanesband__of {
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bf-muted);
+}
+
+.bf-lanesband__title {
+  margin-top: 4px;
+  font-family: var(--bf-font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--bf-text);
+}
+
+.bf-lanesband__lanes {
+  margin-top: 18px;
+}
+
+@media (min-width: 1025px) {
+  .bf-lanesband__lanes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .bf-lanesband .bf-lane {
+    padding: 16px 18px;
+  }
+}
+
+#recent-work .bf-proof {
+  margin-top: 64px;
+}
+
+/* The proof strip on a phone: ruled rows, not four boxed cards — 175px a
+   figure became 140. The figure's chip stays in the figure's row
+   (ProofStrip.tsx; checks 8 and 28). */
+@media (max-width: 767px) {
+  .bf-lanesband { margin-top: 48px; }
+
+  #recent-work .bf-proof {
+    margin-top: 48px;
+    padding-top: 24px;
+  }
+
+  #recent-work .bf-proof__list {
+    gap: 0;
+    border: 0;
+    border-top: 1px solid var(--bf-line-strong);
+    background-color: transparent;
+  }
+
+  #recent-work .bf-proof__item {
+    gap: 6px;
+    padding: 18px 0 8px;
+    border-bottom: 1px solid var(--bf-line);
+  }
+
+  #recent-work .bf-proof__figure { font-size: 34px; }
+}
+
+/* ── How we work with you (#how-we-work, 2026-09-28) ─────────────────────── *
+   A spec sheet, not a row of cards: the head beside the headcount, the four
+   terms on one ruled row, the engagement models as a table beside the lines
+   under it, then the pilot on its own plate — its three stations on the
+   `pilot` trace — and the section's Schedule a Call. */
+.bf-hww__top {
+  display: grid;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.bf-hww__top .bf-head {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__top {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    column-gap: 72px;
+    align-items: end;
+    margin-bottom: 56px;
+  }
+}
+
+.bf-hww__team {
+  padding-top: 20px;
+  border-top: 1px solid var(--bf-line-strong);
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__team {
+    padding: 0 0 6px 32px;
+    border-top: 0;
+    border-left: 1px solid var(--bf-line-strong);
+  }
+}
+
+.bf-hww__count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-family: var(--bf-font-heading);
+  color: var(--bf-text);
+}
+
+.bf-hww__num {
+  font-size: 56px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__num { font-size: 64px; }
+}
+
+.bf-hww__unit {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.bf-hww__where {
+  margin-top: 12px;
+  max-width: 34ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-hww__terms {
+  display: grid;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-hww__term {
+  padding: 18px 0 20px;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+@media (min-width: 768px) {
+  .bf-hww__terms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__terms {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: 0;
+    border-bottom: 1px solid var(--bf-line);
+  }
+
+  .bf-hww__term {
+    padding: 24px 28px 26px;
+    border-bottom: 0;
+    border-left: 1px solid var(--bf-line);
+  }
+
+  .bf-hww__term:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+.bf-hww__term dt {
+  margin-bottom: 6px;
+  font-family: var(--bf-font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--bf-text);
+}
+
+.bf-hww__term dd {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-hww__models {
+  display: grid;
+  gap: 18px;
+  margin-top: 48px;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__models {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 72px;
+    margin-top: 56px;
+  }
+
+  .bf-hww__h3,
+  .bf-hww__table { grid-column: 1; }
+
+  .bf-hww__lines {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: end;
+  }
+}
+
+.bf-hww__h3 {
+  font-family: var(--bf-font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--bf-text);
+}
+
+.bf-hww__table {
+  width: 100%;
+  border-top: 1px solid var(--bf-line-strong);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.bf-hww__table th,
+.bf-hww__table td {
+  padding: 13px 16px 13px 0;
+  border-bottom: 1px solid var(--bf-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.bf-hww__table thead th {
+  padding-block: 10px;
+  font-family: var(--bf-font-heading);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bf-muted);
+}
+
+.bf-hww__table tbody th {
+  font-family: var(--bf-font-heading);
+  font-weight: 600;
+  color: var(--bf-text);
+}
+
+.bf-hww__table td {
+  color: var(--bf-soft);
+}
+
+.bf-hww__table td:last-child,
+.bf-hww__table th:last-child {
+  padding-right: 0;
+}
+
+.bf-hww__table td:last-child {
+  font-family: var(--bf-font-heading);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--bf-text);
+}
+
+.bf-hww__table td:last-child {
+  white-space: nowrap;
+}
+
+.bf-hww__lines {
+  display: grid;
+  gap: 12px;
+  padding-left: 16px;
+  border-left: 2px solid var(--bf-line-strong);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+/* The pilot: its own plate, the destination of the section. The stations run
+   along the `pilot` trace from 768px, stack down a rule below that. */
+.bf-hww__pilot {
+  display: grid;
+  grid-template-areas: "text" "plan" "cta";
+  gap: 28px;
+  margin-top: 48px;
+  padding: 24px 20px;
+  border: 1px solid var(--bf-line);
+  background-color: var(--bf-surface);
+}
+
+@media (min-width: 768px) {
+  .bf-hww__pilot { padding: 32px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__pilot {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    grid-template-areas:
+      "text plan"
+      "cta plan";
+    column-gap: 64px;
+    row-gap: 0;
+    margin-top: 56px;
+    padding: 40px 44px;
+  }
+}
+
+.bf-hww__pilot-text { grid-area: text; }
+.bf-hww__plan { grid-area: plan; }
+.bf-hww__cta { grid-area: cta; }
+
+.bf-hww__pilot-title {
+  font-family: var(--bf-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+  text-wrap: balance;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__pilot-title { font-size: 28px; }
+}
+
+.bf-hww__pilot-body {
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-hww__pilot .bf-hww__cta {
+  margin-top: 0;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__pilot .bf-hww__cta {
+    align-self: end;
+    margin-top: 28px;
+  }
+}
+
+.bf-hww__plan {
+  position: relative;
+  min-width: 0;
+}
+
+/* The trace hook (DECISIONS 2026-09-28, the interface between the streams):
+   drawn complete in a steel hairline, from the first station's marker to the
+   last's. Without script it is the finished drawing. */
+.bf-hww__plan .bf-trace {
+  display: none;
+}
+
+.bf-trace__path {
+  fill: none;
+  stroke: var(--bf-steel);
+  stroke-width: 1;
+}
+
+.bf-hww__stations {
+  display: grid;
+  margin-left: 5px;
+  border-left: 1px solid var(--bf-steel);
+}
+
+.bf-hww__station {
+  position: relative;
+  padding: 0 0 22px 24px;
+}
+
+.bf-hww__station:last-child {
+  padding-bottom: 0;
+}
+
+.bf-hww__station::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: -6px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--bf-brand);
+  background-color: var(--bf-surface);
+}
+
+.bf-hww__station:last-child::before {
+  background-color: var(--bf-brand);
+}
+
+/* A station the Signal's trace has reached (`data-bf-lit`, set only where
+   gsap runs, >=1025px): its square fills brand blue as the trace reaches it,
+   as the rail's stage markers do, and stays filled — the plan, traced. The
+   deliverable's square is filled at rest: the trace ends in it. How an HTML
+   station shows `data-bf-lit` is its owner's CSS (CLAUDE.md, "Motion, as
+   built"), and without this rule the trace ran past three squares that never
+   answered it. */
+.bf-hww__station[data-bf-lit]::before {
+  background-color: var(--bf-brand);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bf-hww__station::before {
+    transition: background-color 0.2s ease;
+  }
+}
+
+@media (min-width: 768px) {
+  .bf-hww__plan .bf-trace {
+    display: block;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: calc(100% - (100% - 48px) / 3);
+    height: 1px;
+    overflow: visible;
+  }
+
+  .bf-hww__stations {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 24px;
+    margin-left: 0;
+    border-left: 0;
+  }
+
+  .bf-hww__station {
+    padding: 30px 0 0;
+  }
+
+  .bf-hww__station::before {
+    top: 0;
+    left: 0;
+  }
+}
+
+.bf-hww__station-label {
+  display: block;
+  font-family: var(--bf-font-heading);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--bf-text);
+}
+
+.bf-hww__station-what {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+/* The pilot's weeks are lower-case fragments in content/pilot.ts, and the
+   deliverable a sentence; side by side they read unfinished. The words are
+   unchanged — the first letter is set in capitals by CSS. */
+.bf-hww__station-what::first-letter {
+  text-transform: uppercase;
+}
+
+/* ── What we engineer: the ledger (2026-09-28) ──────────────────────────── *
+   One ruled row per capability — the number, the name, the job, the tiers,
+   the linked work and "in depth" — with its own diagram at a compact size.
+   Measured label sizes: beside the row at 440px from 1280 (12.3–15.8px) and
+   at 420px at 1025–1279 (11.7–15.1px); under it at 768–1024, up to 440px
+   (12.1–15.5px); none below 768, where its labels would fall under 13px, and
+   robotics' "Concept — not a shipped system" moves beside its Lab chip. */
+.bf-ledger6__head {
+  margin-bottom: 32px;
+}
+
+.bf-ledger6__head .bf-head {
+  margin-bottom: 0;
+}
+
+.bf-ledger6__head .bf-tier-legend {
+  margin-top: 28px;
+}
+
+@media (min-width: 1025px) {
+  .bf-ledger6__head { margin-bottom: 40px; }
+}
+
+.bf-ledger6 {
+  border-top: 1px solid var(--bf-line-strong);
+}
+
+/* The ledger's own Schedule a Call, at every width since 2026-09-29 (fix pass
+   B; the design and honesty reviews): on a phone from the merge, where how we
+   work's and the final call's were 7,471px apart at 390; on a desktop too
+   since six viewports in a row at 1440 — the ledger, how we build, the
+   industries, the insights and the FAQ — showed none on the way down, where
+   headroom has put the header's away. One primary in view at a time: the
+   nearest others are thousands of pixels away, and the header's steps down
+   while this one is on screen (HeaderCtaQuiet). */
+.bf-ledger6__cta {
+  margin-top: 32px;
+}
+
+@media (min-width: 1025px) {
+  .bf-ledger6__cta { margin-top: 40px; }
+}
+
+.bf-cap6 {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 26px 0 28px;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+/* The last row closes on the section's own floor, the next section's
+   hairline: a rule of its own there drew two floors 80px apart. */
+.bf-cap6:last-child {
+  border-bottom: 0;
+}
+
+.bf-cap6__num {
+  padding-top: 5px;
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--bf-brand);
+}
+
+.bf-cap6__text {
+  min-width: 0;
+}
+
+.bf-cap6__figure {
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .bf-cap6__figure { display: none; }
+}
+
+/* A Lab row's caption, beside its Lab chip where the ledger shows no diagram
+   (below 768px); from 768px it is the diagram's own figcaption. */
+.bf-cap6__concept {
+  margin-left: 0;
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__concept { display: none; }
+}
+
+@media (min-width: 768px) {
+  .bf-cap6 {
+    grid-template-columns: 40px minmax(0, 1fr);
+    column-gap: 16px;
+  }
+
+  .bf-cap6__figure {
+    max-width: 440px;
+    margin-top: 24px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-cap6 {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 420px);
+    column-gap: 32px;
+    align-items: start;
+    padding: 32px 0;
+  }
+
+  .bf-cap6__figure {
+    grid-column: 3;
+    grid-row: 1;
+    max-width: none;
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .bf-cap6 {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 440px);
+    column-gap: 48px;
+  }
+}
+
+.bf-cap6__plate {
+  padding: 12px;
+}
+
+@media (min-width: 1025px) {
+  .bf-cap6__plate { padding: 8px; }
+}
+
+.bf-cap6__name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--bf-font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--bf-text);
+}
+
+@media (min-width: 1025px) {
+  .bf-cap6__name { font-size: 26px; letter-spacing: -0.01em; }
+}
+
+.bf-cap6__glyph {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  color: var(--bf-brand);
+}
+
+.bf-cap6__job {
+  margin-top: 10px;
+  max-width: 52ch;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-cap6__tiers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.bf-cap6__honesty {
+  max-width: 62ch;
+  margin-top: 16px;
+}
+
+/* The label in its own column, the links wrapping in theirs beside it, so
+   the label keeps its place on every row (2026-09-29, the design review: as
+   one flex row, row 01's seven links pushed the label onto a line of its own
+   and left GodConnect alone on a third). The label's box is a link's 44px
+   line, so it sits level with the first row of links; its column is as wide
+   as the label, up to 12rem, inside which POS's "Linked work (online and
+   wholesale commerce)" wraps. On a phone the label is over the links. */
+.bf-cap6__work {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 8px;
+  font-size: 15px;
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__work {
+    grid-template-columns: fit-content(12rem) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 16px;
+  }
+}
+
+.bf-cap6__label {
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bf-muted);
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__label {
+    padding-block: 12px;
+    line-height: 20px;
+  }
+}
+
+.bf-cap6__work ul {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 16px;
+}
+
+.bf-cap6__work a,
+.bf-inds__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--bf-brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.bf-cap6__work a:hover,
+.bf-inds__links a:hover {
+  color: var(--bf-brand-hi);
+}
+
+/* A cell's link that wraps (OPAL's) starts on the same line as its
+   neighbours': its 44px box grows down, from a fixed top, instead of
+   centring two lines where the others centre one. */
+.bf-inds__links a {
+  align-items: flex-start;
+  padding-block: 11px;
+}
+
+.bf-cap6 .bf-cap6__more {
+  margin-top: 4px;
+}
+
+.bf-cap6__figure .bf-cap__caption {
+  margin-top: 10px;
+}
+
+/* ── Industries with delivered work (2026-09-28) ─────────────────────────── *
+   A ruled grid of cells, each linking where we built it, then "All
+   industries" to /industries and its honest split. Scoped to the homepage's
+   section (2026-09-29): /industries lists its rows in a `.bf-inds` too, and
+   these grid rules laid its industries out five to a row from 1025px and two
+   from 768px, each row a column of words a few letters wide. */
+.bf-inds__head {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 32px;
+}
+
+.bf-inds__head .bf-head {
+  margin-bottom: 0;
+}
+
+/* The industries' own Schedule a Call, below 1025px (2026-09-29, fix pass B;
+   the honesty review): the ledger's and the close's were 5,055px apart at
+   390, six phone screens of how we build, the industries, the insights and
+   the FAQ with no call on them (the header carries none below 520px). From
+   1025px the ledger's and the close's are 3,100px apart and it is not
+   shown. */
+.bf-inds__cta {
+  margin-top: 32px;
+}
+
+@media (min-width: 1025px) {
+  .bf-inds__cta { display: none; }
+}
+
+.bf-inds__head .bf-btn--quiet {
+  margin-top: 0;
+}
+
+@media (min-width: 1025px) {
+  .bf-inds__head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: 48px;
+    margin-bottom: 40px;
+  }
+}
+
+.bf-inds-sec .bf-inds {
+  display: grid;
+  border-top: 1px solid var(--bf-line-strong);
+}
+
+.bf-inds__cell {
+  min-width: 0;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+@media (min-width: 768px) {
+  .bf-inds-sec .bf-inds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 32px;
+  }
+}
+
+/* The last row closes on the next section's hairline, as the ledger does. */
+.bf-inds__cell:last-child {
+  border-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  .bf-inds__cell:nth-child(odd):nth-last-child(2) { border-bottom: 0; }
+}
+
+/* Two rows of three from 1025px (2026-09-29: six industries, when Logistics
+   gained delivered work — one row of five until then, and six in it would have
+   left an orphan), on shared rows (subgrid): a name that wraps ("HR &
+   professional services") pushes every cell's "Where we've built it" down with
+   it, so the labels stay on one line across the row. */
+@media (min-width: 1025px) {
+  .bf-inds-sec .bf-inds {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(8, auto);
+    column-gap: 0;
+  }
+
+  .bf-inds__cell {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    align-content: start;
+    row-gap: 0;
+    padding: 22px 22px 16px;
+    border-bottom: 0;
+    border-left: 1px solid var(--bf-line);
+  }
+
+  .bf-inds__cell:nth-child(3n + 1) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .bf-inds__cell:nth-child(n + 4) {
+    border-top: 1px solid var(--bf-line);
+  }
+}
+
+.bf-inds__name {
+  font-family: var(--bf-font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--bf-text);
+}
+
+.bf-inds__label {
+  margin-top: 12px;
+  font-family: var(--bf-font-heading);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bf-muted);
+}
+
+.bf-inds__links {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.bf-inds__note {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bf-muted);
+}
+
+/* ── motion-hire: scene ── */
+
+/* No rules of its own: the scene stream's CSS changes are edits in place to
+   the hero's poster rules (.bf-hero__poster, contained at every width, and
+   its drift, a pure translate), where a second rule would contradict them. */
+
+/* ── motion-hire: motion ── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIGNAL — the motion system (owner, 2026-09-28; components/motion; CLAUDE.md
+   "Motion, as built"). Trace a connection in brand blue, let data flow along
+   it in cyan, then settle. Everything below is either a static drawing the
+   server sends complete, or an overlay the engine adds and removes: nothing
+   here is hidden at rest, and nothing moves without script.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* A trace hook's drawing ([data-bf-trace] > svg.bf-trace): hairlines, complete
+   in the server HTML. These are defaults at zero specificity (:where), so the
+   owner of each hook styles its own drawing whatever order the blocks of this
+   file come in — the rail and the call to action below name theirs, and the
+   pilot's (the IA stream's) wins over these however it is written. */
+:where(.bf-trace) {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+}
+
+:where(.bf-trace__path) {
+  fill: none;
+  stroke: var(--bf-line-strong);
+  stroke-width: 1;
+}
+
+/* The overlays the engine clones over a stroke and removes when it settles:
+   brand blue, butt caps (a round cap draws a dot at 0%). A dashed source keeps
+   its own dashes (the engine copies them inline), and the Lab sketch is a
+   light-steel pencil, dashed like every concept drawing — both drawn through
+   a mask (.bf-signal-mask), since DrawSVG owns the dash pattern of whatever it
+   draws. The pencil is lighter than the drawing's own steel, or it would draw
+   steel over steel and nobody would see it pass; it is never blue and never
+   cyan, because nothing in a concept has shipped. */
+.bf-signal-trace {
+  fill: none;
+  stroke: var(--bf-brand);
+  stroke-width: 2;
+  stroke-linecap: butt;
+  pointer-events: none;
+}
+
+.bf-signal-trace--lab {
+  stroke: var(--bf-soft);
+  stroke-width: 1.5;
+}
+
+.bf-signal-mask {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 8;
+  stroke-linecap: butt;
+}
+
+/* After a trace the diagram's flow runs TWO passes, not three: it takes over
+   0.96s into the trace, and 0.96 + 2 x 1.6s ends at 4.2s, under five seconds
+   (WCAG 2.2.2). Only a diagram the engine claimed; the CSS flow everywhere
+   else is unchanged. A station lights in the `state` time. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-bf-motion="gsap"].bf-flowing .dg-flow {
+    animation-iteration-count: 2;
+  }
+
+  .bf-trace__stop {
+    transition: fill 0.2s ease;
+  }
+
+  .bf-rail .bf-stage::before {
+    transition: background-color 0.2s ease;
+  }
+}
+
+/* The Lab drawing never flows, on any profile — nothing flows in a system
+   that has not shipped (BRIEF §3A, §4.2). Since 2026-09-29 that is the
+   drawing's own: it carries no `.dg-flow` and no cyan at all
+   (components/site/diagrams.tsx), only dashed steel edges with steel
+   arrowheads, so there is nothing here to hold still. Until then this block
+   held its flow still in the Signal's media only (the engine's claim came too
+   late for a reload in place, a deep link or a fast reader), and phones and
+   touch screens kept the cyan flow on it; verify-site check 33 now fails a
+   flow line, a cyan paint or a moving flow in the Lab drawing anywhere. */
+
+/* A station on a hook: hollow, the stage marker's square; lit (filled) once
+   a trace has reached it. A square is drawn on the pixel grid (crispEdges): at
+   DPR 1 a 1px edge at a fractional x spread over two pixels at a third of
+   the brand's strength, where the CSS markers it stands in for are snapped
+   whole. */
+.bf-trace__stop {
+  fill: var(--bf-ground);
+  stroke: var(--bf-brand);
+  stroke-width: 1;
+}
+
+rect.bf-trace__stop {
+  shape-rendering: crispEdges;
+}
+
+.bf-trace__stop[data-bf-lit] {
+  fill: var(--bf-brand);
+}
+
+/* A hook whose trace has run (`data-bf-traced`, 2026-09-29): its own line is
+   brand blue, under the overlay that fades onto it, and stays so with its
+   lit stations — the settled state is the lit one. It adds to the server's
+   drawing and takes nothing from it: the same line, the same width. Above
+   every owner's own stroke (three classes deep). */
+[data-bf-trace][data-bf-traced] .bf-trace__path {
+  stroke: var(--bf-brand);
+}
+
+/* How we build — the `rail` hook. At >=1025px the rail is one hairline in the
+   SVG, over the stages' own top borders, which give way to it and keep their
+   space; the stations are the stages themselves (`li[data-bf-trace-stop]`),
+   shown by each stage's own square marker (`.bf-stage::before`), which is
+   filled while it is lit. So the stations sit wherever the grid puts each
+   column, snapped to whole pixels, and the drawing is the one the page always
+   had. The hairline is drawn on the pixel grid too (crispEdges), as the
+   border it stands in for was. The rail holds still: only each stage's text
+   reveals (`.bf-stage__body`). Below 1025 the SVG is not shown and the
+   borders and markers are the rail. */
+.bf-rail {
+  position: relative;
+}
+
+.bf-rail__line {
+  display: none;
+}
+
+.bf-rail__line .bf-trace__path {
+  stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
+}
+
+@media (min-width: 1025px) {
+  .bf-rail__line {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+
+  .bf-rail .bf-stage {
+    border-top-color: transparent;
+  }
+
+  /* the marker paints over the hairline, and over the trace inside it, as it
+     sat over its own border: it comes later in the page, and neither is
+     given a z-index */
+  .bf-rail .bf-stage[data-bf-lit]::before {
+    background-color: var(--bf-brand);
+  }
+}
+
+/* The final call to action — the `cta` hook, the last trace on the page. At
+   >=1025px the buttons' row is as wide as the buttons, and a hairline runs
+   over them, halfway between the line and the buttons, from the second's far
+   edge to Schedule a Call's first edge, then down into it: the button is the
+   station, where working together starts. The trace runs along it right to
+   left and down; reached, Schedule a Call's top edge turns brand blue (its
+   border was transparent: nothing moves) and stays so. Below 1025 it is not
+   drawn. Until 2026-09-29 the line ran the column's full width, 1,300px at
+   1440, into an 8px square above the button. */
+.bf-final__wire {
+  display: none;
+}
+
+.bf-final__wire .bf-trace__path {
+  stroke: var(--bf-line-strong);
+  shape-rendering: crispEdges;
+}
+
+@media (min-width: 1025px) {
+  .bf-final .bf-actions[data-bf-trace] {
+    position: relative;
+    width: fit-content;
+  }
+
+  .bf-final .bf-actions[data-bf-trace] .bf-btn--primary[data-bf-lit] {
+    border-top-color: var(--bf-brand);
+  }
+
+  .bf-final__wire {
+    display: block;
+    position: absolute;
+    top: -18px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+}
+
+/* ── motion-hire: projects (2026-09-29) ── */
+/* ── TTouch Clothing's four systems: a client story on /work ─────────────── *
+   Its own section straight after the case studies (2026-09-29, fix pass B;
+   the design review: as an h3 sub-group inside Bolt Fusion projects it sat at
+   screen 4 of 9 at 1440): the eyebrow, the h2 and the intro — beside the h2
+   from 1025px — over its members' cards, two across. */
+@media (min-width: 1025px) {
+  .bf-clientstory__head,
+  .bf-featwork__head {
+    display: grid;
+    max-width: none;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas:
+      "eyebrow intro"
+      "title intro";
+    grid-template-rows: auto 1fr;
+    column-gap: 64px;
+  }
+
+  .bf-clientstory__head > .bf-eyebrow,
+  .bf-featwork__head > .bf-eyebrow { grid-area: eyebrow; }
+  .bf-clientstory__head > .bf-h2,
+  .bf-featwork__head > .bf-h2 { grid-area: title; }
+
+  .bf-clientstory__head > .bf-lead,
+  .bf-featwork__head > .bf-lead {
+    grid-area: intro;
+    align-self: end;
+    margin: 0;
+  }
+}
+
+/* ── The client story on the homepage: a plate in the proof ──────────────── *
+   Straight after the pair of write-ups, before the section's Schedule a Call
+   (2026-09-29, the design and honesty reviews: as a 22px text band after the
+   proof strip it was the smallest and last block of the proof). A surface
+   plate — the pilot's family, a set of four — with the eyebrow, the label and
+   the title (28 / 30 / 34px: above the write-ups' 26, under the section's
+   h2) beside the intro and "See the four systems" from 1025px, over the four
+   systems: each its screenshot in a 16:10 frame, its name — a 44px link to the
+   live system, the whole tile its target — and its tagline. Four across from
+   1025px, two across below that, phones included. */
+.bf-clientband {
+  margin-top: 56px;
+  padding: 28px 20px 24px;
+  background-color: var(--bf-surface);
+  border: 1px solid var(--bf-line);
+}
+
+@media (min-width: 768px) {
+  .bf-clientband { padding: 36px 32px 28px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband {
+    margin-top: 64px;
+    padding: 40px 40px 32px;
+  }
+}
+
+.bf-clientband__eyebrow {
+  margin-bottom: 12px;
+}
+
+.bf-clientband__lede .bf-attr {
+  margin-bottom: 6px;
+}
+
+.bf-clientband__title {
+  font-family: var(--bf-font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--bf-text);
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__title { font-size: 30px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__title { font-size: 34px; letter-spacing: -0.02em; }
+}
+
+.bf-clientband__intro {
+  margin-top: 14px;
+  max-width: 62ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-clientband__aside .bf-btn--quiet {
+  margin-top: 6px;
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__head {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: 56px;
+    align-items: end;
+  }
+
+  .bf-clientband__intro {
+    margin-top: 0;
+    font-size: 17px;
+  }
+}
+
+.bf-clientband__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 12px;
+  margin-top: 24px;
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__list { gap: 28px 24px; margin-top: 32px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-clientband__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+    margin-top: 36px;
+  }
+}
+
+/* The tile is the name's link target: its ::after covers the tile, so the
+   screenshot opens the live system too, and the tile is one tab stop. */
+.bf-clientband__item {
+  position: relative;
+  min-width: 0;
+}
+
+.bf-clientband__shot {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--bf-line-strong);
+  background-color: var(--bf-raised);
+}
+
+.bf-clientband__img {
+  object-fit: cover;
+  object-position: 50% 0;
+  transition: transform 0.4s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .bf-clientband__item:hover .bf-clientband__img { transform: scale(1.03); }
+}
+
+.bf-clientband__name {
+  margin-top: 8px;
+  font-family: var(--bf-font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--bf-text);
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__name { margin-top: 10px; font-size: 18px; }
+}
+
+/* A name that wraps ("TTouch Employee Verification") starts on the same line
+   as its neighbours: its 44px box grows down from a fixed top, as the
+   industries' links do. */
+.bf-clientband__name a {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  min-height: 44px;
+  padding-block: 10px 8px;
+  color: var(--bf-text);
+  text-decoration: underline;
+  text-decoration-color: var(--bf-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.bf-clientband__name a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.bf-clientband__item:hover .bf-clientband__name a,
+.bf-clientband__name a:focus-visible {
+  text-decoration-color: var(--bf-brand);
+}
+
+.bf-clientband__out {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  color: var(--bf-muted);
+}
+
+.bf-clientband__line {
+  margin-top: -4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bf-soft);
+}
+
+@media (min-width: 768px) {
+  .bf-clientband__line { font-size: 15px; }
+}
+
+/* ── Feature work: the screens where our features live (2026-09-30) ───────── *
+   The owner allowed Bazzile's own screens (its App Store screenshots) for the
+   features we built in its app. Shared by /work's featured card and the
+   homepage's tile: each screen is a phone's screen in a fixed 1:2 frame — a
+   black bezel and a hairline ring, the one rounded object on the site,
+   because it is a phone — over its caption, the feature it shows beside the
+   small brand-blue mark the status line uses. Two side by side, the second
+   set lower, so they read as two screens and not as a strip. */
+.bf-screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.bf-screens__item {
+  min-width: 0;
+}
+
+.bf-screens__item:nth-child(2n) {
+  margin-top: 28px;
+}
+
+.bf-screen {
+  margin: 0;
+}
+
+.bf-screen__frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1 / 2;
+  border: 5px solid #000;
+  border-radius: 22px;
+  background-color: var(--bf-raised);
+  box-shadow: 0 0 0 1px var(--bf-line-strong);
+}
+
+.bf-screen__img {
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.bf-screen__cap {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-family: var(--bf-font-heading);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--bf-text);
+}
+
+.bf-screen__cap::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  background-color: var(--bf-brand);
+}
+
+/* The app's public figure: the store's count, linked to the listing it was
+   read off, with whose reach it is under it. A neutral hairline box on the
+   ground — never a shipped/target chip or colour: it is not our metric. The
+   link's arrow sits in the box's corner, so the figure wraps as words do and
+   the arrow never falls to a line of its own. */
+.bf-pubstat {
+  position: relative;
+  padding: 10px 44px 14px 16px;
+  border: 1px solid var(--bf-line);
+  background-color: var(--bf-ground);
+}
+
+.bf-pubstat__fig {
+  display: inline-block;
+  padding-block: 8px 6px;
+  text-wrap: balance;
+  font-family: var(--bf-font-heading);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+  text-decoration: underline;
+  text-decoration-color: var(--bf-line-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+@media (min-width: 768px) {
+  .bf-pubstat__fig { font-size: 22px; }
+}
+
+.bf-pubstat__fig:hover {
+  text-decoration-color: var(--bf-brand);
+}
+
+.bf-pubstat__icon {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--bf-muted);
+}
+
+.bf-pubstat__fig:hover .bf-pubstat__icon {
+  color: var(--bf-brand);
+}
+
+.bf-pubstat__note {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bf-muted);
+}
+
+/* ── /work: feature work, its own section after the client stories ───────── *
+   The featured card: the screens on the ground beside the text from 768px,
+   half and half from 1025px, the screens over the text on a phone. Then the
+   text cards; a lone one lays its facts beside its words from 1025px. */
+.bf-featwork__list {
+  display: grid;
+  gap: 20px;
+}
+
+.bf-featwork__list + .bf-projects {
+  margin-top: 20px;
+}
+
+.bf-feat__media {
+  display: flex;
+  justify-content: center;
+  padding: 28px 20px 36px;
+  border-bottom: 1px solid var(--bf-line);
+  background-color: var(--bf-ground);
+}
+
+.bf-feat__screens {
+  width: 100%;
+  max-width: 340px;
+}
+
+.bf-feat__name {
+  font-size: 28px;
+  letter-spacing: -0.01em;
+}
+
+.bf-feat__summary {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  .bf-feat {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .bf-feat__media {
+    align-items: center;
+    padding: 40px 28px 48px;
+    border-right: 1px solid var(--bf-line);
+    border-bottom: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-feat {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .bf-feat__media {
+    padding: 56px 48px 64px;
+  }
+
+  .bf-feat__screens {
+    max-width: 440px;
+    gap: 24px;
+  }
+
+  .bf-feat__screens .bf-screens__item:nth-child(2n) {
+    margin-top: 40px;
+  }
+
+  .bf-feat__body {
+    justify-content: center;
+    padding: 48px 48px 44px;
+  }
+
+  .bf-feat__name {
+    font-size: 34px;
+    letter-spacing: -0.02em;
+  }
+
+  .bf-featwork .bf-projects--1 > .bf-project:not(.bf-project--shot) > .bf-project__body {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-auto-flow: row dense;
+    column-gap: 56px;
+    align-content: start;
+  }
+
+  .bf-featwork .bf-projects--1 > .bf-project:not(.bf-project--shot) > .bf-project__body > * {
+    grid-column: 1;
+  }
+
+  .bf-featwork .bf-projects--1 > .bf-project:not(.bf-project--shot) > .bf-project__body > :is(.bf-facts, .bf-tags, .bf-project__links) {
+    grid-column: 2;
+  }
+
+  .bf-featwork .bf-projects--1 > .bf-project:not(.bf-project--shot) > .bf-project__body > .bf-facts {
+    grid-row: 1 / span 3;
+  }
+}
+
+/* ── The homepage's feature-work tile, in the proof (2026-09-30) ──────────── *
+   After the client story, before the section's Schedule a Call. A hairline
+   tile on the ground, not the client story's surface plate — it is features
+   in another company's app, not systems we built — and a step under it: the
+   title 24 / 28px against the plate's 34. From 1025px the head sits beside
+   the project: its two screens small, then its label, name, what we built,
+   the app's public figure and the links. */
+.bf-feattile {
+  margin-top: 24px;
+  padding: 28px 20px 24px;
+  border: 1px solid var(--bf-line-strong);
+}
+
+@media (min-width: 768px) {
+  .bf-feattile { padding: 32px 32px 28px; }
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    column-gap: 56px;
+    align-items: start;
+    padding: 40px;
+  }
+}
+
+.bf-feattile__eyebrow {
+  margin-bottom: 12px;
+}
+
+.bf-feattile__title {
+  font-family: var(--bf-font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile__title { font-size: 28px; letter-spacing: -0.015em; }
+}
+
+.bf-feattile__intro {
+  margin-top: 12px;
+  max-width: 52ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-feattile__card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.bf-feattile__screens {
+  max-width: 256px;
+  gap: 12px;
+}
+
+/* smaller on a phone, so the tile stays a tile */
+@media (max-width: 767px) {
+  .bf-feattile__screens .bf-screens__item:nth-child(2n) { margin-top: 20px; }
+  .bf-feattile__screens .bf-screen__frame { border-width: 4px; border-radius: 16px; }
+  .bf-feattile__screens .bf-screen__cap { margin-top: 10px; font-size: 13px; }
+  .bf-feattile__screens .bf-screen__cap::before { margin-top: 5px; }
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__screens { max-width: none; gap: 14px; }
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__card {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 32px;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1025px) {
+  .bf-feattile__card {
+    grid-template-columns: 272px minmax(0, 1fr);
+    gap: 40px;
+    margin-top: 0;
+  }
+}
+
+.bf-feattile__body .bf-attr {
+  margin-bottom: 6px;
+  text-wrap: balance;
+}
+
+.bf-feattile__head .bf-btn--quiet {
+  margin-top: 14px;
+}
+
+.bf-feattile__name {
+  font-family: var(--bf-font-heading);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--bf-text);
+}
+
+@media (min-width: 768px) {
+  .bf-feattile__name { font-size: 24px; }
+}
+
+.bf-feattile__role {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-feattile__stat {
+  margin-top: 16px;
+}
+
+.bf-feattile__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 22px;
+  margin-top: 12px;
 }

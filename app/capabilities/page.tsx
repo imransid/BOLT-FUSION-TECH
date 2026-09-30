@@ -4,6 +4,7 @@ import FigureText from "@/components/FigureText";
 import CapabilityDiagram from "@/components/site/diagrams";
 import DomainGlyph from "@/components/site/DomainGlyph";
 import FinalCta from "@/components/site/home/FinalCta";
+import SystemMapSection from "@/components/site/home/SystemMapSection";
 import JsonLd from "@/components/site/JsonLd";
 import PageHead from "@/components/site/PageHead";
 import SiteShell from "@/components/site/SiteShell";
@@ -19,7 +20,7 @@ import { siteContent } from "@/content/site";
 import { pageMetadata } from "@/lib/page-meta";
 import { getSiteUrl } from "@/lib/site-url";
 import { breadcrumbLd, organizationLd, serviceLd } from "@/lib/structured-data";
-import { workLink } from "@/lib/work-links";
+import { workLabel, workLink } from "@/lib/work-links";
 
 export function generateMetadata(): Metadata {
   const m = pages.capabilities.head.meta;
@@ -121,7 +122,7 @@ function CapabilityDetail({ c, flip, reading }: { c: Capability; flip: boolean; 
             {work.length ? (
               <div className="bf-evidence__work">
                 <p id={`${c.id}-work`} className="bf-evidence__label">
-                  Linked work
+                  {workLabel(c)}
                 </p>
                 <ul aria-labelledby={`${c.id}-work`}>
                   {work.map((w) => (
@@ -167,8 +168,15 @@ function CapabilityDetail({ c, flip, reading }: { c: Capability; flip: boolean; 
  * /capabilities (SPEC §4): the six capabilities in depth, in the redesign.
  * The page head with the tier legend, a contents row (each capability with its
  * tier), then one full-bleed section per capability, text and its own diagram
- * alternating sides, and the final call to action. One Service node per
- * capability (lib/structured-data.ts), from the same entries.
+ * alternating sides, then the system map — how the six fit together — and the
+ * final call to action. One Service node per capability
+ * (lib/structured-data.ts), from the same entries.
+ *
+ * The system map moved here from the homepage on 2026-09-28 (DECISIONS item
+ * 1): its parts ARE the six capabilities, so it belongs where the reader has
+ * already chosen depth on them, after them. Its lists — every part, every
+ * connection and the three worked flows — are the no-JS and crawler view, as
+ * they were on the homepage.
  */
 export default function CapabilitiesPage() {
   const site = getSiteUrl().toString();
@@ -206,8 +214,13 @@ export default function CapabilitiesPage() {
                   <a href={`#${c.id}`} className="bf-toc__link">
                     <DomainGlyph id={c.id} className="bf-toc__glyph" />
                     <span className="bf-toc__name">{c.name}</span>
+                    {/* Every tier with its scope, as the ledger shows them
+                        (2026-09-29, the honesty review): the first alone read
+                        ERP as a plain "Proven" (verify-site check 33). */}
                     <span className="bf-toc__tier">
-                      <TierChip tier={c.evidence[0].tier} />
+                      {c.evidence.map((e) => (
+                        <TierChip key={e.tier} tier={e.tier} scope={e.scope} />
+                      ))}
                     </span>
                   </a>
                 </li>
@@ -219,6 +232,8 @@ export default function CapabilitiesPage() {
         {engineering.capabilities.map((c, i) => (
           <CapabilityDetail key={c.id} c={c} flip={i % 2 === 1} reading={insights.filter((a) => a.capabilities.includes(c.id))} />
         ))}
+
+        <SystemMapSection />
 
         <FinalCta cta={siteContent.finalCta} />
       </SiteShell>

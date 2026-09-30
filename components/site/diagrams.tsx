@@ -14,7 +14,10 @@ import type { Capability, DiagramId } from "@/content/engineering-schema";
  * the one element that decides (the router, the till, the core), and the cyan
  * ONLY on flow lines (`.dg-flow`). The flow runs along those paths only under
  * no-preference motion, three passes and then rest (components/site/SiteMotion).
- * A concept is drawn dashed.
+ * A concept is drawn dashed, and carries NO flow: the Lab drawing (robotics)
+ * has no `.dg-flow` and no cyan anywhere in its markup, on any profile —
+ * nothing flows in a system that has not shipped (2026-09-29, the lead
+ * designer under the owner's honesty rule; verify-site check 33).
  *
  * Every drawing is 480 x 360 units with labels at 15–17 units, so they stay
  * legible at a phone's width.
@@ -23,7 +26,7 @@ import type { Capability, DiagramId } from "@/content/engineering-schema";
 const W = 480;
 const H = 360;
 
-function Svg({ id, capability, children }: { id: DiagramId; capability: Capability; children: ReactNode }) {
+function Svg({ id, capability, flow = true, children }: { id: DiagramId; capability: Capability; flow?: boolean; children: ReactNode }) {
   const t = `dg-${id}-title`;
   const d = `dg-${id}-desc`;
   return (
@@ -34,9 +37,11 @@ function Svg({ id, capability, children }: { id: DiagramId; capability: Capabili
         <marker id={`dg-${id}-arrow`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0L10 5L0 10z" className="dg-arrowhead" />
         </marker>
-        <marker id={`dg-${id}-flowhead`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0 0L10 5L0 10z" className="dg-flowhead" />
-        </marker>
+        {flow ? (
+          <marker id={`dg-${id}-flowhead`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0L10 5L0 10z" className="dg-flowhead" />
+          </marker>
+        ) : null}
       </defs>
       {children}
     </svg>
@@ -244,25 +249,29 @@ function TillHub({ c }: { c: Capability }) {
 }
 
 /* 5 — Robotics, a CONCEPT: sensor, vision, decision, controller, machine, and
-   the machine's effect back on what the sensor sees. Drawn dashed. */
+   the machine's effect back on what the sensor sees. Drawn dashed, in steel:
+   every connection is a dashed steel edge with a steel arrowhead, and none
+   carries a flow line — no cyan anywhere, on any profile (2026-09-29). Where
+   the Signal runs it is sketched once in light steel, and never flows. It
+   carries no caption of its own: wherever it is drawn, its figcaption says
+   "Concept — not a shipped system" under it (the schema requires the caption
+   on a Lab diagram), and "concept: not a shipped system" inside the drawing
+   said it twice, in two styles, 58px apart (the design review, 2026-09-29). */
 function MachineLoop({ c }: { c: Capability }) {
   return (
-    <Svg id="machine-loop" capability={c}>
+    <Svg id="machine-loop" capability={c} flow={false}>
       <Box x={20} y={60} w={116} h={52} label="Sensor" variant="concept" />
       <Box x={182} y={60} w={116} h={52} label="Vision" variant="concept" />
       <Box x={344} y={60} w={116} h={52} label="Decision" variant="concept" />
       <Box x={344} y={232} w={116} h={52} label="Controller" variant="concept" />
       <Box x={182} y={232} w={116} h={52} label="Machine" variant="concept" />
-      <Wire id="machine-loop" d="M136 86H182" />
-      <Wire id="machine-loop" d="M298 86H344" />
-      <Wire id="machine-loop" d="M402 112V232" />
-      <Wire id="machine-loop" d="M344 258H298" />
+      <Wire id="machine-loop" d="M136 86H182" dashed flow={false} />
+      <Wire id="machine-loop" d="M298 86H344" dashed flow={false} />
+      <Wire id="machine-loop" d="M402 112V232" dashed flow={false} />
+      <Wire id="machine-loop" d="M344 258H298" dashed flow={false} />
       <Wire id="machine-loop" d="M182 258H78V112" dashed flow={false} />
       <text x={90} y={190} className="dg-small" fontSize={14}>
         feedback
-      </text>
-      <text x={240} y={334} className="dg-small" textAnchor="middle" fontSize={14}>
-        concept: not a shipped system
       </text>
     </Svg>
   );

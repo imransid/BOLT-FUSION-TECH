@@ -95,17 +95,32 @@ const labels: FigureLabel[] = [
   { text: "$0 marginal cost", status: "shipped", source: ZERO_MARGINAL },
   { text: "books showings 24/7", status: "target", source: WARMCHATS },
 
-  /* The homepage's terms, each exempt for its own reason. Where two entries match
+  /* The terms, each exempt for its own reason. Where two entries match
      overlapping words the earlier match wins (FigureText), so "MVP in 8–16 weeks"
-     is the hero's and the bare "8–16 weeks" is the engagement table's cell. The
-     two "Start a 2-week pilot" buttons (hero, how we work) are the same words and
-     share one entry: the same term, for the same reason. A button's exemption
+     is the hero's and the bare "8–16 weeks" is the engagement table's cell — on
+     /about, and since 2026-09-28 in the homepage's how we work, the same table
+     from content/services.ts. The two "Start a 2-week pilot" buttons (/about's
+     pilot and, since 2026-09-28, the homepage's how we work) are the same words
+     starting the same pilot and share one entry: an exemption is keyed by its
+     words, and these words are one term with one reason. A button's exemption
      covers its whole label: the button lays its children out as flex items, so a
      span around part of the label would open a gap inside it. */
   { text: "MVP in 8–16 weeks", exempt: "The delivery window the hero gives a production MVP: an engagement term, not a performance claim" },
   { text: "8–16 weeks", exempt: "The timeline the engagement-models table gives an MVP build: a contract term, not a performance claim" },
-  /* /about's how-we-work tagline and terms, and the Organization description:
-     the same term, for the same reason. */
+  /* The homepage FAQ's overlap answer (2026-09-28), and its FAQPage JSON-LD,
+     which repeats it word for word: its own instance, so its own entry. It
+     starts where the entry below does and is longer, so it wins here
+     (FigureText), and it occurs nowhere else. It ends before a space, never
+     before punctuation: verify-site check 14 reads the served answer with its
+     tags turned into spaces, and "sprints</span>," would read "sprints ,". */
+  {
+    text: "4–8 hours of overlap with US and EU working days. Two-week",
+    exempt: "The daily working-hours overlap with US and EU clients the homepage FAQ answer states, and its FAQPage answer repeats: a contract term, not a performance claim",
+  },
+  /* /about's how-we-work tagline and terms — shown again, from the same
+     content, in the homepage's how we work and beside the booking calendar on
+     /contact (2026-09-28) — and the Organization description: the same term,
+     in the same words, for the same reason. */
   { text: "4–8 hours of overlap", exempt: "The daily working-hours overlap with US and EU clients that we commit to: a contract term, not a performance claim" },
   { text: "Start a 2-week pilot", exempt: "The fixed length of the paid pilot this button starts: a contract term, not a performance claim" },
   { text: "Pick a time (30 min)", exempt: "The length of the intro call this calendar button books: a meeting length, not a performance claim" },
@@ -123,6 +138,13 @@ const labels: FigureLabel[] = [
   /* /work's feature work (content/projects.ts) and the llms files: GodConnect
      Online's years, a span of years joined by a spaced dash. */
   { text: "2023 – 2024", exempt: "The years Bolt Fusion shipped feature work into GodConnect LTD's GodConnect Online app: a date range, not a performance claim" },
+  /* Bazzile's public install band (the owner, 2026-09-30: "Google Play's
+     public count"), on /work's card, the homepage's feature-work tile and the
+     llms files — content/projects.ts, `publicStat`, linked to the listing. */
+  {
+    text: "100K+ downloads on Google Play",
+    exempt: "The install band Google Play publicly shows for Bazzile Technology SA's app, read off its store listing on 2026-09-30: the reach of the client's whole app, not a measurement of the features Bolt Fusion built",
+  },
 
   /* /work/warmchats — hardcoded in its component; the copy lock yields to the label rule. */
   { text: "follows up 24/7", status: "target", source: WARMCHATS },

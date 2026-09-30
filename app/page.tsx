@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 
-import Capabilities from "@/components/site/home/Capabilities";
 import Faq from "@/components/site/home/Faq";
 import FinalCta from "@/components/site/home/FinalCta";
 import Hero from "@/components/site/home/Hero";
 import HowWeBuild from "@/components/site/home/HowWeBuild";
+import HowWeWork from "@/components/site/home/HowWeWork";
 import Industries from "@/components/site/home/Industries";
 import InsightsTeaser from "@/components/site/home/InsightsTeaser";
 import Stories from "@/components/site/home/Stories";
-import SystemMapSection from "@/components/site/home/SystemMapSection";
-import TechnicalDepth from "@/components/site/home/TechnicalDepth";
-import Team from "@/components/site/home/Team";
 import WhatWeEngineer from "@/components/site/home/WhatWeEngineer";
 import SiteShell from "@/components/site/SiteShell";
 import type { SectionId, SiteContent } from "@/content/site-schema";
@@ -60,22 +57,16 @@ function renderSection(id: SectionId, c: SiteContent) {
   switch (id) {
     case "hero":
       return <Hero hero={c.hero} />;
+    case "stories":
+      return <Stories work={c.recentWorks} lanesTitle={c.caseStudy.lanesSectionTitle} />;
+    case "how_we_work":
+      return <HowWeWork team={c.team} />;
     case "what_we_engineer":
       return <WhatWeEngineer />;
-    case "capabilities":
-      return <Capabilities />;
-    case "system_map":
-      return <SystemMapSection />;
-    case "industries":
-      return <Industries />;
     case "how_we_build":
       return <HowWeBuild />;
-    case "technical_depth":
-      return <TechnicalDepth />;
-    case "stories":
-      return <Stories work={c.recentWorks} />;
-    case "team":
-      return <Team team={c.team} />;
+    case "industries":
+      return <Industries />;
     case "faq":
       /* the Insights teaser sits before the FAQ (SPEC §6) */
       return (
@@ -92,18 +83,21 @@ function renderSection(id: SectionId, c: SiteContent) {
 }
 
 /**
- * The homepage — the owner's redesign of 2026-09-16 (SPEC §5): a broad
- * engineering company, "Software. Intelligence. Automation. Machines." The
- * sections, in `site.sectionOrder`: the hero; what we engineer; the six
- * capabilities, each with its own diagram; the system map; industries; how we
- * build; technical depth; the engineering stories with the proof strip; the
- * team; the FAQ; the final call to action. The booking calendar and the
- * contact panel are on /contact.
+ * The homepage — the owner's redesign of 2026-09-16 (SPEC §5), "Software.
+ * Intelligence. Automation. Machines.", ordered since 2026-09-28 for a buyer
+ * deciding whether to hire (the owner: "make it easy for clients to hire";
+ * DECISIONS 2026-09-28, item 1). The sections, in `site.sectionOrder`: the
+ * hero, with its proof line; the engineering stories with the proof strip
+ * (#recent-work); how we work with you — the terms, the engagement models,
+ * the pilot and the headcount; what we engineer, one ledger row per
+ * capability; how we build; the industries with delivered work; the Insights
+ * teaser and the FAQ; the final call to action. The capability deep dives and
+ * the system map are on /capabilities, the stack by layer on /engineering, the
+ * full Team section on /about, and the booking calendar on /contact.
  *
  * Every section is a server component. The scripts on the page: the header's
- * headroom and drawer, the system map's highlighting, the hero's pause control
- * and the quiet motion (components/site/SiteMotion). No canvas and no WebGL
- * yet — the 3D wave mounts its scene in the hero's field.
+ * headroom and drawer, the hero's pause control and three.js scene
+ * (components/field), and the quiet motion (components/site/SiteMotion).
  */
 export default function Home() {
   const content = siteContent;
@@ -113,8 +107,10 @@ export default function Home() {
   // FAQPage is built from the very items the FAQ section renders, and only when
   // it renders: one source, so the markup and the page cannot diverge.
   const renderedFaq = sectionOrder.includes("faq") && isVisible(sectionVisibility, "faq") ? content.faq.items : [];
-  // One Service node per capability, when the capabilities render.
-  const withServices = sectionOrder.includes("capabilities") && isVisible(sectionVisibility, "capabilities");
+  // One Service node per capability, when the capabilities render — since
+  // 2026-09-28 in the "What we engineer" ledger, which absorbed the six
+  // capability sections.
+  const withServices = sectionOrder.includes("what_we_engineer") && isVisible(sectionVisibility, "what_we_engineer");
 
   return (
     <>
@@ -128,7 +124,7 @@ export default function Home() {
           ),
         }}
       />
-      <SiteShell ground="graphite">
+      <SiteShell ground="graphite" headerCtaQuiet>
         {sectionOrder.map((id) =>
           isVisible(sectionVisibility, id) ? <Fragment key={id}>{renderSection(id, content)}</Fragment> : null,
         )}

@@ -1,3 +1,4 @@
+import FigureText from "@/components/FigureText";
 import type { SiteContent } from "@/content/site-schema";
 
 /**
@@ -6,6 +7,10 @@ import type { SiteContent } from "@/content/site-schema";
  * one at a time with or without script, and <summary> reports open and closed
  * to assistive technology itself — there is no aria-expanded to keep in sync.
  * The FAQPage structured data is built from these same items (app/page.tsx).
+ *
+ * An answer's figure carries its label or exemption where it sits, as every
+ * figure does (<FigureText>, content/figure-labels.ts): since 2026-09-28 the
+ * overlap answer holds "4–8 hours of overlap", exempt for that instance.
  *
  * The section holds nothing clickable but the questions: verify-site check 14
  * finds the FAQ as the <section> around them, and reads each answer as the
@@ -30,7 +35,9 @@ export default function Faq({ faq }: { faq: SiteContent["faq"] }) {
                   <path d="M8 2.5v11M2.5 8h11" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
               </summary>
-              <p className="bf-faq__a">{item.a}</p>
+              <p className="bf-faq__a">
+                <FigureText text={item.a} />
+              </p>
             </details>
           ))}
         </div>

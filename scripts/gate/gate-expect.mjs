@@ -4,6 +4,9 @@
    cases.json   the table as gate-cases.py applied it (each case's status)
    misuse.json  the suite's report on the patched build
    control.json the suite's report on the same HEAD, unpatched (RUN 1)
+   Each report may be a comma-separated list — the suite's and
+   scripts/probe-scene.mjs's (2026-09-29), whose checks are `probe:<name>` —
+   read as one.
    A case passes when its check FAILED on the patched build with a finding
    matching its regex — its OWN finding. With a control, that regex must match
    NOTHING on the clean build: a regex that also matches a finding the clean
@@ -14,8 +17,9 @@ import { readFileSync } from "node:fs";
 
 const [casesFile, misuseFile, controlFile] = process.argv.slice(2);
 const cases = JSON.parse(readFileSync(casesFile, "utf8"));
-const report = JSON.parse(readFileSync(misuseFile, "utf8"));
-const control = controlFile ? JSON.parse(readFileSync(controlFile, "utf8")) : null;
+const read = (list) => ({ results: list.split(",").flatMap((f) => JSON.parse(readFileSync(f, "utf8")).results) });
+const report = read(misuseFile);
+const control = controlFile ? read(controlFile) : null;
 const by = Object.fromEntries(report.results.map((c) => [c.id, c]));
 const cby = control ? Object.fromEntries(control.results.map((c) => [c.id, c])) : null;
 let miss = 0;

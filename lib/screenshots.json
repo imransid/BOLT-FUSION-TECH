@@ -79,5 +79,59 @@
       1280
     ],
     "base": "/projects/opt/opal"
+  },
+  "/projects/delivery-lens-bd.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/delivery-lens-bd"
+  },
+  "/projects/ttouch-wholesale.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/ttouch-wholesale"
+  },
+  "/projects/sudarshini-signin.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/sudarshini-signin"
+  },
+  "/projects/ttouch-employee-verification.webp": {
+    "width": 1440,
+    "height": 900,
+    "widths": [
+      640,
+      1280
+    ],
+    "base": "/projects/opt/ttouch-employee-verification"
+  },
+  "/projects/bazzile-swipe-browsing.webp": {
+    "width": 880,
+    "height": 1760,
+    "widths": [
+      320,
+      640
+    ],
+    "base": "/projects/opt/bazzile-swipe-browsing"
+  },
+  "/projects/bazzile-map-matching.webp": {
+    "width": 880,
+    "height": 1760,
+    "widths": [
+      320,
+      640
+    ],
+    "base": "/projects/opt/bazzile-map-matching"
   }
 }

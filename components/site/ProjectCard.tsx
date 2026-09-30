@@ -17,7 +17,8 @@ import ScreenImage from "./ScreenImage";
  *
  * Feature work (a project with `scope: "features"`, decided 2026-09-16) reads
  * "features built by Bolt Fusion for ‹client›": we built features inside the
- * client's app, not the app, so its label never says "built by Bolt Fusion".
+ * client's app, not the app, so its label never says "built by Bolt Fusion" —
+ * on /work's cards and on the homepage's feature-work tile (2026-09-30) alike.
  */
 export function attribution(p: Project): string {
   switch (p.kind) {
@@ -104,13 +105,18 @@ export function ProjectLinks({ p }: { p: Project }) {
 
 /** One project that is not a case study: a real screenshot of its live site
  *  when it is ours (none for a track record, nor for features in a client's
- *  app), then the text. Its name is an h3, or an h4 on a card in a sub-group
- *  under its own h3 (/work's feature work). `data-project-kind`,
- *  `data-project-scope` and `data-project-id` are check 9's. */
+ *  app — a feature-work project with its screens is /work's featured card,
+ *  app/work/page.tsx, 2026-09-30), then the text. Its name is an h3 (an h4
+ *  only on a card under a heading of its own, which /work has none of since
+ *  its feature work became a section). `data-project-kind`,
+ *  `data-project-scope` and `data-project-id` are check 9's. The card's `id` is
+ *  its project's, so evidence can link to the card itself (`/work#sudarshini`,
+ *  2026-09-29; lib/work-links.ts) — check 15 fails a link to one that is gone. */
 export default function ProjectCard({ p, sizes, headingLevel = 3 }: { p: Project; sizes: string; headingLevel?: 3 | 4 }) {
   const Name = headingLevel === 4 ? "h4" : "h3";
   return (
     <li
+      id={p.id}
       className={p.image ? "bf-project bf-project--shot" : "bf-project"}
       data-project-kind={p.kind}
       data-project-scope={p.kind === "project" ? p.scope : undefined}

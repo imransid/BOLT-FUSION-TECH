@@ -1,50 +1,61 @@
 import { engineering } from "@/content/engineering";
+import { pages } from "@/content/pages";
+import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 
+import Cta from "../Cta";
 import SectionHead from "../SectionHead";
 
 /**
- * "Technology we can build for…" (SPEC §5): a ledger, one ruled row per
- * industry — what we'd build, and where we've built it. Evidence links appear
- * ONLY where delivered work exists (content/engineering.ts); every other row
- * says plainly that there is none yet, rather than leaving a gap a reader
- * might fill with a claim.
+ * Industries on the homepage — since 2026-09-28 only those with delivered work
+ * (DECISIONS 2026-09-28, item 1): one ruled row of cells, each industry and
+ * where we have built for it, the links only where content/engineering.ts
+ * records delivered work (SPEC §8b.10), and "All industries" to /industries,
+ * which keeps the honest split — the industries with delivered work and those
+ * with none yet. Saying "No delivered work yet" five times on the sales page
+ * read as a list of what the company has not done.
+ *
+ * The heading is /industries' own for this group (content/pages.ts). A
+ * capability's evidence written as "#pos" lands on its ledger row on this
+ * page (components/site/home/WhatWeEngineer).
+ *
+ * Below 1025px it ends in a Schedule a Call (2026-09-29, fix pass B): the
+ * ledger's and the close's were six phone screens apart, and the header
+ * carries none below 520px (app/site.css; verify-site check 36).
  */
 export default function Industries() {
   const h = engineering.headings.industries;
+  const built = pages.industries.built;
+  const delivered = engineering.industries.filter((ind) => ind.evidence.length > 0);
   return (
-    <section id="industries" className="bf-section" aria-labelledby="industries-title">
+    <section id="industries" className="bf-section bf-inds-sec" aria-labelledby="industries-title">
       <div className="bf-wrap">
-        <SectionHead id="industries-title" eyebrow={h.eyebrow} title={h.title} lead={h.lead} />
-        <ul className="bf-ledger">
-          {engineering.industries.map((ind) => (
-            <li key={ind.id} className="bf-ledger__row" data-bf-reveal>
-              <h3 className="bf-ledger__name">{ind.name}</h3>
-              <div className="bf-ledger__cell">
-                <p className="bf-ledger__label">What we&rsquo;d build</p>
-                <ul className="bf-ledger__list">
-                  {ind.wouldBuild.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="bf-ledger__cell">
-                <p className="bf-ledger__label">Where we&rsquo;ve built it</p>
-                {ind.evidence.length ? (
-                  <ul className="bf-ledger__list">
-                    {ind.evidence.map((e) => (
-                      <li key={e.href + e.label}>
-                        <a href={e.href}>{e.label}</a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="bf-ledger__none">No delivered work yet</p>
-                )}
-                {ind.note ? <p className="bf-ledger__note">{ind.note}</p> : null}
-              </div>
+        <div className="bf-inds__head">
+          <SectionHead id="industries-title" eyebrow={h.eyebrow} title={built.title} lead={built.lead} />
+          <Cta href="/industries" variant="quiet" className="bf-inds__all">
+            All industries
+          </Cta>
+        </div>
+        <ul className="bf-inds">
+          {delivered.map((ind) => (
+            <li key={ind.id} className="bf-inds__cell" data-bf-reveal>
+              <h3 className="bf-inds__name">{ind.name}</h3>
+              <p className="bf-inds__label">Where we&rsquo;ve built it</p>
+              <ul className="bf-inds__links">
+                {ind.evidence.map((e) => (
+                  <li key={e.href + e.label}>
+                    <a href={e.href}>{e.label}</a>
+                  </li>
+                ))}
+              </ul>
+              {ind.note ? <p className="bf-inds__note">{ind.note}</p> : null}
             </li>
           ))}
         </ul>
+        <p className="bf-actions bf-inds__cta">
+          <Cta href={SCHEDULE_HREF} cta="schedule">
+            {SCHEDULE_LABEL}
+          </Cta>
+        </p>
       </div>
     </section>
   );

@@ -9,7 +9,8 @@
     "`match: \"word\"` matches whole words (\"Expo\" is not \"export\"); `ignoreCase`. `sets` hold items a route includes",
     "({ \"include\": name }). `awaiting` holds a page not yet published: printed until it is in the sitemap, then it must",
     "move into `routes`. Adding a route is data only.",
-    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too."
+    "2026-09-24, the integration: the pages wave's routes moved in from `awaiting` (its needles, $SP/engineering/needles.mjs, recovered), and the team became a headcount — the `team-headcount` set on / and /about, and the `team-roster-cut` set there too.",
+    "2026-09-29, TTouch Clothing's four systems (owner): a /work item for the client story and a / item for its band, Logistics among the industries with delivered work, the evidence they add on /industries and /capabilities, and the `ttouch-cuts` set on / and /work — the client's own figures and data, and the \"came back\" the owner struck."
   ],
   "excludedAsInterfaceText": [
     ", LinkedIn profile (opens in a new tab)",
@@ -138,6 +139,40 @@
           "developers"
         ]
       }
+    ],
+    "ttouch-cuts": [
+      {
+        "item": "TTouch Clothing's own figures and data, and a repeat-engagement claim",
+        "proves": "Nothing about us: the four sites' counters, catalogue sizes and speed and accuracy claims are the client's marketing, not Bolt Fusion's metrics; the demo's phone numbers belong to unknown people; the API's hidden fields are the client's; and the owner has not said TTouch came back for separate engagements (research/projects/PROPOSAL.md §3 and OWNER-ANSWERS.md, 2026-09-29)",
+        "status": "cut",
+        "cut": "owner, 2026-09-29: no figures, public pages only, no private data — and \"came back for four systems\" is not used on the site",
+        "needles": [
+          "3,281",
+          "189 products",
+          "15K+",
+          "25K+",
+          "45K+",
+          "99.99%",
+          "people are viewing",
+          "01610083516",
+          "01850889998",
+          "supplier_code",
+          "max_price",
+          "came back"
+        ]
+      }
+    ],
+    "bazzile-cuts": [
+      {
+        "item": "Bazzile's download and user figures",
+        "proves": "Nothing about us: the client's growth, not Bolt Fusion's work (owner, 2026-09-16 and 2026-09-30)",
+        "status": "cut",
+        "cut": "the owner, 2026-09-16: Bazzile's 70,000 downloads are the client's growth, not ours — never shown; and 2026-09-30: its 70,000 downloads and 15,000 active users in France stay off the site, which shows only Google Play's public count",
+        "needles": [
+          "70,000",
+          "15,000 active users"
+        ]
+      }
     ]
   },
   "routes": {
@@ -193,6 +228,20 @@
         ]
       },
       {
+        "item": "Hero: the first call and the proof line (2026-09-28)",
+        "proves": "What the first call is, in /about's approved words, and three shipped products under the calls to action, each with who it was built for (DECISIONS 2026-09-28, item 2)",
+        "status": "required",
+        "needles": [
+          "Your first call is with the engineer who writes the code.",
+          "Built by Bolt Fusion and in production",
+          "WarmChats",
+          "for WarmChats, Inc.",
+          "Balanzify",
+          "for Balanzify Inc.",
+          "Go Style Business"
+        ]
+      },
+      {
         "item": "Hero: the old positioning and its calls to action",
         "proves": "Nothing: the AI-studio hero the redesign replaced (MOVES.md, Hero)",
         "status": "cut",
@@ -204,10 +253,9 @@
         ]
       },
       {
-        "item": "Hero: the engagement terms, moved to /about",
-        "proves": "The overlap hours and the two-week pilot — moved to /about with the engagement models (SPEC §4); required there under \"awaiting\" until it is published",
-        "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, Hero): see awaiting /about",
+        "item": "How we work with you: the tagline and the pilot's button (back on / 2026-09-28)",
+        "proves": "The overlap hours, named engineers and IP in one line, and the way to start small — on / again in how we work with you (DECISIONS 2026-09-28, item 1); /about keeps them too",
+        "status": "required",
         "needles": [
           "Senior-only teams, named engineers up front, 4–8 hours of overla",
           "Start a 2-week pilot"
@@ -234,7 +282,7 @@
           "30–40% hit rate target",
           "<100ms",
           "Search response, 80% of traffic",
-          "Restaurant discovery platform",
+          "Intelligent restaurant search",
           "~$0.001",
           "Average cost per AI query",
           "~90%",
@@ -244,6 +292,15 @@
           "WarmChats",
           "From systems we shipped.",
           "Each figure says whether it was measured (shipped) or is a target."
+        ]
+      },
+      {
+        "item": "One product, one name: the proof strip's old source label",
+        "proves": "Nothing: the restaurant search's figures and its industry link name it as its write-up does, so a buyer counts one product, not two",
+        "status": "cut",
+        "cut": "the design review 2026-09-29 — the homepage called one product \"Intelligent restaurant search\", \"Restaurant discovery platform\" and \"The restaurant search\"",
+        "needles": [
+          "Restaurant discovery platform"
         ]
       },
       {
@@ -290,18 +347,37 @@
         "cut": "decided 2026-09-11 — COPY.md, Removed from the homepage"
       },
       {
-        "include": "team-headcount"
+        "item": "Team: the section's own head, moved to /about",
+        "proves": "The Team section (its eyebrow, headline and subtext) left / and merged into how we work with you, where the headcount stays — required on /about, which includes the team-headcount set",
+        "status": "retired",
+        "retired": "moved to /about — owner request 2026-09-28 (\"make it easy for clients to hire\")",
+        "needles": [
+          "Your bench",
+          "// who builds with you",
+          "Senior engineers.One delivery standard.",
+          "Named engineers are assigned before you sign. Ask on the call who would work on your project."
+        ]
       },
       {
         "include": "team-roster-cut"
       },
       {
-        "item": "Proof: the two write-ups",
-        "proves": "Real systems, each with a technical write-up",
-        "status": "required",
+        "item": "Proof: the section's old heading, \"Two products, two write-ups.\"",
+        "proves": "Nothing now: the section holds TTouch Clothing's four systems beside the pair, and four of its six systems have no write-up",
+        "status": "retired",
+        "retired": "reworded 2026-09-29 (the design and honesty reviews) — the client story moved up to follow the pair, and \"Two products\" and \"Each one has a full technical write-up\" were no longer true of the section",
         "needles": [
           "Two products, two write-ups.",
-          "Each one has a full technical write-up, not a screenshot and a sentence.",
+          "Each one has a full technical write-up, not a screenshot and a sentence."
+        ]
+      },
+      {
+        "item": "Proof: the two write-ups",
+        "proves": "Real systems, two with a technical write-up, under a heading true of every system in the section",
+        "status": "required",
+        "needles": [
+          "Built and shipped.",
+          "Two full technical write-ups, not a screenshot and a sentence — and the systems we built end to end for TTouch Clothing.",
           "WarmChats landing page: 'Turn new real estate leads into booked appoin",
           "Real estate, AI automation, microservices",
           "WarmChats — AI booking for real estate",
@@ -328,7 +404,54 @@
         ]
       },
       {
+        "item": "Proof: TTouch Clothing's four systems, straight after the pair (2026-09-29)",
+        "proves": "One client, four live systems, labelled as their /work cards are, each with its real screenshot, its name linked to the live system, and one link to the story on /work — before the section's Schedule a Call since the design and honesty reviews",
+        "status": "required",
+        "needles": [
+          "Client story",
+          "Delivered project: built by Bolt Fusion for TTouch Clothing",
+          "Four systems for TTouch Clothing",
+          "TTouch Clothing is a fashion brand from Bangladesh. We built four of its systems end to end",
+          "All four are live.",
+          "See the four systems",
+          "Delivery Lens BD",
+          "Courier-risk checks for online sellers",
+          "TTouch Wholesale",
+          "An approval-based wholesale portal",
+          "Sudarshini",
+          "The Sudarshini saree store",
+          "TTouch Employee Verification",
+          "Employee verification and HR records"
+        ]
+      },
+      {
+        "item": "Proof: the features we shipped into other companies’ apps, after the client story (2026-09-30)",
+        "proves": "The owner's highlight of Bazzile (2026-09-30): a tile after TTouch Clothing's client story and before the section's Schedule a Call — its label says features, never built by Bolt Fusion; the two screens where our features live, each captioned with its feature; what we built, word for word; Google Play's public install band with its source; and links to its card on /work and to the stores",
+        "status": "required",
+        "needles": [
+          "Feature work",
+          "Features we shipped into other companies’ apps",
+          "Features we built inside apps other companies own. The apps are theirs: each card names the company and only the features that were ours.",
+          "See Bazzile on our work page",
+          "Delivered project: features built by Bolt Fusion for Bazzile Technology SA",
+          "Bazzile",
+          "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+          "Swipe-based browsing",
+          "Google Maps location matching",
+          "100K+ downloads on Google Play",
+          "The whole app’s install count on its Google Play listing — its reach, not a measure of our features. Read 30 September 2026.",
+          "App Store",
+          "Google Play"
+        ]
+      },
+      {
         "include": "excluded-projects"
+      },
+      {
+        "include": "ttouch-cuts"
+      },
+      {
+        "include": "bazzile-cuts"
       },
       {
         "item": "How we work: the three steps and their section",
@@ -355,10 +478,9 @@
         ]
       },
       {
-        "item": "How we work: the engagement models and the pilot, moved to /about",
-        "proves": "What a founder buys — PROOF, moved to /about (SPEC §4: the engagement ladder); required there under \"awaiting\" until it is published. Sources kept: content/services.ts, content/pilot.ts",
-        "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /about (MOVES.md, How we work): see awaiting /about",
+        "item": "How we work with you: the engagement models, the line under them and the operating detail (back on / 2026-09-28)",
+        "proves": "What a founder buys and how it runs — PROOF, on / again in how we work with you (DECISIONS 2026-09-28, item 1); /about keeps it too. Sources: content/services.ts, content/pages.ts",
+        "status": "required",
         "needles": [
           "Model",
           "Shape",
@@ -374,6 +496,35 @@
           "As needed",
           "Most engagements start with the two-week pilot below. We’ll give",
           "Two-week sprints, a demo at the end of each, a named escalation"
+        ]
+      },
+      {
+        "item": "How we work with you: the four terms, the pilot and the headcount (2026-09-28)",
+        "proves": "The four offshore worries answered on the homepage — who you talk to, overlap, IP, NDA — the two-week pilot's plan, and the team as a headcount with where it works (DECISIONS 2026-09-28, item 1: the Team section merged here)",
+        "status": "required",
+        "needles": [
+          "How we work with clients",
+          "Named engineers, a pilot first, and IP you own.",
+          "Named engineers",
+          "Assigned before you sign. Your first call is with the engineer who writes the code.",
+          "Overlap hours",
+          "4–8 hours of overlap with US and EU working days.",
+          "Intellectual property",
+          "Assigned to you on payment.",
+          "NDA",
+          "Signed before scoping.",
+          "Engagement models",
+          "Two weeks. Fixed price. Full IP. No obligation.",
+          "A scoped slice of your real product, not a demo. You keep everything whether you continue or not.",
+          "Week 1",
+          "architecture and a working vertical slice",
+          "Week 2",
+          "iterate, harden, and write the handover document",
+          "Deliverable",
+          "Running code in your repository, on your infrastructure, with a handover doc.",
+          "15+",
+          "developers",
+          "Our engineers work across the UK, Malaysia and Bangladesh."
         ]
       },
       {
@@ -441,6 +592,22 @@
         ]
       },
       {
+        "item": "FAQ: the four buyer objections (2026-09-28)",
+        "proves": "Who writes the code, the overlap, who owns the IP and how to start small — answered in words the site already publishes (DECISIONS 2026-09-28, item 6); FAQPage is generated from the same items (check 14). \"Can we start small?\" ends at the pilot's terms: /about's quote line stays on / in how we work, and in the FAQ it gave the cost question a second answer beside \"How do you estimate timeline and cost?\"",
+        "status": "required",
+        "needles": [
+          "Who writes the code?",
+          "Named engineers are assigned before you sign. Your first call is with the engineer who writes the code.",
+          "How much do our working hours overlap?",
+          "4–8 hours of overlap with US and EU working days. Two-week sprints, a demo at the end of each",
+          "Who owns the IP?",
+          "You own the IP: it is assigned to you on payment. An NDA is signed before scoping.",
+          "Can we start small?",
+          "Most engagements start with the two-week pilot: a scoped slice of your real product, not a demo.",
+          "Two weeks. Fixed price. Full IP. No obligation."
+        ]
+      },
+      {
         "item": "FAQ: the two answers the redesign reworded",
         "proves": "Nothing: the first contradicted the six capabilities; the last named the contact section and \"book a call\"",
         "status": "cut",
@@ -454,7 +621,7 @@
         "item": "Contact and booking, moved to /contact",
         "proves": "Routes to a conversation — PROOF (the booking calendar), required on /contact",
         "status": "retired",
-        "retired": "owner's redesign 2026-09-16 — moved to /contact (MOVES.md), where its inventory requires every needle",
+        "retired": "owner's redesign 2026-09-16 — moved to /contact (MOVES.md), where its inventory requires every needle but one: the calendar's blurb, \"Or grab an open slot below…\", was cut there on 2026-09-28 (its \"Or\" pointed at the panel's Schedule a Call, removed that day)",
         "needles": [
           "Tell us what you need to ship",
           "Share goals, timeline, and constraints—we'll reply with honest f",
@@ -481,23 +648,67 @@
       },
       {
         "item": "Capabilities: the six, and robotics' honesty line",
-        "proves": "Each capability's claim, and robotics' Lab status in the owner's words (SPEC §8b.7) — check 33 holds the honesty line visible, beside its Lab chip",
+        "proves": "Robotics' Lab status in the owner's words (SPEC §8b.7), in its ledger row with the diagram's concept caption — check 33 holds the honesty line visible, beside its Lab chip; the six deep dives' headlines are on /capabilities",
         "status": "required",
+        "needles": [
+          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
+          "Concept — not a shipped system"
+        ]
+      },
+      {
+        "item": "Capabilities: the six deep dives' headlines, moved to /capabilities",
+        "proves": "Each capability's claim — on /capabilities, where its inventory requires every headline; / shows one ledger row per capability instead",
+        "status": "retired",
+        "retired": "moved to /capabilities — owner request 2026-09-28 (\"make it easy for clients to hire\")",
         "needles": [
           "Software that becomes infrastructure for your business.",
           "Turn intelligence into action.",
           "One system for complex operations.",
           "Commerce systems built around real operations.",
           "Bringing intelligence beyond the screen.",
-          "The systems behind the systems.",
-          "We engineer software for machines; we don't manufacture hardware. We haven't delivered robotics work yet, and nothing here is a shipped system — ask us and we'll tell you exactly what exists today.",
-          "Concept — not a shipped system"
+          "The systems behind the systems."
+        ]
+      },
+      {
+        "item": "What we engineer: the ledger (2026-09-28)",
+        "proves": "One row per capability: its job, its evidence, its linked work and the way to it in depth (DECISIONS 2026-09-28, item 1)",
+        "status": "required",
+        "needles": [
+          "Web platforms, mobile apps and the backends behind them.",
+          "Agents, retrieval and workflows that act on a model's output.",
+          "One model of the business, with each department as a module.",
+          "Point of sale that keeps selling when the network drops.",
+          "The software side of machines: vision, control and telemetry.",
+          "Databases, APIs, containers, CI/CD and observability.",
+          "Linked work",
+          "Software engineering in depth",
+          "AI & automation in depth",
+          "ERP & enterprise systems in depth",
+          "POS & commerce in depth",
+          "Robotics & intelligent systems in depth",
+          "Cloud, data & infrastructure in depth",
+          "Proven",
+          "Core",
+          "Capable",
+          "Lab"
+        ]
+      },
+      {
+        "item": "What we engineer: the tiers TTouch Clothing's systems add (2026-09-29)",
+        "proves": "ERP's Proven scope covers a wholesale back office, and online and wholesale commerce are Proven beside point of sale's Core — each backed by a published project; Full ERP stays Capable",
+        "status": "required",
+        "needles": [
+          "HR, payroll and a wholesale back office",
+          "Full ERP",
+          "Online and wholesale commerce",
+          "Point of sale",
+          "Linked work (online and wholesale commerce)"
         ]
       },
       {
         "item": "The system map",
-        "proves": "How the capabilities connect, as text for a crawler and a reader without script (SPEC §5)",
-        "status": "required",
+        "proves": "How the capabilities connect, as text for a crawler and a reader without script — on /capabilities, after the six, where its inventory requires every needle",
+        "status": "retired",
         "needles": [
           "Different technologies. One engineering discipline.",
           "Parts",
@@ -507,30 +718,43 @@
           "A lead arrives",
           "A camera sees a defect",
           "Concept"
-        ]
+        ],
+        "retired": "moved to /capabilities — owner request 2026-09-28 (\"make it easy for clients to hire\")"
       },
       {
-        "item": "Industries",
-        "proves": "Where we have built, and what we would build — no claim of past work without evidence (SPEC §8b.10)",
+        "item": "Industries with delivered work",
+        "proves": "Where we have built, each linked to what we built there — no claim of past work without evidence (SPEC §8b.10); the honest split is on /industries (DECISIONS 2026-09-28, item 1)",
         "status": "required",
         "needles": [
-          "Technology we can build for…",
+          "Industries with delivered work.",
+          "Each links to what we built there: a write-up, a project on our work page, or the capability it comes from.",
           "Restaurants & hospitality",
           "Retail & commerce",
           "Real estate",
           "HR & professional services",
           "Salons & beauty",
+          "Logistics",
+          "Where we’ve built it",
+          "All industries"
+        ]
+      },
+      {
+        "item": "Industries: the heading and the industries with no delivered work, moved to /industries",
+        "proves": "What we would build where we have built nothing yet — on /industries, which says so in its own group and requires every one",
+        "status": "retired",
+        "retired": "moved to /industries — owner request 2026-09-28 (\"make it easy for clients to hire\")",
+        "needles": [
+          "Technology we can build for…",
           "Healthcare",
           "Education",
-          "Logistics",
           "Enterprise operations",
           "Startups & technology companies"
         ]
       },
       {
         "item": "Technical depth, by layer",
-        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding)",
-        "status": "required",
+        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding) — on /engineering, where its inventory requires every name",
+        "status": "retired",
         "needles": [
           "The stack, by layer.",
           "React",
@@ -556,7 +780,8 @@
           "Docker Swarm",
           "GitHub Actions",
           "Vercel"
-        ]
+        ],
+        "retired": "moved to /engineering — owner request 2026-09-28 (\"make it easy for clients to hire\")"
       },
       {
         "include": "evidence-cuts"
@@ -632,8 +857,32 @@
         "proves": "PROOF: the 30-minute intro call, bookable — every Schedule a Call lands here (#schedule)",
         "status": "required",
         "needles": [
-          "Pick a time (30 min)",
-          "Or grab an open slot below — same 30‑minute intro call."
+          "Pick a time (30 min)"
+        ]
+      },
+      {
+        "item": "The booking calendar's blurb",
+        "proves": "An alternative to the contact panel's Schedule a Call, a jump to this calendar",
+        "status": "cut",
+        "cut": "2026-09-28: its \"Or\" pointed at the panel's Schedule a Call, removed that day when the calendar moved beside the h1 (DECISIONS 2026-09-28, item 4; BRIEF §2 row 5, SAFE)",
+        "needles": [
+          "Or grab an open slot below"
+        ]
+      },
+      {
+        "item": "How we work with clients, beside the calendar",
+        "proves": "What happens once you call — /about's four terms, word for word (content/pages.ts), next to the booking calendar (2026-09-28)",
+        "status": "required",
+        "needles": [
+          "How we work with clients",
+          "Named engineers",
+          "Assigned before you sign. Your first call is with the engineer who writes the code.",
+          "Overlap hours",
+          "4–8 hours of overlap with US and EU working days.",
+          "Intellectual property",
+          "Assigned to you on payment.",
+          "NDA",
+          "Signed before scoping."
         ]
       },
       {
@@ -661,7 +910,18 @@
         "needles": [
           "The systems, and how they were built.",
           "Two write-ups so far. Each one covers the actual architecture —",
-          "Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
+          "Then the four systems we built end to end for TTouch Clothing, all four live.",
+          "Then the features we shipped into other companies’ apps.",
+          "Below them: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers. Every card says who built it."
+        ]
+      },
+      {
+        "item": "The page head's old second lede, which did not name the client story",
+        "proves": "Nothing now: the lede names TTouch Clothing's four systems, straight after the write-ups",
+        "status": "retired",
+        "retired": "reworded 2026-09-29 (fix pass B, the design review) — \"Below the write-ups: the other products…\" never mentioned the client story, which moved to its own section after the case studies",
+        "needles": [
+          "Below the write-ups: the other products we built, for clients and for ourselves, and what our engineers shipped at previous employers."
         ]
       },
       {
@@ -736,15 +996,51 @@
         ]
       },
       {
-        "item": "Bolt Fusion feature work: Bazzile, GodConnect Online",
-        "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion",
+        "item": "Bolt Fusion projects: TTouch Clothing's four systems, as one client story (2026-09-29)",
+        "proves": "Four full builds the owner confirmed on 2026-09-29 — design, app, backend and database — each labelled built by Bolt Fusion for TTouch Clothing, which owns them (Sudarshini is a TTouch brand), in their own section and h2 straight after the case studies at /work#ttouch-clothing (an h3 inside Bolt Fusion projects until fix pass B)",
         "status": "required",
         "needles": [
+          "Client story",
+          "Four systems for TTouch Clothing",
+          "TTouch Clothing is a fashion brand from Bangladesh. We built four of its systems end to end",
+          "All four are live.",
+          "Delivered project: built by Bolt Fusion for TTouch Clothing",
+          "Delivery Lens BD",
+          "A subscription web app for online sellers in Bangladesh",
+          "The whole build: design, the web app, subscriptions, the developer API, the admin console and the database",
+          "deliverylensbd.com",
+          "TTouch Wholesale",
+          "A wholesale portal for TTouch Clothing: shops register",
+          "The whole build: design, the customer portal, the admin back office, the API and the database",
+          "wholesale.ttouch.clothing",
+          "Sudarshini",
+          "The online store of Sudarshini, TTouch Clothing's saree brand",
+          "The whole build: design, the storefront, the admin, the API and the database",
+          "sudarshini.com",
+          "TTouch Employee Verification",
+          "A public page where anyone can check that a person really works at TTouch Clothing",
+          "The whole build: design, the verification page, the HR back office, the API and the database",
+          "employee.ttouch.clothing",
+          "Node.js",
+          "REST"
+        ]
+      },
+      {
+        "item": "Bolt Fusion feature work: Bazzile, featured with its screens, and GodConnect Online",
+        "proves": "Features Bolt Fusion shipped inside apps other companies own (owner, 2026-09-16), each labelled features built by Bolt Fusion for the company that owns the app — never built by Bolt Fusion. Since 2026-09-30 (the owner) its own section straight after the client story, /work#feature-work: Bazzile first, with the two screens where our features live, each captioned with its feature, and Google Play's public install band with its source; GodConnect Online, whose role names no features, a text card",
+        "status": "required",
+        "needles": [
+          "Feature work",
           "Features we shipped into other companies’ apps",
+          "Features we built inside apps other companies own. The apps are theirs: each card names the company and only the features that were ours.",
           "Bazzile",
           "Delivered project: features built by Bolt Fusion for Bazzile Technology SA",
           "A Swiss real-estate marketplace app based in Geneva: listings come only from professional agencies, are ranked by an AI matching model, and sync with most agency CRMs.",
           "Features in the React Native app: swipe-based browsing, Google Maps location matching and Firebase real-time sync",
+          "Swipe-based browsing",
+          "Google Maps location matching",
+          "100K+ downloads on Google Play",
+          "The whole app’s install count on its Google Play listing — its reach, not a measure of our features. Read 30 September 2026.",
           "Jan 2025 – Jul 2025",
           "App Store",
           "Redux-Saga",
@@ -758,14 +1054,7 @@
         ]
       },
       {
-        "item": "Bazzile's download and user figures",
-        "proves": "Nothing about us: the client's growth, not Bolt Fusion's work (owner, 2026-09-16)",
-        "status": "cut",
-        "cut": "the owner, 2026-09-16: Bazzile's 70,000 downloads are the client's growth, not ours — never shown",
-        "needles": [
-          "70,000",
-          "15,000 active users"
-        ]
+        "include": "bazzile-cuts"
       },
       {
         "item": "In-house products: OPAL",
@@ -781,7 +1070,7 @@
         ]
       },
       {
-        "item": "Our engineers’ track record: Go Smart, NIdle Finishing",
+        "item": "Our engineers’ track record: Go Smart",
         "proves": "Work our engineers shipped at previous employers, credited to them — the employer and the engineer's role on every card, never called our client",
         "status": "required",
         "needles": [
@@ -796,7 +1085,15 @@
           "Brain Station 23",
           "2020–2022",
           "The Daily Star",
-          "Google Play",
+          "Google Play"
+        ]
+      },
+      {
+        "item": "Our engineers’ track record: NIdle Finishing, held back",
+        "proves": "Nothing while it is held: its only proof link went, and a track-record text card carries a working proof link or is not published (content/schema.ts)",
+        "status": "retired",
+        "retired": "held back 2026-09-28 — its only proof link, \"Intellier's case study\" (intellier.com/nidle/), 301s to a bare PNG (DECISIONS 2026-09-28, item 8); content/projects.ts holds it as awaiting-asset until a working proof link exists",
+        "needles": [
           "NIdle Finishing",
           "Track record: built by our engineer at Intellier, not by Bolt Fusion",
           "Finishing-stage digitisation for a ready-made-garments factory floor.",
@@ -807,6 +1104,9 @@
       },
       {
         "include": "excluded-projects"
+      },
+      {
+        "include": "ttouch-cuts"
       },
       {
         "item": "Building something with a constraint like these?",
@@ -1409,6 +1709,36 @@
           "Capable",
           "Lab"
         ]
+      },
+      {
+        "item": "The system map (moved from /, 2026-09-28)",
+        "proves": "How the six capabilities connect, as text for a crawler and a reader without script (SPEC §5) — after the six, where the reader has chosen depth on them",
+        "status": "required",
+        "needles": [
+          "Different technologies. One engineering discipline.",
+          "Parts",
+          "Connections",
+          "Worked flows",
+          "A sale at the till",
+          "A lead arrives",
+          "A camera sees a defect",
+          "Concept"
+        ]
+      },
+      {
+        "item": "Evidence: what TTouch Clothing's systems add (2026-09-29)",
+        "proves": "The Proven scopes and linked work the four systems back, and no more: Full ERP stays Capable, point of sale stays Core, and no payments or commerce integrations are claimed",
+        "status": "required",
+        "needles": [
+          "HR, payroll and a wholesale back office",
+          "Online and wholesale commerce",
+          "Online stores",
+          "Wholesale ordering portals",
+          "Online commerce is shipped: the Sudarshini store and TTouch Clothing's wholesale portal.",
+          "Delivery Lens BD",
+          "TTouch Employee Verification",
+          "Linked work (online and wholesale commerce)"
+        ]
       }
     ],
     "/industries": [
@@ -1442,6 +1772,24 @@
           "Logistics",
           "Enterprise operations",
           "Startups & technology companies"
+        ]
+      },
+      {
+        "item": "Where we've built it: TTouch Clothing's systems (2026-09-29)",
+        "proves": "Retail gains client work, HR a second delivery, and Logistics moves to delivered work on Delivery Lens BD — its first problem and build rewritten to what that product does",
+        "status": "required",
+        "needles": [
+          "Sudarshini",
+          "TTouch Wholesale",
+          "OPAL, our own e-commerce store",
+          "Wholesale ordering portals",
+          "Balanzify",
+          "TTouch Employee Verification",
+          "Employee records and verification",
+          "Delivery Lens BD",
+          "Orders shipped to customers who refuse them at the door",
+          "Courier data and delivery-risk checks",
+          "Trade prices that only approved shops should see"
         ]
       }
     ],
@@ -1485,6 +1833,40 @@
         "needles": [
           "Checked before every push."
         ]
+      },
+      {
+        "item": "Technical depth, by layer (moved from /, 2026-09-28)",
+        "proves": "Only what the repositories and shipped work show (SPEC §8b.2, binding) — every name on the stack",
+        "status": "required",
+        "needles": [
+          "The stack, by layer.",
+          "React",
+          "Next.js",
+          "React Native",
+          "Node.js",
+          "NestJS",
+          "Django",
+          "GraphQL",
+          "REST",
+          "gRPC",
+          "Socket.IO",
+          "PostgreSQL",
+          "Redis",
+          "pgvector",
+          "WatermelonDB",
+          "SQLite",
+          "Claude",
+          "GPT-4.1",
+          "Embeddings and retrieval",
+          "Agents",
+          "Docker",
+          "Docker Swarm",
+          "GitHub Actions",
+          "Vercel"
+        ]
+      },
+      {
+        "include": "evidence-cuts"
       }
     ],
     "/insights": [

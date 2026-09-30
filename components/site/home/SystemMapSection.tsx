@@ -5,7 +5,8 @@ import SystemMap from "../SystemMap";
 
 /** The system map's section: the heading, then the map and its lists
  *  (components/site/SystemMap), on the faint engineering grid — the only
- *  place besides the hero that carries it (SPEC §3). */
+ *  place besides the hero that carries it (SPEC §3). On /capabilities, after
+ *  the six, since 2026-09-28; it was the homepage's until then. */
 export default function SystemMapSection() {
   const h = engineering.headings.systemMap;
   return (

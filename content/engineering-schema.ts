@@ -148,6 +148,12 @@ export const capabilitySchema = z
     evidenceNote: text("evidenceNote"),
     /** Published projects in content/projects.ts that back the evidence (by id). */
     workSlugs: z.array(text("a work slug")),
+    /** The scope of the tier the linked work evidences, when it is not the
+     *  first tier's (2026-09-29, the honesty review): POS's linked work is its
+     *  online and wholesale commerce, beside a till tagline and a till
+     *  diagram, and read as the delivered point of sale. The "Linked work"
+     *  label then names it. One of the capability's other tiers' scopes. */
+    workScope: text("workScope").optional(),
     /** Figures that back it, from content/metrics.ts (by id), each shown with its own chip. */
     metricIds: z.array(text("a metric id")).default([]),
     /** Required, verbatim in spirit, on a Lab capability. */
@@ -181,6 +187,12 @@ export const capabilitySchema = z
     c.metricIds.forEach((id, i) => {
       if (!metrics.some((m) => m.id === id)) ctx.addIssue({ code: "custom", path: ["metricIds", i], message: `"${id}" is not a metric in content/metrics.ts` });
     });
+    if (c.workScope !== undefined && !c.evidence.slice(1).some((e) => e.scope === c.workScope))
+      ctx.addIssue({
+        code: "custom",
+        path: ["workScope"],
+        message: `"${c.name}": workScope "${c.workScope}" is not the scope of one of its later tiers (${c.evidence.slice(1).map((e) => `"${e.scope}"`).join(", ") || "it has none"}) — the first tier's work needs no scope`,
+      });
     if (c.evidence[0].tier === "lab" && c.workSlugs.length)
       ctx.addIssue({ code: "custom", path: ["workSlugs"], message: `"${c.name}" is Lab: there is no delivered work to link` });
   });

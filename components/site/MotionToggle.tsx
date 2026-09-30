@@ -1,8 +1,22 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 const subscribeNothing = () => () => {};
+
+/* The paused state has ONE home: <html data-motion="paused">, which survives
+   a client-side navigation. The button reads it, and re-reads it whenever it
+   changes, so a button that remounts — Back and Forward after the header's
+   logo — can never disagree with it. Until 2026-09-29 it kept its own copy in
+   React state, which reset to "not paused" on remount: the page was paused,
+   the button said "Pause motion", and its first press only changed the label
+   (the engineering review). */
+const subscribeMotion = (onChange: () => void) => {
+  const mo = new MutationObserver(onChange);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion"] });
+  return () => mo.disconnect();
+};
+const isPaused = () => document.documentElement.dataset.motion === "paused";
 
 /**
  * The hero's pause control (SPEC §3: "a pause control appears on anything that
@@ -20,6 +34,10 @@ const subscribeNothing = () => () => {};
  * scene stops its loop on `paused: true` and resumes on `false`; the CSS drift
  * reads the attribute.
  *
+ * Its state is said once, by its label — "Pause motion" or "Resume motion" —
+ * and not also by `aria-pressed`, which made a screen reader announce
+ * "Resume motion, toggle button, pressed" (2026-09-29).
+ *
  * In the server HTML it is invisible: without JavaScript it could do nothing.
  * It is `visibility: hidden` (so neither focusable nor read) until it carries
  * `data-ready` after mount, and app/site.css shows it only where something
@@ -28,7 +46,7 @@ const subscribeNothing = () => () => {};
  * when the scene went live, and 0.0245 at 390 at hydration (2026-09-16).
  */
 export default function MotionToggle() {
-  const [paused, setPaused] = useState(false);
+  const paused = useSyncExternalStore(subscribeMotion, isPaused, () => false);
   const mounted = useSyncExternalStore(
     subscribeNothing,
     () => true,
@@ -36,8 +54,7 @@ export default function MotionToggle() {
   );
 
   const toggle = () => {
-    const next = !paused;
-    setPaused(next);
+    const next = !isPaused();
     const root = document.documentElement;
     if (next) root.dataset.motion = "paused";
     else delete root.dataset.motion;
@@ -45,7 +62,7 @@ export default function MotionToggle() {
   };
 
   return (
-    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle} data-ready={mounted ? "" : undefined}>
+    <button type="button" className="bf-motion-toggle" onClick={toggle} data-ready={mounted ? "" : undefined}>
       <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">
         {paused ? <path d="M4 2.5v11L13 8z" fill="currentColor" /> : <path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" fill="currentColor" />}
       </svg>

@@ -10,6 +10,10 @@ import Logo from "./Logo";
  * entity details join the base row when the owner supplies them — there is no
  * slot for them until then.
  *
+ * Its Schedule a Call is the ghost (2026-09-29, fix pass B; the design
+ * review): the close's filled one is 354px above it on every page that ends
+ * in one, and a view holds one primary.
+ *
  * The name here is plain text in the lockup, not the `data-logotype` wordmark:
  * it meets contrast on its own (checks 18 and 20). The column labels are not
  * headings, so the page's outline stays the page's.
@@ -21,7 +25,7 @@ export default function Footer({ footer }: { footer: SiteContent["footer"] }) {
         <div className="bf-footer__brand">
           <Logo />
           <p className="bf-footer__tagline">{footer.tagline}</p>
-          <a href={footer.cta.href} className="bf-btn bf-btn--primary bf-btn--sm" data-cta="schedule">
+          <a href={footer.cta.href} className="bf-btn bf-btn--ghost bf-btn--sm" data-cta="schedule">
             {footer.cta.label}
           </a>
         </div>

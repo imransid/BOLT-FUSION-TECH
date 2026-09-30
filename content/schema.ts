@@ -104,12 +104,17 @@ export const projectKindSchema = z.enum(["case-study", "project", "in-house", "t
 export type ProjectKind = z.infer<typeof projectKindSchema>;
 
 /* ── what a Bolt Fusion delivery was — decided by the owner, 2026-09-16 ──────
- *  · product   we built the product: FanLock, Balanzify, Go Style Business
+ *  · product   we built the product: FanLock, Balanzify, Go Style Business,
+ *              TTouch Clothing's four systems (2026-09-29)
  *  · features  we built features inside an app another company owns: Bazzile,
  *              GodConnect Online. The label reads "features built by Bolt
  *              Fusion for ‹client›" — never "built by Bolt Fusion" — so it names
- *              the client, and the card shows no screenshot: the app's UI is
- *              the client's, and showing it needs their permission.
+ *              the client. The card never shows a generic screenshot of the
+ *              app (`image`): the app's UI is the client's, and a view of the
+ *              whole app claims all of it. Since 2026-09-30 (the owner, with
+ *              Bazzile's permission) it may show `featureScreens`: only the
+ *              screens where OUR features live, each tied to one feature its
+ *              role names and captioned with it.
  * Set only on kind "project"; left out, it is "product".
  */
 export const projectScopeSchema = z.enum(["product", "features"]);
@@ -129,6 +134,51 @@ export const projectImageSchema = z.object({
   height: z.number().int().positive(),
 });
 export type ProjectImage = z.infer<typeof projectImageSchema>;
+
+/** The features a role names: the list after its colon. "Features in the
+ *  React Native app: swipe-based browsing, Google Maps location matching and
+ *  Firebase real-time sync" names three; "Feature work in the React Native
+ *  app" (GodConnect Online: the portfolio does not say which features were
+ *  ours) names none. Read by the schema below, and by verify-site check 9 in
+ *  words of its own. */
+export function roleFeatures(role: string): string[] {
+  const colon = role.indexOf(":");
+  if (colon < 0) return [];
+  return role
+    .slice(colon + 1)
+    .split(/,\s*|\s+and\s+/)
+    .map((f) => f.trim())
+    .filter(Boolean);
+}
+
+/** A feature screen (the owner, 2026-09-30): one screen of another company's
+ *  app where a feature WE built lives — the client's own published screenshot
+ *  (Bazzile's App Store listing), shown with their permission. `feature` is
+ *  one of the features its project's role names, word for word; `caption` is
+ *  what the page prints under the screen, and names that feature. Both are
+ *  required: the refinement below refuses a screen tied to no feature of the
+ *  role, or captioned without its feature — an empty or missing one included
+ *  (the defaults make a missing field that refusal, in its words). */
+export const featureScreenSchema = z.object({
+  feature: z.string().default(""),
+  caption: z.string().default(""),
+  image: projectImageSchema,
+});
+export type FeatureScreen = z.infer<typeof featureScreenSchema>;
+
+/** A public figure about a client's app (the owner, 2026-09-30): read off one
+ *  of the project's own public listings — Google Play's install band for
+ *  Bazzile — and shown with that listing linked, never as our metric. Its
+ *  `text` is a per-instance exemption in content/figure-labels.ts (verify-site
+ *  check 8), and names the listing it links to. `read` is the day it was read. */
+export const publicStatSchema = z.object({
+  text: z.string().min(1),
+  href: z.string().url().startsWith("https://", "an outbound link is https"),
+  /** What the figure is, in words, for the line under it. */
+  source: z.string().min(12, "say what the figure counts"),
+  read: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "the day it was read, as 2026-09-30"),
+});
+export type PublicStat = z.infer<typeof publicStatSchema>;
 
 /** A link out: the live product, a store listing, a public proof. */
 export const projectLinkSchema = z.object({
@@ -160,11 +210,18 @@ export const projectSchema = z
     period: z.string().min(1).nullable().default(null),
     stack: z.array(z.string().min(1)),
     image: projectImageSchema.nullable().default(null),
+    /** Feature work only (2026-09-30): the screens where our features live. */
+    featureScreens: z.array(featureScreenSchema).default([]),
+    /** A public figure about the app, with its source (2026-09-30). */
+    publicStat: publicStatSchema.nullable().default(null),
     /** The technical write-up — case studies only. COPY.md §4: "Each one has a
      *  full technical write-up, not a screenshot and a sentence." */
     href: pending(z.string().min(1)).default(null),
     /** Links out: the live product, store listings, public proof. */
     links: z.array(projectLinkSchema).default([]),
+    /** What it is in a few words, for the homepage's client-story band only
+     *  (2026-09-29), where a name sits over it instead of a card's summary. */
+    tagline: z.string().min(1).max(60).optional(),
     state: projectStateSchema,
     /** Metric ids shown on the /work row. Relations, not copies. */
     metricIds: z.array(z.string().min(1)).default([]),
@@ -205,7 +262,39 @@ export const projectSchema = z
       if (p.image !== null)
         refuse(
           "image",
-          `"${p.name}" is feature work inside ${p.client ?? "another company"}'s app. The app's UI belongs to the client, so the card is text with its store links and no screenshot. Showing one needs the client's permission: that is a separate decision, not a content edit.`,
+          `"${p.name}" is feature work inside ${p.client ?? "another company"}'s app: a generic screenshot of the app claims all of it, and its UI is the client's. It shows only the screens where our features live, each tied to a feature its role names and captioned with it (featureScreens), and only with the client's permission.`,
+        );
+    }
+
+    /* the screens where our features live (2026-09-30) */
+    if (p.featureScreens.length) {
+      const named = roleFeatures(p.role);
+      if (p.scope !== "features" || !named.length)
+        refuse(
+          "featureScreens",
+          `"${p.name}" carries feature screens, and ${p.scope !== "features" ? `is not feature work (scope "features"): a screenshot of a product we built is its image` : `its role names no features ("${p.role}"), so no screen can be tied to one`}. A feature screen shows one of the features a feature-work role names.`,
+        );
+      else
+        p.featureScreens.forEach((s, i) => {
+          const at = (field: string, message: string) => ctx.addIssue({ code: "custom", path: ["featureScreens", i, field], message });
+          if (!named.some((f) => f.toLowerCase() === s.feature.trim().toLowerCase()))
+            at(
+              "feature",
+              `"${p.name}": the screen ${s.image.src} is for "${s.feature}", which is not one of the features its role names (${named.map((f) => `"${f}"`).join(", ")}). Show only the screens where our features live.`,
+            );
+          else if (!s.caption.toLowerCase().includes(s.feature.trim().toLowerCase()))
+            at("caption", `"${p.name}": the screen ${s.image.src} is captioned "${s.caption}", which does not name its feature, "${s.feature}" — a feature screen is captioned with the feature it shows`);
+          if (p.featureScreens.findIndex((o) => o.image.src === s.image.src) !== i) at("image", `"${p.name}": ${s.image.src} is shown twice`);
+        });
+    }
+
+    /* a public figure about the app, read off one of its own listings */
+    if (p.publicStat) {
+      const link = p.links.find((l) => l.href === p.publicStat!.href);
+      if (!link || !p.publicStat.text.includes(link.label))
+        refuse(
+          "publicStat",
+          `"${p.name}": its public figure "${p.publicStat.text}" links to ${p.publicStat.href}${link ? `, its "${link.label}" listing, which the figure does not name` : ", which is not one of its links"}. A public figure is read off one of the project's own listings, and says which.`,
         );
     }
 
@@ -246,6 +335,21 @@ export const projectSectionsSchema = z
     message: "Every project kind has exactly one section on /work.",
   });
 export type ProjectSection = z.infer<typeof projectSectionSchema>;
+
+/** A client story (2026-09-29): one client's product projects shown together —
+ *  on /work as a sub-group of Bolt Fusion projects under its own h3, and on the
+ *  homepage as a band in the proof. Which projects belong to it is not stored:
+ *  it is every published product project whose `client` is exactly this one
+ *  (content/projects.ts, `clientStoryMembers`), because nothing derived is. */
+export const clientStorySchema = z.object({
+  /** The anchor on /work: /work#ttouch-clothing. */
+  id: z.string().regex(/^[a-z][a-z-]*$/),
+  /** Equals Project.client, byte for byte. */
+  client: z.string().min(1),
+  title: z.string().min(1),
+  intro: z.string().min(1),
+});
+export type ClientStory = z.infer<typeof clientStorySchema>;
 
 /* ── services ───────────────────────────────────────────────────────────── */
 export const serviceSchema = z.object({

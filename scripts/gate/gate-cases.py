@@ -11,8 +11,19 @@ validate-next.sh's hand-written list once omitted check 9, and its case could
 not fail.
 
   python3 gate-cases.py only                 the --only list, from the table
+  python3 gate-cases.py probe-only           scripts/probe-scene.mjs's --only
+                                             list, from PROBE_CASES
   python3 gate-cases.py apply <root> <json>  patch <root>; write the table with
                                              each case's status to <json>
+
+PROBE_CASES (2026-09-29) are the hero scene's: rules that live in pixels over
+time, which scripts/probe-scene.mjs checks and the suite cannot. Their check
+is `probe:<name>`, read from the probe's --json report, and the gate runs the
+probe on the clean HEAD (RUN 1, the control) and on the misuse build (RUN 2)
+beside the suite. Their patches go into the same misuse build as every other
+case's, so each patch leaves the scene's t = 0 frame alone (the poster and the
+first frames it is compared with stay what they are) and each finding names
+its own cause — a case must not pass on another case's damage.
 
 A case is
   applied   its patch went in;
@@ -94,7 +105,7 @@ class Stage:
         """a throwaway client component in components/site, mounted on the homepage"""
         self.write(f"components/site/{name}.tsx", source)
         self.rep("app/page.tsx", 'import SiteShell from "@/components/site/SiteShell";\n', f'import SiteShell from "@/components/site/SiteShell";\nimport {name} from "@/components/site/{name}";\n')
-        self.rep("app/page.tsx", '      <SiteShell ground="graphite">\n', f'      <SiteShell ground="graphite">\n        <{name} />\n')
+        self.rep("app/page.tsx", '      <SiteShell ground="graphite" headerCtaQuiet>\n', f'      <SiteShell ground="graphite" headerCtaQuiet>\n        <{name} />\n')
 
     def flush(self):
         for p, s in self.files.items():
@@ -118,7 +129,10 @@ def p_vanishing_frame(s):
 
 
 def p_logotype(s):
-    s.rep("app/contact/page.tsx", '<p className="bf-lead">\n                <FigureText text={c.schedule.blurb} />', '<p data-logotype className="bf-lead">\n                <FigureText text={c.schedule.blurb} />')
+    # re-anchored 2026-09-28: onto the panel's body, beside the calendar — the
+    # calendar's blurb it anchored on was cut that day (same meaning: a
+    # data-logotype on /contact text that is not the wordmark)
+    s.rep("app/contact/page.tsx", '              <p className="bf-lead">{c.body}</p>\n', '              <p data-logotype className="bf-lead">{c.body}</p>\n')
 
 
 def p_faq_ld(s):
@@ -128,13 +142,18 @@ def p_faq_ld(s):
 def p_faq_client_only(s):
     s.write("components/site/home/VsClientOnly.tsx", '"use client";\nimport { useEffect, useState } from "react";\nexport default function VsClientOnly({ children }: { children: React.ReactNode }) {\n  const [on, setOn] = useState(false);\n  useEffect(() => setOn(true), []);\n  return on ? <>{children}</> : null;\n}\n')
     s.rep("components/site/home/Faq.tsx", 'import type { SiteContent } from "@/content/site-schema";\n', 'import type { SiteContent } from "@/content/site-schema";\nimport VsClientOnly from "./VsClientOnly";\n')
-    s.rep("components/site/home/Faq.tsx", '<p className="bf-faq__a">{item.a}</p>', '<p className="bf-faq__a"><VsClientOnly>{item.a}</VsClientOnly></p>')
+    # re-anchored 2026-09-28: the answer renders through <FigureText> (its figures are labelled where they sit)
+    s.rep("components/site/home/Faq.tsx", '                <FigureText text={item.a} />\n', '                <VsClientOnly>\n                  <FigureText text={item.a} />\n                </VsClientOnly>\n')
 
 
 def p_person_card(s):
-    """a named member's card put back in the Team section (homepage and /about)"""
+    """a named member's card put back where the team is shown — /about's Team
+    section, and the homepage's headcount, in how we work with you since
+    2026-09-28 (the Team section left / that day; re-anchored, same meaning)"""
     s.rep("components/site/home/Team.tsx", '            <p className="bf-lead">{team.subtext}</p>\n',
           '            <p className="bf-lead">{team.subtext}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
+    s.rep("components/site/home/HowWeWork.tsx", '            <p className="bf-hww__where">{where.lead}</p>\n',
+          '            <p className="bf-hww__where">{where.lead}</p>\n            <ul>\n              <li>\n                <div data-person-card data-person-status="pending">\n                  <h3>Nadim</h3>\n                </div>\n              </li>\n            </ul>\n')
 
 
 def p_admin(s):
@@ -307,13 +326,48 @@ def p_scene_static(s):
     s.rep("components/field/HeroScene.tsx", '      const mod = await import("./scene").catch(() => null);\n', "      const mod = vsSceneStatic;\n")
 
 
+def p_scene_lcp_only(s):
+    """25: the hero scene waits for an LCP entry alone again — the reader's
+    first input before the first paint, and no entry ever comes (the
+    engineering review, 2026-09-29: 5 of 5 trials, no scene)"""
+    s.rep("components/field/HeroScene.tsx", "      gate ??= Promise.all([lcpSeen(), loaded()]);\n",
+          '      gate ??= Promise.all([new Promise<void>((r) => new PerformanceObserver((l) => void (l.getEntries().length && r())).observe({ type: "largest-contentful-paint", buffered: true })), loaded()]); // THROWAWAY misuse\n')
+
+
+def p_nav_smooth(s):
+    """34: <html> without data-scroll-behavior — Next leaves smooth scrolling
+    on through a route change, and the new page scrolls up from the old
+    offset (the engineering review, 2026-09-29)"""
+    s.rep("app/layout.tsx", '      data-scroll-behavior="smooth"\n', "")
+
+
+def p_st_awake(s):
+    """34: the Signal's teardown leaves ScrollTrigger enabled — its own rAF
+    loop runs on, about 62 a second, on a page with nothing to trace (the
+    engineering review, 2026-09-29)"""
+    s.rep("components/motion/signal.ts", "    ScrollTrigger.disable();\n    asleep = true;\n", "    asleep = false; // THROWAWAY misuse: ScrollTrigger's own loop left running\n")
+
+
+def p_toggle_local(s):
+    """34: the pause control back on a state of its own, with aria-pressed —
+    the page stays paused across Back and Forward, and the remounted control
+    says "Pause motion" (the engineering review, 2026-09-29)"""
+    f = "components/site/MotionToggle.tsx"
+    s.rep(f, 'import { useSyncExternalStore } from "react";\n', 'import { useState, useSyncExternalStore } from "react";\n')
+    s.rep(f, "  const paused = useSyncExternalStore(subscribeMotion, isPaused, () => false);\n", "  const [paused, setPaused] = useState(false); // THROWAWAY misuse\n")
+    s.rep(f, "    const next = !isPaused();\n", "    const next = !paused;\n    setPaused(next);\n")
+    s.rep(f, '    <button type="button" className="bf-motion-toggle" onClick={toggle}', '    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle}')
+
+
 def p_scene_hides_poster(s):
     s.rep("components/field/HeroScene.tsx", '        canvas.style.opacity = "1";\n',
           '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster && window.innerWidth >= 1280) vsPoster.style.display = "none";\n')
 
 
 def p_honesty(s):
-    s.rep("components/site/home/Capabilities.tsx", "          {c.honesty ? (\n", "          {false && c.honesty ? (\n")
+    # re-anchored 2026-09-28: the six capability sections became one ledger on /
+    # (components/site/home/WhatWeEngineer.tsx), which renders the honesty line
+    s.rep("components/site/home/WhatWeEngineer.tsx", "        {c.honesty ? (\n", "        {false && c.honesty ? (\n")
 
 
 def p_tier_status(s):
@@ -321,12 +375,281 @@ def p_tier_status(s):
 
 
 def p_kubernetes(s):
+    # the stack's list renders on /engineering since 2026-09-28 (it left /), and
+    # /engineering's inventory includes the evidence cuts, so check 30 still sees it
     s.rep("components/site/home/TechnicalDepth.tsx", "                  ))}\n                </ul>", '                  ))}\n                  {layer.id === "infrastructure" ? <li>Kubernetes</li> : null}\n                </ul>')
+
+
+def p_contact_form(s):
+    """32 (2026-09-28): the /contact project form collapsed to its content's
+    width — the shape of the bug found that day, when /work's card rule
+    (.bf-project) won over the contact wrapper of the same name and the form
+    rendered 203px wide at 1440"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the /contact project form collapsed (the .bf-project collision's shape) */\n#project > .bf-wrap { display: flex !important; flex-direction: column; align-items: flex-start; }\n")
+
+
+def p_fallback_face(s):
+    """2 (2026-09-28): text that the site's faces cannot draw, so the browser
+    paints it in a system fallback — Jost has no CJK glyphs. Check 2 reads only
+    text the browser renders since that day (an element in a closed <details>
+    is never painted); this proves it still sees the text it does render."""
+    s.rep("components/site/home/Faq.tsx", '        <div className="bf-faq__list">\n',
+          '        <p className="bf-lead">\u6f22\u5b57\u306e\u6587\u5b57\u5217\u3092\u8868\u793a\u3059\u308b</p>\n        <div className="bf-faq__list">\n')
+
+
+# ── new for the TTouch Clothing projects (2026-09-29), one per new rule ─────
+
+
+def p_story_label(s):
+    """9: the client-story band's label no longer says Bolt Fusion built it"""
+    s.rep("components/site/home/Stories.tsx", "            {attribution(members[0])}\n", "            Built by TTouch Clothing\n")
+
+
+def p_story_hidden(s):
+    """9: the client-story band's label hidden from a reader"""
+    s.rep("components/site/home/Stories.tsx", '          <p className="bf-attr" data-attribution>\n', '          <p className="bf-attr sr-only" data-attribution>\n')
+
+
+def p_story_members(s):
+    """9: the band names our own OPAL as TTouch Clothing's, and leaves out
+    Delivery Lens BD"""
+    s.rep("components/site/home/Stories.tsx", "        {members.map((p) => {\n", '        {[...members.slice(1), ...projects.filter((x) => x.id === "opal")].map((p) => {\n')
+
+
+def p_story_shot_foreign(s):
+    """9: the band's Sudarshini tile shows another project's screenshot (OPAL's)"""
+    s.rep("components/site/home/Stories.tsx", "                    src={p.image.src}\n", '                    src={p.id === "sudarshini" ? "/projects/opal.webp" : p.image.src}\n')
+
+
+def p_story_shot_loose(s):
+    """9: a screenshot in the band outside every system's tile"""
+    s.rep("components/site/home/Stories.tsx", '        <div className="bf-clientband__aside">\n',
+          '        <div className="bf-clientband__aside">\n          <ScreenImage src="/projects/fanlock.webp" alt="" sizes="300px" />\n')
+
+
+def p_toc_first_tier(s):
+    """33: /capabilities' contents row back to each capability's first tier,
+    with no scope — ERP reads as a plain "Proven" """
+    s.rep("app/capabilities/page.tsx",
+          "                      {c.evidence.map((e) => (\n                        <TierChip key={e.tier} tier={e.tier} scope={e.scope} />\n",
+          "                      {[c.evidence[0]].map((e) => (\n                        <TierChip key={e.tier} tier={e.tier} />\n")
+
+
+def p_reach_desktop(s):
+    """36: the ledger's Schedule a Call hidden from 768px again, and how we
+    work's with it — at 1440 about eight viewports, from the proof's call to
+    the close's, show none on the way down. The ledger's alone gives a run of
+    5, one over the limit; how we work's makes the case fail by a margin no
+    other case's patch in the same build can take away"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: 36, the ledger's call phone-only again, and how we work's gone */\n@media (min-width: 768px) { .bf-ledger6__cta, #how-we-work [data-cta=\"schedule\"] { display: none; } }\n")
+
+
+def p_header_loud(s):
+    """36: the header's Schedule a Call never steps down — filled beside the
+    hero's on the first screen"""
+    s.rep("components/site/HeaderCtaQuiet.tsx", "    const apply = () => cta.toggleAttribute(\"data-quiet\", seen.size > 0);\n",
+          "    const apply = () => cta.toggleAttribute(\"data-quiet\", false); // THROWAWAY misuse\n")
+    s.rep("components/site/Header.tsx", ' data-quiet={ctaQuiet ? "" : undefined}>', ">")
+
+
+def p_footer_filled(s):
+    """36: the footer's Schedule a Call filled again — beside the close's"""
+    s.rep("components/site/Footer.tsx", 'className="bf-btn bf-btn--ghost bf-btn--sm" data-cta="schedule"', 'className="bf-btn bf-btn--primary bf-btn--sm" data-cta="schedule"')
 
 
 def p_canonical(s):
     s.rep("public/llms-full.txt", "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to production.",
           "> We engineer intelligent software, business systems, automation, and connected technologies — from idea to launch.")
+
+
+# ── new with the Signal motion system (2026-09-28): motion a script writes, and
+#    CLS while reading ─────────────────────────────────────────────────────────
+
+
+def p_script_motion(s):
+    """21: an rAF loop that ignores reduced motion, writing an inline transform"""
+    s.mount("VsScriptMotion", client(
+        "export default function VsScriptMotion() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-spin\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.transform = `translateX(${n % 2}px)`;\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_script_motion_var(s):
+    """21: an rAF loop that ignores reduced motion, moving a box through a CSS
+    custom property its transform reads — no inline transform ever changes"""
+    s.mount("VsScriptMotionVar", client(
+        "export default function VsScriptMotionVar() {\n  useEffect(() => {\n    const el = document.createElement(\"div\");\n    el.className = \"vs-var\";\n"
+        '    el.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;pointer-events:none;transform:translateX(var(--vs-x,0px))";\n    document.body.append(el);\n'
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      el.style.setProperty(\"--vs-x\", `${n % 2}px`);\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      el.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_script_motion_attr(s):
+    """21: an rAF loop that ignores reduced motion, drawing a line on through
+    its stroke-dashoffset ATTRIBUTE — no inline style ever changes"""
+    s.mount("VsScriptMotionAttr", client(
+        "export default function VsScriptMotionAttr() {\n  useEffect(() => {\n    const ns = \"http://www.w3.org/2000/svg\";\n    const svg = document.createElementNS(ns, \"svg\");\n"
+        '    svg.setAttribute("style", "position:fixed;left:0;top:0;width:2px;height:2px;pointer-events:none");\n    const line = document.createElementNS(ns, "line");\n'
+        '    line.setAttribute("class", "vs-draw");\n    for (const [k, v] of [["x1", "0"], ["y1", "1"], ["x2", "2"], ["y2", "1"], ["stroke", "#000"], ["stroke-dasharray", "2"]]) line.setAttribute(k, v);\n'
+        "    svg.append(line);\n    document.body.append(svg);\n"
+        "    let n = 0;\n    let id = 0;\n    const tick = () => {\n      line.setAttribute(\"stroke-dashoffset\", String(n % 2));\n      if (++n < 180) id = requestAnimationFrame(tick);\n    };\n"
+        "    id = requestAnimationFrame(tick);\n    return () => {\n      cancelAnimationFrame(id);\n      svg.remove();\n    };\n  }, []);\n  return null;\n}\n"))
+
+
+def p_scroll_shift(s):
+    """29: a 120px block inserted above #faq once #faq reaches the middle of
+    the viewport — a layout shift only a reader who scrolls ever meets"""
+    s.mount("VsScrollShift", client(
+        "export default function VsScrollShift() {\n  useEffect(() => {\n    const faq = document.getElementById(\"faq\");\n    if (!faq) return;\n"
+        "    const io = new IntersectionObserver(\n      (es) => {\n        if (!es.some((e) => e.isIntersecting)) return;\n        io.disconnect();\n"
+        '        const d = document.createElement("div");\n        d.className = "vs-shift";\n        d.style.height = "120px";\n        faq.before(d);\n'
+        '      },\n      { rootMargin: "0px 0px -50% 0px" },\n    );\n    io.observe(faq);\n    return () => io.disconnect();\n  }, []);\n  return null;\n}\n'))
+
+
+# ── new for the Signal motion system (2026-09-28), one per new rule ────────
+
+LOADER = "components/motion/MotionLoader.tsx"
+
+
+def p_gsap_static(s):
+    """29 and 31: the loader imports ScrollTrigger statically — gsap in every
+    page's initial JavaScript, requested before the load event"""
+    s.rep(LOADER, 'import { useEffect } from "react";\n', 'import { useEffect } from "react";\nimport { ScrollTrigger as vsStaticTrigger } from "gsap/ScrollTrigger";\n\n(globalThis as unknown as Record<string, unknown>).__vsStaticTrigger = vsStaticTrigger;\n')
+
+
+def p_scene_gsap(s):
+    """25 and 31: the hero scene imports gsap — its chunk carries GSAP. By the
+    dist path, which nothing else imports, so Turbopack bundles it INTO the
+    scene's chunk whether this build imports the scene dynamically or (with
+    scene-static) statically; a scene importing plain "gsap" shares the
+    loader's chunk instead, which check 25 sees in the scene's chunk list"""
+    s.append("components/field/scene.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nimport { gsap as vsSceneGsap } from "gsap/dist/gsap";\nexport const vsSceneGsapVersion = vsSceneGsap.version;\n')
+
+
+def p_signal_second_loader(s):
+    """31: a second module imports gsap dynamically — a second gate"""
+    s.append("components/motion/signal.ts", '\n/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. */\nexport const vsSecondLoader = () => import("gsap/Observer");\n')
+
+
+def p_gsap_coarse(s):
+    """25: the loader's gate drops the fine pointer — a touch tablet gets gsap"""
+    s.rep(LOADER, 'const FINE = "(pointer: fine)";\n', 'const FINE = "(min-width: 0px)";\n')
+
+
+def p_gsap_reduced(s):
+    """21: the loader's gate drops reduced motion — gsap requested, and the
+    traces run, under reduced motion"""
+    s.rep(LOADER, 'const CALM = "(prefers-reduced-motion: no-preference)";\n', 'const CALM = "(min-width: 0px)";\n')
+
+
+# ── new at the merge (2026-09-29): robotics honesty, the Lab drawing ───────
+
+
+DIAGRAMS = "components/site/diagrams.tsx"
+
+
+def p_lab_flow(s):
+    """33: the Lab drawing's four connections back as flow lines — a cyan
+    .dg-flow over each, with its cyan arrowhead, flowing on a phone and a
+    touch tablet (the drawing as it was until the merge)"""
+    s.rep(DIAGRAMS, '    <Svg id="machine-loop" capability={c} flow={false}>\n', '    <Svg id="machine-loop" capability={c}>\n')
+    for d in ("M136 86H182", "M298 86H344", "M402 112V232", "M344 258H298"):
+        s.rep(DIAGRAMS, f'      <Wire id="machine-loop" d="{d}" dashed flow={{false}} />\n', f'      <Wire id="machine-loop" d="{d}" />\n')
+
+
+def p_lab_cyan_head(s):
+    """33: cyan arrowheads on the Lab drawing's steel edges — no flow line at
+    all, only the colour of data flow where it points"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the Lab drawing's arrowheads in the flow colour */\n.bf-dg--machine-loop .dg-arrowhead { fill: var(--bf-flow); }\n")
+
+
+def p_lab_dash_motion(s):
+    """33: the Lab drawing's steel dashes marching on touch screens — a flow
+    drawn in steel, with no cyan anywhere"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: the Lab drawing's edges animated on a coarse pointer */\n@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {\n  .bf-dg--machine-loop .dg-edge { animation: bf-flow 1.6s linear infinite; }\n}\n")
+
+
+def p_signal_dead(s):
+    """25: the engine's matchMedia never matches on the homepage — gsap loads,
+    and the Signal never starts there. On / only since 2026-09-29: the build
+    it shares carries hook-blink, whose check (35) reads the Signal's traces
+    on /engineering, where the engine must still run for that case to fail
+    on its own damage"""
+    s.rep("components/motion/signal.ts", "  mm.add(gate, (ctx) => {\n", '  mm.add(location.pathname === "/" ? "(min-width: 99999px)" : gate, (ctx) => {\n')
+
+
+def p_hook_blink(s):
+    """35: a hook settles back to the server's hollow drawing — every payoff a
+    blink again (the design review, 2026-09-29)"""
+    s.rep("components/motion/signal.ts", "          traces.forEach((t) => t.made.forEach((m) => m.remove()));\n          lightHook(host);\n        };\n",
+          "          traces.forEach((t) => t.made.forEach((m) => m.remove()));\n          unlightHook(host); // THROWAWAY misuse: back to the hollow drawing\n          lit.delete(host);\n        };\n")
+
+
+def p_scene_share(s):
+    """25: a three.js module whose import loads the Signal's gsap chunk beside
+    it — what a scene importing plain "gsap" builds to, since Turbopack gives a
+    module two imports share a chunk of its own. Stood in by a throwaway
+    module carrying three.js's signature rather than by scene.ts, because
+    scene-static (same build) turns the scene's own import static and leaves
+    no chunk list to read."""
+    s.write("components/site/VsSceneShareMod.ts", '/* THROWAWAY misuse for the gate (scripts/gate/gate-cases.py) — never committed. Carries three.js\'s signature (check 25\'s THREE_CODE) and imports gsap. */\nimport { gsap } from "gsap";\n\n(globalThis as unknown as Record<string, unknown>).__vsSceneShare = ["WebGLRenderer", gsap.version];\n')
+    s.mount("VsSceneShare", client(
+        "export default function VsSceneShare() {\n  useEffect(() => {\n    const t = setTimeout(() => void import(\"./VsSceneShareMod\"), 1500);\n    return () => clearTimeout(t);\n  }, []);\n  return null;\n}\n"))
+
+
+# ── new for Bazzile's feature screens (2026-09-30), one per new rule ──────
+# /work's featured card takes the screenshot and caption cases on its own
+# figures, the homepage's tile the rest on its own, so no case's damage hides
+# another's: a screen whose caption is gone is not read for its words.
+
+WORK = "app/work/page.tsx"
+TILE = "components/site/home/Stories.tsx"
+
+
+def p_feat_generic(s):
+    """9: a generic screenshot of the app on Bazzile's /work card, outside its
+    captioned feature screens"""
+    s.rep(WORK, '      <div className="bf-feat__media">\n',
+          '      <div className="bf-feat__media">\n        <ScreenImage src="/projects/bazzile-swipe-browsing.webp" alt="" sizes="300px" />\n')
+
+
+def p_feat_captions(s):
+    """9: /work's feature screens captioned wrong — the swipe screen with no
+    feature of the role ("Listing details"), the map screen with the swipe
+    screen's feature"""
+    s.rep(WORK, '        <FeatureScreens p={p} sizes=',
+          '        <FeatureScreens p={{ ...p, featureScreens: p.featureScreens.map((x, i) => ({ ...x, caption: i === 0 ? "Listing details" : "Swipe-based browsing" })) }} sizes=')
+
+
+def p_feat_tile_screens(s):
+    """9: the homepage tile's swipe screen with no caption, and a third screen
+    that is not one of Bazzile's (OPAL's screenshot)"""
+    s.rep(TILE, '          <FeatureScreens p={p} sizes=',
+          '          <FeatureScreens p={{ ...p, featureScreens: [...p.featureScreens.map((x, i) => (i === 0 ? { ...x, caption: "" } : x)), { ...p.featureScreens[0], image: { ...p.featureScreens[0].image, src: "/projects/opal.webp" } }] }} sizes=')
+
+
+def p_feat_cap_hidden(s):
+    """9: the homepage tile's map caption hidden from a reader"""
+    s.append("app/site.css", "\n/* throwaway misuse CSS: 9, the tile's second feature screen's caption hidden */\n.bf-feattile .bf-screens__item:nth-child(2) .bf-screen__cap { visibility: hidden; }\n")
+
+
+def p_feat_tile_label(s):
+    """9: the homepage tile's label says Bolt Fusion built the app, and is
+    hidden from a reader"""
+    s.rep(TILE, "            <AttributionLabel p={p} />\n",
+          '            <p className="bf-attr sr-only" data-attribution>\n              Delivered project: built by Bolt Fusion for {p.client}\n            </p>\n')
+
+
+def p_bazzile_figures(s):
+    """30: the client's own figures back on the homepage tile"""
+    s.rep(TILE, '            <PublicStat p={p} className="bf-feattile__stat" />\n',
+          '            <PublicStat p={p} className="bf-feattile__stat" />\n            <p className="bf-feattile__role">Around 70,000 downloads in France in twelve months, and 15,000 active users there.</p>\n')
+
+
+def p_pubstat_bare(s):
+    """8: the public figure rendered without its exemption"""
+    s.rep("components/site/FeatureScreens.tsx", "        <FigureText text={s.text} />\n", "        {s.text}\n")
 
 
 # ── the table: [key, the case, its check, the finding it must print (a JS
@@ -335,7 +658,7 @@ def p_canonical(s):
 CASES = [
     # kept from the 2026-09-15 gate, re-anchored on the redesign's files
     ["vanishing-frame", "a WebGL context in a frame that removes itself", 25, r"WebGL context request\(s\) — (?:[^;]*; )*webgl2? in a child frame", p_vanishing_frame, {}],
-    ["logotype", "logotype on the schedule blurb (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
+    ["logotype", "logotype on the contact panel's body (/contact)", 18, r'data-logotype holds "', p_logotype, {}],
     ["faq-drop", "FAQPage drops a question", 14, r"which FAQPage leaves out", p_faq_ld, {}],
     ["faq-answer", "FAQPage changes an answer", 14, r'FAQPage answers ".*" differently from the page', None, {"from": "faq-drop"}],
     ["faq-client", "FAQ answers rendered only in the browser", 14, r"is not in the served HTML — the markup describes", p_faq_client_only, {}],
@@ -380,10 +703,16 @@ CASES = [
     ["k12-dynamic", "K12: a dynamic subpath import of framer-motion", 31, r"repository: components/site/StatusChip\.tsx holds a package of the retired design", p_k12_dynamic, {}],
     ["k12-package", "K12: a retired package in package.json", 31, r'repository: package\.json lists "framer-motion"', p_k12_package, {}],
     ["k12-tailwind", "K12: @tailwind in a stylesheet", 31, r"repository: app/site\.css holds Tailwind", p_k12_tailwind, {}],
-    ["feature-label", "a feature-work label that overclaims (Bazzile)", 9, r'"Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feature_label, {"reanchor": "pages"}],
+    # re-anchored 2026-09-30 onto /work (same meaning: its card's label): the
+    # homepage's feature-work tile carries Bazzile's label too, and its own
+    # case (feat-tile-overclaim) prints the same words for /
+    ["feature-label", "a feature-work label that overclaims (Bazzile, /work)", 9, r'^/work @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feature_label, {"reanchor": "pages"}],
     # new for the redesign (2026-09-16), one per new rule
     ["book-a-call", 'a "Book a call" label on the header button', 32, r"the header's primary button reads \"Book a call\" — it reads exactly \"Schedule a Call\"", p_book_a_call, {}],
     ["scene-coarse", "HeroScene allowed on a coarse pointer — a touch tablet gets WebGL (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): \d+ WebGL context request\(s\) — (?:[^;]*; )*webgl2 in the page", p_scene_coarse, {"needs": "scene"}],
+    # its finding is the missing first frame, not a missing context: the
+    # misuse build carries cases that ask for WebGL contexts of their own
+    ["scene-lcp-only", "the hero scene waits for an LCP entry alone — an input before the first paint, and it never starts (1440)", 25, r"^/ @1440 input before first paint: \[data-hero-field\] never got data-scene-ready", p_scene_lcp_only, {}],
     ["scene-static", "the scene chunk imported statically — three.js in the initial JavaScript", 29, r"the scene chunk .* is requested at \d+ms, before the load event ended", p_scene_static, {"needs": "scene"}],
     ["scene-static-390", "the scene chunk imported statically — three.js requested at 390", 25, r"^/ @390\b[^:]*: requests .*a three\.js chunk", None, {"from": "scene-static", "needs": "scene"}],
     ["scene-hides-poster", "the poster display:none once the scene is ready (1440)", 28, r"@1440: after the settle the poster is not rendered \(display:none", p_scene_hides_poster, {"needs": "scene"}],
@@ -392,11 +721,174 @@ CASES = [
     ["tier-status", "a data-status on a tier chip", 33, r"a tier chip \(\[data-tier=\"[a-z]+\"\][^)]*\) carries data-status", p_tier_status, {}],
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
+    # new for the 2026-09-28 redesign, one per new rule
+    ["fallback-face", "text drawn in a system fallback face (CJK glyphs Jost does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
+    ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
+    # new with the Signal motion system (2026-09-28): script motion, CLS while reading
+    ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],
+    ["script-motion-var", "an rAF loop that ignores reduced motion, through a CSS custom property its transform reads", 21, r"^/: \d+ element\(s\) animated by script through a CSS custom property under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-var \(\d+ changes to --vs-x\)", p_script_motion_var, {}],
+    ["script-motion-attr", "an rAF loop that ignores reduced motion, through an SVG stroke-dashoffset attribute", 21, r"^/: \d+ element\(s\) animated by script through an SVG attribute under reduced motion — e\.g\. (?:[^;]*, )?line\.vs-draw \(\d+ changes to stroke-dashoffset\)", p_script_motion_attr, {}],
+    ["scroll-shift", "a block inserted above #faq as a reader nears it — CLS while scrolling", 29, r"CLS [\d.]+ during a reading-speed scroll", p_scroll_shift, {}],
+    # new for the Signal motion system (2026-09-28), one per new rule
+    ["gsap-static", "gsap imported statically by the loader — ScrollTrigger in the initial JavaScript", 29, r"the GSAP chunk .* \((?:[^)]*, )?ScrollTrigger[,)].* is requested at \d+ms, before the load event ended", p_gsap_static, {}],
+    ["gsap-static-31", "gsap imported statically by the loader — the repository", 31, r'repository: components/motion/MotionLoader\.tsx imports "gsap/ScrollTrigger" statically', None, {"from": "gsap-static"}],
+    ["scene-gsap", "the hero scene imports gsap — a three.js chunk carrying GSAP", 25, r"is the hero scene's (?:three\.js )?chunk and carries GSAP", p_scene_gsap, {}],
+    ["scene-share", "a three.js chunk whose import loads the Signal's gsap chunk beside it", 25, r"the hero scene's import loads the GSAP chunk .*gsap core.* together with", p_scene_share, {}],
+    ["scene-gsap-31", "the hero scene imports gsap — the repository", 31, r'repository: components/field/scene\.ts imports "gsap/dist/gsap" — gsap belongs to the Signal', None, {"from": "scene-gsap"}],
+    ["signal-second-loader", "a second module imports gsap dynamically", 31, r'repository: components/motion/signal\.ts imports "gsap/Observer" dynamically — gsap is imported by components/motion/MotionLoader\.tsx alone', p_signal_second_loader, {}],
+    ["gsap-coarse", "the Signal's gate without the fine pointer — gsap on a touch tablet (1180x820)", 25, r"^/ @1180x820 tablet \(touch, coarse pointer\): requests the GSAP chunk", p_gsap_coarse, {}],
+    ["signal-dead", "the Signal's engine never starts — gsap loads for nothing (1440)", 25, r"^/ @1440[^:]*: the Signal never started", p_signal_dead, {}],
+    ["gsap-reduced", "the Signal's gate without reduced motion — gsap requested under reduced motion", 21, r"^/[^:]*: \d+ GSAP script\(s\) requested under reduced motion — .*the Signal engine", p_gsap_reduced, {}],
+    # new at the merge (2026-09-29): robotics honesty — the Lab drawing shows no cyan and never flows, on any profile
+    ["lab-flow", "the Lab drawing's connections back as cyan flow lines", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) carries \d+ flow line\(s\) \(\.dg-flow\)", p_lab_flow, {}],
+    ["lab-flow-phone", "the Lab drawing's connections back as cyan flow lines — flowing on a phone", 33, r"^/capabilities @390 phone \(touch\): the Lab drawing animates — (?:[^;]*; )*path\.dg-flow \(bf-flow\)", None, {"from": "lab-flow"}],
+    ["lab-cyan-head", "cyan arrowheads on the Lab drawing's steel edges, no flow line", 33, r"^/capabilities @\d+: the Lab drawing \(bf-dg--machine-loop[^)]*\) is painted cyan — (?:[^;]*; )*path\.dg-arrowhead fill ", p_lab_cyan_head, {}],
+    ["lab-dash-motion", "the Lab drawing's steel dashes animated on touch screens, no cyan", 33, r"^/capabilities @1180x820 tablet \(touch, coarse pointer\): the Lab drawing animates — (?:[^;]*; )*path\.dg-edge(?:\.dg-edge--dashed)? \(bf-flow\)", p_lab_dash_motion, {}],
+    # new at the fix pass (2026-09-29): a client-side navigation starts at the top, and its reveals run
+    ["nav-smooth", "no data-scroll-behavior on <html> — a client-side navigation smooth-scrolls the new page up from the old offset", 34, r"^@1440: the new page's first frame is at scrollY [1-9]\d*", p_nav_smooth, {}],
+    ["st-awake", "the Signal's teardown leaves ScrollTrigger's loop running — an idle /work wakes ~62 times a second", 34, r"^@1440 on /work after the Signal ran on /engineering, the idle page still asks for \d+ animation frames a second", p_st_awake, {}],
+    ["toggle-local", "the pause control keeps its own state — paused across Back and Forward, it reads \"Pause motion\"", 34, r'^@390: after Back and Forward the page is paused \(html\[data-motion="paused"\]\) and its pause control reads "Pause motion"', p_toggle_local, {}],
+    ["toggle-pressed", "the pause control says its state twice — aria-pressed beside a changing label", 34, r'^@390: the pause control carries aria-pressed="false" beside a label that changes', None, {"from": "toggle-local"}],
+    ["hook-blink", "the Signal's hooks settle back to the hollow drawing — the payoff a blink", 35, r"^/engineering @1440 a fresh load: read down at reading speed, 0 of \d+ stations of the Signal's hooks are lit at rest", p_hook_blink, {}],
+    ["hook-blink-untraced", "the Signal's hooks settle back to the hollow drawing — the line not left traced", 35, r"^/engineering @1440 a fresh load: the hook\(s\) rail, cta did not settle traced", None, {"from": "hook-blink"}],
+    ["nav-reveals", "no data-scroll-behavior on <html> — the new page's reveals judged at the old offset, and skipped", 34, r"^@(?:1440|390): after the navigation, \d+ of \d+ reveals ran as / was read down, against \d+ of \d+ on a fresh load", None, {"from": "nav-smooth"}],
+    # new for the TTouch Clothing projects (2026-09-29), one per new rule
+    ["story-label", "the homepage's client-story band labelled \"Built by TTouch Clothing\"", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label reads "Built by TTouch Clothing"; it reads "Delivered project: built by Bolt Fusion for TTouch Clothing"', p_story_label, {}],
+    ["story-hidden", "the client-story band's label hidden (sr-only)", 9, r'^/ @\d+: the client story "ttouch-clothing" — its label ".*" is not visible', p_story_hidden, {}],
+    ["story-foreign", "the client-story band names our own OPAL as TTouch Clothing's", 9, r'^/ @\d+: the client story "ttouch-clothing" names "OPAL", which is not a published product project of TTouch Clothing', p_story_members, {}],
+    ["story-missing", "the client-story band leaves out one of TTouch Clothing's systems", 9, r'^/ @\d+: the client story "ttouch-clothing" leaves out "Delivery Lens BD", a published product project of TTouch Clothing', None, {"from": "story-foreign"}],
+    # new at fix pass B (2026-09-29): the band shows each system's screenshot
+    ["story-shot-foreign", "the client-story band's Sudarshini tile shows OPAL's screenshot", 9, r'^/ @\d+: the client story "ttouch-clothing" — the tile of "Sudarshini" shows /projects/opt/opal-\d+\.(?:avif|webp), which is not its screenshot in content/projects\.ts', p_story_shot_foreign, {}],
+    ["toc-first-tier", "/capabilities' contents row shows each capability's first tier alone — ERP without Capable (Full ERP)", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows ERP & enterprise systems as \"[^\"]*Proven[^\"]*\", without Capable — its evidence is Proven \(HR, payroll and a wholesale back office\) and Capable \(Full ERP\)", p_toc_first_tier, {}],
+    ["toc-bare-tier", "/capabilities' contents row shows a tier without its scope — ERP's Proven bare", 33, r"^/capabilities @\d+: [^:]*\(the link to #erp\) shows the Proven tier of ERP & enterprise systems as \"[^\"]*\", without its scope \"HR, payroll and a wholesale back office\"", None, {"from": "toc-first-tier"}],
+    ["reach-desktop", "the ledger's and how we work's Schedule a Calls hidden from 768px — a long run of viewports with none at 1440", 36, r"^/ @1440: \d+ viewports in a row, scrollY \d+–\d+, show no Schedule a Call on the way down — at most 4", p_reach_desktop, {}],
+    ["header-loud", "the header's Schedule a Call never steps down — two primaries on the first screen (1440)", 36, r"^/ @1440: two primary Schedule a Calls in one view at scrollY 0 \(scrolling down\) — [^—]*the header's", p_header_loud, {}],
+    ["footer-filled", "the footer's Schedule a Call filled again — two primaries at the end of the page", 36, r"^/ @(?:1440|390): two primary Schedule a Calls in one view at scrollY \d+ \(scrolling (?:down|up)\) — [^—]*the footer's", p_footer_filled, {}],
+    ["story-shot-loose", "a screenshot in the client-story band outside every system's tile", 9, r'^/ @\d+: the client story "ttouch-clothing" shows a screenshot \(/projects/opt/fanlock-\d+\.(?:avif|webp)\) outside the tile of any system it names', p_story_shot_loose, {}],
+    # new for Bazzile's feature screens and its public install count (2026-09-30), one per new rule
+    ["feat-generic", "a generic screenshot of Bazzile's app on its /work card, outside its feature screens", 9, r'^/work @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app and shows a screenshot \(/projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp)\) outside its feature screens', p_feat_generic, {}],
+    ["feat-cap-words", "a /work feature screen captioned with no feature its role names (\"Listing details\")", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp) is captioned "Listing details", which names none of the features its role names', p_feat_captions, {}],
+    ["feat-cap-swapped", "a /work feature screen captioned with the other screen's feature (the map as swipe browsing)", 9, r'^/work @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-map-matching-\d+\.(?:avif|webp) is captioned "Swipe-based browsing", and it is the screen of "Google Maps location matching"', None, {"from": "feat-cap-words"}],
+    ["feat-cap-missing", "the homepage tile's swipe screen with no caption", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-swipe-browsing-\d+\.(?:avif|webp) has no visible caption — each screen', p_feat_tile_screens, {}],
+    ["feat-foreign", "a screen in the homepage tile that is not one of Bazzile's (OPAL's screenshot)", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/opal-\d+\.(?:avif|webp) is not one of its feature screens in content/projects\.ts', None, {"from": "feat-cap-missing"}],
+    ["feat-cap-hidden", "the homepage tile's map caption hidden (visibility: hidden)", 9, r'^/ @\d+: "Bazzile" — the feature screen /projects/opt/bazzile-map-matching-\d+\.(?:avif|webp) has no visible caption \(its caption "Google Maps location matching" is not visible\)', p_feat_cap_hidden, {}],
+    ["feat-tile-overclaim", "the homepage tile's label says \"built by Bolt Fusion\" without \"features\"", 9, r'^/ @\d+: "Bazzile" is feature work inside Bazzile Technology SA\'s app, and its label says "built by Bolt Fusion" without "features"', p_feat_tile_label, {}],
+    ["feat-tile-hidden", "the homepage tile's label hidden (sr-only)", 9, r'^/ @\d+: "Bazzile" — its attribution label ".*" is not visible', None, {"from": "feat-tile-overclaim"}],
+    ["bazzile-70k-home", "Bazzile's 70,000 downloads back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "70,000" is back', p_bazzile_figures, {}],
+    ["bazzile-users-home", "Bazzile's 15,000 active users back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "15,000 active users" is back', None, {"from": "bazzile-70k-home"}],
+    ["pubstat-bare", "Bazzile's Google Play figure without its exemption", 8, r'"100K\+" has no shipped/target label', p_pubstat_bare, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
 RETIRED = [
     ["person", "Person node with an empty jobTitle", 14, "the team is a headcount (owner, 2026-09-24): no Person node is emitted anywhere, so there is none to empty — check 14 now fails any Person node (the person-card case)"],
+]
+
+
+
+# ── the hero scene's patches (PROBE_CASES): each fails one probe-scene check ─
+
+
+def p_scene_gap(s):
+    """explode: the stack opened 0.3 a plate — the band at full open"""
+    s.rep("components/field/scene.ts", "const EXPLODE_GAP = 0.13;", "const EXPLODE_GAP = 0.3;")
+
+
+def p_explode_span(s):
+    """view: the explode's span back to 36% of the field (202px) — the stack
+    finishes opening with its top modules under the pinned header and off
+    the screen (the design review, 2026-09-29)"""
+    s.rep("components/field/scene.ts", "const EXPLODE_SPAN = 0.16;", "const EXPLODE_SPAN = 0.36;")
+
+
+def p_scene_nohold(s):
+    """reload: the exploded view starts where the scroll is at mount, so a
+    page loaded mid-scroll draws an opened stack as its first frame"""
+    s.rep("components/field/scene.ts", "  let explode = 0; // the exploded view", "  let explode = Math.min(1, window.scrollY / 393); // THROWAWAY misuse: the exploded view")
+
+
+def p_scene_nopause(s):
+    """explode and charge: Pause motion ignored — the loop keeps running"""
+    s.rep("components/field/scene.ts", "      paused = p;\n", "      paused = p && false; // THROWAWAY misuse\n")
+
+
+def p_scene_pop(s):
+    """watchdog: the comets dropped in one frame instead of faded"""
+    s.rep("components/field/scene.ts", "      cometK = Math.max(0, cometK - dt / FADE_S);", "      cometK = 0; // THROWAWAY misuse")
+
+
+def p_scene_cadence(s):
+    """cadence: the watchdog judging the display's cadence again, on every
+    browser — a steady 30Hz (a laptop on battery) reads as a slow GPU, and
+    the comets and the outer tier go (the design review, 2026-09-29)"""
+    s.rep("components/field/scene.ts", "      const dropping = !gpuSeen && avgMs > SLOW_FRAME_MS && uneven();\n", "      const dropping = avgMs > SLOW_FRAME_MS; // THROWAWAY misuse: the cadence alone, as until 2026-09-29\n")
+
+
+def p_scene_gpu_blind(s):
+    """watchdog: the GPU clock read and never judged — a GPU too slow for the
+    scene, at a smooth cadence, never degrades it"""
+    s.rep("components/field/scene.ts", "      const gpuSlow = gpuSeen && avgGpu > WORK_MS;\n", "      const gpuSlow = false; // THROWAWAY misuse\n")
+
+
+def p_charge_amber(s):
+    """charge: the seams mix toward amber — which keeps blue > green > red
+    at the charge's 24%, and lowers the blue"""
+    s.rep("components/field/scene.ts", "vec3( 0.62, 0.8, 1.0 ), uCharge );", "vec3( 0.98, 0.75, 0.14 ), uCharge ); // THROWAWAY misuse")
+
+
+def p_charge_jump(s):
+    """charge: it snaps on instead of easing"""
+    s.rep("components/field/scene.ts", "const CHARGE_EASE = 5;", "const CHARGE_EASE = 80;")
+
+
+def p_scene_cross_core(s):
+    """overlap: the inner tier sways 52 degrees — the web and the AI swing
+    in front of the core. t = 0 is the sway's centre, so the poster holds"""
+    s.rep("components/field/scene.ts", "const INNER: Tier = { radius: 1.75, y: 2.25, swing: 0.3,", "const INNER: Tier = { radius: 1.75, y: 2.25, swing: 0.9,")
+
+
+def p_scene_cross_lab(s):
+    """overlap: the outer tier sways 52 degrees against the inner — the Lab
+    robot meets the AI"""
+    s.rep("components/field/scene.ts", "const OUTER: Tier = { radius: 2.25, y: 0.36, swing: 0.22,", "const OUTER: Tier = { radius: 2.25, y: 0.36, swing: -0.9,")
+
+
+def p_poster_cover(s):
+    """poster: covering its field again — the 16:9 field at 768 cuts the
+    frame's top and bottom (the adversarial review, 2026-09-29)"""
+    s.rep("app/site.css", "  object-fit: contain;\n  object-position: 50% 50%;\n", "  object-fit: cover;\n  object-position: 50% 50%;\n")
+
+
+def p_poster_stale(s):
+    """identity: the desktop sources serve the v1 poster — a frame of
+    another scene, which the canvas no longer matches"""
+    for ext in ("avif", "webp"):
+        s.rep("components/site/home/Hero.tsx", f'srcSet="/hero/scene-poster-v2-660-1x.{ext} 660w, /hero/scene-poster-v2-1320.{ext} 1320w"', f'srcSet="/hero/scene-poster-v1-660.{ext} 660w, /hero/scene-poster-v1-1320.{ext} 1320w"')
+
+
+# the hero scene's cases (2026-09-29): the same shape, the check a
+# scripts/probe-scene.mjs check, `probe:<name>`. One per rule the probe holds
+# that the suite cannot see (CLAUDE.md, "The hero field").
+PROBE_CASES = [
+    ["scene-gap", "the exploded view opened 0.3 a plate — the stack reaches the frame's edge", "probe:explode", r"^@660 fully open, [^:]*: the edge band is \d+ off the ground", p_scene_gap, {}],
+    ["explode-span", "the exploded view opens over 202px again — it finishes with its top under the pinned header", "probe:view", r"^the opened stack goes under the pinned header \(\d+px\) at scroll \d+px while it is only \d+% open — it opens fully only at scroll (?:1[6-9]\d|2\d\d)px", p_explode_span, {}],
+    ["scene-nohold", "the exploded view starts from the scroll at mount — a mid-scroll reload opens before the fade", "probe:reload", r"^loaded mid-scroll, the first frame is not the poster", p_scene_nohold, {}],
+    ["scene-nopause", "Pause motion ignored by the scene — the stack follows the scroll while paused", "probe:explode", r"^paused, the stack still moved with the scroll \([1-9]\d* draw calls", p_scene_nopause, {}],
+    ["scene-nopause-charge", "Pause motion ignored by the scene — the charge answers a hover while paused", "probe:charge", r"^paused, the scene still answered the hover \([1-9]\d* draw calls", None, {"from": "scene-nopause"}],
+    ["scene-pop", "the watchdog drops the comets in one frame", "probe:watchdog", r"^the comets: \d+% of it went in one 0\.2s step at [\d.]+s — it vanished instead of fading", p_scene_pop, {}],
+    ["scene-gpu-blind", "the watchdog never judges the GPU's clocked time — a slow GPU at a smooth cadence keeps everything", "probe:watchdog", r"^a GPU clocked at 30ms a frame, at a smooth 60Hz cadence with cheap script work: the drawing buffer never stepped down in 4s", p_scene_gpu_blind, {}],
+    # the cadence check's control (with no GPU clock, an uneven cadence DOES
+    # degrade) has no case of its own: a patch that stops it degrading cannot
+    # share a build with scene-cadence, which makes every slow cadence
+    # degrade. It fails its check itself ("proves nothing") if it ever stops.
+    ["scene-cadence", "the watchdog judges the display's cadence again — a steady 30Hz strips the scene", "probe:cadence", r"^30Hz, GPU clocked at 1\.5ms a frame: the drawing buffer stepped down to 825x700", p_scene_cadence, {}],
+    ["scene-cadence-safari", "the watchdog judges the display's cadence again — with no GPU clock (Safari)", "probe:cadence", r"^30Hz, no GPU clock \(Safari\): the drawing buffer stepped down to 825x700", None, {"from": "scene-cadence"}],
+    ["charge-amber", "the charge mixes toward amber (the order of the channels holds, the blue falls)", "probe:charge", r"^hover: the charged seams are rgb [\d,]+ against [\d,]+ at rest — blue -\d+\.\d as red rises [\d.]+ — the charge is a brighter blue, never amber", p_charge_amber, {}],
+    ["charge-jump", "the charge snaps on instead of easing", "probe:charge", r"^hover: \d+% of the charge came in the first 0\.1s — it eases in, it does not jump", p_charge_jump, {}],
+    ["scene-cross-core", "the inner tier sways 52° — modules swing in front of the core", "probe:overlap", r'^assembled: "(?:web|ai)" comes within -?[\d.]+px of the core, in front of it — a module crosses the core', p_scene_cross_core, {}],
+    ["scene-cross-lab", "the outer tier sways 52° against the inner — a live module crosses the Lab robot", "probe:overlap", r'^assembled: "\w+" and "\w+" come within -?[\d.]+px of each other — a live module crosses the Lab robot', p_scene_cross_lab, {}],
+    ["poster-cover", "the poster covers its field again — the frame cut at 768", "probe:poster", r"^@768, the drift's (?:from|to) end: the field's 16px band is not the ground — .*\(\S+, cover, transform", p_poster_cover, {}],
+    ["poster-stale", "the desktop sources serve the v1 poster — not this scene's first frame", "probe:identity", r"^@660 DPR 2: the canvas's t = 0 frame differs from the poster the browser draws under it \(scene-poster-v1-1320", p_poster_stale, {}],
 ]
 
 
@@ -439,12 +931,103 @@ def b_e(s):
     s.rep("content/site.ts", '    sizeLabel: "developers",\n', '    sizeLabel: "developers",\n    ...({ roster: [{ id: "nadim", status: "pending", name: "Nadim" }] } as {}),\n')
 
 
+def b_f(s):
+    """(f) the hero's first-call line turned into a new promise (2026-09-28:
+    the microcopy is one whole sentence of /about's terms, word for word —
+    DECISIONS item 3, no reply time, no price, no call length)"""
+    s.rep("content/site.ts", '    microcopy: "Your first call is with the engineer who writes the code.",\n', '    microcopy: "We reply within one working day.",\n')
+
+
+def b_g(s):
+    """(g) feature work named on the hero's proof line (2026-09-28: the line
+    names only work that is ours — Bazzile is features inside Bazzile
+    Technology SA's app, never "built by Bolt Fusion")"""
+    s.rep("content/site.ts", '      projects: ["warmchats", "balanzify", "go-style-business"],\n', '      projects: ["warmchats", "bazzile", "go-style-business"],\n')
+
+
+def b_h(s):
+    """(h) a client story that is not a set: pointed at a client with one
+    published product project (2026-09-29: a story needs at least two)"""
+    s.rep("content/projects.ts", '        id: "ttouch-clothing",\n        client: "TTouch Clothing",\n', '        id: "ttouch-clothing",\n        client: "Balanzify Inc.",\n')
+
+
+def b_i(s):
+    """(i) a client story whose title's count is not its member count — "Five
+    systems" over four cards (2026-09-29: the count is the data's)"""
+    s.rep("content/projects.ts", '        title: "Four systems for TTouch Clothing",\n', '        title: "Five systems for TTouch Clothing",\n')
+
+
+def b_k(s):
+    """(k) a capability's linked work scoped to a tier it does not name as
+    later: POS's workScope set to its first tier, "Point of sale" (2026-09-29:
+    the linked work names a LATER tier's scope, or none)"""
+    s.rep("content/engineering.ts", '      workScope: "Online and wholesale commerce",\n', '      workScope: "Point of sale",\n')
+
+
+def b_j(s):
+    """(j) a client story that says its set is live while a member is not:
+    Delivery Lens BD set to in production (2026-09-29)"""
+    s.rep("content/projects.ts", '      client: "TTouch Clothing",\n      status: "live",\n      stack: ["Next.js", "Node.js"],\n', '      client: "TTouch Clothing",\n      status: "in-production",\n      stack: ["Next.js", "Node.js"],\n')
+
+
+def b_l(s):
+    """(l) a feature screen for a feature its role does not name: Bazzile's
+    swipe screen tied to "listing detail pages" (2026-09-30: only the screens
+    where our features live, each one of the role's features)"""
+    s.rep("content/projects.ts", '          feature: "swipe-based browsing",\n          caption: "Swipe-based browsing",\n', '          feature: "listing detail pages",\n          caption: "Listing detail pages",\n')
+
+
+def b_m(s):
+    """(m) a feature screen with no caption: the map screen's left out
+    (2026-09-30: each screen is captioned with its feature)"""
+    s.rep("content/projects.ts", '          caption: "Google Maps location matching",\n', "")
+
+
+def b_n(s):
+    """(n) feature screens on a card whose role names no features: GodConnect
+    Online, "Feature work in the React Native app" (2026-09-30: a screen is
+    tied to one of the features the role names, and this one names none)"""
+    s.rep("content/projects.ts", '      role: "Feature work in the React Native app",\n',
+          '      role: "Feature work in the React Native app",\n      featureScreens: [{ feature: "community groups", caption: "Community groups", image: { src: "/projects/bazzile-map-matching.webp", alt: "A screen of the GodConnect Online app for this case", width: 880, height: 1760 } }],\n')
+
+
+def b_o(s):
+    """(o) a generic screenshot on a feature-work card: Bazzile given an
+    `image` (2026-09-30: the screens where our features live, never a view of
+    the whole app)"""
+    s.rep("content/projects.ts", "      publicStat: {\n",
+          '      image: { src: "/projects/bazzile-swipe-browsing.webp", alt: "The Bazzile app, as a generic screenshot for this case", width: 880, height: 1760 },\n      publicStat: {\n')
+
+
+def b_p(s):
+    """(p) Bazzile's public figure linked to its App Store listing while it
+    says Google Play (2026-09-30: read off one of its own listings, and it
+    says which)"""
+    s.rep("content/projects.ts", '        href: "https://play.google.com/store/apps/details?id=com.bazzile.app",\n        source:',
+          '        href: "https://apps.apple.com/fr/app/bazzile/id1622224603",\n        source:')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
     ["c", "an exemption with an empty reason", "content/figure-labels.ts", b_c, [r"exemption's reason"]],
     ["d", "a capability whose evidence tier is not proven, core, capable or lab", "content/engineering.ts", b_d, [r"engineering\.ts failed validation", r"expected one of"]],
     ["e", "a named team roster put back", "content/site.ts", b_e, [r"[Uu]nrecognized key.*roster"]],
+    # new for the 2026-09-28 redesign, one per new build-time rule
+    ["f", "the hero's first-call line turned into a new promise", "content/site.ts", b_f, [r"is not approved copy"]],
+    ["g", "feature work (Bazzile) named on the hero's proof line", "content/site.ts", b_g, [r"hero\.proof: .{1,2}bazzile.{1,2} is feature work in another company's app"]],
+    # new for the TTouch Clothing projects (2026-09-29), one per new build-time rule
+    ["h", "a client story with one member (Balanzify Inc.)", "content/projects.ts", b_h, [r"a client story is a set — it needs at least two published product projects for .{1,2}Balanzify Inc\..{1,2}, and has 1"]],
+    ["i", "a client story whose title says five over four members", "content/projects.ts", b_i, [r"its title says .{1,2}five.{1,2}, and .{1,2}TTouch Clothing.{1,2} has four published product projects"]],
+    ["j", "a client story that says it is live while a member is in production", "content/projects.ts", b_j, [r"its intro says the set is live, and Delivery Lens BD is not"]],
+    # new at fix pass B (2026-09-29), one per new build-time rule
+    ["k", "POS's linked work scoped to its first tier (point of sale), which it does not evidence", "content/engineering.ts", b_k, [r"engineering\.ts failed validation", r"POS & commerce.{1,2}: workScope .{1,2}Point of sale.{1,2} is not the scope of one of its later tiers"]],
+    # new for Bazzile's feature screens and its public install count (2026-09-30), one per new build-time rule
+    ["l", "a feature screen for a feature Bazzile's role does not name (listing detail pages)", "content/projects.ts", b_l, [r"projects\.ts failed validation", r"the screen /projects/bazzile-swipe-browsing\.webp is for .{1,2}listing detail pages.{1,2}, which is not one of the features its role names"]],
+    ["m", "a feature screen with no caption (Bazzile's map)", "content/projects.ts", b_m, [r"projects\.ts failed validation", r"the screen /projects/bazzile-map-matching\.webp is captioned .{1,4}, which does not name its feature"]],
+    ["n", "feature screens on GodConnect Online, whose role names no features", "content/projects.ts", b_n, [r"projects\.ts failed validation", r"GodConnect Online.{1,2} carries feature screens, and its role names no features"]],
+    ["o", "a generic screenshot on a feature-work card (Bazzile)", "content/projects.ts", b_o, [r"projects\.ts failed validation", r"Bazzile.{1,2} is feature work inside Bazzile Technology SA's app: a generic screenshot of the app claims all of it"]],
+    ["p", "Bazzile's Google Play figure linked to its App Store listing", "content/projects.ts", b_p, [r"projects\.ts failed validation", r"its public figure .{1,2}100K\+ downloads on Google Play.{1,2} links to https://apps\.apple\.com/fr/app/bazzile/id1622224603, its .{1,2}App Store.{1,2} listing, which the figure does not name"]],
 ]
 
 
@@ -462,11 +1045,15 @@ def only():
     return ",".join(str(i) for i in ids)
 
 
+def probe_only():
+    return ",".join(sorted({c[2].split(":", 1)[1] for c in PROBE_CASES}))
+
+
 def apply(root, out):
     global ROOT
     ROOT = root
     status = {}
-    for key, name, check, expect, patch, opt in CASES:
+    for key, name, check, expect, patch, opt in CASES + PROBE_CASES:
         if patch is None:
             continue
         st = Stage()
@@ -481,7 +1068,7 @@ def apply(root, out):
         st.flush()
         status[key] = ("applied", ", ".join(sorted(st.files)))
     rows = []
-    for key, name, check, expect, patch, opt in CASES:
+    for key, name, check, expect, patch, opt in CASES + PROBE_CASES:
         src = key if patch else opt["from"]
         s, detail = status[src]
         rows.append({"key": key, "name": name, "check": check, "expect": expect, "status": s, "detail": detail, "reanchor": opt.get("reanchor"), "needs": opt.get("needs")})
@@ -498,6 +1085,8 @@ def apply(root, out):
 if __name__ == "__main__":
     if sys.argv[1:2] == ["only"]:
         print(only())
+    elif sys.argv[1:2] == ["probe-only"]:
+        print(probe_only())
     elif sys.argv[1:2] == ["apply"]:
         apply(sys.argv[2], sys.argv[3])
     elif sys.argv[1:2] == ["bad-list"]:
