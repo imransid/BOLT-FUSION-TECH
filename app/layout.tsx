@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow, Jost } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./site.css";
 
 import { CANONICAL_DESCRIPTION } from "@/content/canonical";
@@ -13,19 +13,17 @@ import { getSiteUrl } from "@/lib/site-url";
    stylesheet, app/techwix.css, were retired the same day, once the inner pages
    had moved.
 
-   The faces: Barlow 500 / 600 / 700 and Jost 400 / 500 / 600 — no new family
-   (SPEC §3; verify-site checks 2 and 31). All normal, no italic. A weight
-   outside these would be synthesised (check 3), so neither stylesheet uses one.
+   The face: Archivo, one variable file for the whole site (the studio
+   redesign, 2026-10-24) — its weight axis (400–700 in use) and its width
+   axis, which carries the design: the headings are set expanded
+   (`font-stretch` in app/site.css), the text at its normal width. One family
+   for the shell, the headings and the text, so one latin file to preload.
+   All normal, no italic. A weight outside the axis would be synthesised
+   (check 3); font-synthesis is off in the base block.
 
-   Preloaded, both: every page paints each face — the header's wordmark sets
-   "Bolt Fusion" in Barlow 700 and "Tech" in Barlow 500, every button and the
-   footer's Schedule a Call are Barlow 600, the text is Jost. That is four latin
-   files: three Barlow statics and one Jost variable file for all three weights.
-   A preload lands on every page this layout wraps, so a face that stops being
-   painted on any of them gets `preload: false`, not a place in this list
-   (verify-site check 25 reads every page's own). */
-const barlow = Barlow({ variable: "--font-barlow", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap", preload: true });
-const jost = Jost({ variable: "--font-jost", subsets: ["latin"], weight: ["400", "500", "600"], display: "swap", preload: true });
+   Preloaded: every page paints it — the wordmark, every button and all the
+   text (verify-site check 25 reads every page's own preloads). */
+const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"], axes: ["wdth"], display: "swap", preload: true });
 
 /* The canonical description, alone: a meta description is 50–160 characters
    (verify-site check 26) and the canonical line is 117 of them, so nothing
@@ -97,7 +95,7 @@ export default function RootLayout({
          stylesheets declare the tokens that read them. On <body>, every token
          would resolve against an undefined variable and the whole site would
          render in the system font (verify-site checks 1 and 2). */
-      className={`${barlow.variable} ${jost.variable}`}
+      className={archivo.variable}
       /* app/site.css scrolls <html> smoothly (under no-preference motion), and
          Next 16 turns that off for a route change ONLY where this attribute
          says so. Without it a client-side navigation — the header's logo, Back

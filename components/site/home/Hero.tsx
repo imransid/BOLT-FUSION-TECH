@@ -55,8 +55,10 @@ function proofItems(ids: readonly string[]) {
  * The hero (SPEC §5; CLAUDE.md, "The hero field"). Everything it says is server
  * HTML: the one h1, the support line, the body and both calls to action.
  *
- * The field sits BESIDE the text at >=1025px — the right column, a 560px-tall
- * frame on the ground colour — and above the text below that; never behind it.
+ * The headline runs the whole width at >=1025px (the studio redesign,
+ * 2026-10-24), and under it the field sits BESIDE the text — the right
+ * column, a 560px-tall frame on the ground colour; below 1025px the field is
+ * a band above the headline. Never behind it.
  * The faint engineering grid and the one radial light are behind the field
  * only (.bf-hero__stage), never behind the words.
  *
@@ -78,10 +80,13 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
   return (
     <section id="hero" className="bf-hero" aria-labelledby="hero-title">
       <div className="bf-wrap bf-hero__inner">
+        {/* The h1 is the grid's own item (2026-10-24): from 1025px it runs the
+            whole width on one line, above the text and the field side by
+            side; below that it sits between the field's band and the text. */}
+        <h1 id="hero-title" className="bf-hero__title">
+          <span className="bf-hero__line">{first}</span> <span className="bf-hero__line">{rest}</span>
+        </h1>
         <div className="bf-hero__text">
-          <h1 id="hero-title" className="bf-hero__title">
-            <span className="bf-hero__line">{first}</span> <span className="bf-hero__line">{rest}</span>
-          </h1>
           <p className="bf-hero__support">{hero.support}</p>
           <p className="bf-hero__body">{hero.body}</p>
           <div className="bf-actions">

@@ -86,6 +86,11 @@ export default function Footer({ footer }: { footer: SiteContent["footer"] }) {
           {footer.backToTopLabel}
         </a>
       </div>
+      {/* The page's signature (2026-10-24): the name as wide as the page, in
+          the ground's raised tone. Decoration — the lockup above is the name. */}
+      <p className="bf-footer__giant" aria-hidden="true">
+        Bolt Fusion Tech
+      </p>
     </footer>
   );
 }

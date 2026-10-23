@@ -15,39 +15,79 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Ground, surfaces and lines: near-black graphite with a slight blue bias. */
-  --bf-ground: #07090d;
-  --bf-surface: #0d1016;
-  --bf-raised: #141922;
-  --bf-line: #232a36;          /* hairlines between sections and cells: decoration, not a boundary */
-  --bf-line-strong: #2e3747;   /* a rail, a chip's edge */
-  --bf-steel: #6b7385;         /* a boundary that must read (inputs, diagram strokes): >= 3:1 on every ground */
+  /* ── Two grounds (the studio redesign, 2026-10-24) ──────────────────────
+     Paper for people, screens for machines. Everything a person reads — the
+     stories, the terms, the ledger's words, the answers — sits on a warm
+     paper; the things a machine draws — the hero's scene, the diagrams, the
+     measured figures, code — sit on graphite "screens" inset in it, and the
+     shell (header, footer) frames the page in the same graphite. The raw
+     values of each ground are below; the semantic tokens after them
+     (`--bf-ground`, `--bf-text` …) are the CURRENT ground's, paper by
+     default, and `.bf-ink` (and the pieces listed with it, below) re-point
+     them at the graphite, so a component styled with the tokens reads on
+     either ground with no rule of its own. */
 
-  /* Text: cool neutrals. */
-  --bf-text: #eceff4;          /* headings and primary text */
-  --bf-soft: #c3c9d4;          /* body text */
-  --bf-muted: #9aa3b4;         /* labels and meta */
+  /* Graphite: the screens. The hero scene's own ground (#07090d) is the
+     poster's edge colour, so the field shows no box. */
+  --ink-ground: #07090d;
+  --ink-surface: #0e1118;
+  --ink-raised: #161a23;
+  --ink-line: #232a36;
+  --ink-line-strong: #2f3747;
+  --ink-steel: #6b7385;
+  --ink-text: #f3f2ef;
+  --ink-soft: #c6cad3;
+  --ink-muted: #9aa2b2;
 
-  /* One brand blue for actions: the link colour on dark, and a deeper fill for
-     the primary button, which carries white at 5.35:1. */
-  --bf-brand: #4c86ff;
-  --bf-brand-hi: #7aa7ff;
-  --bf-brand-fill: #2a62e0;
-  --bf-brand-fill-hover: #2256c9;
+  /* Paper: warm, never cream-yellow; its steel still reads at 3:1. */
+  --paper-ground: #f3f1ec;
+  --paper-surface: #eae7e0;
+  --paper-raised: #fbfaf7;
+  --paper-line: #dcd8ce;
+  --paper-line-strong: #c9c3b6;
+  --paper-steel: #837d70;
+  --paper-text: #121316;
+  --paper-soft: #3a3c42;
+  --paper-muted: #5c5e65;
+
+  /* Cobalt, the one accent: the fill of every primary action, the links on
+     paper, the pilot's plate. On graphite its links take a lighter tint. */
+  --cobalt: #2b44ff;
+  --cobalt-hover: #1d33db;
+  --cobalt-deep: #1a2ac4;
+  --cobalt-tint: #8e9cff;
+  --cobalt-tint-hi: #b6bfff;
+
+  /* The current ground — paper unless a graphite piece says otherwise. */
+  --bf-ground: var(--paper-ground);
+  --bf-surface: var(--paper-surface);
+  --bf-raised: var(--paper-raised);
+  --bf-line: var(--paper-line);          /* hairlines: decoration, not a boundary */
+  --bf-line-strong: var(--paper-line-strong);
+  --bf-steel: var(--paper-steel);        /* a boundary that must read: >= 3:1 */
+  --bf-text: var(--paper-text);
+  --bf-soft: var(--paper-soft);
+  --bf-muted: var(--paper-muted);
+
+  --bf-brand: var(--cobalt);             /* links */
+  --bf-brand-hi: var(--cobalt-deep);
+  --bf-brand-fill: var(--cobalt);        /* the primary button: white at 6.2:1 */
+  --bf-brand-fill-hover: var(--cobalt-hover);
 
   /* One cyan, ONLY for data-flow lines in the diagrams, the system map and the
-     3D scene — never text, never a chip. */
+     3D scene — never text, never a chip. It only ever sits on graphite. */
   --bf-flow: #2ee6d6;
 
-  /* The two semantic colours of a figure's label, used by nothing else. */
-  --bf-shipped: #34d399;
-  --bf-target: #fbbf24;
+  /* The two semantic colours of a figure's label, used by nothing else —
+     deeper on paper, so the words in the chip keep 4.5:1. */
+  --bf-shipped: #0b7a4c;
+  --bf-target: #9a5800;
 
-  --bf-focus: #8ab4ff;
+  --bf-focus: var(--cobalt);
 
-  /* The one light surface on the site: the third-party booking calendar's
-     panel (/contact). Its text and its focus ring are measured against white
-     by scripts/contrast-site.mjs. */
+  /* The booking calendar's panel (/contact): Calendly paints its own white
+     interface, so its card stays white on either ground. Its text and its
+     focus ring are measured against white by scripts/contrast-site.mjs. */
   --bf-paper: #ffffff;
   --bf-paper-line: #d9dee8;
   --bf-paper-muted: #4a5266;
@@ -56,13 +96,45 @@
   --brand: var(--bf-brand);
   --focus: var(--bf-focus);
 
-  --bf-font-heading: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
-  --bf-font-body: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  /* One family, two widths: headings expanded, text at its normal width. */
+  --bf-font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --bf-font-body: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --bf-display: 116%;                    /* font-stretch of the headings */
+  --bf-label: 104%;                      /* of buttons, labels and the nav */
 
   /* Layout: content capped at 1240px; a side gutter of at least 16px. */
   --bf-max: 1240px;
   --bf-gutter: clamp(16px, 4vw, 48px);
   --bf-header-h: 72px;
+  --bf-radius: 14px;                     /* a screen, a plate, a card */
+}
+
+/* The graphite pieces: they re-point the current-ground tokens, and every
+   descendant styled with them follows. */
+.bf-ink,
+.bf-header,
+.bf-drawer,
+.bf-hero,
+.bf-pagehead,
+.bf-final,
+.bf-footer {
+  --bf-ground: var(--ink-ground);
+  --bf-surface: var(--ink-surface);
+  --bf-raised: var(--ink-raised);
+  --bf-line: var(--ink-line);
+  --bf-line-strong: var(--ink-line-strong);
+  --bf-steel: var(--ink-steel);
+  --bf-text: var(--ink-text);
+  --bf-soft: var(--ink-soft);
+  --bf-muted: var(--ink-muted);
+  --bf-brand: var(--cobalt-tint);
+  --bf-brand-hi: var(--cobalt-tint-hi);
+  --bf-shipped: #34d399;
+  --bf-target: #fbbf24;
+  --bf-focus: #8ab4ff;
+  --brand: var(--cobalt-tint);
+  --focus: var(--bf-focus);
+  color-scheme: dark;
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────── *
@@ -76,7 +148,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   background-color: var(--bf-ground);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -256,6 +328,7 @@ html {
   background-color: var(--bf-brand-fill);
   color: #ffffff;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 600;
   transform: translateY(-200%);
@@ -298,6 +371,7 @@ html {
   gap: 10px;
   margin-bottom: 18px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
@@ -325,8 +399,9 @@ html {
 
 .bf-h2 {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;
   color: var(--bf-text);
@@ -345,6 +420,7 @@ html {
   margin-top: 36px;
   margin-bottom: 14px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 18px;
   font-weight: 600;
   line-height: 1.35;
@@ -379,6 +455,7 @@ html {
   border: 1px solid transparent;
   border-radius: 2px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
@@ -498,6 +575,7 @@ html {
 
 .bf-wordmark {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: calc(var(--bf-mark) * 0.62);
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -701,6 +779,7 @@ html {
   padding: 14px 0;
   border-bottom: 1px solid var(--bf-line);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 20px;
   font-weight: 600;
   color: var(--bf-text);
@@ -734,21 +813,44 @@ html {
    above the text below that. The grid and the one radial light sit behind
    the field only. */
 .bf-hero {
-  padding-block: 24px 72px;
+  padding-block: 24px 64px;
   overflow-x: clip;
+  background-color: var(--bf-ground);
+  color: var(--bf-soft);
+}
+
+/* The hero is the page's first screen, a graphite one: its foot is rounded,
+   so the paper below reads as the page and the hero as a screen set into it
+   (the studio redesign, 2026-10-24). The header, also graphite, runs into it
+   with no seam. */
+.bf-hero {
+  border-radius: 0 0 28px 28px;
 }
 
 @media (min-width: 1025px) {
-  .bf-hero { padding-block: 40px 72px; }
+  .bf-hero {
+    padding-block: 48px 72px;
+    border-radius: 0 0 40px 40px;
+  }
 }
 
+/* Below 1025px: the field's band, the headline, the text — one column. */
 .bf-hero__inner {
   display: grid;
-  gap: 32px;
+  grid-template-areas:
+    "media"
+    "title"
+    "text";
+  row-gap: 20px;
+}
+
+.bf-hero__title {
+  grid-area: title;
+  min-width: 0;
 }
 
 .bf-hero__media {
-  order: -1;
+  grid-area: media;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -756,52 +858,59 @@ html {
 }
 
 .bf-hero__text {
+  grid-area: text;
   min-width: 0;
 }
 
-/* The field is the poster's own 660 x 560 from 1280px up — the width `sizes`
-   declares and the scene is composed for — and as close to it as the grid
-   allows below that (467px at 1025), where the poster is contained, as the
-   scene draws it (.bf-hero__poster below). The text column keeps at least
-   420px, so the headline holds its two lines and the body stays inside 68ch. */
+/* From 1025px the headline runs the whole width on one line, and under it
+   the text and the field sit side by side. The field is the poster's own
+   660 x 560 from 1280px up — the width `sizes` declares and the scene is
+   composed for — and as close to it as the grid allows below that (467px at
+   1025), where the poster is contained, as the scene draws it. The text
+   column keeps at least 420px, centred on the field's height. */
 @media (min-width: 1025px) {
   .bf-hero__inner {
     grid-template-columns: minmax(420px, 1fr) minmax(0, 660px);
-    align-items: center;
-    gap: 56px;
+    grid-template-areas:
+      "title title"
+      "text media";
+    column-gap: 56px;
+    row-gap: 36px;
+    align-items: stretch;
   }
 
-  .bf-hero__media {
-    order: 0;
+  .bf-hero__text {
+    align-self: center;
   }
 }
 
-/* The headline: two lines that never break inside ("Build" / "what's
-   next."), upper case by CSS with the sentence-case source, tight tracking.
-   It is the largest type on the page at every width, and it never gets
-   smaller as the window gets wider (2026-09-29, the design review: it was
-   72px on a tablet and 52px at 1025, and at 1440 66px against 63px chapter
-   heads). The longer line, "WHAT'S NEXT.", is 6.06 times the font size wide:
-   below 1025 the text has the whole width, so 11.5vw up to 64px (45px at
-   390, 64 from 557 to 1024); from 1025 it is 68px while the text column is
-   its 420px floor (to 1232, where the 660px field is full width) and then
-   grows with the column to 84px (75px at 1280, 84 from 1345) — 509px of a
-   524px column at 1440. */
+/* The headline: sentence case, set expanded and tight. Below 1025px it is two
+   lines that never break inside ("Build" / "what's next."), so verify-site
+   check 7 never sees an orphaned last word; from 1025 it is one line across
+   the whole width. It is the largest type on the page at every width, and it
+   never gets smaller as the window gets wider: 46px at 390, 64 from 557 to
+   1024; from 1025 it grows with the window, the line always inside the
+   content width. */
 .bf-hero__title {
   font-family: var(--bf-font-heading);
-  font-size: clamp(40px, 11.5vw, 64px);
-  font-weight: 700;
-  line-height: 0.94;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  font-stretch: var(--bf-display);
+  font-size: clamp(40px, 11.8vw, 64px);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
   color: var(--bf-text);
 }
 
-/* Sized so "what's next." fits the text column beside the field, with room
-   to spare: 412px in 420 at 1025–1232, 455px in 468 at 1280, 509px in 524
-   at 1440. */
+/* From 1025px the line is sized to the content width: "Build what's next."
+   is 8.54 times its font size wide, so a 8.8th of the width leaves it a hair
+   inside (1149px of 1184 at 1280, 933 of 943 at 1025, even with a classic
+   scrollbar counted in 100vw), capped at 144px (1230 of 1240 from 1366). */
 @media (min-width: 1025px) {
-  .bf-hero__title { font-size: clamp(68px, calc(15.4vw - 122px), 84px); }
+  .bf-hero__title {
+    font-size: clamp(88px, calc((100vw - 2 * var(--bf-gutter)) / 8.8), 144px);
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+  }
 }
 
 .bf-hero__line {
@@ -809,12 +918,17 @@ html {
   white-space: nowrap;
 }
 
+@media (min-width: 1025px) {
+  .bf-hero__line { display: inline; }
+}
+
 .bf-hero__support {
-  margin-top: 28px;
   font-family: var(--bf-font-heading);
-  font-size: 20px;
-  font-weight: 600;
+  font-stretch: var(--bf-display);
+  font-size: 19px;
+  font-weight: 500;
   line-height: 1.3;
+  letter-spacing: -0.01em;
   color: var(--bf-text);
 }
 
@@ -824,7 +938,7 @@ html {
 
 .bf-hero__body {
   margin-top: 16px;
-  max-width: 56ch;
+  max-width: 52ch;
   font-size: 18px;
   line-height: 1.6;
   color: var(--bf-soft);
@@ -965,6 +1079,7 @@ html[data-motion="paused"] .bf-hero__poster {
   border-radius: 2px;
   background: none;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -1001,6 +1116,7 @@ html[data-motion="paused"] .bf-hero__poster {
   border: 1px solid var(--bf-line-strong);
   background-color: var(--bf-raised);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
@@ -1123,6 +1239,7 @@ html[data-motion="paused"] .bf-hero__poster {
   gap: 10px;
   margin-top: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -1236,6 +1353,7 @@ html[data-motion="paused"] .bf-hero__poster {
 
 .bf-evidence__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -1279,12 +1397,14 @@ html[data-motion="paused"] .bf-hero__poster {
 .bf-dg .dg-label {
   fill: var(--bf-text);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 600;
 }
 
 .bf-dg .dg-small {
   fill: var(--bf-muted);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 500;
 }
 
@@ -1446,6 +1566,7 @@ html[data-motion="paused"] .bf-hero__poster {
 .bf-map__label {
   fill: var(--bf-text);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
 }
@@ -1474,6 +1595,7 @@ html[data-motion="paused"] .bf-hero__poster {
 .bf-map__readout-title {
   margin-bottom: 4px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   color: var(--bf-text);
@@ -1532,6 +1654,7 @@ html[data-motion="paused"] .bf-hero__poster {
   border: 0;
   background: none;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 16px;
   font-weight: 600;
   color: var(--bf-text);
@@ -1575,6 +1698,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 1px 7px;
   border: 1px dashed var(--bf-steel);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.5;
@@ -1640,6 +1764,7 @@ button.bf-map__btn[aria-pressed="true"] {
   display: block;
   margin-bottom: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -1649,6 +1774,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-stage__title {
   margin-bottom: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -1682,6 +1808,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-strata__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 18px;
   font-weight: 600;
   color: var(--bf-text);
@@ -1698,6 +1825,7 @@ button.bf-map__btn[aria-pressed="true"] {
   border: 1px solid var(--bf-line-strong);
   background-color: var(--bf-surface);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -1746,6 +1874,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-story__stack {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -1754,6 +1883,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-story__title {
   margin-top: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.2;
@@ -1793,6 +1923,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-story__step dt {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;
@@ -1830,6 +1961,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-lane__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-weight: 600;
   color: var(--bf-text);
 }
@@ -1848,6 +1980,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-lane__cost {
   margin-top: 6px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -1867,6 +2000,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-proof__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   color: var(--bf-text);
@@ -1906,6 +2040,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-proof__figure {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 40px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -2021,6 +2156,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: baseline;
   gap: 8px 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 16px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -2063,6 +2199,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 22px 0;
   list-style: none;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 18px;
   font-weight: 600;
   line-height: 1.35;
@@ -2112,8 +2249,9 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-final__title {
   max-width: 14ch;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: clamp(40px, 7vw, 72px);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--bf-text);
@@ -2180,6 +2318,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-footer__label {
   margin-bottom: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -2254,8 +2393,9 @@ button.bf-map__btn[aria-pressed="true"] {
   max-width: 16ch;
   margin-top: 16px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: clamp(40px, 6vw, 72px);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.02;
   letter-spacing: -0.02em;
   color: var(--bf-text);
@@ -2267,6 +2407,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: center;
   gap: 10px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 500;
   color: var(--bf-soft);
@@ -2297,6 +2438,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-calendar__caption {
   margin-bottom: 14px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-paper-muted);
@@ -2390,6 +2532,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-field label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 600;
   color: var(--bf-text);
@@ -2482,6 +2625,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: center;
   min-height: 44px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -2497,6 +2641,7 @@ button.bf-map__btn[aria-pressed="true"] {
   gap: 4px 20px;
   margin-top: 18px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.5;
@@ -2601,6 +2746,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-toc__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.3;
@@ -2674,6 +2820,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-capfigs__figure {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 28px;
   font-weight: 500;
   line-height: 1;
@@ -2753,6 +2900,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-ind__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -2766,6 +2914,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-ind__label {
   margin-bottom: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -2788,6 +2937,7 @@ button.bf-map__btn[aria-pressed="true"] {
   gap: 8px;
   min-height: 32px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 500;
   color: var(--bf-soft);
@@ -2853,6 +3003,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-phase__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -2869,6 +3020,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-phase__label {
   margin: 18px 0 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -2885,6 +3037,7 @@ button.bf-map__btn[aria-pressed="true"] {
   border: 1px solid var(--bf-line-strong);
   background-color: var(--bf-surface);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.3;
@@ -2916,6 +3069,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-principle__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -2934,6 +3088,7 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: auto;
   padding-top: 20px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -3042,6 +3197,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 28px;
   background-color: var(--bf-ground);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 24px;
   font-weight: 600;
   line-height: 1.2;
@@ -3087,6 +3243,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-term dt {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 18px;
   font-weight: 600;
   line-height: 1.3;
@@ -3136,6 +3293,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-table thead th {
   background-color: var(--bf-surface);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -3144,6 +3302,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-table tbody th {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.4;
@@ -3159,6 +3318,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-table td:last-child {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--bf-text);
@@ -3197,8 +3357,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-pilot__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.015em;
   color: var(--bf-text);
@@ -3237,6 +3398,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-pilot__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.6;
@@ -3286,6 +3448,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-refuse__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 20px;
   font-weight: 600;
   line-height: 1.3;
@@ -3328,6 +3491,7 @@ button.bf-map__btn[aria-pressed="true"] {
   flex-wrap: wrap;
   gap: 2px 16px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
@@ -3344,8 +3508,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-articles__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.015em;
   color: var(--bf-text);
@@ -3383,6 +3548,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 3px 10px;
   border: 1px solid var(--bf-line-strong);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -3433,6 +3599,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-teaser__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -3485,6 +3652,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-article__label {
   margin-bottom: 10px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -3511,8 +3679,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-prose h2 {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.015em;
   color: var(--bf-text);
@@ -3599,6 +3768,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 8px 18px;
   border-bottom: 1px solid var(--bf-line);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -3617,6 +3787,7 @@ button.bf-map__btn[aria-pressed="true"] {
   margin: 0;
   padding: 18px 20px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14.5px;
   font-weight: 500;
   line-height: 1.7;
@@ -3639,6 +3810,7 @@ button.bf-map__btn[aria-pressed="true"] {
   max-width: 68ch;
   margin-top: 10px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.55;
@@ -3701,6 +3873,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-flowsteps__num {
   display: block;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.5;
@@ -3710,6 +3883,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-flowsteps__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.35;
@@ -3792,6 +3966,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-work__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 28px;
   font-weight: 600;
   line-height: 1.15;
@@ -3826,6 +4001,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-attr {
   margin-bottom: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.45;
@@ -3849,6 +4025,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-facts dt {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.7;
@@ -3868,6 +4045,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: center;
   gap: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-text);
@@ -3910,6 +4088,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-metric__value {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 26px;
   font-weight: 500;
   line-height: 1.1;
@@ -3935,6 +4114,7 @@ button.bf-map__btn[aria-pressed="true"] {
   border: 1px solid var(--bf-line-strong);
   background-color: var(--bf-surface);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
@@ -4032,6 +4212,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-project__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -4110,6 +4291,7 @@ button.bf-map__btn[aria-pressed="true"] {
   justify-content: space-between;
   gap: 16px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -4124,6 +4306,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-shot__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.35;
@@ -4227,6 +4410,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-kpi__value {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 40px;
   font-weight: 500;
   line-height: 1;
@@ -4243,6 +4427,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-kpi__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.35;
@@ -4293,6 +4478,7 @@ button.bf-map__btn[aria-pressed="true"] {
   padding: 0 6px;
   border: 1px solid var(--bf-brand);
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -4307,6 +4493,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-lanecard__tag {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-brand);
@@ -4315,6 +4502,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-lanecard__title {
   margin-top: 20px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -4332,6 +4520,7 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: auto;
   padding-top: 20px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-text);
@@ -4417,6 +4606,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-card__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 20px;
   font-weight: 600;
   line-height: 1.3;
@@ -4426,6 +4616,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-card__tagline {
   margin-top: -6px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -4433,6 +4624,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-card__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -4499,8 +4691,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-ctaband__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: clamp(32px, 5vw, 56px);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -4551,6 +4744,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: center;
   gap: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 18px;
   font-weight: 700;
   color: var(--bf-text);
@@ -4666,8 +4860,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-contact__h2 {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--bf-text);
@@ -4685,6 +4880,7 @@ button.bf-map__btn[aria-pressed="true"] {
   margin-top: 36px;
   margin-bottom: 4px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
@@ -4716,6 +4912,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-contact__term dt {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.55;
@@ -4886,8 +5083,22 @@ button.bf-map__btn[aria-pressed="true"] {
   border-top: 1px solid var(--bf-line);
 }
 
+/* From 1025px the proof line sits at the text column's foot, level with the
+   field's (the column runs the field's height). */
+@media (min-width: 1025px) {
+  .bf-hero__proof {
+    margin-top: 40px;
+    padding-top: 18px;
+  }
+}
+
+@media (max-width: 559px) {
+  .bf-hero__proof-name { font-stretch: 100%; }
+}
+
 .bf-hero__proof-label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
@@ -4919,6 +5130,7 @@ button.bf-map__btn[aria-pressed="true"] {
   gap: 5px;
   min-height: 44px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.2;
@@ -4979,8 +5191,7 @@ button.bf-map__btn[aria-pressed="true"] {
    browser without `svh`. */
 @media (max-width: 1024px) {
   #hero.bf-hero { padding-top: 16px; }
-  .bf-hero__inner { gap: 24px; }
-  .bf-hero__support { margin-top: 20px; }
+  .bf-hero__inner { gap: 20px; }
   .bf-hero .bf-actions { margin-top: 28px; }
   .bf-hero__micro { margin-top: 12px; }
   .bf-hero__proof { margin-top: 20px; padding-top: 12px; }
@@ -4992,8 +5203,6 @@ button.bf-map__btn[aria-pressed="true"] {
     height: clamp(160px, 22vh, 188px);
     height: clamp(160px, max(22vh, 100svh - 658px), 260px);
   }
-
-  .bf-hero__support { margin-top: 16px; }
 
   .bf-hero__body {
     font-size: 16px;
@@ -5167,6 +5376,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-lanesband__of {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -5175,6 +5385,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-lanesband__title {
   margin-top: 4px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
@@ -5270,6 +5481,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: baseline;
   gap: 4px 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   color: var(--bf-text);
 }
 
@@ -5337,6 +5549,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-hww__term dt {
   margin-bottom: 6px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.3;
@@ -5375,6 +5588,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-hww__h3 {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 20px;
   font-weight: 600;
   line-height: 1.3;
@@ -5399,6 +5613,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-hww__table thead th {
   padding-block: 10px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -5406,6 +5621,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-hww__table tbody th {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 600;
   color: var(--bf-text);
 }
@@ -5421,6 +5637,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-hww__table td:last-child {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--bf-text);
@@ -5475,8 +5692,9 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-hww__pilot-title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--bf-text);
@@ -5601,6 +5819,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-hww__station-label {
   display: block;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
@@ -5682,6 +5901,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-cap6__num {
   padding-top: 5px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -5760,6 +5980,7 @@ button.bf-map__btn[aria-pressed="true"] {
   align-items: center;
   gap: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.2;
@@ -5822,6 +6043,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-cap6__label {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -5977,6 +6199,7 @@ button.bf-map__btn[aria-pressed="true"] {
 
 .bf-inds__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 19px;
   font-weight: 600;
   line-height: 1.3;
@@ -5986,6 +6209,7 @@ button.bf-map__btn[aria-pressed="true"] {
 .bf-inds__label {
   margin-top: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 13px;
   font-weight: 500;
   color: var(--bf-muted);
@@ -6272,8 +6496,9 @@ rect.bf-trace__stop {
 
 .bf-clientband__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 28px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.015em;
   color: var(--bf-text);
@@ -6360,6 +6585,7 @@ rect.bf-trace__stop {
 .bf-clientband__name {
   margin-top: 8px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
@@ -6464,6 +6690,7 @@ rect.bf-trace__stop {
   gap: 8px;
   margin-top: 12px;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.35;
@@ -6496,6 +6723,7 @@ rect.bf-trace__stop {
   padding-block: 8px 6px;
   text-wrap: balance;
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 19px;
   font-weight: 600;
   line-height: 1.3;
@@ -6666,8 +6894,9 @@ rect.bf-trace__stop {
 
 .bf-feattile__title {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--bf-text);
@@ -6736,6 +6965,7 @@ rect.bf-trace__stop {
 
 .bf-feattile__name {
   font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.2;
@@ -6763,4 +6993,504 @@ rect.bf-trace__stop {
   align-items: center;
   gap: 4px 22px;
   margin-top: 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE STUDIO REDESIGN (2026-10-24)
+
+   The owner: the site did not look creative or made by people. It read as
+   one dark template — every section the same graphite, the same eyebrow, the
+   same grey box. This layer is the composition that answers it, over the
+   tokens at the top of the file (paper for people, screens for machines):
+
+   - the paper is the page; graphite is kept for screens — the hero, the
+     diagrams, the system's lanes and the measured figures, code — each a
+     rounded plate set into the paper, and the shell that frames the page;
+   - Archivo, set expanded and tight for every heading, at sizes that give
+     the page an editorial scale: the h1 one line across the hero, chapter
+     heads up to 80px, the figures large on their screen;
+   - one cobalt, for every primary action and for the pilot's plate — the
+     one offer on the page gets the one coloured surface;
+   - soft geometry: pill buttons, 14–24px radii on plates and frames.
+
+   Every rule a check reads — the hooks, the hero field's box, the chips'
+   families, one filled Schedule a Call in view — is unchanged.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Graphite screens inside the paper ───────────────────────────────────── */
+.bf-cap__plate,
+.bf-lanesband,
+.bf-proof,
+.bf-code__box,
+.bf-map__canvas {
+  --bf-ground: var(--ink-ground);
+  --bf-surface: var(--ink-surface);
+  --bf-raised: var(--ink-raised);
+  --bf-line: var(--ink-line);
+  --bf-line-strong: var(--ink-line-strong);
+  --bf-steel: var(--ink-steel);
+  --bf-text: var(--ink-text);
+  --bf-soft: var(--ink-soft);
+  --bf-muted: var(--ink-muted);
+  --bf-brand: var(--cobalt-tint);
+  --bf-brand-hi: var(--cobalt-tint-hi);
+  --bf-shipped: #34d399;
+  --bf-target: #fbbf24;
+  --bf-focus: #8ab4ff;
+  color-scheme: dark;
+}
+
+.bf-final,
+.bf-pagehead {
+  background-color: var(--bf-ground);
+  color: var(--bf-soft);
+}
+
+/* ── Buttons: pills ──────────────────────────────────────────────────────── */
+.bf-btn,
+.bf-skip,
+.bf-header__burger,
+.bf-drawer__close,
+.bf-motion-toggle {
+  border-radius: 999px;
+}
+
+.bf-btn--md {
+  min-height: 52px;
+  padding: 0 26px;
+}
+
+.bf-btn--sm {
+  padding: 0 18px;
+}
+
+.bf-btn--quiet {
+  padding: 0;
+}
+
+.bf-btn--primary {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.18) inset, 0 8px 24px -12px rgba(43, 68, 255, 0.7);
+}
+
+.bf-header__cta[data-quiet] {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bf-btn {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+
+  .bf-btn--primary:hover,
+  .bf-btn--ghost:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ── The eyebrow: a cobalt dot before a plain label ──────────────────────── */
+.bf-eyebrow {
+  gap: 10px;
+  font-size: 14px;
+  color: var(--bf-soft);
+}
+
+.bf-eyebrow::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* ── Headings: an editorial scale ────────────────────────────────────────── *
+   The hierarchy keeps its rule: the h1 is the largest type at every width,
+   and a chapter head is at most 0.72 of it — 32px on a phone (the h1 46),
+   44 on a tablet (64), and 5.4vw from 1025 up to 80px (55 at 1025 against an
+   h1 of 94; 78 at 1440 against 132). Every other h2 on the homepage is
+   28 / 34 / up to 48px. */
+.bf-h2,
+.bf-pagehead__title,
+.bf-final__title {
+  letter-spacing: -0.035em;
+}
+
+@media (min-width: 1025px) {
+  #hero ~ .bf-section .bf-h2 {
+    font-size: clamp(36px, 3.4vw, 48px);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+  }
+
+  #hero ~ .bf-section .bf-head--chapter .bf-h2,
+  #hero ~ .bf-final .bf-final__title {
+    font-size: clamp(48px, 5.4vw, 80px);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+}
+
+.bf-lead {
+  font-size: 18px;
+  color: var(--bf-soft);
+}
+
+@media (min-width: 1025px) {
+  .bf-head--chapter .bf-lead {
+    font-size: 20px;
+    line-height: 1.55;
+  }
+}
+
+/* ── The homepage's grounds and rhythm ───────────────────────────────────── *
+   No hairline across the page between sections: the paper changes tone
+   instead — what we engineer and the Insights teaser sit on the deeper
+   paper — and the air does the rest. */
+#hero ~ .bf-section {
+  border-top: 0;
+}
+
+@media (min-width: 1025px) {
+  #hero ~ .bf-section { padding-block: 96px; }
+  #hero ~ #how-we-work,
+  #hero ~ #what-we-engineer { padding-top: 128px; }
+}
+
+#hero ~ #what-we-engineer,
+#hero ~ #insights {
+  background-color: var(--bf-surface);
+}
+
+#hero + #recent-work {
+  padding-top: 72px;
+}
+
+@media (min-width: 1025px) {
+  #hero + #recent-work { padding-top: 104px; }
+}
+
+/* ── Frames: screenshots, plates and tiles ───────────────────────────────── */
+.bf-story__shot,
+.bf-clientband__shot,
+.bf-work__shot,
+.bf-project__shot,
+.bf-shot__frame {
+  border-radius: var(--bf-radius);
+  overflow: hidden;
+  border: 1px solid var(--bf-line);
+  box-shadow: 0 1px 2px rgba(18, 19, 22, 0.04), 0 18px 40px -28px rgba(18, 19, 22, 0.35);
+}
+
+.bf-clientband,
+.bf-feattile,
+.bf-lanesband,
+.bf-proof,
+.bf-hww__pilot,
+.bf-cap__plate,
+.bf-code__box,
+.bf-map__canvas,
+.bf-project,
+.bf-card,
+.bf-teaser__item {
+  border-radius: 24px;
+}
+
+.bf-tier,
+.bf-honesty,
+.bf-concept,
+.bf-tag {
+  border-radius: 8px;
+}
+
+/* ── The engineering stories ─────────────────────────────────────────────── */
+@media (min-width: 1025px) {
+  .bf-proofsec__head { margin-bottom: 56px; }
+  #recent-work .bf-stories { column-gap: 48px; }
+}
+
+#recent-work .bf-story__text {
+  padding-top: 28px;
+}
+
+#recent-work .bf-story__title {
+  font-size: 26px;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+@media (min-width: 768px) {
+  #recent-work .bf-story__title { font-size: 32px; }
+}
+
+#recent-work .bf-story__outcome {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--bf-text);
+}
+
+/* The client story and the feature work: plates on the paper. */
+.bf-clientband {
+  border: 0;
+}
+
+.bf-feattile {
+  background-color: var(--bf-raised);
+  border-color: var(--bf-line);
+}
+
+/* The system's lanes and the measured figures: two graphite screens. */
+.bf-lanesband {
+  padding: 32px 24px 24px;
+  border-top: 0;
+  background-color: var(--bf-ground);
+  color: var(--bf-soft);
+}
+
+@media (min-width: 768px) {
+  .bf-lanesband { padding: 40px; }
+}
+
+.bf-lanesband .bf-lane {
+  border-radius: 14px;
+}
+
+#recent-work .bf-proof,
+.bf-proof {
+  padding: 32px 24px 28px;
+  border-top: 0;
+  background-color: var(--bf-ground);
+  color: var(--bf-soft);
+}
+
+@media (min-width: 768px) {
+  #recent-work .bf-proof,
+  .bf-proof { padding: 44px 40px 36px; }
+}
+
+#recent-work .bf-proof {
+  margin-top: 24px;
+}
+
+.bf-proof__title {
+  font-size: 26px;
+  letter-spacing: -0.03em;
+}
+
+.bf-proof__list {
+  margin-top: 28px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bf-proof__item {
+  padding: 28px 24px;
+}
+
+.bf-proof__figure {
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+
+@media (min-width: 1025px) {
+  .bf-proof__figure { font-size: 56px; }
+}
+
+.bf-proof__top {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── How we work: the headcount large, the pilot on cobalt ───────────────── */
+.bf-hww__num {
+  font-family: var(--bf-font-heading);
+  font-stretch: 125%;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+}
+
+@media (min-width: 1025px) {
+  .bf-hww__count .bf-hww__num {
+    font-size: 112px;
+    line-height: 0.9;
+  }
+}
+
+/* The pilot: the one offer on the page, on the one coloured plate. Its
+   tokens are white on cobalt (6.2:1) and a pale cobalt for the rest
+   (4.8:1); its primary is white with cobalt words, its ghost a pale
+   outline — still one filled Schedule a Call in view. */
+.bf-hww__pilot {
+  --bf-text: #ffffff;
+  --bf-soft: #e1e5ff;
+  --bf-muted: #e1e5ff;
+  --bf-line: #5a6eff;
+  --bf-line-strong: #7486ff;
+  --bf-steel: #cdd3ff;
+  --bf-brand: #ffffff;
+  --bf-brand-hi: #e1e5ff;
+  --bf-focus: #ffffff;
+  border: 0;
+  background-color: var(--cobalt);
+  background-image: radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 55%);
+  color: var(--bf-soft);
+}
+
+.bf-hww__pilot .bf-btn--primary {
+  background-color: #ffffff;
+  color: var(--cobalt);
+  box-shadow: none;
+}
+
+.bf-hww__pilot .bf-btn--primary:hover {
+  background-color: #e8ebff;
+}
+
+.bf-hww__pilot .bf-hww__station::before,
+.bf-hww__pilot .bf-hww__station[data-bf-lit]::before {
+  background-color: var(--cobalt);
+  border-color: #ffffff;
+}
+
+.bf-hww__pilot .bf-hww__station[data-bf-lit]::before {
+  background-color: #ffffff;
+}
+
+.bf-hww__pilot-title {
+  letter-spacing: -0.035em;
+}
+
+@media (min-width: 768px) {
+  .bf-hww__pilot-title { font-size: 34px; }
+}
+
+/* From 1025px the plate is a billboard: the offer large across the top with
+   its calls to action at its right, the plan's three stations across the
+   foot. */
+@media (min-width: 1025px) {
+  .bf-hww__pilot {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "text cta"
+      "plan plan";
+    column-gap: 48px;
+    row-gap: 56px;
+    padding: 56px 56px 48px;
+  }
+
+  .bf-hww__pilot .bf-hww__cta {
+    align-self: end;
+    margin-top: 0;
+  }
+
+  .bf-hww__pilot-title {
+    max-width: 23ch;
+    font-size: clamp(44px, 4.2vw, 60px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  .bf-hww__pilot-body {
+    max-width: 52ch;
+    margin-top: 18px;
+    font-size: 18px;
+  }
+}
+
+.bf-hww__station::before {
+  border-radius: 50%;
+}
+
+/* ── What we engineer: the words on paper, each diagram on its screen ───── */
+.bf-cap__plate {
+  border: 0;
+  background-color: var(--bf-ground);
+}
+
+.bf-cap6__num {
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bf-brand);
+}
+
+@media (min-width: 768px) {
+  .bf-cap6__name {
+    font-size: 30px;
+    letter-spacing: -0.035em;
+  }
+}
+
+/* ── The Insights teaser: raised cards ───────────────────────────────────── */
+.bf-teaser__item {
+  background-color: var(--bf-raised);
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .bf-faq__q {
+    padding-block: 26px;
+    font-stretch: var(--bf-display);
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ── The close and the footer: the page's last screen ───────────────────── *
+   The close is graphite with a rounded head, the mirror of the hero's foot,
+   and the footer runs on under it with no seam. */
+.bf-final {
+  border-top: 0;
+  border-radius: 28px 28px 0 0;
+}
+
+@media (min-width: 1025px) {
+  .bf-final { border-radius: 40px 40px 0 0; }
+}
+
+.bf-final__title {
+  max-width: 16ch;
+}
+
+.bf-final__title::before {
+  display: none;
+}
+
+.bf-final + .bf-footer,
+.bf-main:has(> .bf-final:last-child) + .bf-footer {
+  border-top-color: var(--bf-line);
+}
+
+.bf-footer {
+  background-color: var(--bf-ground);
+  overflow: hidden;
+}
+
+/* The name, set as large as the page is wide, under the base row: the
+   page's signature. Decoration — aria-hidden; the lockup above is the name. */
+.bf-footer__giant {
+  max-width: calc(var(--bf-max) + 2 * var(--bf-gutter));
+  margin: 8px auto 0;
+  padding-inline: var(--bf-gutter);
+  font-family: var(--bf-font-heading);
+  font-stretch: 125%;
+  /* 9.05 times its font size wide: a 9.3th of the width keeps it inside */
+  font-size: min(137px, calc((100vw - 2 * var(--bf-gutter)) / 9.3));
+  font-weight: 700;
+  line-height: 0.78;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+  color: var(--bf-raised);
+  user-select: none;
+}
+
+/* An evidence tier with its scope can be wider than a phone: there it sets
+   at the text's width and its scope wraps inside the chip. */
+@media (max-width: 559px) {
+  .bf-tier {
+    max-width: 100%;
+    font-stretch: 100%;
+    white-space: normal;
+  }
 }
