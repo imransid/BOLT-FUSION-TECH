@@ -5488,19 +5488,20 @@ check(
 /* 31 — one design. It guarded the split while two designs coexisted; the owner
    retired the site's old dark design on 2026-09-15, and on 2026-09-16 the
    Techwix clone's design with it: the one design is now the engineering
-   redesign, app/site.css (its `bf-` rules), in Barlow and Jost, on every page
+   redesign, app/site.css (its `bf-` rules), in Archivo (the studio redesign,
+   2026-10-24; Barlow and Jost until then), on every page
    and the 404. Nothing of either retired design comes back — not their
    stylesheets, faces, classes or packages, nor Tailwind. three.js returns for
    the hero's scene alone: under components/field/, imported dynamically. */
 check(
   31,
-  "One design: every page and the 404 load app/site.css's design and only Barlow and Jost; nothing of the retired designs — the Techwix clone's stylesheet, tw- classes and components, the dark design's stylesheet, faces, classes and packages — and three.js only in the hero's scene",
+  "One design: every page and the 404 load app/site.css's design and only Archivo; nothing of the retired designs — the Techwix clone's stylesheet, tw- classes and components, the dark design's stylesheet, faces, classes and packages — and three.js only in the hero's scene",
   "a retired design coming back on any page or in the source — the Techwix stylesheet, a tw- class or a components/techwix import; the dark design's stylesheet, its faces, its classes, [data-reveal], Tailwind or framer-motion — or a second design growing beside the one; three.js outside components/field/ or imported statically, so it lands in the initial JavaScript; a 404 that falls out of the site's layout or answers 200",
   (F, I) => {
-    const OURS = /^(barlow|jost)$/i;
-    const RETIRED_FACES = /^(inter|satoshi|commit\s*mono)$/i;
+    const OURS = /^archivo$/i;
+    const RETIRED_FACES = /^(inter|satoshi|commit\s*mono|barlow|jost)$/i;
     const face = (fam) => String(fam || "").replace(/["']/g, "").replace(/\s+Fallback$/i, "").trim();
-    const why = (fam) => (RETIRED_FACES.test(fam) ? "a face of the retired design" : "not one of the site's two faces");
+    const why = (fam) => (RETIRED_FACES.test(fam) ? "a face of the retired design" : "not the site's face");
     /* font file names are hashed: a file is known by the @font-face rule that points at it, on any page */
     const familyOf = new Map();
     for (const v of Object.values(visits)) for (const r of v.fontFaceRules) for (const m of r.src.matchAll(/url\(["']?([^"')]+)/g)) familyOf.set(m[1].split("/").pop(), face(r.family));
@@ -5514,7 +5515,7 @@ check(
       if (v.design.techwix?.length) F.push(`${at(k)}: ${v.design.techwix.length} element(s) carry the retired Techwix design's tw- classes — e.g. ${[...new Set(v.design.techwix)].slice(0, 4).join("; ")}`);
       if (retired.length) F.push(`${at(k)}: loads a stylesheet of the retired design — ${retired.map((x) => x.href).join(", ")}`);
       if (tw.length) F.push(`${at(k)}: loads Tailwind's output — ${tw.map((x) => x.href).join(", ")}; the design is plain CSS in app/site.css`);
-      for (const f of ["Barlow", "Jost"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the site's faces are Barlow and Jost`);
+      for (const f of ["Archivo"]) if (!v.fontsLoaded.includes(f)) F.push(`${at(k)}: ${f} is not loaded — the site's face is Archivo`);
       for (const fam of new Set([...v.fontsDeclared, ...v.fontFaceRules.map((r) => r.family)].map(face)))
         if (!OURS.test(fam)) F.push(`${at(k)}: declares the face "${fam}" — ${why(fam)}`);
       const files = [...new Set(v.fontFiles.map((f) => f.split("/").pop()))].map((f) => ({ f, fam: familyOf.get(f) || "" }));
@@ -5551,7 +5552,7 @@ check(
         F.push(`repository: git ls-files failed (${String(e?.message || e).split("\n")[0]}) — unsure is a failure`);
       }
       const fonts = files.filter((f) => /\.(woff2?|ttf|otf)$/i.test(f));
-      for (const f of fonts) if (!/barlow|jost/i.test(path.basename(f))) F.push(`repository: tracks the font file ${f} — the site's faces are Barlow and Jost`);
+      for (const f of fonts) if (!/archivo/i.test(path.basename(f))) F.push(`repository: tracks the font file ${f} — the site's face is Archivo`);
       /* the Techwix design's files: its stylesheet and its pieces (2026-09-16) */
       const twFiles = files.filter((f) => f === "app/techwix.css" || f.startsWith("components/techwix/"));
       if (twFiles.length) F.push(`repository: tracks ${twFiles.length} file(s) of the retired Techwix design — ${twFiles.slice(0, 4).join(", ")}${twFiles.length > 4 ? ` and ${twFiles.length - 4} more` : ""}; every page moves onto app/site.css and they are deleted`);
@@ -5616,7 +5617,7 @@ check(
         }
         for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s*["']next\/font\/google["']/g))
           for (const name of m[1].split(",").map((s) => s.trim()).filter(Boolean))
-            if (!/^(Barlow|Jost)$/.test(name)) F.push(`repository: ${f} loads ${name} from next/font/google — the site's faces are Barlow and Jost`);
+            if (!/^Archivo$/.test(name)) F.push(`repository: ${f} loads ${name} from next/font/google — the site's face is Archivo`);
         /* the Techwix pieces and stylesheet, imported from outside them */
         if (!f.startsWith("components/techwix/"))
           for (const s of specsOf(text)) {

@@ -27,10 +27,10 @@ import { markSvg } from "../lib/mark.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/* The brand ground: the button fill (app/site.css --bf-brand-fill), which
-   carries white at 5.35:1. The lighter link blue (#4C86FF) carries white at
-   only 3.6:1, too soft for a 16px tile. */
-const GROUND = "#2A62E0";
+/* The brand ground: the cobalt of every primary button (app/site.css
+   --cobalt, the studio redesign of 2026-10-24), which carries white at
+   6.2:1. */
+const GROUND = "#2B44FF";
 const INK = "#FFFFFF";
 
 const favicon = markSvg({ variant: "small", ink: INK, ground: GROUND, radius: 10 });

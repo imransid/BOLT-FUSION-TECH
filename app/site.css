@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   THE SITE'S DESIGN — the owner's redesign of 2026-09-16: a dark, precise,
-   restrained engineering foundation (SPEC §3). "Software. Intelligence.
-   Automation. Machines."
+   THE SITE'S DESIGN — the owner's engineering redesign of 2026-09-16 (SPEC
+   §3), "Software. Intelligence. Automation. Machines.", recomposed by the
+   studio redesign of 2026-10-24: paper for people, graphite screens for
+   machines, Archivo set expanded, one cobalt (the tokens below, and the
+   studio layer at the end of the file).
 
    The site's one stylesheet, loaded by app/layout.tsx, on every page and the
    404. Every class is `bf-`. The Techwix design it replaced — app/techwix.css,
@@ -80,8 +82,8 @@
 
   /* The two semantic colours of a figure's label, used by nothing else —
      deeper on paper, so the words in the chip keep 4.5:1. */
-  --bf-shipped: #0b7a4c;
-  --bf-target: #9a5800;
+  --bf-shipped: #086640;
+  --bf-target: #854c00;
 
   --bf-focus: var(--cobalt);
 
@@ -139,11 +141,10 @@
 
 /* ── Base ───────────────────────────────────────────────────────────────── *
    The resets the retired app/techwix.css held, carried over so nothing in the
-   shell moved: the body's Jost 16px on the unitless 1.73, antialiased, with
+   shell moved: the body's 16px on the unitless 1.73, antialiased, with
    font-synthesis off (a missing face renders visibly wrong, not plausibly
-   wrong); the button reset; 600 for bold — the browser's 700 would ask Jost for
-   a face it does not load (verify-site check 3). Code is Barlow: the site loads
-   no mono face (checks 2 and 31). */
+   wrong); the button reset; 600 for bold. Code is Archivo: the site loads no
+   mono face (checks 2 and 31). */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -362,9 +363,10 @@ html {
 }
 
 /* ── Type ───────────────────────────────────────────────────────────────── *
-   Barlow 700 for H1 and H2 with tight tracking, Barlow 600 for H3 and H4,
-   Jost for text; machine values in Barlow 500 with tabular figures. The scale
-   is 72 / 48 / 32 / 22 / 18 / 16 / 14. Sentence case; never tracked capitals. */
+   Archivo throughout: 600 for the headings, set expanded (`--bf-display`)
+   with tight tracking; labels, buttons and the nav at a touch wider than the
+   text (`--bf-label`); the text at its normal width; machine values in 500
+   with tabular figures. Sentence case; never tracked capitals. */
 .bf-eyebrow {
   display: flex;
   align-items: center;
@@ -445,8 +447,8 @@ html {
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────────── *
-   Barlow 600, square-cut (2px), one primary per view. The quiet variant is a
-   text link with an arrow. */
+   Archivo 600, one primary per view; pills since 2026-10-24 (the studio
+   layer). The quiet variant is a text link with an arrow. */
 .bf-btn {
   display: inline-flex;
   align-items: center;
@@ -549,9 +551,9 @@ html {
 }
 
 /* ── The logo: the Forward Monogram (SPEC §2) ───────────────────────────── *
-   The mark, then the wordmark — "Bolt Fusion" in Barlow 700 at -0.01em and
-   "Tech" in Barlow 500, muted — with a gap of 0.3 x the mark's height and a
-   stem width (a sixth of the mark) of clear space. */
+   The mark, then the wordmark — "Bolt Fusion" in Archivo 700 and "Tech" in
+   Archivo 500, muted, both set expanded — with a gap of 0.3 x the mark's
+   height and a stem width (a sixth of the mark) of clear space. */
 .bf-logo {
   --bf-mark: 30px;
   display: inline-flex;
@@ -3753,7 +3755,7 @@ button.bf-map__btn[aria-pressed="true"] {
   font-size: 15px;
 }
 
-/* ── Code in an article: Barlow 500, tabular, never reflowed ────────────── */
+/* ── Code in an article: Archivo 500, tabular, never reflowed ───────────── */
 .bf-code {
   min-width: 0;
   margin-top: 28px;
@@ -7492,5 +7494,41 @@ rect.bf-trace__stop {
     max-width: 100%;
     font-stretch: 100%;
     white-space: normal;
+  }
+}
+
+/* ── Inner pages: the page head is the page's first screen ───────────────── *
+   As the homepage's hero: graphite, with a rounded foot over the paper. The
+   section under it draws no hairline — the edge is the screen's. */
+.bf-pagehead {
+  border-radius: 0 0 28px 28px;
+}
+
+@media (min-width: 1025px) {
+  .bf-pagehead { border-radius: 0 0 40px 40px; }
+}
+
+.bf-pagehead + .bf-section {
+  border-top: 0;
+}
+
+/* ── Details ─────────────────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--cobalt);
+  color: #ffffff;
+}
+
+/* A write-up's screenshot leans in, slightly, under the pointer. */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .bf-story__shot img,
+  .bf-clientband__shot img,
+  .bf-work__shot img {
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .bf-story:hover .bf-story__shot img,
+  .bf-clientband__item:hover .bf-clientband__shot img,
+  .bf-work__row:hover .bf-work__shot img {
+    transform: scale(1.025);
   }
 }

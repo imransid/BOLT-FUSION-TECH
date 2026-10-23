@@ -13,26 +13,48 @@
  * and run this.
  */
 
-const T = {
+/* Two grounds since the studio redesign (2026-10-24): the paper every page
+   reads on, and the graphite of the screens and the shell. Each lists the
+   values its tokens take there (`:root` and `.bf-ink` in app/site.css). The
+   pilot's cobalt plate is a third, measured on its own below. */
+const INK = {
   ground: "#07090d",
-  surface: "#0d1016",
-  raised: "#141922",
-  lineStrong: "#2e3747",
+  surface: "#0e1118",
+  raised: "#161a23",
   steel: "#6b7385",
-  text: "#eceff4",
-  soft: "#c3c9d4",
-  muted: "#9aa3b4",
-  brand: "#4c86ff",
-  brandHi: "#7aa7ff",
-  brandFill: "#2a62e0",
-  brandFillHover: "#2256c9",
-  flow: "#2ee6d6",
+  text: "#f3f2ef",
+  soft: "#c6cad3",
+  muted: "#9aa2b2",
+  brand: "#8e9cff",
+  brandHi: "#b6bfff",
   shipped: "#34d399",
   target: "#fbbf24",
   focus: "#8ab4ff",
+};
+const PAPER = {
+  ground: "#f3f1ec",
+  surface: "#eae7e0",
+  raised: "#fbfaf7",
+  steel: "#837d70",
+  text: "#121316",
+  soft: "#3a3c42",
+  muted: "#5c5e65",
+  brand: "#2b44ff",
+  brandHi: "#1a2ac4",
+  shipped: "#086640",
+  target: "#854c00",
+  focus: "#2b44ff",
+};
+const T = {
+  cobalt: "#2b44ff",
+  cobaltHover: "#1d33db",
+  flow: "#2ee6d6",
   white: "#ffffff",
-  paper: "#ffffff",
-  paperMuted: "#4a5266",
+  pilotSoft: "#e1e5ff",
+  pilotSteel: "#cdd3ff",
+  pilotHover: "#e8ebff",
+  calendar: "#ffffff",
+  calendarMuted: "#4a5266",
 };
 
 const hex = (h) => [0, 2, 4].map((i) => parseInt(h.replace("#", "").slice(i, i + 2), 16));
@@ -49,45 +71,59 @@ const TEXT = 4.5;
 const LARGE = 3;
 const UI = 3;
 
-/* [foreground, background, need, where it is used] — a background is a token
-   name or an [r,g,b] composite. */
-const pairs = [
-  ["text", "ground", TEXT, "headings, primary text, labels on the page"],
-  ["text", "surface", TEXT, "text on the footer, drawer, diagram plates, lanes"],
-  ["text", "raised", TEXT, "tier-chip labels, diagram node labels, the honesty note"],
-  ["soft", "ground", TEXT, "body copy"],
-  ["soft", "surface", TEXT, "body copy in the footer and drawer"],
-  ["soft", "raised", TEXT, "a tier chip's scope"],
-  ["muted", "ground", TEXT, "eyebrows, meta, labels, the pause control"],
-  ["muted", "surface", TEXT, "footer labels and base row, diagram notes"],
-  ["muted", "raised", TEXT, "muted text on a raised surface"],
-  ["brand", "ground", TEXT, "links, the quiet call to action, stage numbers"],
-  ["brand", "surface", TEXT, "links on the footer and drawer"],
-  ["brandHi", "ground", TEXT, "link hover, a pressed map part"],
-  ["brandHi", "surface", TEXT, "the drawer's current link"],
-  ["white", "brandFill", TEXT, "the primary button, the skip link"],
-  ["white", "brandFillHover", TEXT, "the primary button, hovered"],
-  ["shipped", over(T.shipped, 0.1, T.ground), TEXT, "a shipped chip on the ground"],
-  ["shipped", over(T.shipped, 0.1, T.surface), TEXT, "a shipped chip on a surface"],
-  ["target", over(T.target, 0.1, T.ground), TEXT, "a target chip on the ground"],
-  ["target", over(T.target, 0.1, T.surface), TEXT, "a target chip on a surface"],
-  ["shipped", over(T.shipped, 0.1, T.raised), TEXT, "a shipped chip inside a tag on a card"],
-  ["target", over(T.target, 0.1, T.raised), TEXT, "a target chip inside a tag on a card"],
-  ["steel", "ground", UI, "input borders, ghost-button borders, diagram strokes (non-text)"],
-  ["steel", "surface", UI, "diagram strokes on the plate (non-text)"],
-  ["steel", "raised", UI, "the Lab chip's dashed edge (non-text)"],
-  ["flow", "surface", UI, "the cyan flow lines on a diagram plate (non-text)"],
-  ["flow", "ground", UI, "the cyan on the system map (non-text)"],
-  ["brand", "surface", UI, "an accented node's outline, a tier meter step (non-text)"],
-  ["brand", "raised", UI, "a tier meter step on the chip (non-text)"],
-  ["focus", "ground", UI, "the focus ring on the ground (non-text)"],
-  ["focus", "surface", UI, "the focus ring in the footer and drawer (non-text)"],
-  ["paperMuted", "paper", TEXT, "the booking calendar panel's caption and placeholder (/contact)"],
-  ["brandFill", "paper", UI, "that panel's focus ring and links on white (non-text)"],
+/* The chips' fills are the dark design's tints, on either ground (app/site.css,
+   "Status chips"): 10% of the shipped green and the target amber. */
+const SHIPPED_TINT = "#34d399";
+const TARGET_TINT = "#fbbf24";
+
+/* [foreground, background, need, where it is used] on one ground — a colour
+   is a hex string or an [r,g,b] composite. */
+const onGround = (G, at) => [
+  [G.text, G.ground, TEXT, `${at}: headings, primary text, labels`],
+  [G.text, G.surface, TEXT, `${at}: text on a surface — a plate, the footer, the drawer`],
+  [G.text, G.raised, TEXT, `${at}: tier-chip labels, a raised card's text`],
+  [G.soft, G.ground, TEXT, `${at}: body copy`],
+  [G.soft, G.surface, TEXT, `${at}: body copy on a surface`],
+  [G.soft, G.raised, TEXT, `${at}: a tier chip's scope, a card's body`],
+  [G.muted, G.ground, TEXT, `${at}: meta, labels, the pause control`],
+  [G.muted, G.surface, TEXT, `${at}: labels on a surface`],
+  [G.muted, G.raised, TEXT, `${at}: muted text on a raised card`],
+  [G.brand, G.ground, TEXT, `${at}: links, the quiet call to action, numbers`],
+  [G.brand, G.surface, TEXT, `${at}: links on a surface`],
+  [G.brand, G.raised, TEXT, `${at}: links on a raised card`],
+  [G.brandHi, G.ground, TEXT, `${at}: link hover`],
+  [G.shipped, over(SHIPPED_TINT, 0.1, G.ground), TEXT, `${at}: a shipped chip`],
+  [G.shipped, over(SHIPPED_TINT, 0.1, G.surface), TEXT, `${at}: a shipped chip on a surface`],
+  [G.shipped, over(SHIPPED_TINT, 0.1, G.raised), TEXT, `${at}: a shipped chip on a raised card`],
+  [G.target, over(TARGET_TINT, 0.1, G.ground), TEXT, `${at}: a target chip`],
+  [G.target, over(TARGET_TINT, 0.1, G.surface), TEXT, `${at}: a target chip on a surface`],
+  [G.target, over(TARGET_TINT, 0.1, G.raised), TEXT, `${at}: a target chip on a raised card`],
+  [G.steel, G.ground, UI, `${at}: input and ghost-button borders, diagram strokes (non-text)`],
+  [G.steel, G.surface, UI, `${at}: strokes on a surface (non-text)`],
+  [G.steel, G.raised, UI, `${at}: the Lab chip's dashed edge (non-text)`],
+  [G.brand, G.raised, UI, `${at}: a tier meter step (non-text)`],
+  [G.focus, G.ground, UI, `${at}: the focus ring (non-text)`],
+  [G.focus, G.surface, UI, `${at}: the focus ring on a surface (non-text)`],
 ];
 
-const color = (c) => (typeof c === "string" ? (T[c] ? hex(T[c]) : hex(c)) : c);
-const name = (c) => (typeof c === "string" ? (T[c] ? `${c} ${T[c]}` : c) : `rgb(${c.join(",")})`);
+const pairs = [
+  ...onGround(PAPER, "paper"),
+  ...onGround(INK, "graphite"),
+  [T.white, T.cobalt, TEXT, "the primary button, the skip link; the pilot plate's headings"],
+  [T.white, T.cobaltHover, TEXT, "the primary button, hovered"],
+  [T.flow, INK.ground, UI, "the cyan flow lines on a diagram's screen (non-text)"],
+  [T.flow, INK.surface, UI, "the cyan on a surface inside a screen (non-text)"],
+  [T.pilotSoft, T.cobalt, TEXT, "the pilot plate's body, stations and ghost label"],
+  [T.cobalt, T.white, TEXT, "the pilot plate's primary: cobalt words on white"],
+  [T.cobalt, T.pilotHover, TEXT, "the pilot plate's primary, hovered"],
+  [T.pilotSteel, T.cobalt, UI, "the pilot plate's ghost border and trace (non-text)"],
+  [T.white, T.cobalt, UI, "the pilot plate's focus ring (non-text)"],
+  [T.calendarMuted, T.calendar, TEXT, "the booking calendar panel's caption and placeholder (/contact)"],
+  [T.cobalt, T.calendar, UI, "that panel's focus ring and links on white (non-text)"],
+];
+
+const color = (c) => (typeof c === "string" ? hex(c) : c);
+const name = (c) => (typeof c === "string" ? c : `rgb(${c.join(",")})`);
 
 const rows = pairs.map(([fg, bg, need, use]) => {
   const r = ratio(color(fg), color(bg));

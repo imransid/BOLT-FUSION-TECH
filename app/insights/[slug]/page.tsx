@@ -79,7 +79,7 @@ function sectionBody(s: InsightSection, i: number): ReactNode[] {
  * An article (SPEC §6): the head (a link back to the index, the one h1 — the
  * Article's headline — the dek, the author and the date), the sections in
  * reading order, and beside them the related work, the capabilities it comes
- * from and the other articles. Code is set in Barlow 500 with tabular figures
+ * from and the other articles. Code is set in Archivo 500 with tabular figures
  * — the site loads no mono face — in a box that scrolls sideways, captioned;
  * each "diagram" is drawn as an ordered flow. Article and BreadcrumbList
  * structured data from the same entry the page renders.

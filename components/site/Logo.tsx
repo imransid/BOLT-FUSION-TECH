@@ -7,8 +7,8 @@ import LogoMarkSvg from "@/components/LogoMarkSvg";
  *   stacked     the mark above the wordmark, for square avatars
  *   mark        the mark alone — favicons, app icons, GitHub, LinkedIn, documents
  *
- * The wordmark: "Bolt Fusion" in Barlow 700 at -0.01em, then "Tech" in Barlow
- * 500 in the muted colour. Title case, never tracked capitals, and the legal
+ * The wordmark: "Bolt Fusion" in Archivo 700, set expanded, then "Tech" in
+ * Archivo 500 in the muted colour. Title case, never tracked capitals, and the legal
  * name stays whole. Clear space is one stem width on every side (a sixth of the
  * mark's height); the minimum is 16px for the mark and 100px for a lockup.
  * The sizes and colours are in app/site.css ("The logo").
