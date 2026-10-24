@@ -1326,6 +1326,44 @@ has a pause control.
   from 1025px, the selected stage's title turns brand blue and the panel under
   the rail swaps its words; its progress line advances by `transform:
   scaleX` over 0.3s. The rail's trace is the Signal's and untouched.
+- **The motion layer** (2026-10-24; the owner, the same day: "i want to make
+  more better and more creative and beautiful and powerful motion"). Six
+  pieces in the Signal's grammar, all CSS but the light, every one off under
+  reduced motion, none hiding anything at rest or without script (app/site.css,
+  "The motion layer"):
+  - **Chapter heads rise out of their own line.** When a section head's
+    reveal lands (`.bf-head`, the map's head, the playground's title), the
+    eyebrow fades up (0.5s), the title is unmasked from its baseline while it
+    rises 0.38em (`bf-head-unmask`, 0.85s, 70ms in) and the lead follows
+    (0.6s, 160ms in). `backwards` holds each piece's first frame only through
+    its own delay, after `.bf-revealed` — so the hard rule holds: nothing is
+    hidden in the server HTML or at rest. Sampled at 1440: the clip opens 94%
+    → 0 and the rise 17px → 0, and at 0.98s no clip or transform is left.
+  - **The playground's request is a packet.** A cyan streak (18 units on
+    every edge, from each edge's own length) crosses each edge in its 0.45s
+    step over the brand-blue trace; the response rings once when the answer
+    arrives; on a phone the current stop's marker beats. Under reduced motion
+    and Pause motion none of it is drawn.
+  - **The stage panel's words enter** (10px, 0.32s) when a stage is chosen.
+  - **The screens catch the light** (`components/site/ScreenLight.tsx`):
+    over a graphite screen — the playground, the proof strip, the map's
+    canvas, the capability plates, code — a soft cobalt light follows the
+    mouse and fades out when it leaves. It is each screen's own `::before`
+    under its content (an isolated stacking context), invisible at rest, so
+    contrast and every capture see the screen as drawn. One passive
+    pointermove listener, one write a frame; mouse only (by pointer type and
+    by `(hover: hover) and (pointer: fine)`), off under reduced motion,
+    watched live.
+  - **Pages cross-fade** — a cross-document view transition: the header
+    (`view-transition-name: bf-header`) holds while the old page fades out
+    in 0.16s and the new one rises 10px in 0.24s. `@view-transition` lives
+    inside the no-preference media rule only; a browser without view
+    transitions navigates as before. The client-side `<Link>` to / is not a
+    document navigation and does not transition.
+  - **An article's reading line** (`.bf-readbar`, /insights/[slug]): 3px of
+    cobalt along the top of the window, a scroll timeline, no script — only
+    where scroll timelines exist and motion is allowed; elsewhere it is
+    `display: none`. Check 23's motion kill leaves it at zero width.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
   the owner's brief; engineering SPEC §7, "Many technologies. One engineering
   system."; its v2, 2026-09-28, *Decided 2026-09-28*). An engineering core of
@@ -2543,7 +2581,13 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   what happens in it, in order. RUN 2: `pg-every-node`, `pg-reduced`,
   `pg-words`, `map-robotics-work`, `map-concept-cyan` (+ `-full`),
   `stage-off-by-one`, `stage-twice` — each proven to fail with its own finding
-  on one misuse build, 2026-10-24. RUN 3: (q) a playground request that skips
+  on one misuse build, 2026-10-24. **The motion layer, the same day:** with
+  motion allowed a followed request runs `bf-flowpg-packet` 620ms in; the
+  mouse over the proof strip lights it (`data-light` and its glow at opacity
+  1) and the light goes when the mouse leaves; under reduced motion it never
+  lights; every `@view-transition` rule sits under `prefers-reduced-motion:
+  no-preference`, and one exists. RUN 2: `pg-packet-gone`, `light-reduced`,
+  `light-dead`, `vt-always`. RUN 3: (q) a playground request that skips
   the cache and (r) a stage with an empty description are refused in the
   schema's words. The suite's content loader now stubs zod with a chainable
   proxy: `content/architecture.ts`'s schemas are built in steps
@@ -2941,6 +2985,16 @@ outside the new pieces.
 
 **The suite:** check 37 is new; 36 is at its limit at both widths (*Verify
 before pushing*).
+
+**Later the same day, the owner: "i want to make more better and more
+creative and beautiful and powerful motion".** Answered with the motion
+layer (*Motion, as built*): chapter heads that rise out of their own line,
+the playground's request as a cyan packet with an arrival ring, the graphite
+screens catching a cobalt light under the mouse, pages that cross-fade under
+a still header, the stage panel's words entering, and an article's reading
+line. Inside the brief's rules — no scroll hijacking, no pins, no autoplay,
+nothing hidden at rest, all of it off under reduced motion, and the hero
+left to its scene. Check 37 holds it.
 
 ## Decided 2026-10-24: the studio redesign (owner's request; merged the same day, PR #3, main d068f11)
 

@@ -5,6 +5,7 @@ import { siteContent } from "@/content/site";
 
 import Footer from "./Footer";
 import Header from "./Header";
+import ScreenLight from "./ScreenLight";
 import SiteMotion from "./SiteMotion";
 
 /**
@@ -43,6 +44,7 @@ export default function SiteShell({
       </main>
       <Footer footer={footer} />
       <SiteMotion />
+      <ScreenLight />
       <MotionLoader />
     </>
   );
