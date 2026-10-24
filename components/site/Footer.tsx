@@ -87,10 +87,10 @@ export default function Footer({ footer }: { footer: SiteContent["footer"] }) {
         </a>
       </div>
       {/* The page's signature (2026-10-24): the name as wide as the page, in
-          the ground's raised tone. Decoration — the lockup above is the name. */}
-      <p className="bf-footer__giant" aria-hidden="true">
-        Bolt Fusion Tech
-      </p>
+          the ground's raised tone. Decoration — the lockup above is the name —
+          so its letters are CSS content (app/site.css), not text: a scanner
+          reads no low-contrast text where a reader is meant to read none. */}
+      <div className="bf-footer__giant" aria-hidden="true" data-name="Bolt Fusion Tech" />
     </footer>
   );
 }

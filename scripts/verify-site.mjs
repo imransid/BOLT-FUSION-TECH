@@ -1089,8 +1089,12 @@ async function visitLcp(browser, prof) {
     /* the h1's line boxes, against the visible poster */
     let h1Overlap = 0;
     const h1 = document.querySelector("h1");
-    /* SPEC §7: beside the headline at >=1025px — the field in the right-hand
-       column, clear of every line of the h1 — and above it below that */
+    /* SPEC §7: beside the text at >=1025px — the field in the right-hand
+       column, clear of every line of the h1 — and above it below that. Since
+       the studio redesign (2026-10-24) the h1 runs the whole width ABOVE the
+       two columns, so "beside" is read against the hero's text column (the
+       support line, the body, the calls to action): the field to its right
+       and level with it. Behind the h1 is h1Overlap's, at every width. */
     let h1Box = null;
     if (h1) {
       const rg = document.createRange();
@@ -1103,9 +1107,12 @@ async function visitLcp(browser, prof) {
       }
       if (lines.length) h1Box = { l: Math.min(...lines.map((q) => q.left)), r: Math.max(...lines.map((q) => q.right)), t: Math.min(...lines.map((q) => q.top)), b: Math.max(...lines.map((q) => q.bottom)) };
     }
-    const beside = h1Box ? vis.l >= h1Box.r - 1 && vis.t < h1Box.b && vis.btm > h1Box.t : null;
+    const textEl = document.querySelector("#hero .bf-hero__text");
+    const tr = textEl ? textEl.getBoundingClientRect() : null;
+    const textBox = tr && tr.width > 1 && tr.height > 1 ? { l: tr.left, r: tr.right, t: tr.top, b: tr.bottom } : h1Box;
+    const beside = textBox ? vis.l >= textBox.r - 1 && vis.t < textBox.b && vis.btm > textBox.t : null;
     const above = h1Box ? vis.btm <= h1Box.t + 1 : null;
-    const where = h1Box ? `the visible poster spans x ${Math.round(vis.l)}–${Math.round(vis.r)}, y ${Math.round(vis.t)}–${Math.round(vis.btm)}; the h1's lines x ${Math.round(h1Box.l)}–${Math.round(h1Box.r)}, y ${Math.round(h1Box.t)}–${Math.round(h1Box.b)}` : "no h1";
+    const where = h1Box ? `the visible poster spans x ${Math.round(vis.l)}–${Math.round(vis.r)}, y ${Math.round(vis.t)}–${Math.round(vis.btm)}; the h1's lines x ${Math.round(h1Box.l)}–${Math.round(h1Box.r)}, y ${Math.round(h1Box.t)}–${Math.round(h1Box.b)}${textBox && textBox !== h1Box ? `; the text column x ${Math.round(textBox.l)}–${Math.round(textBox.r)}, y ${Math.round(textBox.t)}–${Math.round(textBox.b)}` : ""}` : "no h1";
     const badCanvases = [...document.querySelectorAll("canvas")].filter((c) => !field?.contains(c) || !same(c)).map((c) => `${tag(c)} ${c.offsetWidth}x${c.offsetHeight}${field?.contains(c) ? " inside the field, not its box" : " outside [data-hero-field]"}`);
     /* H4: how far the chosen file is stretched to fill the field. The file's
        own width is its srcset `w` descriptor — naturalWidth is density-corrected
@@ -2536,6 +2543,13 @@ async function measureContrast(page) {
       const frames = [...document.querySelectorAll("iframe")].map((f) => f.getBoundingClientRect());
       for (const el of document.body.querySelectorAll("*")) {
         if (el.closest("script, style, noscript, template, svg, [aria-hidden='true']")) continue;
+        /* 2026-10-24: a closed <details>' answer is never painted, but Chrome
+           still lays it out, and its box can run past the section over the
+           next one's ground (the FAQ's last answer, over the close's graphite
+           since the studio redesign): it was measured against pixels it is
+           never drawn on. Check 2 skips it for the same reason. Its summary is
+           painted and is measured. */
+        if (el.closest("details:not([open])") && !el.closest("summary")) continue;
         if (![...el.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim().length > 1)) continue;
         const r = el.getBoundingClientRect();
         if (r.width < 2 || r.height < 2) continue;
@@ -5390,11 +5404,11 @@ check(
       if (st.coveredBy) F.push(`/ ${r.label}: after the settle ${st.coveredBy} sits on top of the poster — only a canvas with the field's box may`);
       if (st.h1Overlap) F.push(`/ ${r.label}: the poster sits behind the headline — ${st.h1Overlap}px² of it under the h1; the field is beside the headline, never behind it`);
       /* SPEC §7: beside the text at >=1025px, above it below that */
-      if (r.width >= 1025 && st.beside === false) F.push(`/ ${r.label}: the poster is not beside the headline — at >=1025px the field is the column to the right of the text (${st.where})`);
+      if (r.width >= 1025 && st.beside === false) F.push(`/ ${r.label}: the poster is not beside the hero's text — at >=1025px the field is the column to the right of the support line, body and calls to action (${st.where})`);
       if (r.width < 1025 && st.above === false) F.push(`/ ${r.label}: the poster is not above the headline — below 1025px the field sits above the text (${st.where})`);
       for (const c of st.badCanvases) F.push(`/ ${r.label}: a canvas ${c} — any canvas sits inside [data-hero-field] with the field's box`);
       I.push(
-        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside it" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to ${st.fit === "contain" ? "fit (contain)" : "cover"} the field`,
+        `/ ${r.label}: settled poster — rendered, opacity ${st.opacity.toFixed(2)}, box ${st.pBox} = field ${st.fBox}, nothing on top, clear of the h1${r.width >= 1025 ? ", beside the text" : ", above it"}; ${st.sceneReady ? `read with the scene drawn over it (${st.fieldCanvases} canvas in the field)` : "no scene drawn"}; file ${st.natural}w at DPR ${st.dpr}, stretched ${st.upscale}x to ${st.fit === "contain" ? "fit (contain)" : "cover"} the field`,
       );
     }
   },

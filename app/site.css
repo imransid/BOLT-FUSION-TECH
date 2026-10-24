@@ -7334,7 +7334,9 @@ rect.bf-trace__stop {
   --bf-focus: #ffffff;
   border: 0;
   background-color: var(--cobalt);
-  background-image: radial-gradient(120% 140% at 100% 0%, rgba(255, 255, 255, 0.14), transparent 55%);
+  /* a shade, never a highlight: it only deepens the cobalt, so the pale
+     words on it keep at least the flat plate's 4.8:1 */
+  background-image: radial-gradient(120% 140% at 0% 100%, rgba(8, 12, 90, 0.32), transparent 60%);
   color: var(--bf-soft);
 }
 
@@ -7485,6 +7487,11 @@ rect.bf-trace__stop {
   white-space: nowrap;
   color: var(--bf-raised);
   user-select: none;
+}
+
+.bf-footer__giant::before {
+  content: attr(data-name);
+  display: block;
 }
 
 /* An evidence tier with its scope can be wider than a phone: there it sets
