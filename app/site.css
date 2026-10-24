@@ -1054,56 +1054,11 @@ html {
     transform: translate3d(-2.5%, -1.2%, 0);
   }
 
-  .bf-hero:has(.bf-motion-toggle[data-ready]) .bf-hero__poster {
+  /* always (2026-10-24): it waited for the pause control to be ready until
+     the owner removed the control */
+  .bf-hero__poster {
     animation: bf-field-drift 26s ease-in-out infinite alternate;
   }
-}
-
-html[data-motion="paused"] .bf-hero__poster {
-  animation-play-state: paused;
-}
-
-/* The pause control (components/site/MotionToggle): shown only where
-   something in the hero moves — the drift, or the live 3D scene — and aligned
-   to the field's right edge (align-self: flex-end), so it reads as the scene's. */
-.bf-motion-toggle {
-  /* Always in the layout, shown by `visibility`: a button that appears by
-     `display` or `hidden` moved the hero text 42px when it did (CLS 0.0085 at
-     1440 when the scene went live, 0.0245 at 390 at hydration). */
-  display: inline-flex;
-  visibility: hidden;
-  align-self: flex-end;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--bf-line-strong);
-  border-radius: 2px;
-  background: none;
-  font-family: var(--bf-font-heading);
-  font-stretch: var(--bf-label);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--bf-muted);
-  cursor: pointer;
-}
-
-.bf-motion-toggle:hover {
-  color: var(--bf-text);
-}
-
-@media (prefers-reduced-motion: no-preference) and (max-width: 1024px),
-  (prefers-reduced-motion: no-preference) and (pointer: coarse) {
-  .bf-motion-toggle[data-ready] { visibility: visible; }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .bf-hero[data-scene="live"] .bf-motion-toggle[data-ready] { visibility: visible; }
-}
-
-/* Under reduced motion nothing moves, the button never shows, and it keeps no space. */
-@media (prefers-reduced-motion: reduce) {
-  .bf-motion-toggle { display: none; }
 }
 
 /* ── Evidence tiers: a THIRD visual family ──────────────────────────────── *
@@ -2829,6 +2784,23 @@ button.bf-map__btn[aria-pressed="true"] {
   .bf-revealed .bf-clientband__shot img {
     animation: bf-unmask 0.65s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
+}
+
+/* The hero's field, once its scene is live: a hand can turn it (scene.ts,
+   the visitor's hand) — the cursor says so, and a drag never picks up the
+   poster as an image or selects the words beside it. */
+.bf-hero[data-scene="live"] [data-hero-field] {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.bf-hero[data-scene="live"] [data-hero-field]:active {
+  cursor: grabbing;
+}
+
+[data-hero-field] img {
+  -webkit-user-drag: none;
 }
 
 /* ── The motion layer (2026-10-24, the owner: "more creative and beautiful
@@ -5680,9 +5652,14 @@ button.bf-map__btn[aria-pressed="true"] {
 @media (max-width: 1024px) {
   #hero.bf-hero { padding-top: 16px; }
   .bf-hero__inner { gap: 20px; }
+  /* 14px under the field, where the h1 sat beside the pause control's row
+     until the owner removed the control (2026-10-24); and 6px off the proof
+     line's gap — together they keep the whole proof line in the first screen
+     at 390x844 and 768x1024, which the row had been holding up */
+  .bf-hero__title { margin-top: -6px; }
   .bf-hero .bf-actions { margin-top: 28px; }
   .bf-hero__micro { margin-top: 12px; }
-  .bf-hero__proof { margin-top: 20px; padding-top: 12px; }
+  .bf-hero__proof { margin-top: 14px; padding-top: 12px; }
 }
 
 @media (max-width: 767px) {
@@ -5710,23 +5687,10 @@ button.bf-map__btn[aria-pressed="true"] {
   text-wrap: pretty;
 }
 
-/* The pause control keeps its place under the field's right edge, and the
-   headline's first line ("Build", one short word) rises into that row beside
-   it, 14px under the field: the row was 42px of empty ground. Only where the
-   control is laid out — under reduced motion it keeps no space (above), and
-   the h1 sits the grid's gap under the field. It is lifted over the h1's box
-   so it stays the thing a tap on it reaches. */
-@media (prefers-reduced-motion: no-preference) and (max-width: 1024px) {
-  .bf-hero__media {
-    gap: 14px;
-    margin-bottom: -56px;
-  }
-
-  .bf-motion-toggle {
-    position: relative;
-    z-index: 1;
-  }
-}
+/* Until 2026-10-24 the pause control sat under the field's right edge here,
+   and the headline rose into its row (a -56px margin). With the control gone
+   the h1 sits the grid's gap under the field at every motion setting — the
+   layout reduced motion always had. */
 
 /* ── The engineering stories, compact (#recent-work) ────────────────────── *
    The proof, second: the head with its link to every case study, the two
@@ -7802,8 +7766,7 @@ rect.bf-trace__stop {
 .bf-btn,
 .bf-skip,
 .bf-header__burger,
-.bf-drawer__close,
-.bf-motion-toggle {
+.bf-drawer__close {
   border-radius: 999px;
 }
 

@@ -590,11 +590,13 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   in IA's first band — sized for `cover` — the scene was drawn at most 222px
   wide on any phone and 495 on any tablet; `probe-scene` (poster) reads the
   16px band as ground at 390, 768 and 1024, the nearest lit pixel 23px from
-  the band's top at 390 and 37 at 1024. The pause control keeps
-  its place under the field's right edge and the headline's first line
-  ("Build") rises into that row beside it (`margin-bottom: -56px` on
-  `.bf-hero__media`, only where the control is laid out — never under reduced
-  motion); the proof line's three items sit in one row at every width, each a
+  the band's top at 390 and 37 at 1024. Until 2026-10-24 the pause control
+  kept its place under the field's right edge and the headline's first line
+  ("Build") rose into that row beside it (`margin-bottom: -56px` on
+  `.bf-hero__media`); with the control gone the h1 sits 14px under the field
+  (`.bf-hero__title { margin-top: -6px }` against the grid's 20px) and the
+  proof line's gap is 14px, so the layout is the same at every motion setting
+  and the whole proof line is still in the first screen; the proof line's three items sit in one row at every width, each a
   44px link over its client. Measured: at 390x844 the h1 at 289, Schedule a
   Call at 584 and the whole proof line at 745–832 — inside the first screen;
   at 412x915 by 823 and at 768x1024 by 988 (both 10px lower under reduced
@@ -784,7 +786,7 @@ grounds — paper and graphite — and the pilot's cobalt plate. Every pair is A
 | #3a3c42 | #f3f1ec | 9.77:1 | 4.5:1 | paper: body copy |
 | #3a3c42 | #eae7e0 | 8.93:1 | 4.5:1 | paper: body copy on a surface |
 | #3a3c42 | #fbfaf7 | 10.56:1 | 4.5:1 | paper: a tier chip's scope, a card's body |
-| #5c5e65 | #f3f1ec | 5.73:1 | 4.5:1 | paper: meta, labels, the pause control |
+| #5c5e65 | #f3f1ec | 5.73:1 | 4.5:1 | paper: meta, labels |
 | #5c5e65 | #eae7e0 | 5.24:1 | 4.5:1 | paper: labels on a surface |
 | #5c5e65 | #fbfaf7 | 6.20:1 | 4.5:1 | paper: muted text on a raised card |
 | #2b44ff | #f3f1ec | 5.51:1 | 4.5:1 | paper: links, the quiet call to action, numbers |
@@ -809,7 +811,7 @@ grounds — paper and graphite — and the pilot's cobalt plate. Every pair is A
 | #c6cad3 | #07090d | 12.14:1 | 4.5:1 | graphite: body copy |
 | #c6cad3 | #0e1118 | 11.50:1 | 4.5:1 | graphite: body copy on a surface |
 | #c6cad3 | #161a23 | 10.60:1 | 4.5:1 | graphite: a tier chip's scope, a card's body |
-| #9aa2b2 | #07090d | 7.77:1 | 4.5:1 | graphite: meta, labels, the pause control |
+| #9aa2b2 | #07090d | 7.77:1 | 4.5:1 | graphite: meta, labels |
 | #9aa2b2 | #0e1118 | 7.36:1 | 4.5:1 | graphite: labels on a surface |
 | #9aa2b2 | #161a23 | 6.79:1 | 4.5:1 | graphite: muted text on a raised card |
 | #8e9cff | #07090d | 7.92:1 | 4.5:1 | graphite: links, the quiet call to action, numbers |
@@ -1052,8 +1054,14 @@ hooks*). BRIEF §4 said every sequence settles to the server state; for the
 hooks that made every payoff a blink (the design review). It is one idea
 used at every scale, and it carries the argument — how Bolt Fusion builds —
 without delaying reading. Transform, opacity and SVG strokes only. Everything is
-off under reduced motion, and anything that moves for more than five seconds
-has a pause control.
+off under reduced motion. Anything that moved for more than five seconds had a
+pause control until 2026-10-24, when the owner removed it ("remove Pause
+motion button, all time should be move but mouse to control"): the hero's
+scene and the phone's poster drift now run whenever they are on screen, and
+the mouse drives the scene (*The visitor's hand*, below). Reduced motion still
+stops everything. This no longer meets WCAG 2.2.2 (Pause, Stop, Hide) for a
+visitor who has not asked their system for reduced motion — the owner's
+decision, recorded here so it is not "fixed" by accident.
 
 - **The reveal** (`components/site/SiteMotion.tsx`): an element marked
   `data-bf-reveal` that is still below the fold after hydration gets
@@ -1292,10 +1300,11 @@ has a pause control.
     drawn at 1.16s, the flow takes over at 0.96s for 2 x 1.6s; the Lab sketch
     1.8s; a hook 2.2s — its trace, a 0.4s hold and a 0.6s fade); **focus ends a sequence**
     (focus inside the host's section, or a sequence that would start with focus
-    there, starts at its end); **the pause control ends them too** —
+    there, starts at its end); **the pause control ended them too** —
     `html[data-motion="paused"]` or `bf:motion` with `{ paused: true }` finishes
     every running sequence, and a new one starts at its end — a diagram the
-    server's drawing, a hook lit.
+    server's drawing, a hook lit. (The hook stays; nothing sets it since the
+    owner removed the control on 2026-10-24.)
   - **Tokens** (BRIEF §4.3): `response` 120–160ms and `state` 200ms (CSS);
     `trace` 800ms per edge, `power2.inOut`, 60ms stagger, 360ms ceiling, 300ms
     fade; a hook's trace 1.2s (`cta` 0.9s), a 400ms hold and a 600ms fade onto
@@ -1516,29 +1525,50 @@ has a pause control.
     page served before v2 still asks for them. The step-3 files,
     `field-poster-{660,1320}.*`, were deleted at the integration (2026-09-24):
     nothing referenced them.
-  - **Its pause control** (`components/site/MotionToggle.tsx`) shows only
-    where the hero moves — the drift, or a hero marked `data-scene="live"` —
-    and is invisible in the server HTML (`visibility: hidden` until it
-    carries `data-ready`), keeping its space, so appearing never shifts the
-    page. As `hidden` it moved the hero text 42px when it appeared: CLS 0.0085
-    at 1440 when the scene went live, and 0.0245 at 390 at hydration (found by
-    the scene's probe, fixed 2026-09-16). `HeroScene` sets `data-scene="live"` on
-    `#hero` once the scene has drawn and removes it on teardown, so the button
-    stays while the scene is paused and can resume it. Pausing sets
-    `data-motion="paused"` on `<html>` and dispatches `bf:motion` with
-    `{ paused }`: the drift reads the attribute; the scene stops its loop on
-    the event and resumes on the next, and starts paused (its t = 0 frame
-    drawn, no loop) if the attribute is already set when it mounts. **The
-    attribute is the button's one state** (2026-09-29): it reads
-    `html[data-motion]` (`useSyncExternalStore` over a MutationObserver on
-    `<html>`) and computes the next state from it. It kept a copy in React
-    state until then, which a client-side Back or Forward reset while the
-    attribute stayed: the page was paused, the button said "Pause motion"
-    with `aria-pressed="false"`, and its first press only changed the label
-    (the engineering review). Its state is said once, by the label ("Pause
-    motion" / "Resume motion"): `aria-pressed` went, since with a label that
-    changes a screen reader heard "Resume motion, toggle button, pressed".
-    Check 34 holds both at 390.
+  - **No pause control since 2026-10-24** (the owner). `MotionToggle` and its
+    CSS are gone, and with them `HeroScene`'s pause wiring and the scene's
+    `paused` option and `setPaused`: the scene runs whenever it is on screen
+    and the tab is visible, and the phone's drift runs from load (it waited
+    for the control's `data-ready` until then). On a tablet or phone the h1
+    sits the grid's gap under the field at every motion setting — the -56px
+    row it shared with the control went, which is the layout reduced motion
+    always had. The `html[data-motion="paused"]` / `bf:motion` hooks in the
+    Signal, the playground and the motion layer are left in place, inert:
+    nothing sets them now. Until then the control showed only where the hero
+    moved, was invisible in the server HTML (`visibility: hidden` until
+    `data-ready`, keeping its space — as `hidden` it had moved the hero text
+    42px), and its one state was `html[data-motion]` (check 34 held it across
+    Back and Forward).
+  - **The visitor's hand** (2026-10-24; the owner: "mouse to control … more
+    power, more creative, more interesting"). The mouse over the field — the
+    canvas's own box, never the page around it — drives four things, each
+    exactly zero until the visitor acts and none before `HOLD_S`, so the
+    first frame is still the poster's (`probe-scene` identity: 0.36% and
+    0.42% at 660, unchanged):
+    - **a light in the hand**: a cool, pale brand point light (`#b7c8ff`,
+      never amber, never the comets' cyan) hangs 2.8 units in front of the
+      stack under the pointer and eases in and out at 3 per second — the
+      plates' faces catch it as it passes. Made at intensity 0 with the
+      scene, so every program is compiled with it from the start;
+    - **a module wakes**: the one nearest the pointer on screen, within
+      0.34 of the field's half-height, rises 0.16 and grows 7%, and its
+      link's comets run up to 3.2x — on a clock of their own that only runs
+      ahead, so nothing jumps. The Lab robot rises too, and stays steel with
+      no comets: it has none to run;
+    - **a drag spins the core**: the plates turn against each other (odd
+      plates at -0.7), 0.012 rad/s per pixel, at most 4.5 rad/s, coasting
+      down at 1.5 per second — a machined assembly, never a blur. The
+      field's cursor is `grab` once the scene is live, and the poster never
+      drags as an image (`draggable={false}`, `-webkit-user-drag: none`);
+    - **a click sends a pulse**: a brand-blue ring crosses the floor from the
+      core's footprint to where the floor fades (1.3 → 2.75, 1.6s, its light
+      ramping in over 0.12s), while the comets surge (up to +1.4x) and the
+      seams swell 16% — a swell, never a flash.
+    Off the field, everything settles back: 3s after the mouse leaves, the
+    frame is the untouched page's to the pixel (`probe-scene` hand). One
+    passive pointermove listener (it already drove the parallax), a
+    pointerdown and a pointerup; the module's reach is projected through the
+    camera into reused vectors — nothing allocated per frame.
 - **The header's headroom** slide is a 0.25s transform; the drawer slides in
   over 0.28s.
 - **One reveal on every page** since 2026-09-16. The older one
@@ -2487,12 +2517,10 @@ carries cases that ask for WebGL contexts of their own.
   per width, at 1440 and 390. Without `data-scroll-behavior="smooth"` on
   `<html>` the new page's first frame was at 10201 and ran 0 reveals (the
   engineering review). RUN 2: `nav-smooth` and `nav-reveals`, one patch (the
-  attribute removed). At 390, where the pause control shows for the poster's
-  drift, it also presses Pause, goes Back to /capabilities and Forward to /
-  (both client-side): `html[data-motion]` must still be "paused", the
-  remounted control must read "Resume motion", and it carries no
-  `aria-pressed`. RUN 2: `toggle-local` and `toggle-pressed`, one patch (the
-  control back on a React state of its own, with `aria-pressed`). And at
+  attribute removed). Until 2026-10-24 it also pressed the hero's Pause at
+  390 and held the paused state across Back and Forward (RUN 2:
+  `toggle-local`, `toggle-pressed`); the owner removed the control, and both
+  cases are RETIRED with that reason. And at
   1440, /engineering (the Signal live) → /work through Next's own router
   (`window.next.router.push`, what a `<Link>` drives; not through / and the
   logo, since the gate's `signal-dead` case kills the engine on /): once
@@ -2671,10 +2699,14 @@ the scene's own objects over seven sways, assembled and fully open —
 `scripts/lib/scene-layout.mjs`), `poster` (the drifting poster below 1025px
 and on a touch tablet keeps the band), `identity` (the t = 0 frame against the
 poster the browser draws under it, at 660, 536 and 467, DPR 1 and 2),
-`charge` (eased, blue, gone after leave, dead while paused, and a page hovered
+`charge` (eased, blue, gone after leave, and a page hovered
 before mount still starts on the poster), `explode` (the band fully open;
-identity at scroll 0, opening with the scroll, frozen by Pause motion,
-reassembled at the top), `reload` (a page loaded mid-scroll starts on the
+identity at scroll 0, opening with the scroll, reassembled at the top),
+`hand` (2026-10-24: the hand's light, a drag's spin and a click's pulse, each
+against an untouched page with the pointer at the same place on the screen;
+the band stays the ground; off the field, the frame settles back to the
+untouched one; PROBE_CASES `hand-dark`, `hand-nospin`, `hand-nopulse`, and
+`hand-at-rest` — the light on from the first frame, which `identity` fails), `reload` (a page loaded mid-scroll starts on the
 poster, then opens), `view` (2026-09-29: on the page as laid out, with the
 header pinned over the first 200px of scroll, the stack is fully open before
 any of the drawing goes under the header — read 10px of scroll at a time, its
@@ -2996,6 +3028,29 @@ line. Inside the brief's rules — no scroll hijacking, no pins, no autoplay,
 nothing hidden at rest, all of it off under reduced motion, and the hero
 left to its scene. Check 37 holds it.
 
+## Decided 2026-10-24, last: no pause control, and the mouse drives the hero (owner)
+
+**The request, verbatim:** "remove Pause motion button all time should be
+move but mouse to control also make this motion more power more creative and
+more interesting". Done as asked: the control is gone (*Motion, as built*,
+"No pause control since 2026-10-24"), and the scene gained the visitor's
+hand — a light under the mouse, the module nearest it waking, a drag that
+spins the core, a click that sends a pulse across the floor (*Motion, as
+built*, "The visitor's hand").
+
+**What it costs, said to the owner when it was built:** WCAG 2.2.2 (Pause,
+Stop, Hide, level A) asks for a way to stop motion that runs past five
+seconds; without the control, only a visitor whose system asks for reduced
+motion is spared it (they still get the still poster, and nothing else
+moves). Restoring the control is a revert of this section's commit.
+
+**Held, on purpose:** the first frame is still the poster's (identity
+unchanged); every hand effect waits out HOLD_S and is zero at rest; the Lab
+robot stays steel with no comets; no amber, and the hand's light is not the
+comets' cyan; the frame's edge band stays the ground; reduced motion, Save-Data,
+phones and touch never mount the scene. The four pause-control cases are
+RETIRED with the owner's words; `probe-scene` gained `hand`, with four cases.
+
 ## Decided 2026-10-24: the studio redesign (owner's request; merged the same day, PR #3, main d068f11)
 
 **The request.** The owner, 2026-10-24, verbatim: "it's not look like well
@@ -3236,7 +3291,7 @@ as a solid, lit, connected peer with data flowing to it. So:
    55% of the hero's, about 390px, until the merge) — as the hero leaves; the hero is NOT pinned to lengthen it — for a
    buyer, delaying the proof below costs more than the effect earns. Its
    own passive scroll listener, no GSAP; identity at scroll 0, so no poster
-   change; frozen by Pause motion.
+   change.
 
 It stays inside every rule of *The hero field*: no textures, no
 post-processing, nothing allocated per frame, built in slices, the poster the

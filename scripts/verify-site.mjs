@@ -618,34 +618,6 @@ async function visitNav(browser, w) {
   await page.waitForTimeout(HOOK_SETTLE_MS);
   const nav = await page.evaluate(revealCount);
   const signal = await page.evaluate(() => document.documentElement.getAttribute("data-bf-signal"));
-  /* the pause control across Back and Forward (2026-09-29, the engineering
-     review): on a phone, where it shows for the poster's drift, Pause — then
-     Back to NAV_FROM and Forward to /, both client-side; the page stays
-     paused, and the remounted control must say so */
-  let toggle = null;
-  if (phone) {
-    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await page.waitForTimeout(400);
-    const btn = page.locator(".bf-motion-toggle[data-ready]");
-    if (!(await btn.isVisible().catch(() => false))) toggle = { hidden: true };
-    else {
-      const before = (await btn.textContent())?.trim();
-      await btn.click();
-      await page.waitForTimeout(300);
-      const pausedAt = await page.evaluate(() => document.documentElement.dataset.motion || null);
-      await page.goBack({ waitUntil: "commit" });
-      await page.waitForFunction((p) => location.pathname === p, NAV_FROM, { timeout: 30000 });
-      await page.waitForTimeout(600);
-      await page.goForward({ waitUntil: "commit" });
-      await page.waitForFunction(() => location.pathname === "/" && document.querySelector("#hero .bf-motion-toggle[data-ready]"), null, { timeout: 30000 });
-      await page.waitForTimeout(600);
-      toggle = await page.evaluate(() => {
-        const b = document.querySelector("#hero .bf-motion-toggle");
-        return { motion: document.documentElement.dataset.motion || null, label: b?.textContent?.trim() || null, pressed: b?.getAttribute("aria-pressed") ?? null };
-      });
-      Object.assign(toggle, { before, pausedAt });
-    }
-  }
   await ctx.close();
   return {
     width: w,
@@ -658,7 +630,6 @@ async function visitNav(browser, w) {
     toZero: frames.findIndex((f) => f.y === 0),
     nav,
     signal,
-    toggle,
   };
 }
 
@@ -2427,7 +2398,9 @@ function hiddenWithoutJs() {
     if (!el.getClientRects().length) continue; /* display:none at this width — by design, not by script */
     /* A button of type "button" outside any form does nothing without script, so
        it is not content: hidden without JS is progressive enhancement (the hero's
-       pause control, 2026-09-24). Listed in the report, never silently skipped. A
+       pause control from 2026-09-24 until the owner removed it on 2026-10-24;
+       the playground's "Follow this request"). Listed in the report, never
+       silently skipped. A
        submit button, a link, or any text around the control is still read. */
     const control = el.closest('button[type="button"]');
     if (control && !control.form) {
@@ -6117,8 +6090,8 @@ check(
 /* 34 — a client-side navigation starts the new page at its top, and runs its motion */
 check(
   34,
-  "A client-side navigation starts the new page at its top, at once, and its reveals — and at >=1025px the Signal — run on it as on a fresh load; a pause survives Back and Forward, and the pause control says so",
-  "the new page smooth-scrolling up from the old one's offset after the header's logo (html scroll-behavior: smooth without data-scroll-behavior, which Next 16 needs to turn it off for a route change), and every reveal measured at that stale offset and skipped — 0 of 39 from the bottom of /capabilities; a pause control that forgets the page is paused when it remounts, and says so twice (aria-pressed and its label)",
+  "A client-side navigation starts the new page at its top, at once, and its reveals — and at >=1025px the Signal — run on it as on a fresh load",
+  "the new page smooth-scrolling up from the old one's offset after the header's logo (html scroll-behavior: smooth without data-scroll-behavior, which Next 16 needs to turn it off for a route change), and every reveal measured at that stale offset and skipped — 0 of 39 from the bottom of /capabilities",
   (F, I) => {
     for (const r of navRuns) {
       const at = `@${r.width}`;
@@ -6141,15 +6114,6 @@ check(
       else if (r.nav.revealed < r.ref.revealed)
         F.push(`${at}: after the navigation, ${r.nav.revealed} of ${r.nav.total} reveals ran as / was read down, against ${r.ref.revealed} of ${r.ref.total} on a fresh load — the new page's reveals were judged at the old page's offset`);
       if (r.width >= 1025 && r.signal !== "live") F.push(`${at}: after the navigation the Signal never started on / (no html[data-bf-signal="live"]) — each page's motion starts on that page`);
-      const t = r.toggle;
-      if (t?.hidden) F.push(`${at}: the hero's pause control is not shown — its state across Back and Forward went untested; unsure is a failure`);
-      else if (t) {
-        if (t.before !== "Pause motion" || t.pausedAt !== "paused") F.push(`${at}: pressing the pause control ("${t.before}") left html[data-motion] ${t.pausedAt ? `"${t.pausedAt}"` : "unset"} — the page did not pause; the rest went untested`);
-        else if (t.motion !== "paused") F.push(`${at}: after Back and Forward the page is no longer paused (html[data-motion] unset) — a pause lasts until the reader resumes`);
-        else if (t.label !== "Resume motion") F.push(`${at}: after Back and Forward the page is paused (html[data-motion="paused"]) and its pause control reads "${t.label}" — the control shows the state it controls`);
-        if (t.pressed !== null) F.push(`${at}: the pause control carries aria-pressed="${t.pressed}" beside a label that changes — its state is said twice ("Resume motion, pressed")`);
-        I.push(`${at}: Pause, then Back and Forward: html[data-motion] ${t.motion ? `"${t.motion}"` : "unset"}, the control reads "${t.label}"${t.pressed !== null ? `, aria-pressed="${t.pressed}"` : ""}`);
-      }
       I.push(`${at}: ${NAV_FROM} left at scrollY ${r.fromY}; the new page's first frame at ${r.firstY}, the highest after it ${r.maxY} (${r.frames} frames); reveals ${r.nav.revealed}/${r.nav.total} after the navigation, ${r.ref.revealed}/${r.ref.total} on a fresh load${r.width >= 1025 ? `; the Signal ${r.signal || "not running"}` : ""}`);
     }
     /* the Signal's teardown: nothing left asking for frames on an idle page */

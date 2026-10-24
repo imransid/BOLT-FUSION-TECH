@@ -35,12 +35,11 @@ import type { SceneHandle } from "./scene";
  * `data-scene-ready`. The poster stays rendered underneath; it is never hidden
  * or removed (verify-site check 28).
  *
- * The pause control (components/site/MotionToggle): once the scene has drawn,
- * `#hero` carries `data-scene="live"`, which shows "Pause motion". The button
- * sets `html[data-motion="paused"]` and dispatches `bf:motion` with
- * `{ paused }`; the scene stops its loop and resumes on the next event. A
- * scene that mounts while the attribute is set draws its first frame and waits.
- * `data-scene` goes on teardown.
+ * Once the scene has drawn, `#hero` carries `data-scene="live"` (the field's
+ * grab cursor reads it); it goes on teardown. There is no pause control since
+ * 2026-10-24 — the owner: "remove Pause motion button, all time should be
+ * move but mouse to control". The scene runs whenever it is on screen and
+ * the tab is visible; reduced motion still never mounts it.
  *
  * The field is found by `document.querySelector`: a component that renders
  * nothing has no node to call `closest()` from, and the page has one field.
@@ -61,9 +60,6 @@ function idle(): Promise<void> {
 }
 
 type Mount = { dead: boolean; handle?: SceneHandle; canvas?: HTMLCanvasElement; field?: HTMLElement; hero?: HTMLElement | null };
-
-/** The hero's pause control (components/site/MotionToggle) sets this on <html>. */
-const motionPaused = () => document.documentElement.dataset.motion === "paused";
 
 export default function HeroScene() {
   useEffect(() => {
@@ -106,8 +102,6 @@ export default function HeroScene() {
       canvas.style.cssText = `position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity ${FADE_MS}ms ease-out;pointer-events:none`;
       field.append(canvas);
       const handle = mod.createScene(canvas, {
-        /* already paused by the visitor: draw t = 0, run no loop */
-        paused: motionPaused(),
         /* a lost context: drop the canvas; the poster is already underneath */
         onLost: () => {
           if (current === m) teardown();
@@ -121,29 +115,21 @@ export default function HeroScene() {
       handle.ready.then(() => {
         if (m.dead) return;
         field.setAttribute("data-scene-ready", "");
-        /* shows the hero's "Pause motion" button; it stays while paused, so it can resume */
         m.hero?.setAttribute("data-scene", "live");
         canvas.style.opacity = "1";
       });
     };
 
     const onChange = () => (allowed() ? void mount() : teardown());
-    /* the pause control: { paused } in the event, the <html> attribute as a fallback */
-    const onMotion = (e: Event) => {
-      const paused = (e as CustomEvent<{ paused?: boolean } | null>).detail?.paused;
-      current?.handle?.setPaused(typeof paused === "boolean" ? paused : motionPaused());
-    };
     desktop.addEventListener("change", onChange);
     reduced.addEventListener("change", onChange);
     net?.addEventListener?.("change", onChange);
-    window.addEventListener("bf:motion", onMotion);
     if (allowed()) void mount();
 
     return () => {
       desktop.removeEventListener("change", onChange);
       reduced.removeEventListener("change", onChange);
       net?.removeEventListener?.("change", onChange);
-      window.removeEventListener("bf:motion", onMotion);
       teardown();
     };
   }, []);

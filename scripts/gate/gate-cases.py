@@ -348,17 +348,6 @@ def p_st_awake(s):
     s.rep("components/motion/signal.ts", "    ScrollTrigger.disable();\n    asleep = true;\n", "    asleep = false; // THROWAWAY misuse: ScrollTrigger's own loop left running\n")
 
 
-def p_toggle_local(s):
-    """34: the pause control back on a state of its own, with aria-pressed —
-    the page stays paused across Back and Forward, and the remounted control
-    says "Pause motion" (the engineering review, 2026-09-29)"""
-    f = "components/site/MotionToggle.tsx"
-    s.rep(f, 'import { useSyncExternalStore } from "react";\n', 'import { useState, useSyncExternalStore } from "react";\n')
-    s.rep(f, "  const paused = useSyncExternalStore(subscribeMotion, isPaused, () => false);\n", "  const [paused, setPaused] = useState(false); // THROWAWAY misuse\n")
-    s.rep(f, "    const next = !isPaused();\n", "    const next = !paused;\n    setPaused(next);\n")
-    s.rep(f, '    <button type="button" className="bf-motion-toggle" onClick={toggle}', '    <button type="button" className="bf-motion-toggle" aria-pressed={paused} onClick={toggle}')
-
-
 def p_scene_hides_poster(s):
     s.rep("components/field/HeroScene.tsx", '        canvas.style.opacity = "1";\n',
           '        canvas.style.opacity = "1";\n        const vsPoster = field.querySelector<HTMLImageElement>("img[data-hero-poster]");\n        if (vsPoster && window.innerWidth >= 1280) vsPoster.style.display = "none";\n')
@@ -814,8 +803,6 @@ CASES = [
     # new at the fix pass (2026-09-29): a client-side navigation starts at the top, and its reveals run
     ["nav-smooth", "no data-scroll-behavior on <html> — a client-side navigation smooth-scrolls the new page up from the old offset", 34, r"^@1440: the new page's first frame is at scrollY [1-9]\d*", p_nav_smooth, {}],
     ["st-awake", "the Signal's teardown leaves ScrollTrigger's loop running — an idle /work wakes ~62 times a second", 34, r"^@1440 on /work after the Signal ran on /engineering, the idle page still asks for \d+ animation frames a second", p_st_awake, {}],
-    ["toggle-local", "the pause control keeps its own state — paused across Back and Forward, it reads \"Pause motion\"", 34, r'^@390: after Back and Forward the page is paused \(html\[data-motion="paused"\]\) and its pause control reads "Pause motion"', p_toggle_local, {}],
-    ["toggle-pressed", "the pause control says its state twice — aria-pressed beside a changing label", 34, r'^@390: the pause control carries aria-pressed="false" beside a label that changes', None, {"from": "toggle-local"}],
     ["hook-blink", "the Signal's hooks settle back to the hollow drawing — the payoff a blink", 35, r"^/engineering @1440 a fresh load: read down at reading speed, 0 of \d+ stations of the Signal's hooks are lit at rest", p_hook_blink, {}],
     ["hook-blink-untraced", "the Signal's hooks settle back to the hollow drawing — the line not left traced", 35, r"^/engineering @1440 a fresh load: the hook\(s\) rail, cta did not settle traced", None, {"from": "hook-blink"}],
     ["nav-reveals", "no data-scroll-behavior on <html> — the new page's reveals judged at the old offset, and skipped", 34, r"^@(?:1440|390): after the navigation, \d+ of \d+ reveals ran as / was read down, against \d+ of \d+ on a fresh load", None, {"from": "nav-smooth"}],
@@ -861,6 +848,10 @@ CASES = [
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
 RETIRED = [
+    ["toggle-local", "the pause control keeps its own state across Back and Forward", 34, "the owner removed the hero's Pause motion control on 2026-10-24 (\"remove Pause motion button, all time should be move but mouse to control\"): there is no control to keep a state, and nothing pauses the scene"],
+    ["toggle-pressed", "the pause control says its state twice (aria-pressed and its label)", 34, "the owner removed the hero's Pause motion control on 2026-10-24 (\"remove Pause motion button, all time should be move but mouse to control\"): there is no control to keep a state, and nothing pauses the scene"],
+    ["scene-nopause", "Pause motion ignored by the scene: the stack follows the scroll while paused", "probe:explode", "the owner removed the hero's Pause motion control on 2026-10-24 (\"remove Pause motion button, all time should be move but mouse to control\"): there is no control to keep a state, and nothing pauses the scene"],
+    ["scene-nopause-charge", "Pause motion ignored by the scene: the charge answers a hover while paused", "probe:charge", "the owner removed the hero's Pause motion control on 2026-10-24 (\"remove Pause motion button, all time should be move but mouse to control\"): there is no control to keep a state, and nothing pauses the scene"],
     ["person", "Person node with an empty jobTitle", 14, "the team is a headcount (owner, 2026-09-24): no Person node is emitted anywhere, so there is none to empty — check 14 now fails any Person node (the person-card case)"],
 ]
 
@@ -887,10 +878,25 @@ def p_scene_nohold(s):
     s.rep("components/field/scene.ts", "  let explode = 0; // the exploded view", "  let explode = Math.min(1, window.scrollY / 393); // THROWAWAY misuse: the exploded view")
 
 
-def p_scene_nopause(s):
-    """explode and charge: Pause motion ignored — the loop keeps running"""
-    s.rep("components/field/scene.ts", "      paused = p;\n", "      paused = p && false; // THROWAWAY misuse\n")
 
+def p_hand_dark(s):
+    """hand: the mouse over the field reaches nothing — no light, no woken module"""
+    s.rep("components/field/scene.ts", "    hand.inside = onCanvas(e);\n", "    hand.inside = onCanvas(e) && false; // THROWAWAY misuse\n")
+
+
+def p_hand_nospin(s):
+    """hand: a drag adds no spin"""
+    s.rep("components/field/scene.ts", "const SPIN_PER_PX = 0.012;", "const SPIN_PER_PX = 0 * 0.012; // THROWAWAY misuse")
+
+
+def p_hand_nopulse(s):
+    """hand: a click sends no pulse"""
+    s.rep("components/field/scene.ts", "    if (dragTravel < CLICK_PX && time > HOLD_S) waveT = 0;\n", "    if (dragTravel < CLICK_PX && time > HOLD_S) waveT = -1; // THROWAWAY misuse: the click's pulse dropped\n")
+
+
+def p_hand_at_rest(s):
+    """identity: the hand's light on from the first frame — the poster no longer matches"""
+    s.rep("components/field/scene.ts", "  let handK = 0; // the hand light's presence, eased 0..1", "  let handK = 1; // THROWAWAY misuse: the hand light's presence")
 
 def p_scene_pop(s):
     """watchdog: the comets dropped in one frame instead of faded"""
@@ -950,11 +956,14 @@ def p_poster_stale(s):
 # scripts/probe-scene.mjs check, `probe:<name>`. One per rule the probe holds
 # that the suite cannot see (CLAUDE.md, "The hero field").
 PROBE_CASES = [
+    # the visitor's hand (2026-10-24), one per rule
+    ["hand-dark", "the mouse over the field lights nothing", "probe:hand", r"^the mouse over the field changed nothing", p_hand_dark, {}],
+    ["hand-nospin", "a drag on the field does not turn the core", "probe:hand", r"^a drag across the field did not turn the core", p_hand_nospin, {}],
+    ["hand-nopulse", "a click on the field sends no pulse", "probe:hand", r"^a click on the field sent no pulse", p_hand_nopulse, {}],
+    ["hand-at-rest", "the hand's light on at rest — the first frame is not the poster", "probe:identity", r"^@660 DPR 1: the canvas's t = 0 frame differs from the poster", p_hand_at_rest, {}],
     ["scene-gap", "the exploded view opened 0.3 a plate — the stack reaches the frame's edge", "probe:explode", r"^@660 fully open, [^:]*: the edge band is \d+ off the ground", p_scene_gap, {}],
     ["explode-span", "the exploded view opens over 202px again — it finishes with its top under the pinned header", "probe:view", r"^the opened stack goes under the pinned header \(\d+px\) at scroll \d+px while it is only \d+% open — it opens fully only at scroll (?:1[6-9]\d|2\d\d)px", p_explode_span, {}],
     ["scene-nohold", "the exploded view starts from the scroll at mount — a mid-scroll reload opens before the fade", "probe:reload", r"^loaded mid-scroll, the first frame is not the poster", p_scene_nohold, {}],
-    ["scene-nopause", "Pause motion ignored by the scene — the stack follows the scroll while paused", "probe:explode", r"^paused, the stack still moved with the scroll \([1-9]\d* draw calls", p_scene_nopause, {}],
-    ["scene-nopause-charge", "Pause motion ignored by the scene — the charge answers a hover while paused", "probe:charge", r"^paused, the scene still answered the hover \([1-9]\d* draw calls", None, {"from": "scene-nopause"}],
     ["scene-pop", "the watchdog drops the comets in one frame", "probe:watchdog", r"^the comets: \d+% of it went in one 0\.2s step at [\d.]+s — it vanished instead of fading", p_scene_pop, {}],
     ["scene-gpu-blind", "the watchdog never judges the GPU's clocked time — a slow GPU at a smooth cadence keeps everything", "probe:watchdog", r"^a GPU clocked at 30ms a frame, at a smooth 60Hz cadence with cheap script work: the drawing buffer never stepped down in 4s", p_scene_gpu_blind, {}],
     # the cadence check's control (with no GPU clock, an uneven cadence DOES

@@ -42,7 +42,12 @@ export function captureHook() {
 
 /** The scene camera's pose, recovered: its target is on the y axis, where it looks. */
 export function cameraPose() {
-  const cam = (window.__bfCameras || []).at(-1);
+  /* the scene's own camera: the last PerspectiveCamera made that is not a
+     light's shadow camera — a PointLight (the visitor's hand, 2026-10-24)
+     makes a PerspectiveCamera for its shadow, after the scene's */
+  const shadowCams = new Set();
+  for (const sc of window.__bfScenes || []) sc.traverse?.((o) => o.shadow?.camera && shadowCams.add(o.shadow.camera));
+  const cam = (window.__bfCameras || []).filter((c) => !shadowCams.has(c)).at(-1);
   if (!cam) return null;
   const e = cam.matrixWorld.elements;
   const t = Math.abs(e[10]) > Math.abs(e[8]) ? e[14] / e[10] : e[12] / e[8];
@@ -59,7 +64,12 @@ export function cameraPose() {
  */
 export function layoutRun({ samples, frames, dtMs, variants, W, H, limits, keep = [] }) {
   const scene = (window.__bfScenes || []).find((s) => s.getObjectByName && s.getObjectByName("core"));
-  const cam = (window.__bfCameras || []).at(-1);
+  /* the scene's own camera: the last PerspectiveCamera made that is not a
+     light's shadow camera — a PointLight (the visitor's hand, 2026-10-24)
+     makes a PerspectiveCamera for its shadow, after the scene's */
+  const shadowCams = new Set();
+  for (const sc of window.__bfScenes || []) sc.traverse?.((o) => o.shadow?.camera && shadowCams.add(o.shadow.camera));
+  const cam = (window.__bfCameras || []).filter((c) => !shadowCams.has(c)).at(-1);
   if (!scene || !cam) return { error: "no scene or camera captured (captureHook must run before the page's scripts)" };
   const core = scene.getObjectByName("core");
   const mods = [];

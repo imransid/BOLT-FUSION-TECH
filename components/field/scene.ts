@@ -108,6 +108,7 @@ import {
   type Object3D,
   PerspectiveCamera,
   PlaneGeometry,
+  PointLight,
   QuadraticBezierCurve3,
   RingGeometry,
   Scene,
@@ -123,15 +124,11 @@ import {
 export type SceneOptions = {
   /** Called once if the WebGL context is lost. The loop has stopped; the caller disposes. */
   onLost?: () => void;
-  /** Start paused: the first frame (t = 0) is still drawn, and the loop waits for setPaused(false). */
-  paused?: boolean;
 };
 
 export type SceneHandle = {
   /** Resolves once the first frame (t = 0, camera at rest) has been drawn. */
   ready: Promise<void>;
-  /** The visitor's pause control (the hero's "Pause motion"): stops the loop, or lets it run again. */
-  setPaused(paused: boolean): void;
   /** Stops the loop and frees every GPU resource, the context included. Idempotent. */
   dispose(): void;
 };
@@ -175,6 +172,31 @@ const CHARGE_EASE = 5; // per second: about 0.6s to settle, either way
 const CHARGE_SEAM = 0.24; // the seams' mix toward pale blue at full charge: about +40% luminance, as drawn
 const CHARGE_RIM = 0.3; // the graphite's rim, +30%
 const CHARGE_CLOCK = 0.6; // the comets' clock runs 1 + this, 1.6x
+
+/* ── The visitor's hand (2026-10-24; the owner: "mouse to control … more
+   power, more creative, more interesting"). The mouse over the field — the
+   canvas's own box, never the page around it — carries a light, wakes the
+   module it comes near, spins the core when it drags, and sends a pulse when
+   it clicks. Every one of them is exactly zero until the visitor acts, and
+   nothing answers before HOLD_S: the first frame is still the poster's. ── */
+const HAND_EASE = 3; // per second: the hand light's presence follows the mouse in and out of the field
+const HAND_LIGHT = 0xb7c8ff; // a cool, pale brand light: never amber (amber means target), never the comets' cyan
+const HAND_I = 30; // its intensity at full presence (physical units; decay 2)
+const HAND_NEAR = 2.8; // world units in front of the stack, along the pointer's ray, where the light hangs
+const FOCUS_R = 0.34; // of the field's half-height: how near the pointer must come to a module to wake it
+const FOCUS_EASE = 6; // per second
+const FOCUS_LIFT = 0.16; // world units a woken module rises
+const FOCUS_GROW = 0.07; // and how much it grows
+const FOCUS_FLOW = 2.2; // its link's comets run this much faster at full focus (a Lab link has none)
+const SPIN_PER_PX = 0.012; // rad/s of spin a pixel of drag adds
+const SPIN_MAX = 4.5; // rad/s: a spin, never a blur
+const SPIN_FRICTION = 1.5; // per second: it coasts down over a few seconds
+const CLICK_PX = 6; // a press that travels less than this is a click
+const WAVE_S = 1.6; // a click's pulse: the ring crosses the floor in this long
+const WAVE_FROM = 1.3; // its radius: from just outside the core's footprint…
+const WAVE_TO = 2.75; // …to where the floor fades into the ground
+const WAVE_FLOW = 1.4; // the comets' extra speed at the pulse's peak
+const WAVE_SEAM = 0.16; // and the seams' lift: a swell over 1.6s, never a flash
 
 /* ── Camera: a fixed HORIZONTAL field of view, orbiting a target above the core ── */
 const FOV = 30; // vertical degrees at the 660x560 frame
@@ -443,6 +465,11 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const rim = new DirectionalLight(0x5a8cff, 3.4);
   rim.position.set(-5.5, 3.2, -6.5);
   scene.add(rim);
+  /* the visitor's hand: a point light that follows the mouse over the field.
+     Made at intensity 0, so every program is compiled with it from the start
+     and the first frame — the poster's — is exactly what it was without it. */
+  const handLight = new PointLight(HAND_LIGHT, 0, 0, 2);
+  scene.add(handLight);
 
   /* ── The floor: an architectural grid, anti-aliased in the shader, fading
        into the ground with distance, with a faint blue pool under the core ── */
@@ -504,6 +531,13 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   /* the core's footprint on the floor: a thin octagon */
   const footprint = add(scene, geo(new RingGeometry(1.6, 1.618, 8, 1, Math.PI / 8)), orbitMat, 0, 0.002, 0);
   footprint.rotation.x = -Math.PI / 2;
+
+  /* a click's pulse: one brand-blue ring that crosses the floor from the
+     core's footprint to where the floor fades. Added light at opacity 0 adds
+     nothing, so at rest it is not there. */
+  const waveMat = mat(new MeshBasicMaterial({ color: BRAND, transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }));
+  const waveRing = add(scene, geo(new RingGeometry(0.985, 1, 96)), waveMat, 0, 0.004, 0);
+  waveRing.rotation.x = -Math.PI / 2;
 
   /* ── The core: one slice of the build ── */
   const plates: Group[] = [];
@@ -676,7 +710,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     tier: Tier;
     group: Group;
     ring: Mesh;
-    modules: { obj: Group; yaw: number; wobble: number }[];
+    modules: { obj: Group; yaw: number; wobble: number; scale: number }[];
+    focus: Float32Array; // per module: how awake it is under the hand, 0..1, eased
+    ahead: Float32Array; // per connection: how far its comets' clock has run ahead while woken (s)
     curves: Float32Array; // 9 floats per connection: P0, P1, P2
     pulses: InstancedMesh; // the comets' heads
     halos: InstancedMesh; // their glow: TRAIL instances per comet
@@ -736,6 +772,8 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       ring,
       modules: [],
       curves: new Float32Array(slots.length * 9),
+      focus: new Float32Array(slots.length),
+      ahead: new Float32Array(slots.length),
       pulses,
       halos,
       pulseCurve,
@@ -785,7 +823,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       add(group, portGeo, edge, tmpA.x, tmpA.y, tmpA.z);
       add(group, portGeo, edge, tmpC.x, tmpC.y, tmpC.z);
     }
-    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7 });
+    bt.modules.push({ obj: holder, yaw: s.yaw, wobble: seed + i * 1.7, scale: s.scale });
   };
 
   /* ── Per-frame state (allocated once) ── */
@@ -799,6 +837,18 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let explodeSpan = 1; // px of scroll that open it fully
   let hovered = false;
   let focused = false;
+  /* the hand (all of it exactly zero until the visitor acts) */
+  const hand = { x: 0, y: 0, inside: false }; // the pointer across the canvas, -1..1, and whether it is on it
+  let handK = 0; // the hand light's presence, eased 0..1
+  let spin = 0; // the core's extra turn from a drag (rad)
+  let spinV = 0; // its velocity (rad/s), coasting down
+  let dragging = false;
+  let dragX = 0;
+  let dragTravel = 0;
+  let waveT = -1; // seconds since a click's pulse; -1: none running
+  let surge = 0; // the pulse's swell, 0..1..0 over WAVE_S
+  const handRay = new Vector3();
+  const seen = new Vector3(); // a module's place on screen, for the hand's reach
   let last = 0;
   let slowFor = 0;
   let avgMs = 1000 / 60; // the running average rAF interval, for the watchdog (the cadence)
@@ -819,7 +869,6 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   let lost = false;
   let inView = true;
   let visible = !document.hidden;
-  let paused = opts.paused ?? false;
   let sizeDirty = true;
 
   /* The GPU's own clock, where the browser has one (Chrome and Edge on the
@@ -869,7 +918,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       const j = bt.pulseCurve[i];
       const o = j * 9;
       const dir = bt.pulseDir[i];
-      const head = (bt.pulsePhase[i] + t * bt.pulseRate[i]) % 1;
+      const head = (bt.pulsePhase[i] + (t + bt.ahead[j]) * bt.pulseRate[i]) % 1;
       /* grow in from the start and shrink out at the end: nothing pops */
       const s = smooth(0, 0.12, head) * (1 - smooth(0.86, 1, head)) * fadeK;
       for (let k = 0; k < TRAIL; k++) {
@@ -912,10 +961,11 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   const pose = (t: number) => {
     /* indexed loops only: no iterators or closures per frame */
     for (let i = 0; i < plates.length; i++) {
-      plates[i].rotation.y = (i % 2 ? Math.PI / 8 : 0) + t * (0.055 + (i % 2) * 0.018);
+      /* a drag spins the stack, the plates turning against each other like a machined assembly */
+      plates[i].rotation.y = (i % 2 ? Math.PI / 8 : 0) + t * (0.055 + (i % 2) * 0.018) + spin * (i % 2 ? -0.7 : 1);
     }
     seamU.uT.value = pulseClock;
-    seamU.uCharge.value = Math.min(1, CHARGE_SEAM * energy + EXPLODE_SEAM * explode);
+    seamU.uCharge.value = Math.min(1, CHARGE_SEAM * energy + EXPLODE_SEAM * explode + WAVE_SEAM * surge);
     rimBoost.value = 1 + CHARGE_RIM * energy;
     /* the tiers' one sway: zero at t = 0, so the slots are the poster's layout */
     const sway = Math.sin(t * SWAY_RATE);
@@ -927,6 +977,10 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       for (let i = 0; i < bt.modules.length; i++) {
         const m = bt.modules[i];
         m.obj.rotation.y = m.yaw - ang + 0.2 * Math.sin(t * 0.3 + m.wobble);
+        /* woken by the hand: it rises and grows a little (exactly its slot at focus 0) */
+        const f = bt.focus[i];
+        m.obj.position.y = bt.tier.y + FOCUS_LIFT * f;
+        m.obj.scale.setScalar(m.scale * (1 + FOCUS_GROW * f));
       }
       /* the comets run on their own clock: changing a rate under `phase + t * rate` would make them jump */
       if (degrade < 2 || cometK > 0) writePulses(bt, pulseClock);
@@ -956,6 +1010,54 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     const d = CAM_DIST * (1 + EXPLODE_BACK * explode);
     camera.position.set(d * Math.cos(el) * Math.sin(az), target.y + d * Math.sin(el), d * Math.cos(el) * Math.cos(az));
     camera.lookAt(target);
+
+    /* the hand light hangs in front of the stack, under the pointer */
+    handLight.intensity = HAND_I * handK * handK;
+    if (handK > 0) {
+      camera.updateMatrixWorld();
+      handRay.set(hand.x, hand.y, 0.5).unproject(camera).sub(camera.position).normalize();
+      handLight.position.copy(camera.position).addScaledVector(handRay, d - HAND_NEAR);
+    }
+    /* a click's pulse: the ring eases out across the floor and fades as it
+       goes, its light ramping in over 0.12s — it swells, it never flashes */
+    if (waveT >= 0) {
+      const w = Math.min(1, waveT / WAVE_S);
+      waveRing.scale.setScalar(WAVE_FROM + (WAVE_TO - WAVE_FROM) * (1 - (1 - w) * (1 - w)));
+      waveMat.opacity = 0.7 * Math.pow(1 - w, 1.5) * Math.min(1, waveT / 0.12);
+    } else waveMat.opacity = 0;
+  };
+
+  /** The module nearest the hand, within its reach, wakes; every other one
+   *  settles back to its slot. Read on screen — each module's place projected
+   *  through the camera — so the reach is the same everywhere in the frame. */
+  const wake = (dt: number) => {
+    let bestB = -1;
+    let bestI = -1;
+    let bestD = FOCUS_R;
+    if (hand.inside && handK > 0.05) {
+      for (let b = 0; b < tiers.length; b++) {
+        const ms = tiers[b].modules;
+        for (let i = 0; i < ms.length; i++) {
+          ms[i].obj.getWorldPosition(seen).project(camera);
+          const dx = (seen.x - hand.x) * camera.aspect;
+          const dy = seen.y - hand.y;
+          const dd = Math.sqrt(dx * dx + dy * dy);
+          if (dd < bestD) {
+            bestD = dd;
+            bestB = b;
+            bestI = i;
+          }
+        }
+      }
+    }
+    const k = 1 - Math.exp(-dt * FOCUS_EASE);
+    for (let b = 0; b < tiers.length; b++) {
+      const bt = tiers[b];
+      for (let i = 0; i < bt.modules.length; i++) {
+        bt.focus[i] += ((b === bestB && i === bestI ? 1 : 0) - bt.focus[i]) * k;
+        bt.ahead[i] += dt * FOCUS_FLOW * bt.focus[i];
+      }
+    }
   };
 
   const applySize = () => {
@@ -1018,7 +1120,17 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     time += dt;
     /* the charge follows the visitor once the canvas has faded in */
     if (time > HOLD_S) energy += ((hovered || focused ? 1 : 0) - energy) * (1 - Math.exp(-dt * CHARGE_EASE));
-    pulseClock += dt * (1 + CHARGE_CLOCK * energy);
+    /* the hand — its light, its spin, its pulse, the module it wakes — none
+       of it before the canvas has faded in */
+    if (time > HOLD_S) {
+      handK += ((hand.inside ? 1 : 0) - handK) * (1 - Math.exp(-dt * HAND_EASE));
+      spin += spinV * dt;
+      spinV *= Math.exp(-dt * SPIN_FRICTION);
+      if (waveT >= 0 && (waveT += dt) > WAVE_S) waveT = -1;
+      wake(dt);
+    } else waveT = -1;
+    surge = waveT >= 0 ? Math.sin(Math.PI * (waveT / WAVE_S)) : 0;
+    pulseClock += dt * (1 + CHARGE_CLOCK * energy + WAVE_FLOW * surge);
     if (time > HOLD_S) explode += (explodeTarget - explode) * (1 - Math.exp(-dt * EXPLODE_EASE));
     /* the fades: the comets shrink away, then the outer tier sinks into the
        floor (the floor's depth hides it); each is hidden once it has gone */
@@ -1075,7 +1187,7 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     running = false;
     cancelAnimationFrame(raf);
   };
-  const sync = () => (inView && visible && !paused ? start() : stop());
+  const sync = () => (inView && visible ? start() : stop());
 
   const io = new IntersectionObserver((entries) => {
     inView = entries[entries.length - 1].isIntersecting;
@@ -1099,10 +1211,44 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
     visible = !document.hidden;
     sync();
   };
+  /** Where the pointer is on the canvas; false off it. Read in the
+   *  listener — never per frame. */
+  const onCanvas = (e: PointerEvent) => {
+    const r = canvas.getBoundingClientRect();
+    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (inside) {
+      hand.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      hand.y = -(((e.clientY - r.top) / r.height) * 2 - 1);
+    }
+    return inside;
+  };
   const onPointer = (e: PointerEvent) => {
     if (e.pointerType === "touch") return;
     pointer.x = Math.max(-1, Math.min(1, (e.clientX / window.innerWidth) * 2 - 1));
     pointer.y = Math.max(-1, Math.min(1, -((e.clientY / window.innerHeight) * 2 - 1)));
+    hand.inside = onCanvas(e);
+    if (dragging) {
+      const dx = e.clientX - dragX;
+      dragX = e.clientX;
+      dragTravel += Math.abs(dx);
+      spinV = Math.max(-SPIN_MAX, Math.min(SPIN_MAX, spinV + dx * SPIN_PER_PX));
+    }
+  };
+  /* a press on the field: a drag spins the core; a press that barely moves is a click, and sends a pulse */
+  const onDown = (e: PointerEvent) => {
+    if (e.pointerType === "touch" || e.button !== 0 || !onCanvas(e)) return;
+    dragging = true;
+    dragX = e.clientX;
+    dragTravel = 0;
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dragTravel < CLICK_PX && time > HOLD_S) waveT = 0;
+  };
+  const onOut = () => {
+    hand.inside = false;
+    dragging = false;
   };
   /* the hero's own Schedule a Call; the canvas sits in the hero's field */
   const cta = canvas.closest("#hero")?.querySelector<HTMLElement>('[data-cta="schedule"]') ?? null;
@@ -1129,6 +1275,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
   canvas.addEventListener("webglcontextlost", onLost);
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("pointermove", onPointer, { passive: true });
+  window.addEventListener("pointerdown", onDown, { passive: true });
+  window.addEventListener("pointerup", onUp, { passive: true });
+  document.documentElement.addEventListener("pointerleave", onOut);
   window.addEventListener("scroll", onScroll, { passive: true });
   io.observe(canvas);
   ro.observe(canvas);
@@ -1203,10 +1352,6 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
 
   return {
     ready,
-    setPaused(p: boolean) {
-      paused = p;
-      sync();
-    },
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -1217,6 +1362,9 @@ export function createScene(canvas: HTMLCanvasElement, opts: SceneOptions = {}):
       canvas.removeEventListener("webglcontextlost", onLost);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      document.documentElement.removeEventListener("pointerleave", onOut);
       window.removeEventListener("scroll", onScroll);
       cta?.removeEventListener("pointerenter", onEnter);
       cta?.removeEventListener("pointerleave", onLeave);

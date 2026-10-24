@@ -298,8 +298,6 @@ async function open({ dpr = 1, width = 660, left = 0, css = "", before, init, pi
   await page.evaluate(() => window.__bfStep(1));
   return { ctx, page, errors, width, left };
 }
-/** How many draw calls the scene has attempted so far: none while it is paused. */
-const draws = (p) => p.page.evaluate(() => window.__bfDraws || 0);
 const advance = (p, seconds, dtMs = 1000 / 60) => p.page.evaluate(([n, d]) => window.__bfStep(n, d), [Math.max(1, Math.round((seconds * 1000) / dtMs)), dtMs]);
 const pointerAt = (p, fx, fy) => p.page.mouse.move(1440 * fx, 1000 * fy);
 
@@ -542,12 +540,16 @@ try {
       const ctx = await browser.newContext({ ...o, reducedMotion: "no-preference" });
       const page = await ctx.newPage();
       await page.goto(URL_, { waitUntil: "load", timeout: 120000 });
-      const ready = await page.waitForSelector(".bf-motion-toggle[data-ready]", { timeout: 30000 }).then(() => true, () => false);
+      /* the drift is CSS from load (2026-10-24: it waited for the pause control
+         until the owner removed the control) */
+      const ready = await page
+        .waitForFunction(() => document.querySelector("img[data-hero-poster]")?.getAnimations().some((a) => a.animationName === "bf-field-drift"), null, { timeout: 30000 })
+        .then(() => true, () => false);
       await page.waitForFunction(() => {
         const im = document.querySelector("img[data-hero-poster]");
         return im && im.complete && im.naturalWidth > 0;
       });
-      if (!ready) fail(`@${label}: the pause control never became ready — the drift never starts, so this read its first frame only`);
+      if (!ready) fail(`@${label}: the poster's drift never started — this read its first frame only`);
       const worst = { dev: 0, lit: 0, T: 1e9, B: 1e9, L: 1e9, R: 1e9 };
       let st = null;
       for (const [end, ms] of [["from", 0], ["to", 25999]]) {
@@ -563,7 +565,11 @@ try {
             a.currentTime = t;
           }
           const f = im.closest("[data-hero-field]");
-          f.scrollIntoView({ block: "center" });
+          /* instant: the page scrolls smoothly under no-preference motion, and a
+             smooth scroll still in flight left the clip on the paper beside
+             the field — a false band failure at 1180x820, the one profile
+             whose field ends below the fold (found 2026-10-24) */
+          f.scrollIntoView({ block: "center", behavior: "instant" });
           const b = f.getBoundingClientRect();
           return { hidden, drift: !!a, tf: getComputedStyle(im).transform, fit: getComputedStyle(im).objectFit, src: im.currentSrc.split("/").pop(), canvas: f.querySelectorAll("canvas").length, x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.width), h: Math.round(b.height) };
         }, ms);
@@ -681,22 +687,6 @@ try {
     info(`and once the hold is over it charges: x${eFull.gain.toFixed(2)} at 1.6s`);
     if (eFull.gain < 1.3) fail(`the pointer was on the CTA when the scene mounted, and after the hold the seams are only x${eFull.gain.toFixed(2)}`);
     for (const p of all) await p.ctx.close();
-    /* paused (the hero's Pause motion): hovering changes nothing */
-    const p = await open({ width: 660, left: 760 });
-    await advance(p, 1.5);
-    const before = await grab(p);
-    await p.page.evaluate(() => {
-      document.documentElement.dataset.motion = "paused";
-      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: true } }));
-    });
-    await p.page.hover(CTA);
-    const drawsBefore = await draws(p);
-    await advance(p, 1.6);
-    const drew = (await draws(p)) - drawsBefore;
-    const d = diff(before, await grab(p));
-    info(`paused: hovered for 1.6s, the scene drew ${drew} time(s), the field changed by ${d.line}`);
-    if (drew || d.bigPct > 0) fail(`paused, the scene still answered the hover (${drew} draw calls; ${d.line}) — Pause motion freezes it`);
-    await p.ctx.close();
   }
 
   /* ── explode: the hero scrolled away opens the stack; the band stays the ground ── */
@@ -752,29 +742,65 @@ try {
     info(`scrolled 0, 25, 50, 75 and 100% of the span: the frame differs from the unscrolled one by ${opening.map((v) => `${v.toFixed(1)}%`).join(", ")} of its pixels`);
     if (opening[0] > 0.05) fail(`at scroll 0 the frame is not the assembled one (${opening[0].toFixed(2)}% differ) — the exploded view is identity at scroll 0`);
     for (let i = 1; i < opening.length; i++) if (!(opening[i] > opening[i - 1])) fail(`the stack does not open further as the scroll goes on (${opening.map((v) => v.toFixed(1)).join(" → ")})`);
-    await moved.page.evaluate(() => {
-      document.documentElement.dataset.motion = "paused";
-      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: true } }));
-    });
-    const pausedBefore = await grab(moved);
+    /* (until 2026-10-24 the stack was also held still here under Pause motion;
+       the owner removed the control) */
     await moved.page.evaluate(() => window.scrollTo(0, 0));
     await moved.page.waitForTimeout(120);
-    const drawsPaused = await draws(moved);
-    await advance(moved, 1.5);
-    const drewPaused = (await draws(moved)) - drawsPaused;
-    const frozen = diff(pausedBefore, await grab(moved));
-    info(`paused, scrolled back to the top: the scene drew ${drewPaused} time(s), the field changed by ${frozen.line}`);
-    if (drewPaused || frozen.bigPct > 0) fail(`paused, the stack still moved with the scroll (${drewPaused} draw calls; ${frozen.line}) — Pause motion freezes it`);
-    await moved.page.evaluate(() => {
-      delete document.documentElement.dataset.motion;
-      window.dispatchEvent(new CustomEvent("bf:motion", { detail: { paused: false } }));
-    });
-    await advance(moved, 0); // its first frame after a pause has no delta (the loop restarts): the clocks agree again
     const back = await both(2.5);
-    info(`resumed at the top: 2.5s later it differs from the unscrolled page by ${back.toFixed(2)}% of its pixels`);
+    info(`scrolled back to the top: 2.5s later it differs from the unscrolled page by ${back.toFixed(2)}% of its pixels`);
     if (back > 0.05) fail(`back at the top, the stack did not reassemble (${back.toFixed(2)}% of the frame differs from the unscrolled one)`);
     await still.ctx.close();
     await moved.ctx.close();
+  }
+
+  /* ── hand (2026-10-24): the mouse over the field drives the scene ──
+     Each effect against an untouched page at the same moment, with the
+     pointer at the same place on the screen (the camera's parallax follows
+     the pointer across the viewport, so the frames compare only then). The
+     untouched page's field is pinned at the left, so that point is OFF its
+     canvas: its scene never feels the hand. */
+  if (want("hand")) {
+    begin("hand", "hand — the mouse over the field: its light, a drag's spin and a click's pulse, each against an untouched page; off the field, nothing stays");
+    const ON = { x: 760 + 330, y: 200 + 280 }; // the centre of a field pinned at left 760
+    const OFF = { x: ON.x, y: 900 }; // below it: off every field here
+    const ref = await open({ width: 660, left: 0 });
+    const lit = await open({ width: 660, left: 760 });
+    const spun = await open({ width: 660, left: 760 });
+    const hit = await open({ width: 660, left: 760 });
+    const all = [ref, lit, spun, hit];
+    for (const p of all) await advance(p, 1.5); // past the hold
+    for (const p of all) await p.page.mouse.move(ON.x, ON.y);
+    /* a drag across the field, then back to the same point; and a click */
+    await spun.page.mouse.down();
+    for (let i = 1; i <= 8; i++) await spun.page.mouse.move(ON.x + 30 * i, ON.y);
+    await spun.page.mouse.up();
+    await spun.page.mouse.move(ON.x, ON.y);
+    await hit.page.mouse.down();
+    await hit.page.mouse.up();
+    let worstBand = 0;
+    const band = (img) => (worstBand = Math.max(worstBand, measure(img).dev));
+    for (const p of all) await advance(p, 0.5);
+    const [r1, l1, s1, h1] = await Promise.all(all.map((p, i) => grab(p, `hand-${["ref", "lit", "spun", "hit"][i]}-0.5`)));
+    [l1, s1, h1].forEach(band);
+    const light = diff(r1, l1);
+    const spin = diff(l1, s1);
+    const pulse = diff(l1, h1);
+    info(`0.5s after the hand arrived: the light ${light.line}; a drag's spin against the light alone ${spin.line}; a click's pulse against it ${pulse.line}`);
+    if (light.bigPct < 0.5) fail(`the mouse over the field changed nothing (${light.line}) — the hand carries a light over the stack`);
+    if (spin.bigPct < 0.5) fail(`a drag across the field did not turn the core (${spin.line}) — the plates spin with the drag`);
+    if (pulse.bigPct < 0.3) fail(`a click on the field sent no pulse (${pulse.line}) — a ring crosses the floor and the comets surge`);
+    for (const t of [0.4, 0.4, 0.4]) {
+      for (const p of all) await advance(p, t);
+      band(await grab(hit));
+    }
+    if (worstBand > 2) fail(`the hand lit the frame's 16px edge band (worst channel ${worstBand} off the ground) — the band is the ground in every frame`);
+    /* off the field: the light eases out, the woken module settles */
+    for (const p of [ref, lit]) await p.page.mouse.move(OFF.x, OFF.y);
+    for (const p of all) await advance(p, 3);
+    const gone = diff(await grab(ref, "hand-ref-off"), await grab(lit, "hand-lit-off"));
+    info(`3s after the mouse left the field: ${gone.line} against the untouched page`);
+    if (gone.bigPct > 0.6) fail(`the mouse left the field and the scene did not settle back (${gone.line}) — off the field, nothing of the hand stays`);
+    for (const p of all) await p.ctx.close();
   }
 
   /* ── reload: a page loaded mid-scroll still draws the poster first ── */

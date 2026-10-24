@@ -4,7 +4,6 @@ import type { SiteContent } from "@/content/site-schema";
 
 import Cta, { ctaKind } from "../Cta";
 import { ArrowUpRightIcon } from "../icons";
-import MotionToggle from "../MotionToggle";
 
 /* The width the poster is DRAWN at, which is what `sizes` must say. The
    poster is CONTAINED in its frame at every width (app/site.css, 2026-09-29),
@@ -66,12 +65,13 @@ function proofItems(ids: readonly string[]) {
  * (no optimizer on the LCP path) with its size, fetchpriority="high", never
  * lazy, alt="". The field carries no information and is aria-hidden. Below
  * 1025px, or on a coarse pointer, the poster drifts slowly (a CSS transform, so
- * no layout shift); under reduced motion it is still, and the pause control
- * stops it (components/site/MotionToggle).
+ * no layout shift), always — there is no pause control since 2026-10-24 (the
+ * owner) — and under reduced motion it is still.
  *
  * <HeroScene /> (components/field) mounts the three.js scene inside the field,
  * over the poster, at >=1025px with a fine pointer, no Save-Data and motion
- * allowed, after LCP and load. The poster is that scene's first frame, t = 0
+ * allowed, after LCP and load; the mouse over the field drives it (scene.ts,
+ * the visitor's hand). The poster is that scene's first frame, t = 0
  * (scene-poster-v2-*: /hero/* is served immutable, so a re-render is v3).
  */
 export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
@@ -146,12 +146,12 @@ export default function Hero({ hero }: { hero: SiteContent["hero"] }) {
                   width={660}
                   height={560}
                   fetchPriority="high"
+                  draggable={false}
                 />
               </picture>
               <HeroScene />
             </div>
           </div>
-          <MotionToggle />
         </div>
       </div>
     </section>
