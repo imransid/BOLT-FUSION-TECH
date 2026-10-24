@@ -1708,6 +1708,94 @@ button.bf-map__btn[aria-pressed="true"] {
   vertical-align: middle;
 }
 
+/* A lit concept link is not data: no cyan, no pulse (SystemMap.tsx). It
+   turns a lighter steel and stays dashed, as the Lab drawings' sketch does. */
+.bf-map__link.is-concept.is-lit .bf-map__wire {
+  stroke: var(--bf-soft);
+  stroke-width: 2;
+}
+
+/* ── The compact map, on the homepage (2026-10-24) ──────────────────────── */
+.bf-mapsec {
+  margin: 40px 0 56px;
+}
+
+@media (min-width: 1025px) {
+  .bf-mapsec { margin: 56px 0 72px; }
+}
+
+.bf-mapsec__title {
+  max-width: 26ch;
+  margin-top: 6px;
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+.bf-mapsec__lead {
+  max-width: 60ch;
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-mapsec .bf-map {
+  margin-top: 28px;
+}
+
+.bf-map__rel {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-map__rel-label {
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bf-text);
+}
+
+.bf-map__readout .bf-map__rel-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 6px;
+}
+
+.bf-map__readout .bf-map__rel-depth {
+  margin-top: 0;
+}
+
+/* the ledger's own link: brand, underlined, a 44px target */
+.bf-map__rel-list a,
+.bf-map__more a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--bf-brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.bf-map__rel-list a:hover,
+.bf-map__more a:hover {
+  color: var(--bf-brand-hi);
+}
+
+.bf-map__more {
+  margin-top: -16px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 /* ── How we build: six stages on one rail ───────────────────────────────── */
 .bf-stages {
   display: grid;
@@ -1787,6 +1875,151 @@ button.bf-map__btn[aria-pressed="true"] {
   font-size: 15px;
   line-height: 1.6;
   color: var(--bf-soft);
+}
+
+/* What happens in the stage (StageRail, 2026-10-24): down the rail on a
+   phone and without script; from 1025px, with the picker live, it moves into
+   the panel under the rail, and the column keeps the deliverable. */
+.bf-stage__does {
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--bf-text);
+}
+
+/* The title is the button: the same face, no chrome. */
+.bf-stage__pick {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline 2px transparent;
+  text-underline-offset: 6px;
+}
+
+.bf-stage__pick:hover {
+  text-decoration-color: var(--bf-line-strong);
+}
+
+.bf-stage.is-active .bf-stage__title {
+  color: var(--bf-brand);
+}
+
+.bf-stage.is-active .bf-stage__pick {
+  text-decoration-color: currentColor;
+}
+
+.bf-stagepanel {
+  display: none;
+}
+
+@media (min-width: 1025px) {
+  [data-stage-picker] .bf-stage__does {
+    display: none;
+  }
+
+  .bf-stagepanel {
+    display: block;
+    margin-top: 40px;
+    padding: 32px 36px 20px;
+    border: 1px solid var(--bf-line);
+    border-radius: 18px;
+    background-color: var(--bf-raised);
+  }
+}
+
+.bf-stagepanel__progress {
+  height: 2px;
+  overflow: hidden;
+  background-color: var(--bf-line);
+}
+
+.bf-stagepanel__fill {
+  display: block;
+  height: 100%;
+  background-color: var(--bf-brand);
+  transform-origin: left center;
+}
+
+.bf-stagepanel__body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 5fr) minmax(0, 4fr);
+  gap: 32px;
+  align-items: start;
+  margin-top: 28px;
+}
+
+.bf-stagepanel__title {
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-display);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--bf-text);
+}
+
+.bf-stagepanel__does {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+.bf-stagepanel__label {
+  margin-bottom: 4px;
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bf-muted);
+}
+
+.bf-stagepanel__gets p + p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-text);
+}
+
+.bf-stagepanel__nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-stagepanel__step {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bf-brand);
+  cursor: pointer;
+}
+
+.bf-stagepanel__step:hover {
+  color: var(--bf-brand-hi);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bf-stagepanel__fill {
+    transition: transform 0.3s cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  .bf-stage__title,
+  .bf-stage__pick {
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+  }
 }
 
 /* ── Technical depth: strata ────────────────────────────────────────────── */
@@ -2578,9 +2811,23 @@ button.bf-map__btn[aria-pressed="true"] {
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+/* A screenshot in a revealing block is uncovered by a clean edge, top to
+   bottom, inside its own frame (the owner's brief, 2026-10-24, §2): the
+   frame and the words are there at once; only the picture is masked. */
+@keyframes bf-unmask {
+  from { clip-path: inset(0 0 100% 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* 0.6s (0.8s until 2026-10-24): the brief's entrance range is 400-700ms. */
 @media (prefers-reduced-motion: no-preference) {
   .bf-revealed {
-    animation: bf-rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+    animation: bf-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .bf-revealed .bf-story__shot img,
+  .bf-revealed .bf-clientband__shot img {
+    animation: bf-unmask 0.65s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
 }
 
@@ -5369,14 +5616,15 @@ button.bf-map__btn[aria-pressed="true"] {
   #recent-work .bf-proofsec__cta { margin-top: 48px; }
 }
 
-/* The restaurant search's lanes, as a band under the pair. */
-.bf-lanesband {
+/* The restaurant search's system, as the engineering flow playground
+   (components/site/FlowPlayground.tsx, 2026-10-24): a graphite screen under
+   the pair, in the place the static lanes band held. The diagram from 1025px;
+   below that each lane's steps are the flow, drawn down the lane. */
+.bf-flowpg {
   margin-top: 56px;
-  padding-top: 24px;
-  border-top: 1px solid var(--bf-line-strong);
 }
 
-.bf-lanesband__of {
+.bf-flowpg__of {
   font-family: var(--bf-font-heading);
   font-stretch: var(--bf-label);
   font-size: 14px;
@@ -5384,28 +5632,289 @@ button.bf-map__btn[aria-pressed="true"] {
   color: var(--bf-muted);
 }
 
-.bf-lanesband__title {
-  margin-top: 4px;
+.bf-flowpg__title {
+  margin-top: 6px;
   font-family: var(--bf-font-heading);
   font-stretch: var(--bf-display);
-  font-size: 22px;
+  font-size: clamp(24px, 2.6vw, 34px);
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--bf-text);
 }
 
-.bf-lanesband__lanes {
-  margin-top: 18px;
+.bf-flowpg__lead {
+  max-width: 60ch;
+  margin-top: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--bf-soft);
+}
+
+/* The diagram: the map's faint engineering grid, on a plate of its own. */
+.bf-flowpg__canvas {
+  display: none;
 }
 
 @media (min-width: 1025px) {
-  .bf-lanesband__lanes {
+  .bf-flowpg__canvas {
+    display: block;
+    margin-top: 28px;
+    padding: 16px 20px;
+    border: 1px solid var(--bf-line);
+    border-radius: 18px;
+    background-color: var(--bf-ground);
+    background-image:
+      linear-gradient(to right, rgba(236, 239, 244, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(236, 239, 244, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+.bf-flowpg__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bf-flowpg__wire,
+.bf-flowpg__head-mark {
+  fill: none;
+  stroke: var(--bf-steel);
+  stroke-width: 1.5;
+}
+
+/* The request's path, traced over the steel in brand blue: one dash the
+   length of the edge (pathLength 1), drawn as the request reaches its end. */
+.bf-flowpg__trace {
+  fill: none;
+  stroke: var(--bf-brand);
+  stroke-width: 2.5;
+  stroke-linecap: butt;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.bf-flowpg__trace.is-on {
+  stroke-dashoffset: 0;
+}
+
+.bf-flowpg__box {
+  fill: var(--bf-surface);
+  stroke: var(--bf-line-strong);
+  stroke-width: 1.5;
+}
+
+.bf-flowpg__node.is-lit .bf-flowpg__box {
+  stroke: var(--bf-brand);
+}
+
+/* where the request is now: cyan, the data */
+.bf-flowpg__node.is-here .bf-flowpg__box {
+  stroke: var(--bf-flow);
+}
+
+.bf-flowpg__label {
+  fill: var(--bf-text);
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.bf-flowpg__sub {
+  fill: var(--bf-muted);
+  font-family: var(--bf-font-body);
+  font-size: 13.5px;
+}
+
+.bf-flowpg__tag {
+  fill: var(--bf-muted);
+  font-family: var(--bf-font-body);
+  font-size: 13px;
+}
+
+.bf-flowpg__edge.is-dim,
+.bf-flowpg__node.is-dim,
+.bf-flowpg__tag.is-dim {
+  opacity: 0.35;
+}
+
+.bf-flowpg__status {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--bf-soft);
+}
+
+.bf-flowpg__cta {
+  margin-top: 32px;
+}
+
+.bf-flowpg__lanes-title {
+  margin-top: 32px;
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bf-text);
+}
+
+.bf-flowpg__lanes {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (min-width: 1025px) {
+  .bf-flowpg__lanes {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 
-  .bf-lanesband .bf-lane {
-    padding: 16px 18px;
+  .bf-flowpg .bf-lane {
+    padding: 18px 20px;
+  }
+}
+
+.bf-flowpg__lane.is-active {
+  border-color: var(--bf-line-strong);
+  border-left-color: var(--bf-brand);
+  background-color: var(--bf-raised);
+}
+
+.bf-flowpg__request {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-flowpg__ask {
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bf-text);
+}
+
+.bf-flowpg__query {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--bf-soft);
+}
+
+.bf-flowpg__qlabel {
+  color: var(--bf-muted);
+}
+
+/* Kept invisible, with its space, until hydration (data-ready): a button
+   that did nothing would be worse than none, and appearing never shifts. */
+.bf-flowpg__go {
+  visibility: hidden;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--bf-line-strong);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--bf-font-heading);
+  font-stretch: var(--bf-label);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bf-text);
+  cursor: pointer;
+}
+
+.bf-flowpg__go[data-ready] {
+  visibility: visible;
+}
+
+.bf-flowpg__go:hover,
+.bf-flowpg__go[aria-pressed="true"] {
+  border-color: var(--bf-brand);
+  color: var(--bf-brand-hi);
+}
+
+/* The steps: the request's stops down a rail, each a marker on the line. */
+.bf-flowpg__steps {
+  margin-top: 14px;
+}
+
+.bf-flowpg__step {
+  position: relative;
+  padding: 0 0 10px 24px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--bf-soft);
+}
+
+.bf-flowpg__step:last-child {
+  padding-bottom: 0;
+}
+
+.bf-flowpg__step::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.4em;
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--bf-steel);
+  border-radius: 50%;
+  background-color: var(--bf-surface);
+}
+
+.bf-flowpg__step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: calc(0.4em + 13px);
+  bottom: 2px;
+  width: 1px;
+  background-color: var(--bf-line-strong);
+}
+
+.bf-flowpg__step.is-lit::before {
+  border-color: var(--bf-brand);
+  background-color: var(--bf-brand);
+}
+
+.bf-flowpg__step.is-lit:not(:last-child)::after {
+  background-color: var(--bf-brand);
+}
+
+.bf-flowpg__step.is-here::before {
+  border-color: var(--bf-flow);
+  background-color: var(--bf-flow);
+}
+
+.bf-flowpg__stop {
+  font-weight: 600;
+  color: var(--bf-text);
+}
+
+/* Motion only where it is allowed: under reduced motion the path, the stops
+   and the dimming land at once (and the script skips straight to the end). */
+@media (prefers-reduced-motion: no-preference) {
+  .bf-flowpg__trace.is-on {
+    transition: stroke-dashoffset 0.45s cubic-bezier(0.45, 0, 0.55, 1);
+  }
+
+  .bf-flowpg__edge,
+  .bf-flowpg__node,
+  .bf-flowpg__tag,
+  .bf-flowpg__box,
+  .bf-flowpg__step::before,
+  .bf-flowpg__step::after,
+  .bf-flowpg__lane,
+  .bf-flowpg__go {
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+    transition-property: opacity, stroke, border-color, background-color, color;
   }
 }
 
@@ -5417,7 +5926,7 @@ button.bf-map__btn[aria-pressed="true"] {
    figure became 140. The figure's chip stays in the figure's row
    (ProofStrip.tsx; checks 8 and 28). */
 @media (max-width: 767px) {
-  .bf-lanesband { margin-top: 48px; }
+  .bf-flowpg { margin-top: 48px; }
 
   #recent-work .bf-proof {
     margin-top: 48px;
@@ -7021,7 +7530,7 @@ rect.bf-trace__stop {
 
 /* ── Graphite screens inside the paper ───────────────────────────────────── */
 .bf-cap__plate,
-.bf-lanesband,
+.bf-flowpg,
 .bf-proof,
 .bf-code__box,
 .bf-map__canvas {
@@ -7182,7 +7691,7 @@ rect.bf-trace__stop {
 
 .bf-clientband,
 .bf-feattile,
-.bf-lanesband,
+.bf-flowpg,
 .bf-proof,
 .bf-hww__pilot,
 .bf-cap__plate,
@@ -7237,19 +7746,19 @@ rect.bf-trace__stop {
   border-color: var(--bf-line);
 }
 
-/* The system's lanes and the measured figures: two graphite screens. */
-.bf-lanesband {
+/* The system's lanes (the flow playground) and the measured figures: two
+   graphite screens. */
+.bf-flowpg {
   padding: 32px 24px 24px;
-  border-top: 0;
   background-color: var(--bf-ground);
   color: var(--bf-soft);
 }
 
 @media (min-width: 768px) {
-  .bf-lanesband { padding: 40px; }
+  .bf-flowpg { padding: 40px; }
 }
 
-.bf-lanesband .bf-lane {
+.bf-flowpg .bf-lane {
   border-radius: 14px;
 }
 
@@ -7536,6 +8045,6 @@ rect.bf-trace__stop {
   .bf-story:hover .bf-story__shot img,
   .bf-clientband__item:hover .bf-clientband__shot img,
   .bf-work__row:hover .bf-work__shot img {
-    transform: scale(1.025);
+    transform: scale(1.015);
   }
 }

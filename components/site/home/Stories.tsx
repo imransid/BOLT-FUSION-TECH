@@ -1,11 +1,13 @@
 import FigureText from "@/components/FigureText";
 import ScreenImage from "@/components/site/ScreenImage";
 import { clientStories, clientStoryMembers, countWord, featureWork, lanes, projects, type ClientStory, type Project } from "@/content";
+import { playground, playgroundEdges } from "@/content/architecture";
 import type { SiteContent } from "@/content/site-schema";
 import { SCHEDULE_HREF, SCHEDULE_LABEL } from "@/content/site-schema";
 
 import Cta from "../Cta";
 import FeatureScreens, { PublicStat } from "../FeatureScreens";
+import FlowPlayground from "../FlowPlayground";
 import { ArrowUpRightIcon } from "../icons";
 import { attribution, AttributionLabel, ProjectLinks } from "../ProjectCard";
 import ProofStrip from "../ProofStrip";
@@ -29,8 +31,8 @@ const STEPS = [
  *  who built it (the label /work's card carries, from content/projects.ts),
  *  the name, the outcome, then the problem, the system, the engineering and the
  *  result. Only a published project links anywhere, and it links to its
- *  write-up. The restaurant search's three lanes, its system drawn out, are a
- *  band of their own under the pair (below).
+ *  write-up. The restaurant search's three lanes, its system drawn out, are
+ *  the flow playground under the pair (below; FlowPlayground).
  *
  *  Each step carries its key (`data-step`): on a phone the card shows only the
  *  result of the four, and the write-up the rest (app/site.css). */
@@ -74,37 +76,6 @@ function Story({ w }: { w: Work }) {
         ) : null}
       </div>
     </article>
-  );
-}
-
-/** The restaurant search's system, drawn out: its three lanes
- *  (content/architecture.ts, every figure labelled), under the case study's
- *  own heading for them. Beside the pair it made one card twice the other's
- *  height; as a band it reads as the mechanism between the stories and the
- *  figures. */
-function LanesBand({ story, title }: { story: Work; title: string }) {
-  return (
-    <div className="bf-lanesband" data-bf-reveal>
-      <div className="bf-lanesband__head">
-        <p className="bf-lanesband__of">{story.title}</p>
-        <h3 className="bf-lanesband__title">{title}</h3>
-      </div>
-      <ul className="bf-lanes bf-lanesband__lanes">
-        {lanes.map((lane) => (
-          <li key={lane.id} className="bf-lane" data-tone={lane.tone}>
-            <p className="bf-lane__head">
-              <span className="bf-lane__name">{lane.name}</span> <span className="bf-lane__premise">— {lane.premise}</span>
-            </p>
-            <p className="bf-lane__detail">
-              <FigureText text={lane.detail} />
-            </p>
-            <p className="bf-lane__cost">
-              <FigureText text={lane.cost} />
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
@@ -247,7 +218,8 @@ function FeatureWorkTile({ items }: { items: Project[] }) {
  * screenshots; then the feature work with its screens (Bazzile, since
  * 2026-09-30), as a tile; then the section's own Schedule a Call and the link to all
  * work — the call follows the strongest proof; then the restaurant search's
- * three lanes and the proof strip — "From systems we shipped." (SPEC §8b.1;
+ * three lanes as the flow playground (since 2026-10-24), with its own Schedule
+ * a Call, and the proof strip — "From systems we shipped." (SPEC §8b.1;
  * never "Measured on…": ~$0.001 is a target). Until the design and honesty
  * reviews of 2026-09-29 the client story was a text band after the proof
  * strip, below the section's call, under a heading that said "Two
@@ -302,7 +274,31 @@ export default function Stories({ work, lanesTitle }: { work: SiteContent["recen
             See all work ({ourWork} projects)
           </Cta>
         </p>
-        {laneStory ? <LanesBand story={laneStory} title={lanesTitle} /> : null}
+        {/* The restaurant search's system, as the engineering flow playground
+            (2026-10-24): its three lanes, each with a sample request to follow
+            through the router. It replaced the static lanes band in the same
+            place — the mechanism between the stories and the figures. */}
+        {laneStory ? (
+          <FlowPlayground data={playground} lanes={lanes} edges={playgroundEdges} of={laneStory.title} lanesTitle={lanesTitle}>
+            {/* Its own Schedule a Call (2026-10-24): after the engineering
+                explanation, the brief's §13. The playground is taller than
+                the band it replaced — 2,600px on a phone — and without it six
+                phone screens in a row, from the proof's call to how we work's,
+                showed none (verify-site check 36). It sits over 1,400px under
+                the proof's, so the two are never in one view. */}
+            <p className="bf-actions bf-flowpg__cta">
+              <Cta href={SCHEDULE_HREF} cta="schedule">
+                {SCHEDULE_LABEL}
+              </Cta>
+              {laneStory.state === "published" && laneStory.href ? (
+                <Cta href={laneStory.href} variant="ghost">
+                  {laneStory.ctaLabel ?? "Read the case study"}
+                  <span className="sr-only"> for {laneStory.title}</span>
+                </Cta>
+              ) : null}
+            </p>
+          </FlowPlayground>
+        ) : null}
         <ProofStrip id="proof-title" title={work.proofTitle} note={work.proofNote} />
       </div>
     </section>
