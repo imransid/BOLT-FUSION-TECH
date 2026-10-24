@@ -8,6 +8,7 @@ import CapabilityDiagram from "../diagrams";
 import DomainGlyph from "../DomainGlyph";
 import SectionHead from "../SectionHead";
 import TierChip, { TierLegend } from "../TierChip";
+import SystemMapCompact from "./SystemMapCompact";
 
 /** One capability, one ruled row: its name, its one-line job, every evidence
  *  tier it carries (with its scope where it has one), the work it links, "in
@@ -107,6 +108,7 @@ export default function WhatWeEngineer() {
           <SectionHead id="what-title" eyebrow={h.eyebrow} title={h.title} lead={h.lead} className="bf-head--chapter" />
           <TierLegend />
         </div>
+        <SystemMapCompact />
         <ol className="bf-ledger6">
           {engineering.capabilities.map((c, i) => (
             <Row key={c.id} c={c} n={i + 1} />

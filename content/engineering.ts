@@ -44,6 +44,11 @@ const raw: EngineeringInput = {
       title: "Different technologies. One engineering discipline.",
       lead: "The six capabilities are one system in practice. Hover or focus any part of the map to see what each connection does.",
     },
+    systemMapHome: {
+      eyebrow: "The system map",
+      title: "Different technologies. One engineering discipline.",
+      lead: "Select any part of the map to see what it connects to, the work behind it, and where to read more.",
+    },
     industries: {
       eyebrow: "Industries",
       title: "Technology we can build for…",
@@ -389,14 +394,47 @@ const raw: EngineeringInput = {
     },
   ],
 
-  /* SPEC §5 with §8b.11: a demo every cycle; containerised deployments. */
+  /* SPEC §5 with §8b.11: a demo every cycle; containerised deployments.
+     `does` (2026-10-24, the owner's brief §6): Architect's is the brief's own
+     sentence; the others are COPY.md §6's approved process words
+     (content/process.ts), split across the stages they describe. */
   stages: [
-    { id: "discover", title: "Discover", gets: "The business, users, constraints and goals, written down and signed off." },
-    { id: "architect", title: "Architect", gets: "The architecture, the system boundaries, and the latency and cost budgets." },
-    { id: "engineer", title: "Engineer", gets: "Reliable software and infrastructure, with a demo every cycle." },
-    { id: "integrate", title: "Integrate", gets: "Systems, services, data and automation connected and documented." },
-    { id: "deploy", title: "Deploy", gets: "CI/CD, containerised deployments and a runbook." },
-    { id: "scale", title: "Scale", gets: "Performance, reliability and capability improved against the success measures." },
+    {
+      id: "discover",
+      title: "Discover",
+      does: "We agree on users, success metrics, constraints and risks, so everyone knows what “done” means before anything is designed.",
+      gets: "The business, users, constraints and goals, written down and signed off.",
+    },
+    {
+      id: "architect",
+      title: "Architect",
+      does: "We define system boundaries, data ownership, integration contracts, and performance budgets before implementation begins.",
+      gets: "The architecture, the system boundaries, and the latency and cost budgets.",
+    },
+    {
+      id: "engineer",
+      title: "Engineer",
+      does: "Working software every cycle, with demos and an open backlog, so problems surface when they are cheap to fix.",
+      gets: "Reliable software and infrastructure, with a demo every cycle.",
+    },
+    {
+      id: "integrate",
+      title: "Integrate",
+      does: "Auth, data and deployments are integrated early, not at the end, and every connection between systems is written down.",
+      gets: "Systems, services, data and automation connected and documented.",
+    },
+    {
+      id: "deploy",
+      title: "Deploy",
+      does: "We release with monitoring, runbooks and a sensible cutover.",
+      gets: "CI/CD, containerised deployments and a runbook.",
+    },
+    {
+      id: "scale",
+      title: "Scale",
+      does: "We support stabilisation after go-live, then improve the system against the success measures agreed in Discover.",
+      gets: "Performance, reliability and capability improved against the success measures.",
+    },
   ],
 
   /* SPEC §8b.2, exactly: only these. The schema refuses Kubernetes, Kafka and

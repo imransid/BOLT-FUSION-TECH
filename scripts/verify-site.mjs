@@ -409,7 +409,9 @@ function loadContent(rel) {
     const stubs = {
       "./schema": { parseContent: (_schema, data) => data, metricSchema: null },
       "./engineering-schema": { engineeringSchema: null },
-      zod: { z: new Proxy({}, { get: () => () => null }) },
+      /* chainable: a schema built in steps (z.string().min(1), .superRefine)
+         reads as nothing, as a bare one always did */
+      zod: { z: (() => { const any = new Proxy(function () {}, { get: () => any, apply: () => any }); return any; })() },
     };
     new Function("module", "exports", "require", js)(mod, mod.exports, (id) => {
       if (id in stubs) return stubs[id];
@@ -3313,6 +3315,169 @@ async function visitLab(browser, route, prof) {
   }
 }
 
+/* 37 (2026-10-24, the owner's brief §4-§6) — the new interactions, each driven
+   on a fresh / (and the full map on /capabilities) and read against content/:
+   the flow playground (what a press lights, in what order, and what it says),
+   the compact system map (what a selected part links to, and that a concept
+   link is never cyan) and the stage picker (the panel says the selected
+   stage's words). A desktop, the same desktop under reduced motion, and a
+   phone. Nothing here can be read off a page at rest: a playground that never
+   walks, or lights the wrong lane, looks the same as a right one until it is
+   pressed. */
+const INTERACT_PROFILES = [
+  { label: "1440 desktop", viewport: { width: 1440, height: 900 } },
+  { label: "1440 reduced motion", viewport: { width: 1440, height: 900 }, reduced: true },
+  { label: "390 phone (touch)", viewport: { width: 390, height: 844 }, touch: true, dpr: 3 },
+];
+/* the longest walk (six steps, 450ms apart) is drawn in 2.25s */
+const PG_SETTLE_MS = 3200;
+const PG_EARLY_MS = 120;
+
+async function visitInteractions(browser, prof) {
+  const ctx = await browser.newContext({
+    viewport: prof.viewport,
+    reducedMotion: prof.reduced ? "reduce" : "no-preference",
+    ...(prof.touch ? { isMobile: true, hasTouch: true, deviceScaleFactor: prof.dpr || 2 } : {}),
+  });
+  const out = { label: prof.label, width: prof.viewport.width, reduced: Boolean(prof.reduced), pg: null, map: null, stages: null, fullMap: null };
+  const press = async (loc) => {
+    await loc.scrollIntoViewIfNeeded();
+    if (prof.touch) await loc.tap();
+    else await loc.click();
+  };
+  try {
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/", { waitUntil: "load", timeout: 120000 });
+    await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`);
+
+    /* the playground */
+    if (await page.locator("[data-flow-playground]").count()) {
+      await page.locator("[data-flow-playground]").first().scrollIntoViewIfNeeded();
+      await page.waitForFunction(() => document.querySelector("[data-flow-playground] .bf-flowpg__go[data-ready]"), null, { timeout: 15000 }).catch(() => {});
+      const lanes = await page.evaluate(() => [...document.querySelectorAll("[data-flow-playground] [data-lane]")].map((l) => l.getAttribute("data-lane")));
+      out.pg = { lanes: [] };
+      const read = (lane) =>
+        page.evaluate((lane) => {
+          const root = document.querySelector("[data-flow-playground]");
+          const steps = [...root.querySelectorAll(`[data-lane="${lane}"] [data-step-node]`)];
+          return {
+            lit: steps.filter((s) => s.classList.contains("is-lit")).length,
+            total: steps.length,
+            words: steps.map((s) => ({ node: s.getAttribute("data-step-node"), text: s.textContent.replace(/\s+/g, " ").trim() })),
+            litElsewhere: [...root.querySelectorAll("[data-lane]")]
+              .filter((l) => l.getAttribute("data-lane") !== lane)
+              .map((l) => [l.getAttribute("data-lane"), l.querySelectorAll("[data-step-node].is-lit").length])
+              .filter(([, n]) => n),
+            pressed: [...root.querySelectorAll(".bf-flowpg__go")].map((b) => [b.closest("[data-lane]").getAttribute("data-lane"), b.getAttribute("aria-pressed")]),
+            diagram: Boolean(root.querySelector(".bf-flowpg__svg")?.getClientRects().length),
+            litNodes: [...root.querySelectorAll("[data-node].is-lit")].map((n) => n.getAttribute("data-node")),
+            traced: [...root.querySelectorAll("[data-edge] .bf-flowpg__trace.is-on")].map((t) => t.closest("[data-edge]").getAttribute("data-edge")),
+            anims: root.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length,
+            status: (root.querySelector(".bf-flowpg__status")?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        }, lane);
+      for (const lane of lanes) {
+        const btn = page.locator(`[data-flow-playground] [data-lane="${lane}"] .bf-flowpg__go`);
+        const ready = (await btn.count()) === 1 && (await btn.evaluate((b) => b.hasAttribute("data-ready") && getComputedStyle(b).visibility === "visible"));
+        if (!ready) {
+          out.pg.lanes.push({ lane, ready: false });
+          continue;
+        }
+        await press(btn);
+        await page.waitForTimeout(PG_EARLY_MS);
+        const early = await read(lane);
+        await page.waitForTimeout(PG_SETTLE_MS);
+        out.pg.lanes.push({ lane, ready: true, early, settled: await read(lane) });
+      }
+    }
+
+    /* the compact map: every part, selected in turn */
+    const readMap = (sel) =>
+      page.evaluate((sel) => {
+        const root = document.querySelector(sel);
+        const t = root.querySelector(".bf-map__readout-title");
+        const concept = [...root.querySelectorAll(".bf-map__link.is-concept")];
+        return {
+          title: t ? [...t.childNodes].filter((c) => c.nodeType === 3).map((c) => c.textContent).join("").trim() : null,
+          relLabel: (root.querySelector(".bf-map__rel-label")?.textContent || "").trim(),
+          work: [...root.querySelectorAll(".bf-map__rel-list:not(.bf-map__rel-depth) a")].map((a) => a.getAttribute("href")),
+          depth: [...root.querySelectorAll(".bf-map__rel-depth a")].map((a) => a.getAttribute("href")),
+          cyan: concept.flatMap((g) => window.__bfLabCyan(g)),
+          pulses: concept.reduce((n, g) => n + g.querySelectorAll(".bf-map__pulse").length, 0),
+        };
+      }, sel);
+    if (await page.locator(".bf-map--compact").count()) {
+      const parts = page.locator(".bf-map--compact button.bf-map__btn");
+      const n = await parts.count();
+      out.map = { parts: [] };
+      for (let i = 0; i < n; i++) {
+        const b = parts.nth(i);
+        const label = (await b.innerText()).trim();
+        await press(b);
+        await page.waitForTimeout(300);
+        out.map.parts.push({ label, ...(await readMap(".bf-map--compact")) });
+        await press(b); /* unpin */
+      }
+    }
+
+    /* the stage picker */
+    if (await page.locator("#how-we-build").count()) {
+      await page.locator("#how-we-build").scrollIntoViewIfNeeded();
+      const readStages = () =>
+        page.evaluate(() => {
+          const root = document.querySelector("#how-we-build");
+          const shown = (el) => Boolean(el && el.getClientRects().length && getComputedStyle(el).visibility !== "hidden");
+          const panel = root.querySelector(".bf-stagepanel");
+          const fill = panel?.querySelector(".bf-stagepanel__fill");
+          const m = fill ? /matrix\(([-\d.e]+)/.exec(getComputedStyle(fill).transform) : null;
+          return {
+            picker: root.querySelector("[data-stage-picker]") !== null,
+            buttons: root.querySelectorAll("button.bf-stage__pick").length,
+            pressed: [...root.querySelectorAll("button.bf-stage__pick")].map((b) => b.getAttribute("aria-pressed")),
+            panelShown: shown(panel),
+            title: (panel?.querySelector(".bf-stagepanel__title")?.textContent || "").trim(),
+            does: (panel?.querySelector(".bf-stagepanel__does")?.textContent || "").trim(),
+            gets: (panel?.querySelector(".bf-stagepanel__gets p + p")?.textContent || "").trim(),
+            fill: m ? +m[1] : null,
+            columnDoes: [...root.querySelectorAll(".bf-stage__does")].filter(shown).map((p) => p.textContent.trim()),
+          };
+        });
+      const first = await readStages();
+      out.stages = { first, picks: [] };
+      if (first.panelShown)
+        for (let i = 0; i < first.buttons; i++) {
+          await press(page.locator("#how-we-build button.bf-stage__pick").nth(i));
+          await page.waitForTimeout(400);
+          out.stages.picks.push(await readStages());
+        }
+    }
+
+    /* the full map on /capabilities: its concept link, lit, is not cyan either */
+    if (!prof.touch && ROUTES.includes("/capabilities")) {
+      await page.goto(BASE + "/capabilities", { waitUntil: "load", timeout: 120000 });
+      await page.evaluate(`window.__bfLabCyan = ${labCyanIn.toString()}`);
+      const sel = ".bf-map:not(.bf-map--compact)";
+      if (await page.locator(sel).count()) {
+        out.fullMap = [];
+        for (const name of ["Robotics", "A camera sees a defect"]) {
+          const b = page.locator(`${sel} button.bf-map__btn`, { hasText: name }).first();
+          if (!(await b.count())) {
+            out.fullMap.push({ name, missing: true });
+            continue;
+          }
+          await press(b);
+          await page.waitForTimeout(500);
+          out.fullMap.push({ name, ...(await readMap(sel)) });
+          await press(b);
+        }
+      }
+    }
+  } finally {
+    await ctx.close();
+  }
+  return out;
+}
+
 async function readFiguresIn(page) {
   const opened = await page.evaluate(() => {
     const all = [...document.querySelectorAll("details")];
@@ -3709,6 +3874,13 @@ if (want(36) && ROUTES.includes("/"))
   for (const prof of REACH_PROFILES) {
     process.stderr.write(`  Schedule a Call within reach on / @${prof.label}, a viewport at a time\n`);
     reachRuns.push(await visitReach(browser, prof).catch((e) => ({ label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
+  }
+/* 37 ── the new interactions, driven on fresh pages */
+const interactRuns = [];
+if (want(37) && ROUTES.includes("/"))
+  for (const prof of INTERACT_PROFILES) {
+    process.stderr.write(`  the playground, the compact map and the stages on / @${prof.label}\n`);
+    interactRuns.push(await visitInteractions(browser, prof).catch((e) => ({ label: prof.label, error: String(e?.message || e).split("\n")[0].slice(0, 200) })));
   }
 let faqRun = null;
 if (want(14)) {
@@ -6025,6 +6197,131 @@ check(
         F.push(`${at}: ${worst.length} viewports in a row, scrollY ${worst[0]}–${worst.at(-1) + r.height}, show no Schedule a Call on the way down — at most ${REACH_MAX_RUN}`);
       const with1 = r.steps.filter((st) => st.down.inPage.length).map((st) => `${st.down.y} (${[...new Set(st.down.inPage)].join(", ")})`);
       I.push(`${at}: ${r.steps.length} viewports read; a Schedule a Call on screen on the way down at ${with1.join(", ") || "none"}; the longest run without one: ${worst.length}`);
+    }
+  },
+);
+
+/* 37 — the flow playground, the compact map and the stage picker, driven */
+check(
+  37,
+  "The new interactions work, and say only what content/ says: the flow playground walks each request along its own path, a step at a time (at once under reduced motion); the compact map links each part to its own capabilities' work; the stage picker shows the selected stage's words; a concept link is never cyan",
+  "a playground that lights the wrong lane or every node, never walks, or ignores reduced motion; steps whose words drift from content/architecture.ts; a map part linked to work its capabilities do not have (robotics given a project); a lit robotics link painted cyan or pulsing; a stage panel one stage out",
+  (F, I) => {
+    const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
+    let pgData, eng, projs;
+    try {
+      pgData = loadContent("content/architecture.ts").playground;
+      eng = loadContent("content/engineering.ts").engineering;
+      projs = loadContent("content/projects.ts").projects;
+      if (!pgData || !eng || !Array.isArray(projs)) throw new Error("a file exports none of playground, engineering or projects");
+    } catch (e) {
+      F.push(`content/ could not be read (${e.message}) — the interactions cannot be checked against it; unsure is a failure`);
+      return;
+    }
+    if (!interactRuns.length) F.push("/ was not driven — unsure is a failure");
+    const nodeLabel = new Map(pgData.nodes.map((n) => [n.id, n.label]));
+    const workHref = (slug) => {
+      const p = projs.find((x) => x.id === slug);
+      return p ? (p.kind === "case-study" && p.href ? p.href : `/work#${p.id}`) : `(no project "${slug}")`;
+    };
+    const sameSet = (a, b) => a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+    for (const r of interactRuns) {
+      const at = `/ @${r.label}`;
+      if (r.error) {
+        F.push(`${at}: the run did not finish (${r.error}) — unsure is a failure`);
+        continue;
+      }
+      /* the playground */
+      if (!r.pg) F.push(`${at}: no [data-flow-playground] — the engineering flow playground is gone from /`);
+      else
+        for (const sc of pgData.scenarios) {
+          const run = r.pg.lanes.find((x) => x.lane === sc.lane);
+          const who = `the ${sc.lane} request ("${sc.query}")`;
+          if (!run) {
+            F.push(`${at}: the playground has no [data-lane="${sc.lane}"] — ${who} cannot be followed`);
+            continue;
+          }
+          if (!run.ready) {
+            F.push(`${at}: ${who}: "Follow this request" never became visible after hydration`);
+            continue;
+          }
+          const path = sc.steps.map((s) => s.node);
+          const edges = path.slice(1).map((n, i) => `${path[i]}>${n}`);
+          const { early: e, settled: s } = run;
+          const want = sc.steps.map((st) => norm(`${nodeLabel.get(st.node)} ${st.text}`));
+          const got = s.words.map((w) => norm(w.text));
+          if (s.words.map((w) => w.node).join(">") !== path.join(">")) F.push(`${at}: ${who} lists the stops ${s.words.map((w) => w.node).join(" > ")} — content/architecture.ts walks ${path.join(" > ")}`);
+          else want.forEach((w, i) => w !== got[i] && F.push(`${at}: ${who}, step ${i + 1} reads "${got[i]}" — content/architecture.ts says "${w}"`));
+          if (r.reduced) {
+            if (e.lit !== e.total) F.push(`${at}: under reduced motion, ${who} had lit ${e.lit} of ${e.total} steps ${PG_EARLY_MS}ms after the press — it lands on the end at once`);
+            if (e.anims) F.push(`${at}: under reduced motion, ${e.anims} animation(s) or transition(s) ran in the playground after the press — nothing moves`);
+          } else if (!(e.lit >= 1 && e.lit < e.total))
+            F.push(`${at}: ${who} had lit ${e.lit} of ${e.total} steps ${PG_EARLY_MS}ms after the press — a request walks its path a step at a time`);
+          if (s.lit !== s.total) F.push(`${at}: ${PG_SETTLE_MS}ms after the press, ${who} has lit ${s.lit} of ${s.total} steps — it settles with every step lit`);
+          for (const [lane, n] of s.litElsewhere) F.push(`${at}: following ${who} lit ${n} step(s) of the ${lane} lane — only the request followed lights`);
+          const pressed = s.pressed.filter(([, v]) => v === "true").map(([l]) => l);
+          if (pressed.join() !== sc.lane) F.push(`${at}: after following ${who}, aria-pressed is true on ${pressed.join(", ") || "no button"} — it is the ${sc.lane} lane's alone`);
+          if (s.diagram) {
+            const extra = s.litNodes.filter((n) => !path.includes(n));
+            const missing = path.filter((n) => !s.litNodes.includes(n));
+            if (extra.length) F.push(`${at}: ${who} lights ${extra.join(", ")} on the diagram, which its path does not pass (${path.join(" > ")})`);
+            if (missing.length) F.push(`${at}: ${who} never lights ${missing.join(", ")} on the diagram, which its path passes`);
+            if (!sameSet(s.traced, edges)) F.push(`${at}: ${who} traces ${s.traced.join(", ") || "no edge"} — its path is ${edges.join(", ")}`);
+          } else if (r.width >= 1025) F.push(`${at}: the playground's diagram is not shown at ${r.width}px — it is the picture from 1025px`);
+          if (!s.status.includes(sc.query)) F.push(`${at}: after following ${who}, the live status reads "${s.status.slice(0, 120)}" — it names the request followed`);
+        }
+      if (r.pg) I.push(`${at}: the playground — ${r.pg.lanes.map((l) => (l.ready ? `${l.lane} ${l.early.lit}→${l.settled.lit}/${l.settled.total}${l.settled.diagram ? `, ${l.settled.traced.length} edge(s) traced` : ""}` : `${l.lane} not ready`)).join("; ")}`);
+
+      /* the compact map */
+      if (!r.map) F.push(`${at}: no compact system map (.bf-map--compact) on /`);
+      else {
+        if (r.map.parts.length !== eng.systemMap.nodes.length) F.push(`${at}: the compact map offers ${r.map.parts.length} part(s) to select — content/engineering.ts has ${eng.systemMap.nodes.length}`);
+        for (const node of eng.systemMap.nodes) {
+          const p = r.map.parts.find((x) => x.label === node.label);
+          if (!p) {
+            F.push(`${at}: the compact map has no button for "${node.label}"`);
+            continue;
+          }
+          const caps = node.capabilityIds.map((id) => eng.capabilities.find((c) => c.id === id)).filter(Boolean);
+          const work = [...new Set(caps.flatMap((c) => c.workSlugs).map(workHref))];
+          const depth = caps.map((c) => c.cta.href);
+          if (p.title !== node.label) F.push(`${at}: selecting "${node.label}" on the compact map shows "${p.title}" in its readout`);
+          if (!sameSet(p.work, work)) F.push(`${at}: the compact map links "${node.label}" to ${p.work.join(", ") || "no work"} — its capabilities' linked work is ${work.join(", ") || "none"}`);
+          if (!work.length && !/nothing delivered yet/i.test(p.relLabel)) F.push(`${at}: "${node.label}" has no linked work, and its readout says "${p.relLabel}" — it says nothing delivered yet`);
+          if (!sameSet(p.depth, depth)) F.push(`${at}: the compact map sends "${node.label}" in depth to ${p.depth.join(", ") || "nowhere"} — its capabilities are ${depth.join(", ")}`);
+          if (p.cyan.length || p.pulses) F.push(`${at}: with "${node.label}" selected, a concept link on the compact map is ${p.cyan.length ? `painted cyan (${p.cyan.slice(0, 2).join("; ")})` : ""}${p.pulses ? ` carrying ${p.pulses} pulse(s)` : ""} — nothing flows in a system that has not shipped`);
+        }
+      }
+      for (const m of r.fullMap || []) {
+        if (m.missing) F.push(`/capabilities @${r.label}: the system map has no "${m.name}" button — its concept link was not tested`);
+        else if (m.cyan.length || m.pulses)
+          F.push(`/capabilities @${r.label}: with "${m.name}" selected, a concept link on the system map is ${m.cyan.length ? `painted cyan (${m.cyan.slice(0, 2).join("; ")})` : ""}${m.pulses ? ` carrying ${m.pulses} pulse(s)` : ""} — nothing flows in a system that has not shipped`);
+      }
+
+      /* the stage picker */
+      const stages = eng.stages;
+      if (!r.stages) F.push(`${at}: no #how-we-build on /`);
+      else if (r.width >= 1025) {
+        const f = r.stages.first;
+        if (!f.picker || f.buttons !== stages.length) F.push(`${at}: the stage picker offers ${f.buttons} stage button(s) — content/engineering.ts has ${stages.length} stages`);
+        else if (!f.panelShown) F.push(`${at}: the stage panel is not shown — from 1025px the selected stage is shown under the rail`);
+        else {
+          if (f.pressed[0] !== "true" || norm(f.title) !== stages[0].title) F.push(`${at}: the stage panel opens on "${f.title}" — it opens on ${stages[0].title}`);
+          if (f.columnDoes.length) F.push(`${at}: with the picker live, ${f.columnDoes.length} stage description(s) still show in the columns as well as in the panel — said twice in one view`);
+          r.stages.picks.forEach((p, i) => {
+            const st = stages[i];
+            if (norm(p.title) !== st.title || norm(p.does) !== norm(st.does) || norm(p.gets) !== norm(st.gets))
+              F.push(`${at}: selecting ${st.title} shows "${p.title}": "${p.does.slice(0, 60)}" / "${p.gets.slice(0, 60)}" — content/engineering.ts says ${st.title}: "${st.does.slice(0, 60)}" / "${st.gets.slice(0, 60)}"`);
+            if (p.pressed.filter((v) => v === "true").length !== 1 || p.pressed[i] !== "true") F.push(`${at}: after selecting ${st.title}, aria-pressed is true on stage(s) ${p.pressed.map((v, k) => (v === "true" ? k + 1 : null)).filter(Boolean).join(", ") || "none"}`);
+            if (p.fill === null || Math.abs(p.fill - (i + 1) / stages.length) > 0.02) F.push(`${at}: selecting ${st.title}, the progress line stands at ${p.fill} — it advances to ${(i + 1) / stages.length}`);
+          });
+        }
+      } else {
+        const f = r.stages.first;
+        if (f.panelShown) F.push(`${at}: the stage panel shows below 1025px — on a phone each stage says what happens in it down the rail`);
+        const want = stages.map((s) => norm(s.does));
+        if (f.columnDoes.map(norm).join("|") !== want.join("|")) F.push(`${at}: the stages say ${f.columnDoes.length} description(s) down the rail — content/engineering.ts has ${stages.length}, in order`);
+      }
     }
   },
 );

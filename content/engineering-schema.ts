@@ -238,7 +238,10 @@ export type Industry = z.infer<typeof industrySchema>;
 export const stageSchema = z.strictObject({
   id: z.string().regex(/^[a-z][a-z-]*$/),
   title: text("title"),
-  /** What the client gets from the stage. */
+  /** What happens in the stage, in a sentence: the selected stage's detail
+   *  in how we build (2026-10-24). */
+  does: text("does"),
+  /** What the client gets from the stage — the deliverable. */
   gets: text("gets"),
 });
 export type Stage = z.infer<typeof stageSchema>;
@@ -345,6 +348,8 @@ export const engineeringSchema = z
     headings: z.strictObject({
       whatWeEngineer: headingSchema,
       systemMap: headingSchema,
+      /** The compact map on the homepage, in what we engineer (2026-10-24). */
+      systemMapHome: headingSchema,
       industries: headingSchema,
       howWeBuild: headingSchema,
       depth: headingSchema,

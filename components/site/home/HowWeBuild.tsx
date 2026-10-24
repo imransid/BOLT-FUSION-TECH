@@ -1,6 +1,7 @@
 import { engineering } from "@/content/engineering";
 
 import SectionHead from "../SectionHead";
+import StageRail from "../StageRail";
 
 /**
  * How we build (SPEC §5): six stages that really are a sequence, so they are
@@ -21,6 +22,11 @@ import SectionHead from "../SectionHead";
  * The rail holds still: each stage's text reveals (`.bf-stage__body`), and its
  * border and marker stay where they are at every width. Below 1025 the rail is
  * the stages' own borders and markers.
+ *
+ * Since 2026-10-24 the rail is rendered by `StageRail` (the owner's brief,
+ * §6), its markup unchanged: with JavaScript, from 1025px, one stage is
+ * selected at a time and a panel under the rail shows what happens in it and
+ * what the client gets.
  */
 export default function HowWeBuild() {
   const h = engineering.headings.howWeBuild;
@@ -28,24 +34,7 @@ export default function HowWeBuild() {
     <section id="how-we-build" className="bf-section" aria-labelledby="build-title">
       <div className="bf-wrap">
         <SectionHead id="build-title" eyebrow={h.eyebrow} title={h.title} lead={h.lead} />
-        <div className="bf-rail" data-bf-trace="rail">
-          <svg className="bf-trace bf-rail__line" aria-hidden="true" focusable="false">
-            <line className="bf-trace__path" x1="0" y1="0.5" x2="100%" y2="0.5" />
-          </svg>
-          <ol className="bf-stages">
-            {engineering.stages.map((s, i) => (
-              <li key={s.id} className="bf-stage" data-bf-trace-stop="">
-                <div className="bf-stage__body" data-bf-reveal>
-                  <span className="bf-stage__num" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="bf-stage__title">{s.title}</h3>
-                  <p className="bf-stage__gets">{s.gets}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <StageRail stages={engineering.stages} />
       </div>
     </section>
   );

@@ -652,6 +652,49 @@ def p_pubstat_bare(s):
     s.rep("components/site/FeatureScreens.tsx", "        <FigureText text={s.text} />\n", "        {s.text}\n")
 
 
+# ── the owner's brief of 2026-10-24: the playground, the compact map and the
+#    stage picker (check 37) ───────────────────────────────────────────────────
+PG = "components/site/FlowPlayground.tsx"
+STAGES = "components/site/StageRail.tsx"
+
+
+def p_pg_every_node(s):
+    """37: a followed request lights every node on the diagram"""
+    s.rep(PG, "            const lit = i >= 0 && reached >= i;\n", "            const lit = reached >= 0;\n")
+
+
+def p_pg_reduced(s):
+    """37: reduced motion ignored — the request walks anyway"""
+    s.rep(PG, "    if (reduced()) {\n", "    if (false && reduced()) {\n")
+
+
+def p_pg_words(s):
+    """37: a step that says something content/architecture.ts does not"""
+    s.rep(PG, '<span className="bf-flowpg__stop">{nodeLabel.get(step.node)}</span> {step.text}',
+          '<span className="bf-flowpg__stop">{nodeLabel.get(step.node)}</span> {step.text.replace("No model is asked.", "A small model decides.")}')
+
+
+def p_map_robotics_work(s):
+    """37: robotics given a project on the compact map"""
+    s.rep("components/site/home/SystemMapCompact.tsx", "    related[n.id] = { work, depth: of.map((c) => c.cta) };\n",
+          '    related[n.id] = { work: n.id === "robotics" ? [workLink("warmchats")] : work, depth: of.map((c) => c.cta) };\n')
+
+
+def p_map_concept_cyan(s):
+    """37: a lit concept link carries the cyan pulse again (as until 2026-10-24)"""
+    s.rep("components/site/SystemMap.tsx", "{lit && !l.concept ? <line", "{lit ? <line")
+
+
+def p_stage_off_by_one(s):
+    """37: the stage panel shows the stage after the one selected"""
+    s.rep(STAGES, "  const s = stages[active];\n", "  const s = stages[Math.min(active + 1, stages.length - 1)];\n")
+
+
+def p_stage_twice(s):
+    """37: the stage descriptions left in the columns beside the panel"""
+    s.rep("app/site.css", "  [data-stage-picker] .bf-stage__does {\n    display: none;\n  }\n\n", "")
+
+
 # ── the table: [key, the case, its check, the finding it must print (a JS
 #    regex), its patch (None: the finding comes from the named case's patch),
 #    options] ─────────────────────────────────────────────────────────────────
@@ -777,6 +820,15 @@ CASES = [
     ["bazzile-70k-home", "Bazzile's 70,000 downloads back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "70,000" is back', p_bazzile_figures, {}],
     ["bazzile-users-home", "Bazzile's 15,000 active users back, on the homepage tile", 30, r'^/: "Bazzile\'s download and user figures" was cut .*, but "15,000 active users" is back', None, {"from": "bazzile-70k-home"}],
     ["pubstat-bare", "Bazzile's Google Play figure without its exemption", 8, r'"100K\+" has no shipped/target label', p_pubstat_bare, {}],
+    # new for the owner's brief of 2026-10-24, one per rule of check 37
+    ["pg-every-node", "the playground lights every node for any request", 37, r'^/ @1440 desktop: the keyword request \("sushi"\) lights intent, retrieval on the diagram, which its path does not pass', p_pg_every_node, {}],
+    ["pg-reduced", "the playground walks under reduced motion", 37, r'^/ @1440 reduced motion: under reduced motion, the keyword request \("sushi"\) had lit 1 of 5 steps', p_pg_reduced, {}],
+    ["pg-words", "a playground step that says a model decides the keyword lane", 37, r'the keyword request \("sushi"\), step 2 reads ".*A small model decides\." — content/architecture\.ts says', p_pg_words, {}],
+    ["map-robotics-work", "robotics linked to WarmChats on the compact map", 37, r'^/ @1440 desktop: the compact map links "Robotics" to /work/warmchats — its capabilities\' linked work is none', p_map_robotics_work, {}],
+    ["map-concept-cyan", "a lit concept link pulsing cyan on the compact map", 37, r'^/ @1440 desktop: with "Robotics" selected, a concept link on the compact map is painted cyan', p_map_concept_cyan, {}],
+    ["map-concept-cyan-full", "a lit concept link pulsing cyan on /capabilities' map", 37, r'^/capabilities @1440 desktop: with "Robotics" selected, a concept link on the system map is painted cyan', None, {"from": "map-concept-cyan"}],
+    ["stage-off-by-one", "the stage panel one stage out", 37, r'^/ @1440 desktop: the stage panel opens on "Architect" — it opens on Discover', p_stage_off_by_one, {}],
+    ["stage-twice", "the stage descriptions in the columns and the panel at once", 37, r"^/ @1440 desktop: with the picker live, 6 stage description\(s\) still show in the columns", p_stage_twice, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case
 # goes here only when the rule it tested cannot exist any more
@@ -1007,6 +1059,18 @@ def b_p(s):
           '        href: "https://apps.apple.com/fr/app/bazzile/id1622224603",\n        source:')
 
 
+
+def b_q(s):
+    """(q) a playground request that skips the cache: the write-up's order is
+    classify, check the cache, then one lane (2026-10-24)"""
+    s.rep("content/architecture.ts", '          { node: "cache", text: "Nothing is stored under this key yet. A miss." },\n', "")
+
+
+def b_r(s):
+    """(r) a stage that says nothing about what happens in it (2026-10-24)"""
+    s.rep("content/engineering.ts", '      does: "We release with monitoring, runbooks and a sensible cutover.",\n', '      does: " ",\n')
+
+
 BAD = [
     ["a", "a figure KPI with no status", "content/site.ts", b_a, [r"needs a status"]],
     ["b", "a capability KPI with a status", "content/site.ts", b_b, [r"not a metric"]],
@@ -1028,6 +1092,9 @@ BAD = [
     ["n", "feature screens on GodConnect Online, whose role names no features", "content/projects.ts", b_n, [r"projects\.ts failed validation", r"GodConnect Online.{1,2} carries feature screens, and its role names no features"]],
     ["o", "a generic screenshot on a feature-work card (Bazzile)", "content/projects.ts", b_o, [r"projects\.ts failed validation", r"Bazzile.{1,2} is feature work inside Bazzile Technology SA's app: a generic screenshot of the app claims all of it"]],
     ["p", "Bazzile's Google Play figure linked to its App Store listing", "content/projects.ts", b_p, [r"projects\.ts failed validation", r"its public figure .{1,2}100K\+ downloads on Google Play.{1,2} links to https://apps\.apple\.com/fr/app/bazzile/id1622224603, its .{1,2}App Store.{1,2} listing, which the figure does not name"]],
+    # new for the owner's brief of 2026-10-24, one per new build-time rule
+    ["q", "a playground request that skips the cache (the descriptive search)", "content/architecture.ts", b_q, [r"architecture\.ts failed validation", r"A descriptive search: every request is classified, then checked against the cache, before any lane runs"]],
+    ["r", "a stage with an empty description (Deploy)", "content/engineering.ts", b_r, [r"engineering\.ts failed validation", r"does is empty"]],
 ]
 
 

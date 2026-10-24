@@ -74,9 +74,9 @@ Save-Data and reduced motion never request a byte of it (*Motion, as built*).
 
 | route | what it is | content from |
 |---|---|---|
-| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then, since 2026-09-30, the features we shipped into other companies' apps — Bazzile's tile, its two feature screens and its Google Play count — then a Schedule a Call, the restaurant search's three lanes and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; a Schedule a Call after it, at every width since fix pass B); how we build; the industries with delivered work (below 1025px, a Schedule a Call after them); the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes) · static |
+| `/` | homepage (`app/page.tsx`), in `site.sectionOrder` — since 2026-09-28 ordered for a buyer deciding whether to hire (*Decided 2026-09-28*): the hero, with the first call's microcopy and a proof line of three shipped products; the engineering stories (`#recent-work`, "Built and shipped.": the two write-ups side by side — on a phone each its outcome and its result — then, since 2026-09-29, TTouch Clothing's four systems with their screenshots, then, since 2026-09-30, the features we shipped into other companies' apps — Bazzile's tile, its two feature screens and its Google Play count — then a Schedule a Call, the engineering flow playground — since 2026-10-24 the restaurant search's three lanes, each with a sample request to follow through the router, ending in its own Schedule a Call — and the proof strip); how we work with you (`#how-we-work`: the terms, the engagement models, the two-week pilot on its trace, the headcount, a Schedule a Call); what we engineer (since 2026-10-24 opening with the compact system map; then one ledger row per capability, `#software` … `#cloud`, each with its tiers, linked work, "in depth" and its diagram; a Schedule a Call after it, at every width since fix pass B); how we build; the industries with delivered work (below 1025px, a Schedule a Call after them); the Insights teaser; the FAQ (nine questions, four of them the buyer's objections); the final call to action | `content/site.ts` (hero, stories, team size, FAQ, final call to action, navigation, footer), `content/engineering.ts` (capabilities, industries, stages), `content/pages.ts` (how we work's words, /about's), `content/services.ts`, `content/pilot.ts`, `content/projects.ts` (the proof line, the attribution labels, the client story), `content/metrics.ts` (the proof strip), `content/architecture.ts` (the lanes, and the playground's requests) · static |
 | `/contact` | Schedule a Call: the contact panel, the booking calendar (`#schedule`) and a three-field project form that opens the visitor's email app (`#project`) — `app/contact/page.tsx`, built 2026-09-16. From 1025px (2026-09-28) the h1 and the calendar sit side by side, the calendar in the first viewport: on the left the h1, the lead, /about's four terms word for word under "How we work with clients" and the email; on the right the calendar. Below 1025px it is one column in the DOM's order, the calendar straight after the h1. The panel's own Schedule a Call, a jump to a calendar already beside it, went. The form's wrapper is `.bf-contact-project` — it was `.bf-project`, /work's card, whose rule won and rendered the form 203px wide | `content/site.ts`, `contact`; the terms from `content/pages.ts` |
-| `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
+| `/capabilities` | the six capabilities in depth: body, what we build, how we approach it, the evidence tier with its note, the AI capability's labelled figures, linked work, the articles written from it, and each capability's own diagram; the anchors `#software` … `#cloud`, where the homepage's "in depth" links land; then the system map (`#system-map`, moved here from the homepage on 2026-09-28; its compact form is on / again since 2026-10-24, with the parts only and a link here for the connections and the worked flows) (`app/capabilities/page.tsx`) | `content/engineering.ts`, `content/pages.ts`, `content/metrics.ts`, `content/insights.ts` · static |
 | `/industries` | "Technology we can build for…": each industry's problems, what we'd build, the capabilities it draws on and — only where `content/engineering.ts` records delivered work — where we've built it, in two groups: with delivered work, and without | `content/engineering.ts`, `content/pages.ts` · static |
 | `/engineering` | how we build (the homepage's six stages, and the three phases of `content/process.ts`), the stack by layer (SPEC §8b.2), architecture principles each linked to where it is written up, and the verify-before-release discipline | `content/engineering.ts`, `content/process.ts`, `content/pages.ts` · static |
 | `/about` | who we are; the team (the Team section: 15+ developers, no one named, no Person node — on the homepage since 2026-09-28 only its headcount, in how we work); where our engineers work; how we work with clients (four terms, the engagement models, the pilot — MOVES.md's items word for word); what we won't do | `content/pages.ts`, `content/site.ts` (team), `content/services.ts`, `content/pilot.ts` · static |
@@ -526,7 +526,8 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   semantic tokens (`--bf-ground`, `--bf-text` …) are the CURRENT ground's —
   paper at `:root`, re-pointed at graphite by `.bf-ink` and by the graphite
   pieces (the header, drawer, hero, page heads, the close, the footer; and,
-  in the studio layer, the diagram plates, the lanes band, the proof strip,
+  in the studio layer, the diagram plates, the flow playground (the lanes band
+  until 2026-10-24), the proof strip,
   code boxes and the system map's canvas) — so a component styled with the
   tokens reads on either ground with no rule of its own.
 - **Tokens** (`:root` in `app/site.css`). Paper: ground `#f3f1ec`, surface
@@ -704,7 +705,8 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
   tile on the ground, its head beside Bazzile's card from 1025px, the card's
   two screens small beside its label, name, what we built and its Google Play
   figure from 768px and over them on a phone; then the section's Schedule a
-  Call, then the lanes band and the proof strip, whose four figures are ruled
+  Call, then the flow playground (the lanes band until 2026-10-24) and the
+  proof strip, whose four figures are ruled
   rows on a phone, not boxed cards. Measured: the plate is 511px tall at 1440
   (at 2028), 1061 at 1024 and 865 at 390; the feature-work tile after it
   (2026-09-30) 418px at 1440 (at 2563), 606 at 1024 and 1000 at 390; and the
@@ -1055,7 +1057,11 @@ has a pause control.
 
 - **The reveal** (`components/site/SiteMotion.tsx`): an element marked
   `data-bf-reveal` that is still below the fold after hydration gets
-  `.bf-revealed` when it enters the viewport — a 20px rise and fade over 0.8s,
+  `.bf-revealed` when it enters the viewport — a 20px rise and fade over 0.6s
+  (0.8s until 2026-10-24: the owner's brief puts entrances at 400–700ms); a
+  screenshot in a revealing story or client band is unmasked top to bottom
+  over 0.65s (`bf-unmask`, a clip-path on the picture only — its frame and
+  the words are there at once);
   `fill-mode: none`. Nothing is hidden in the server HTML, and focus ends a
   reveal (A2). "Below the fold" is the IntersectionObserver's own first
   report (2026-09-29), not a position read when the effect runs, which after
@@ -1296,7 +1302,30 @@ has a pause control.
     its lit line; `flow` linear 1.6s a pass, two after a trace, three without;
     `lab` 1.4s, steel, no flow.
 - **The system map:** a lit link's cyan pulse runs four 1.2s passes and rests;
-  the other parts dim with a 0.2s opacity change.
+  the other parts dim with a 0.2s opacity change. **A lit concept link never
+  takes the cyan or the pulse** (2026-10-24): it turns a lighter steel
+  (`--bf-soft`) and stays dashed — the Lab drawings' rule, which the map broke
+  until then (hovering Robotics, or "A camera sees a defect", on /capabilities
+  pulsed the robotics link cyan; check 33 reads only `.dg-node--concept`
+  drawings and never pressed anything). The compact map on / (`compact`):
+  a selection holds until another part is chosen — its readout carries
+  links, which a hover that cleared it would pull from under the pointer —
+  and a tap on the drawing selects too.
+- **The flow playground** (`components/site/FlowPlayground.tsx`, 2026-10-24,
+  the owner's brief §4): pressing "Follow this request" walks that request
+  along its path one step every 450ms — each edge traced in brand blue over
+  0.45s (a dash the edge's length, `pathLength` 1), the request's current
+  stop cyan (the data), the parts it does not pass dimmed to 0.35, and the
+  lane's own steps lit in turn down their rail — and settles lit until another
+  request is followed: 1.35–2.25s, inside five seconds, so no pause control.
+  Under reduced motion, or with motion paused (`html[data-motion="paused"]`),
+  it lands on the end at once and nothing transitions. Started from the
+  press, not from an effect; no gsap — it runs the same on a phone, where the
+  steps are the flow (the diagram is shown from 1025px). Text never moves.
+- **The stage picker** (`components/site/StageRail.tsx`, 2026-10-24, §6):
+  from 1025px, the selected stage's title turns brand blue and the panel under
+  the rail swaps its words; its progress line advances by `transform:
+  scaleX` over 0.3s. The rail's trace is the Signal's and untouched.
 - **Hero field (homepage): a three.js scene over a poster of it** (2026-09-16,
   the owner's brief; engineering SPEC §7, "Many technologies. One engineering
   system."; its v2, 2026-09-28, *Decided 2026-09-28*). An engineering core of
@@ -2346,7 +2375,8 @@ RUN 2 (`scripts/gate/gate-cases.py`).
   wordmark). `kubernetes` still patches the stack's list, which renders on
   /engineering only now, so /engineering's inventory includes the evidence
   cuts and check 30 still sees a cut technology come back. `cache-lane`
-  stands: the restaurant search's lanes stay on `/`, as a band in the stories.
+  stands: the restaurant search's lanes stay on `/`, in the stories (since
+  2026-10-24 as the flow playground, every lane's words in the served HTML).
 
 **Checks changed for the TTouch Clothing projects (2026-09-29).** Each rule was
 proven both ways — the site passes; a copy with the misuse fails with that
@@ -2487,7 +2517,38 @@ own finding — and each has its case in `scripts/gate/gate-cases.py`.
   and how we work's hidden with it, so no other patch in the misuse build can
   bring the run back under the limit — the ledger's alone makes it 5),
   `header-loud` (the header's call never steps down) and `footer-filled`
-  (the footer's filled again). The gate expects 36 checks.
+  (the footer's filled again). The gate expects 37 checks.
+  **Since the flow playground (2026-10-24): 4 at both widths — at the limit
+  at 1440 too.** The playground is 2,600px on a phone, so it ends in its own
+  Schedule a Call (without it, six phone screens in a row showed none, from
+  the proof's call to how we work's); at 1440 the compact map put 4,500px
+  between how we work's call and the ledger's (2 until then).
+- **37, new — the new interactions, driven** (the owner's brief, 2026-10-24).
+  On a fresh / at 1440, at 1440 under reduced motion and at 390 as a phone
+  (and /capabilities' full map on the two desktops), each read against
+  `content/`, never against itself: every playground request is pressed in
+  turn and read 120ms and 3.2s later — it walks (one step lit early, not all;
+  under reduced motion all at once, with no animation running), settles with
+  every step lit, lights no other lane, presses only its own button, says the
+  steps' words in content/architecture.ts's order, and from 1025px lights
+  exactly its path's nodes and traces exactly its path's edges, and the live
+  status names the query; every part of the compact map is selected in turn —
+  its readout's work links are its capabilities' linked work (a part with
+  none says "nothing delivered yet"), its "in depth" links its capabilities',
+  and no concept link is cyan or pulsing (nor on /capabilities with Robotics
+  or "A camera sees a defect" selected); the stage panel opens on the first
+  stage, shows each selected stage's title, `does` and `gets`, presses only
+  it, advances its progress line to (i + 1)/6, and leaves no description in
+  the columns beside it; below 1025px there is no panel and each stage says
+  what happens in it, in order. RUN 2: `pg-every-node`, `pg-reduced`,
+  `pg-words`, `map-robotics-work`, `map-concept-cyan` (+ `-full`),
+  `stage-off-by-one`, `stage-twice` — each proven to fail with its own finding
+  on one misuse build, 2026-10-24. RUN 3: (q) a playground request that skips
+  the cache and (r) a stage with an empty description are refused in the
+  schema's words. The suite's content loader now stubs zod with a chainable
+  proxy: `content/architecture.ts`'s schemas are built in steps
+  (`z.string().min(1)`, `.superRefine`), which the old stub — a call that
+  returned null — threw on, so the file could not be read at all.
 
 **Checks changed for Bazzile's feature screens (2026-09-30).** The owner
 allowed the screens where our features live and Google Play's public count
@@ -2826,7 +2887,62 @@ is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
 
-## Decided 2026-10-24: the studio redesign (owner's request; awaiting his review)
+## Decided 2026-10-24: the master brief — show the engineering (owner)
+
+**The request.** The owner sent two briefs on 2026-10-24. The first, "Precision
+in Motion", proposed navy (#0B1020), electric blue and cyan; the second, the
+"Premium Website Experience & Motion Design Master Brief", replaced it the
+same day and is the mandate: keep the studio design (paper, graphite,
+Archivo, cobalt — merged that day, below), keep the proof first, and make the
+engineering visible — an Engineering Flow Playground, a compact Living System
+Map and an engaging "How we build", with no new claims.
+
+**Audited first, against main d068f11:** most of the brief was already the
+site — the six routes and Schedule a Call, "Build what's next." with
+"Explore Our Capabilities", the three.js hero behind its poster, the proof
+second, the pilot as a cobalt billboard in the brief's own words, the Signal,
+the interactive map on /capabilities, reduced-motion and no-JS behaviour,
+and checks for each. What it lacked was interaction where the brief asked
+for it. One real defect turned up: the map pulsed the robotics link cyan when
+lit (*Motion, as built*).
+
+**What changed:**
+- **The flow playground** replaces the static lanes band in `#recent-work`,
+  in the same place: the lanes' own words and figures, each lane with a
+  sample request (the case study's own examples, labelled illustrative)
+  walked through the diagram. The order of operations is the write-up's —
+  classify with rules, check the cache under a key that includes the lane,
+  then run one lane — so the repeat request passes the router too; the
+  brief's "query → cache lookup" skipped it, and the schema refuses a request
+  that skips the router or the cache (RUN 3, q). No figure is in the new
+  words: the figures stay in the lanes with their chips. It ends in a
+  Schedule a Call (check 36).
+- **The compact system map** opens what we engineer on /: the same map and
+  data as /capabilities (seven parts, robotics a dashed Concept), with each
+  part's work and "in depth" links worked out from its capabilities — robotics
+  says "nothing delivered yet". The brief listed six capability nodes; the
+  map keeps the seven parts of the owner's 2026-09-16 spec, which is also
+  what the first brief listed, rather than a second map of the same thing.
+- **How we build** selects one stage at a time from 1025px: the panel shows
+  what happens in it (`stages[].does`, new) and what you get. Architect's
+  `does` is the brief's sentence; the others are COPY.md §6's approved process
+  words (`content/process.ts`), split across the stages.
+- **Motion tuned to the brief's tokens:** the reveal 0.6s (was 0.8s); the
+  screenshots unmasked as their block reveals; the screenshot hover lean
+  1.5% (was 2.5%; the brief says 1–2%).
+
+**Not changed, on purpose:** the contact form (it already asks for the
+brief's fields, the email being the visitor's own mail app; real success and
+failure states need a provider, which the brief leaves to the owner); the
+header's headroom (the brief warns against "a complex disappearing header" —
+the owner's call, not a silent change); the hero scene's endless sway (the
+brief asks that it "settle"; probe-scene holds the current motion); all copy
+outside the new pieces.
+
+**The suite:** check 37 is new; 36 is at its limit at both widths (*Verify
+before pushing*).
+
+## Decided 2026-10-24: the studio redesign (owner's request; merged the same day, PR #3, main d068f11)
 
 **The request.** The owner, 2026-10-24, verbatim: "it's not look like well
 creative and human level site make more professian and more better better
