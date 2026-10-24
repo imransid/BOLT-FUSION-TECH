@@ -390,7 +390,7 @@ def p_contact_form(s):
 
 def p_fallback_face(s):
     """2 (2026-09-28): text that the site's faces cannot draw, so the browser
-    paints it in a system fallback — Jost has no CJK glyphs. Check 2 reads only
+    paints it in a system fallback — Archivo has no CJK glyphs. Check 2 reads only
     text the browser renders since that day (an element in a closed <details>
     is never painted); this proves it still sees the text it does render."""
     s.rep("components/site/home/Faq.tsx", '        <div className="bf-faq__list">\n',
@@ -722,7 +722,7 @@ CASES = [
     ["kubernetes", "Kubernetes added to the technical-depth list", 30, r"was cut .* but \"Kubernetes\" is back", p_kubernetes, {}],
     ["canonical", "the canonical line changed in one place only (llms-full.txt)", 12, r"^/llms-full\.txt does not carry it word for word", p_canonical, {}],
     # new for the 2026-09-28 redesign, one per new rule
-    ["fallback-face", "text drawn in a system fallback face (CJK glyphs Jost does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
+    ["fallback-face", "text drawn in a system fallback face (CJK glyphs Archivo does not have), on /", 2, r"^/ @\d+: \d+ element\(s\) ask for a web face and paint a fallback", p_fallback_face, {}],
     ["contact-form", "the /contact project form collapsed to its content's width (the .bf-project collision)", 32, r"^/contact @1440: the project form \(#project \.bf-form\) is \d+px wide — at 1440 it is at least 480px", p_contact_form, {}],
     # new with the Signal motion system (2026-09-28): script motion, CLS while reading
     ["script-motion", "an rAF loop that ignores reduced motion (a script-written transform)", 21, r"^/: \d+ element\(s\) animated by script under reduced motion — e\.g\. (?:[^;]*, )?div\.vs-spin", p_script_motion, {}],

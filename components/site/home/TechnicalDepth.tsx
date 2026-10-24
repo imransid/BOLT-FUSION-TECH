@@ -5,7 +5,7 @@ import SectionHead from "../SectionHead";
 /**
  * Technical depth, by layer (SPEC §5), exactly the SPEC's list: a cross-section
  * of strata, product at the top and infrastructure at the bottom. Stack names
- * are machine values: Barlow 500 with tabular figures. No Kubernetes, Kafka or
+ * are machine values: Archivo 500 with tabular figures. No Kubernetes, Kafka or
  * RabbitMQ — the schema refuses them until the owner confirms them.
  */
 export default function TechnicalDepth() {

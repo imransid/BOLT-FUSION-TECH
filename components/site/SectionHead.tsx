@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
 /**
- * A section's heading block: the eyebrow (Barlow 500, muted, after a short
- * brand-blue rule), the h2 (Barlow 700, tight tracking), and an optional lead.
+ * A section's heading block: the eyebrow (Archivo 500, after a cobalt dot),
+ * the h2 (Archivo 600, set expanded and tight), and an optional lead.
  * Sentence case; never tracked capitals.
  */
 export default function SectionHead({

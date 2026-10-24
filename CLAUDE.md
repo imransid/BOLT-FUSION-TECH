@@ -16,8 +16,9 @@ Do not resolve those by editing either side.
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS · Barlow and
-Jost through `next/font/google` · deployed on Vercel. There is no CMS and no
+Next.js 16 (App Router) · React 19 · TypeScript · Zod 4 · plain CSS · Archivo
+(one variable file, weight and width axes; Barlow and Jost until 2026-10-24)
+through `next/font/google` · deployed on Vercel. There is no CMS and no
 database: the content is typed files in `/content`. There is no Tailwind.
 **three.js is back for one thing only, the homepage hero's scene**, by the
 owner's brief of 2026-09-16 (*The hero field*, under Hard rules): imported
@@ -519,13 +520,26 @@ and every page, the 404 included (*The inner pages, as built*, below). Its base
 block carries the resets the retired `app/techwix.css` held — the body's Jost
 16px on the unitless 1.73, the button reset, 600 for bold, code in Barlow.
 
-- **Tokens** (`:root` in `app/site.css`): ground `#07090d`, surface `#0d1016`,
-  raised `#141922`; hairline `#232a36`, a stronger rule `#2e3747`, steel `#6b7385`
-  (a boundary that must read: inputs, ghost buttons, diagram strokes); text
-  `#eceff4`, body `#c3c9d4`, muted `#9aa3b4`; brand `#4c86ff` (links on dark),
-  `#7aa7ff` (hover), the button fill `#2a62e0` (hover `#2256c9`); flow cyan
-  `#2ee6d6`; shipped `#34d399`, target `#fbbf24`; focus `#8ab4ff`. Content capped
-  at 1240px; the side gutter `clamp(16px, 4vw, 48px)`; the header 72px.
+- **Since 2026-10-24 the grounds are two** (*Decided 2026-10-24: the studio
+  redesign*, which overrides the dark-only wording in this section wherever
+  they disagree): **paper for people, graphite screens for machines.** The
+  semantic tokens (`--bf-ground`, `--bf-text` …) are the CURRENT ground's —
+  paper at `:root`, re-pointed at graphite by `.bf-ink` and by the graphite
+  pieces (the header, drawer, hero, page heads, the close, the footer; and,
+  in the studio layer, the diagram plates, the lanes band, the proof strip,
+  code boxes and the system map's canvas) — so a component styled with the
+  tokens reads on either ground with no rule of its own.
+- **Tokens** (`:root` in `app/site.css`). Paper: ground `#f3f1ec`, surface
+  `#eae7e0`, raised `#fbfaf7`; hairline `#dcd8ce`, a stronger rule `#c9c3b6`,
+  steel `#837d70`; text `#121316`, body `#3a3c42`, muted `#5c5e65`; links and
+  the button fill cobalt `#2b44ff` (hover `#1d33db`, link hover `#1a2ac4`);
+  shipped `#086640`, target `#854c00`; focus cobalt. Graphite: ground
+  `#07090d`, surface `#0e1118`, raised `#161a23`; hairline `#232a36`, rule
+  `#2f3747`, steel `#6b7385`; text `#f3f2ef`, body `#c6cad3`, muted `#9aa2b2`;
+  links `#8e9cff` (hover `#b6bfff`); shipped `#34d399`, target `#fbbf24`; focus
+  `#8ab4ff`. Flow cyan `#2ee6d6`, on graphite only. Content capped at 1240px;
+  the side gutter `clamp(16px, 4vw, 48px)`; the header 72px; plates 24px
+  radius, frames 14px, buttons pills.
 - **The cyan is never text and never a chip:** flow lines in the diagrams, the
   system map and, from the 3D wave, the hero scene — and **never in the Lab
   drawing** (robotics), on any profile: nothing flows in a system that has not
@@ -757,45 +771,77 @@ block carries the resets the retired `app/techwix.css` held — the body's Jost
 `node scripts/contrast-site.mjs` measures every text/background pair
 `app/site.css` uses and every boundary that must read, and exits 1 on a failure.
 Text needs 4.5:1; a boundary or indicator 3:1 (SC 1.4.11). A translucent chip
-fill is composited over its ground first. Every pair is AA:
+fill is composited over its ground first. Since 2026-10-24 it measures both
+grounds — paper and graphite — and the pilot's cobalt plate. Every pair is AA:
 
 | foreground | background | ratio | needs | used for |
 |---|---|---|---|---|
-| text #eceff4 | ground #07090d | 17.29:1 | 4.5:1 | headings, primary text, labels on the page |
-| text #eceff4 | surface #0d1016 | 16.52:1 | 4.5:1 | text on the footer, drawer, diagram plates, lanes |
-| text #eceff4 | raised #141922 | 15.29:1 | 4.5:1 | tier-chip labels, diagram node labels, the honesty note |
-| soft #c3c9d4 | ground #07090d | 11.98:1 | 4.5:1 | body copy |
-| soft #c3c9d4 | surface #0d1016 | 11.45:1 | 4.5:1 | body copy in the footer and drawer |
-| soft #c3c9d4 | raised #141922 | 10.59:1 | 4.5:1 | a tier chip's scope |
-| muted #9aa3b4 | ground #07090d | 7.85:1 | 4.5:1 | eyebrows, meta, labels, the pause control |
-| muted #9aa3b4 | surface #0d1016 | 7.50:1 | 4.5:1 | footer labels and base row, diagram notes |
-| muted #9aa3b4 | raised #141922 | 6.94:1 | 4.5:1 | muted text on a raised surface |
-| brand #4c86ff | ground #07090d | 5.85:1 | 4.5:1 | links, the quiet call to action, stage numbers |
-| brand #4c86ff | surface #0d1016 | 5.59:1 | 4.5:1 | links on the footer and drawer |
-| brandHi #7aa7ff | ground #07090d | 8.35:1 | 4.5:1 | link hover, a pressed map part |
-| brandHi #7aa7ff | surface #0d1016 | 7.98:1 | 4.5:1 | the drawer's current link |
-| white #ffffff | brandFill #2a62e0 | 5.35:1 | 4.5:1 | the primary button, the skip link |
-| white #ffffff | brandFillHover #2256c9 | 6.48:1 | 4.5:1 | the primary button, hovered |
-| shipped #34d399 | rgb(12,29,27) | 9.05:1 | 4.5:1 | a shipped chip on the ground |
-| shipped #34d399 | rgb(17,36,35) | 8.40:1 | 4.5:1 | a shipped chip on a surface |
-| target #fbbf24 | rgb(31,27,15) | 10.29:1 | 4.5:1 | a target chip on the ground |
-| target #fbbf24 | rgb(37,34,23) | 9.53:1 | 4.5:1 | a target chip on a surface |
-| shipped #34d399 | rgb(23,44,46) | 7.61:1 | 4.5:1 | a shipped chip inside a tag on a card |
-| target #fbbf24 | rgb(43,42,34) | 8.63:1 | 4.5:1 | a target chip inside a tag on a card |
-| steel #6b7385 | ground #07090d | 4.19:1 | 3:1 | input borders, ghost-button borders, diagram strokes (non-text) |
-| steel #6b7385 | surface #0d1016 | 4.00:1 | 3:1 | diagram strokes on the plate (non-text) |
-| steel #6b7385 | raised #141922 | 3.71:1 | 3:1 | the Lab chip's dashed edge (non-text) |
-| flow #2ee6d6 | surface #0d1016 | 12.16:1 | 3:1 | the cyan flow lines on a diagram plate (non-text) |
-| flow #2ee6d6 | ground #07090d | 12.72:1 | 3:1 | the cyan on the system map (non-text) |
-| brand #4c86ff | surface #0d1016 | 5.59:1 | 3:1 | an accented node's outline, a tier meter step (non-text) |
-| brand #4c86ff | raised #141922 | 5.17:1 | 3:1 | a tier meter step on the chip (non-text) |
-| focus #8ab4ff | ground #07090d | 9.54:1 | 3:1 | the focus ring on the ground (non-text) |
-| focus #8ab4ff | surface #0d1016 | 9.12:1 | 3:1 | the focus ring in the footer and drawer (non-text) |
-| paperMuted #4a5266 | paper #ffffff | 7.81:1 | 4.5:1 | the booking calendar panel's caption and placeholder (/contact) |
-| brandFill #2a62e0 | paper #ffffff | 5.35:1 | 3:1 | that panel's focus ring and links on white (non-text) |
+| #121316 | #f3f1ec | 16.46:1 | 4.5:1 | paper: headings, primary text, labels |
+| #121316 | #eae7e0 | 15.04:1 | 4.5:1 | paper: text on a surface — a plate, the footer, the drawer |
+| #121316 | #fbfaf7 | 17.80:1 | 4.5:1 | paper: tier-chip labels, a raised card's text |
+| #3a3c42 | #f3f1ec | 9.77:1 | 4.5:1 | paper: body copy |
+| #3a3c42 | #eae7e0 | 8.93:1 | 4.5:1 | paper: body copy on a surface |
+| #3a3c42 | #fbfaf7 | 10.56:1 | 4.5:1 | paper: a tier chip's scope, a card's body |
+| #5c5e65 | #f3f1ec | 5.73:1 | 4.5:1 | paper: meta, labels, the pause control |
+| #5c5e65 | #eae7e0 | 5.24:1 | 4.5:1 | paper: labels on a surface |
+| #5c5e65 | #fbfaf7 | 6.20:1 | 4.5:1 | paper: muted text on a raised card |
+| #2b44ff | #f3f1ec | 5.51:1 | 4.5:1 | paper: links, the quiet call to action, numbers |
+| #2b44ff | #eae7e0 | 5.04:1 | 4.5:1 | paper: links on a surface |
+| #2b44ff | #fbfaf7 | 5.96:1 | 4.5:1 | paper: links on a raised card |
+| #1a2ac4 | #f3f1ec | 8.56:1 | 4.5:1 | paper: link hover |
+| #086640 | rgb(224,238,228) | 5.87:1 | 4.5:1 | paper: a shipped chip |
+| #086640 | rgb(216,229,217) | 5.40:1 | 4.5:1 | paper: a shipped chip on a surface |
+| #086640 | rgb(231,246,238) | 6.30:1 | 4.5:1 | paper: a shipped chip on a raised card |
+| #854c00 | rgb(244,236,216) | 5.88:1 | 4.5:1 | paper: a target chip |
+| #854c00 | rgb(236,227,205) | 5.42:1 | 4.5:1 | paper: a target chip on a surface |
+| #854c00 | rgb(251,244,226) | 6.31:1 | 4.5:1 | paper: a target chip on a raised card |
+| #837d70 | #f3f1ec | 3.62:1 | 3:1 | paper: input and ghost-button borders, diagram strokes (non-text) |
+| #837d70 | #eae7e0 | 3.31:1 | 3:1 | paper: strokes on a surface (non-text) |
+| #837d70 | #fbfaf7 | 3.92:1 | 3:1 | paper: the Lab chip's dashed edge (non-text) |
+| #2b44ff | #fbfaf7 | 5.96:1 | 3:1 | paper: a tier meter step (non-text) |
+| #2b44ff | #f3f1ec | 5.51:1 | 3:1 | paper: the focus ring (non-text) |
+| #2b44ff | #eae7e0 | 5.04:1 | 3:1 | paper: the focus ring on a surface (non-text) |
+| #f3f2ef | #07090d | 17.80:1 | 4.5:1 | graphite: headings, primary text, labels |
+| #f3f2ef | #0e1118 | 16.87:1 | 4.5:1 | graphite: text on a surface — a plate, the footer, the drawer |
+| #f3f2ef | #161a23 | 15.55:1 | 4.5:1 | graphite: tier-chip labels, a raised card's text |
+| #c6cad3 | #07090d | 12.14:1 | 4.5:1 | graphite: body copy |
+| #c6cad3 | #0e1118 | 11.50:1 | 4.5:1 | graphite: body copy on a surface |
+| #c6cad3 | #161a23 | 10.60:1 | 4.5:1 | graphite: a tier chip's scope, a card's body |
+| #9aa2b2 | #07090d | 7.77:1 | 4.5:1 | graphite: meta, labels, the pause control |
+| #9aa2b2 | #0e1118 | 7.36:1 | 4.5:1 | graphite: labels on a surface |
+| #9aa2b2 | #161a23 | 6.79:1 | 4.5:1 | graphite: muted text on a raised card |
+| #8e9cff | #07090d | 7.92:1 | 4.5:1 | graphite: links, the quiet call to action, numbers |
+| #8e9cff | #0e1118 | 7.51:1 | 4.5:1 | graphite: links on a surface |
+| #8e9cff | #161a23 | 6.92:1 | 4.5:1 | graphite: links on a raised card |
+| #b6bfff | #07090d | 11.28:1 | 4.5:1 | graphite: link hover |
+| #34d399 | rgb(12,29,27) | 9.05:1 | 4.5:1 | graphite: a shipped chip |
+| #34d399 | rgb(18,36,37) | 8.37:1 | 4.5:1 | graphite: a shipped chip on a surface |
+| #34d399 | rgb(25,45,47) | 7.49:1 | 4.5:1 | graphite: a shipped chip on a raised card |
+| #fbbf24 | rgb(31,27,15) | 10.29:1 | 4.5:1 | graphite: a target chip |
+| #fbbf24 | rgb(38,34,25) | 9.49:1 | 4.5:1 | graphite: a target chip on a surface |
+| #fbbf24 | rgb(45,43,35) | 8.49:1 | 4.5:1 | graphite: a target chip on a raised card |
+| #6b7385 | #07090d | 4.19:1 | 3:1 | graphite: input and ghost-button borders, diagram strokes (non-text) |
+| #6b7385 | #0e1118 | 3.97:1 | 3:1 | graphite: strokes on a surface (non-text) |
+| #6b7385 | #161a23 | 3.66:1 | 3:1 | graphite: the Lab chip's dashed edge (non-text) |
+| #8e9cff | #161a23 | 6.92:1 | 3:1 | graphite: a tier meter step (non-text) |
+| #8ab4ff | #07090d | 9.54:1 | 3:1 | graphite: the focus ring (non-text) |
+| #8ab4ff | #0e1118 | 9.04:1 | 3:1 | graphite: the focus ring on a surface (non-text) |
+| #ffffff | #2b44ff | 6.22:1 | 4.5:1 | the primary button, the skip link; the pilot plate's headings |
+| #ffffff | #1d33db | 8.24:1 | 4.5:1 | the primary button, hovered |
+| #2ee6d6 | #07090d | 12.72:1 | 3:1 | the cyan flow lines on a diagram's screen (non-text) |
+| #2ee6d6 | #0e1118 | 12.06:1 | 3:1 | the cyan on a surface inside a screen (non-text) |
+| #e1e5ff | #2b44ff | 5.00:1 | 4.5:1 | the pilot plate's body, stations and ghost label |
+| #2b44ff | #ffffff | 6.22:1 | 4.5:1 | the pilot plate's primary: cobalt words on white |
+| #2b44ff | #e8ebff | 5.26:1 | 4.5:1 | the pilot plate's primary, hovered |
+| #cdd3ff | #2b44ff | 4.26:1 | 3:1 | the pilot plate's ghost border and trace (non-text) |
+| #ffffff | #2b44ff | 6.22:1 | 3:1 | the pilot plate's focus ring (non-text) |
+| #4a5266 | #ffffff | 7.81:1 | 4.5:1 | the booking calendar panel's caption and placeholder (/contact) |
+| #2b44ff | #ffffff | 6.22:1 | 3:1 | that panel's focus ring and links on white (non-text) |
 
 The wordmark keeps its logotype exemption (checks 18 and 20), and no longer
-needs it: "Bolt Fusion" is `#eceff4` and "Tech" `#9aa3b4` on the ground.
+needs it: "Bolt Fusion" is `#f3f2ef` and "Tech" `#9aa2b2` on the header's
+graphite. The footer's signature (`.bf-footer__giant`) is CSS content in an
+`aria-hidden` box — decoration, not text, so nothing measures it.
 
 ### The pieces every page is built from
 
@@ -910,10 +956,19 @@ verify-site check 31 fails if any of it comes back.
 
 ## Type
 
-Barlow and Jost only, from `next/font/google` in `app/layout.tsx`: Barlow 500 /
-600 / 700 and Jost 400 / 500 / 600. All normal — no italic anywhere. No new
-family (checks 2 and 31), and the site loads no mono face. `<b>` and `<strong>`
-are 600: the browser's `bold` would ask Jost for a 700 it does not load (check 3).
+**Since 2026-10-24: Archivo only** (*Decided 2026-10-24: the studio
+redesign*), from `next/font/google` in `app/layout.tsx` — one variable latin
+file, its weight axis (400–700 in use) and its width axis (`axes: ["wdth"]`).
+Headings are 600 at `font-stretch: var(--bf-display)` (116%) with −0.035 to
+−0.05em tracking; labels, buttons, the nav and chips 500–600 at
+`var(--bf-label)` (104%); text 400 at 100%. All normal — no italic anywhere. No
+new family (checks 2 and 31, which now fail Barlow and Jost as retired faces),
+and the site loads no mono face. The sizes below this paragraph are the
+2026-09-29 ramp; where the studio layer at the end of `app/site.css` restates
+one (the hero's h1, the homepage's chapter and section heads, the pilot, the
+proof figures), the studio layer is what renders.
+
+*Until 2026-10-24:* Barlow 500 / 600 / 700 and Jost 400 / 500 / 600.
 
 **The redesign's ramp** (`app/site.css`): 72 / 48 / 32 / 22 / 18 / 16 / 14.
 - Barlow 700 for the H1 and every H2, tracking −0.02em (−0.015em at 32px). The
@@ -1742,7 +1797,12 @@ at the end, which means nobody has decided yet.
     its canvas in the field, `data-scene-ready` — and holds the scene chunk to
     180KB gzipped, requested after the load event (*Verify before pushing*).
     Width alone is never the gate: an iPad in landscape is 1180 or 1366 wide.
-  - **It sits beside the headline, never behind it.** On the old black hero it
+  - **It sits beside the text, never behind the headline.** Since the studio
+    redesign (2026-10-24) the h1 runs the whole width above the two columns
+    at >=1025px, and the field is the column to the right of the support
+    line, body and calls to action; check 28 reads "beside" against
+    `#hero .bf-hero__text` (it read it against the h1's lines until then),
+    and "behind" against the h1's lines, as before. On the old black hero it
     sat behind the headline, and keeping the white type legible took five
     overlay layers — two colour glows, a radial wash, a vignette and a fade to
     black — which wiped the particles out. In the graphite hero the field is
@@ -2765,6 +2825,67 @@ a `sourceRef`, and the build fails without one. It covers every place a status
 is set: `/content/metrics.ts`, the case-study KPIs, the WarmChats KPIs, and the
 in-sentence labels in `content/figure-labels.ts` (which already refuse a label
 without a `source` string — the same idea, not yet a checked reference).
+
+## Decided 2026-10-24: the studio redesign (owner's request; awaiting his review)
+
+**The request.** The owner, 2026-10-24, verbatim: "it's not look like well
+creative and human level site make more professian and more better better
+m0re creaeetive". Built on `redesign/studio` from main 34b6075; **not pushed
+until the owner has seen it.**
+
+**What was wrong, read off the live site:** one dark template from top to
+bottom — every section the same graphite, the same "— eyebrow", the same grey
+1px boxes, small Barlow/Jost type (the Techwix theme's pairing), a 12,000px
+homepage with no change of pace. Nothing about it was untrue; it read as
+generated.
+
+**What changed — the composition, never the content:**
+- **Paper for people, screens for machines.** The page is a warm paper;
+  graphite is kept for what a machine draws (the hero's scene, every
+  capability diagram, the restaurant search's lanes, the measured figures,
+  code) and for the shell. The hero and every page head are graphite screens
+  with a rounded foot; the close is one with a rounded head, and the footer
+  runs on under it.
+- **Archivo** replaces Barlow and Jost: one variable file, its width axis
+  carrying the design — headings expanded (`--bf-display`, 116%) and tight,
+  labels and buttons a touch wide (`--bf-label`, 104%), text at 100%. Checks
+  2, 3 and 31 now know Archivo as the face and Barlow and Jost as retired.
+  The share image uses static Archivo instances (WOFF, `assets/fonts`).
+- **The hero's h1 runs the whole width on one line from 1025px**, sized to
+  the content width (`(100vw − 2 gutters) / 8.8`, at most 144px), sentence
+  case (it was upper case); the text and the field sit side by side under it.
+  Below 1025px the order is unchanged: the field's band, the h1 on two lines,
+  the text. The h1 is the hero grid's own item, no longer inside
+  `.bf-hero__text`. The poster stays the LCP element: the h1 is at most
+  1240x130 against the poster's 660x560.
+- **One cobalt** (`#2b44ff`) for every primary action and for the pilot's
+  plate, now a billboard — the one offer on the page on the one coloured
+  surface; its primary is white with cobalt words, so there is still one
+  filled Schedule a Call in view. The favicon and touch icon are white on
+  cobalt (`scripts/generate-icons.mjs`; run it with
+  `node --experimental-strip-types`).
+- **Scale:** chapter heads up to 80px (`clamp(48px, 5.4vw, 80px)` from
+  1025, still at most 0.72 of the h1), other homepage h2s up to 48px, the
+  proof figures 56px on their screen, the headcount 112px, the footer's
+  signature — "Bolt Fusion Tech" as wide as the page, `aria-hidden`.
+- **No full-width hairlines between the homepage's sections**: the paper
+  changes tone (what we engineer and the Insights teaser on the deeper paper)
+  and the air does the rest. Inner pages keep theirs.
+
+**The suite, changed with it:** checks 2, 3 and 31 know Archivo (Barlow and
+Jost are retired faces); check 28's "beside" is read against the hero's text
+column (above); check 20 no longer measures the text of a closed `<details>`
+— never painted, but laid out, the FAQ's last answer ran over the close's
+graphite and was measured against it (check 2 already skipped it);
+`scripts/contrast-site.mjs` measures both grounds and the pilot's plate. No
+gate misuse case was added for the new "beside" reading: K6 (the field
+behind the h1) still fails check 28 in its own words. **The gate
+(`scripts/gate/gate.sh`) has not been run on this branch.**
+
+**Unchanged, on purpose:** every word, every hook a check reads, the hero
+field's box (660x560 from 1280), the chip families and their colours'
+meanings, the rules against tracked capitals, a coloured headline word, mono
+outside machine output, and italic.
 
 ## Decided 2026-09-30: Bazzile's feature screens and its public install count (owner)
 

@@ -5,7 +5,7 @@ import type { InsightCode } from "@/content/insights-schema";
 /* What starts a line comment in each language the articles use: the rest of
    the line is set in the muted colour. Deliberately naive — the snippets are
    short and written for the page — and never a second face: the site loads no
-   mono face (verify-site checks 2 and 31), so code is Barlow 500 with tabular
+   mono face (verify-site checks 2 and 31), so code is Archivo 500 with tabular
    figures, as every machine value on the site is. */
 const COMMENT: Record<InsightCode["language"], string | null> = { typescript: "//", sql: "--", python: "#", text: null };
 const LANGUAGE: Record<InsightCode["language"], string> = { typescript: "TypeScript", sql: "SQL", python: "Python", text: "Text" };
