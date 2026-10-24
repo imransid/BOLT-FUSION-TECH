@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 
 import FigureText from "@/components/FigureText";
 import type { Lane, Playground } from "@/content/architecture";
@@ -41,6 +41,24 @@ const EDGE_PATHS: Record<string, string> = {
   "retrieval>response": `M${right("retrieval")} 275 H950 V${165 + H / 2}`,
 };
 
+/* Each edge's length in viewBox units — the paths are straight runs (M, H,
+   V) — so the request's pulse is the same short streak on every edge,
+   whatever its length, and crosses it in one step. */
+const EDGE_LEN: Record<string, number> = Object.fromEntries(
+  Object.entries(EDGE_PATHS).map(([key, d]) => {
+    let x = 0;
+    let y = 0;
+    let len = 0;
+    for (const m of d.matchAll(/([MHV])([-\d.]+)(?: ([-\d.]+))?/g)) {
+      const v = Number(m[2]);
+      if (m[1] === "M") [x, y] = [v, Number(m[3])];
+      else if (m[1] === "H") [len, x] = [len + Math.abs(v - x), v];
+      else [len, y] = [len + Math.abs(v - y), v];
+    }
+    return [key, len];
+  }),
+);
+
 function reduced() {
   return (
     window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -60,10 +78,12 @@ function reduced() {
  * its space, until hydration, so it never shifts the page): pressing it traces
  * that request's path on the diagram in brand blue, an edge per step, while
  * the lane's own steps light in turn — below 1025px the steps are the flow,
- * drawn down the lane. The packet's current stop is cyan, the data; the
- * other parts dim. It settles lit and stays until another request is
- * followed. Under reduced motion, or with motion paused, it lands on the end
- * at once. Text never moves: steps change colour and marker only.
+ * drawn down the lane. The request is the data, so it is cyan: a pulse runs
+ * along each edge as the request crosses it, its current stop is cyan, and
+ * the response rings once when it arrives; the other parts dim. It settles
+ * lit and stays until another request is followed. Under reduced motion, or
+ * with motion paused, it lands on the end at once and nothing runs. Text
+ * never moves: steps change colour and marker only.
  *
  * Every lane's words — its name, premise, detail and cost, the figures with
  * their chips (FigureText) — are the lanes' (content/architecture.ts), in
@@ -90,6 +110,8 @@ export default function FlowPlayground({
   const [active, setActive] = useState<Lane["id"] | null>(null);
   const [reached, setReached] = useState(-1);
   const [running, setRunning] = useState(false);
+  /* one per press: the packets and the arrival ping restart on every follow */
+  const [runId, setRunId] = useState(0);
   const timers = useRef<number[]>([]);
   const mounted = useSyncExternalStore(
     subscribeNothing,
@@ -111,6 +133,7 @@ export default function FlowPlayground({
     timers.current = [];
     const last = s.steps.length - 1;
     setActive(lane);
+    setRunId((r) => r + 1);
     if (reduced()) {
       setReached(last);
       setRunning(false);
@@ -163,6 +186,10 @@ export default function FlowPlayground({
               <g key={key} data-edge={key} className={`bf-flowpg__edge${k >= 0 ? " is-path" : ""}${active && k < 0 ? " is-dim" : ""}`}>
                 <path d={d} className="bf-flowpg__wire" markerEnd={`url(#${uid}-arrow)`} />
                 {active ? <path d={d} pathLength={1} className={`bf-flowpg__trace${on ? " is-on" : ""}`} /> : null}
+                {/* the request itself, crossing this edge: a cyan pulse that
+                    runs once along it while the trace draws (CSS; none under
+                    reduced motion, where the path lands at once) */}
+                {k >= 0 && reached === k + 1 ? <path key={`${runId}-${k}`} d={d} className="bf-flowpg__packet" style={{ "--len": EDGE_LEN[key] } as CSSProperties} /> : null}
               </g>
             );
           })}
@@ -183,6 +210,8 @@ export default function FlowPlayground({
             return (
               <g key={n.id} data-node={n.id} className={`bf-flowpg__node${lit ? " is-lit" : ""}${here ? " is-here" : ""}${active && i < 0 ? " is-dim" : ""}`}>
                 <rect x={x - W / 2} y={y - H / 2} width={W} height={H} rx={10} className="bf-flowpg__box" />
+                {/* the answer arrives: one ring, out and gone */}
+                {n.id === "response" && lit ? <rect key={runId} x={x - W / 2} y={y - H / 2} width={W} height={H} rx={10} className="bf-flowpg__ping" /> : null}
                 <text x={x} y={y - 8} textAnchor="middle" className="bf-flowpg__label">
                   {n.label}
                 </text>

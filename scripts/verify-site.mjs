@@ -3332,6 +3332,7 @@ const INTERACT_PROFILES = [
 /* the longest walk (six steps, 450ms apart) is drawn in 2.25s */
 const PG_SETTLE_MS = 3200;
 const PG_EARLY_MS = 120;
+const PG_MID_MS = 620;
 
 async function visitInteractions(browser, prof) {
   const ctx = await browser.newContext({
@@ -3339,11 +3340,19 @@ async function visitInteractions(browser, prof) {
     reducedMotion: prof.reduced ? "reduce" : "no-preference",
     ...(prof.touch ? { isMobile: true, hasTouch: true, deviceScaleFactor: prof.dpr || 2 } : {}),
   });
-  const out = { label: prof.label, width: prof.viewport.width, reduced: Boolean(prof.reduced), pg: null, map: null, stages: null, fullMap: null };
+  const out = { label: prof.label, width: prof.viewport.width, reduced: Boolean(prof.reduced), touch: Boolean(prof.touch), pg: null, map: null, stages: null, fullMap: null, light: null, vt: null };
+  /* centred first: an edge of the viewport can sit under the sticky header
+     or a fixed box, where a press would wait for ever; a press that cannot
+     land says which one it was */
   const press = async (loc) => {
-    await loc.scrollIntoViewIfNeeded();
-    if (prof.touch) await loc.tap();
-    else await loc.click();
+    await loc.evaluate((el) => el.scrollIntoView({ block: "center", behavior: "instant" }));
+    const what = await loc.evaluate((el) => `${el.tagName.toLowerCase()} "${(el.textContent || "").trim().slice(0, 40)}"`);
+    try {
+      if (prof.touch) await loc.tap({ timeout: 10000 });
+      else await loc.click({ timeout: 10000 });
+    } catch (e) {
+      throw new Error(`pressing ${what}: ${String(e?.message || e).split("\n")[0]}`);
+    }
   };
   try {
     const page = await ctx.newPage();
@@ -3373,6 +3382,7 @@ async function visitInteractions(browser, prof) {
             litNodes: [...root.querySelectorAll("[data-node].is-lit")].map((n) => n.getAttribute("data-node")),
             traced: [...root.querySelectorAll("[data-edge] .bf-flowpg__trace.is-on")].map((t) => t.closest("[data-edge]").getAttribute("data-edge")),
             anims: root.getAnimations({ subtree: true }).filter((a) => a.playState === "running").length,
+            names: [...new Set(root.getAnimations({ subtree: true }).filter((a) => a.playState === "running").map((a) => a.animationName).filter(Boolean))],
             status: (root.querySelector(".bf-flowpg__status")?.textContent || "").replace(/\s+/g, " ").trim(),
           };
         }, lane);
@@ -3386,8 +3396,11 @@ async function visitInteractions(browser, prof) {
         await press(btn);
         await page.waitForTimeout(PG_EARLY_MS);
         const early = await read(lane);
-        await page.waitForTimeout(PG_SETTLE_MS);
-        out.pg.lanes.push({ lane, ready: true, early, settled: await read(lane) });
+        /* mid-walk: the request is crossing its second edge (450-900ms) */
+        await page.waitForTimeout(PG_MID_MS - PG_EARLY_MS);
+        const mid = await read(lane);
+        await page.waitForTimeout(PG_SETTLE_MS - PG_MID_MS + PG_EARLY_MS);
+        out.pg.lanes.push({ lane, ready: true, early, mid, settled: await read(lane) });
       }
     }
 
@@ -3450,6 +3463,38 @@ async function visitInteractions(browser, prof) {
           await page.waitForTimeout(400);
           out.stages.picks.push(await readStages());
         }
+    }
+
+    /* the motion layer (2026-10-24): the light a screen catches under the
+       mouse, and where the page transition is switched on */
+    out.vt = await page.evaluate(() => {
+      const found = [];
+      const walk = (rules, cond) => {
+        for (const r of rules) {
+          if (/^@view-transition\b/.test(r.cssText)) found.push(cond.join(" and ") || "(no condition)");
+          else if (r.cssRules) walk(r.cssRules, r.conditionText ? [...cond, r.conditionText] : cond);
+        }
+      };
+      for (const sh of document.styleSheets) {
+        try {
+          walk(sh.cssRules, []);
+        } catch {
+          /* cross-origin */
+        }
+      }
+      return found;
+    });
+    if (!prof.touch && (await page.locator("#recent-work .bf-proof").count())) {
+      const proof = page.locator("#recent-work .bf-proof").first();
+      await proof.scrollIntoViewIfNeeded();
+      const box = await proof.boundingBox();
+      await page.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.3);
+      await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.4, { steps: 5 });
+      await page.waitForTimeout(700);
+      const on = await proof.evaluate((el) => ({ lit: el.hasAttribute("data-light"), glow: getComputedStyle(el, "::before").opacity }));
+      await page.mouse.move(2, 2, { steps: 3 });
+      await page.waitForTimeout(700);
+      out.light = { ...on, after: await proof.evaluate((el) => el.hasAttribute("data-light")) };
     }
 
     /* the full map on /capabilities: its concept link, lit, is not cyan either */
@@ -6204,8 +6249,8 @@ check(
 /* 37 — the flow playground, the compact map and the stage picker, driven */
 check(
   37,
-  "The new interactions work, and say only what content/ says: the flow playground walks each request along its own path, a step at a time (at once under reduced motion); the compact map links each part to its own capabilities' work; the stage picker shows the selected stage's words; a concept link is never cyan",
-  "a playground that lights the wrong lane or every node, never walks, or ignores reduced motion; steps whose words drift from content/architecture.ts; a map part linked to work its capabilities do not have (robotics given a project); a lit robotics link painted cyan or pulsing; a stage panel one stage out",
+  "The new interactions work, and say only what content/ says: the flow playground walks each request along its own path, a step at a time (at once under reduced motion); the compact map links each part to its own capabilities' work; the stage picker shows the selected stage's words; a concept link is never cyan; the motion layer — the request's packet, the screens' light under a mouse, the page transition — runs where motion is allowed and nowhere else",
+  "a playground that lights the wrong lane or every node, never walks, or ignores reduced motion; steps whose words drift from content/architecture.ts; a map part linked to work its capabilities do not have (robotics given a project); a lit robotics link painted cyan or pulsing; a stage panel one stage out; a packet that never runs; a light that follows the mouse under reduced motion, or never lights; a page transition switched on for everyone",
   (F, I) => {
     const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
     let pgData, eng, projs;
@@ -6258,6 +6303,8 @@ check(
           } else if (!(e.lit >= 1 && e.lit < e.total))
             F.push(`${at}: ${who} had lit ${e.lit} of ${e.total} steps ${PG_EARLY_MS}ms after the press — a request walks its path a step at a time`);
           if (s.lit !== s.total) F.push(`${at}: ${PG_SETTLE_MS}ms after the press, ${who} has lit ${s.lit} of ${s.total} steps — it settles with every step lit`);
+          if (!r.reduced && s.diagram && !(run.mid?.names || []).includes("bf-flowpg-packet"))
+            F.push(`${at}: following ${who}, no packet ran along its path ${PG_MID_MS}ms in (running: ${(run.mid?.names || []).join(", ") || "nothing"}) — the request is the data, and it crosses each edge in cyan`);
           for (const [lane, n] of s.litElsewhere) F.push(`${at}: following ${who} lit ${n} step(s) of the ${lane} lane — only the request followed lights`);
           const pressed = s.pressed.filter(([, v]) => v === "true").map(([l]) => l);
           if (pressed.join() !== sc.lane) F.push(`${at}: after following ${who}, aria-pressed is true on ${pressed.join(", ") || "no button"} — it is the ${sc.lane} lane's alone`);
@@ -6297,6 +6344,16 @@ check(
         else if (m.cyan.length || m.pulses)
           F.push(`/capabilities @${r.label}: with "${m.name}" selected, a concept link on the system map is ${m.cyan.length ? `painted cyan (${m.cyan.slice(0, 2).join("; ")})` : ""}${m.pulses ? ` carrying ${m.pulses} pulse(s)` : ""} — nothing flows in a system that has not shipped`);
       }
+
+      /* the motion layer: the light, and the page transition's switch */
+      if (r.light) {
+        if (r.reduced && r.light.lit) F.push(`${at}: under reduced motion the proof strip still catches the light under the mouse (data-light) — the light is motion, and it stays off`);
+        if (!r.reduced && !(r.light.lit && r.light.glow === "1")) F.push(`${at}: the mouse over the proof strip lit nothing (data-light ${r.light.lit}, its glow at opacity ${r.light.glow}) — the graphite screens catch the light on a desktop`);
+        if (r.light.after) F.push(`${at}: the proof strip kept its light after the mouse left it — the light follows the mouse out`);
+      }
+      for (const cond of r.vt || [])
+        if (!/prefers-reduced-motion:\s*no-preference/.test(cond)) F.push(`${at}: the page transition (@view-transition) is switched on under "${cond}" — only where motion is allowed`);
+      if (!r.touch && !r.reduced && !(r.vt || []).length) F.push(`${at}: no @view-transition rule — the pages no longer cross-fade`);
 
       /* the stage picker */
       const stages = eng.stages;

@@ -690,6 +690,30 @@ def p_stage_off_by_one(s):
     s.rep(STAGES, "  const s = stages[active];\n", "  const s = stages[Math.min(active + 1, stages.length - 1)];\n")
 
 
+def p_pg_packet_gone(s):
+    """37: the request's packet no longer drawn"""
+    s.rep(PG, "{k >= 0 && reached === k + 1 ? <path key", "{false && k >= 0 && reached === k + 1 ? <path key")
+
+
+def p_light_reduced(s):
+    """37: the screens' light follows the mouse under reduced motion too"""
+    s.rep("components/site/ScreenLight.tsx", 'const GATE = "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";',
+          'const GATE = "(hover: hover) and (pointer: fine)";')
+
+
+def p_light_dead(s):
+    """37: the proof strip's glow never shows (its rule dropped) — data-light
+    lands and nothing lights; a separate line from light-reduced's, so the two
+    can share one misuse build"""
+    s.rep("app/site.css", "  .bf-proof[data-light]::before,\n", "")
+
+
+def p_vt_always(s):
+    """37: the page transition switched on for everyone, reduced motion included"""
+    s.rep("app/site.css", "@media (prefers-reduced-motion: no-preference) {\n  @view-transition {\n    navigation: auto;\n  }\n",
+          "@view-transition {\n  navigation: auto;\n}\n\n@media (prefers-reduced-motion: no-preference) {\n")
+
+
 def p_stage_twice(s):
     """37: the stage descriptions left in the columns beside the panel"""
     s.rep("app/site.css", "  [data-stage-picker] .bf-stage__does {\n    display: none;\n  }\n\n", "")
@@ -828,6 +852,10 @@ CASES = [
     ["map-concept-cyan", "a lit concept link pulsing cyan on the compact map", 37, r'^/ @1440 desktop: with "Robotics" selected, a concept link on the compact map is painted cyan', p_map_concept_cyan, {}],
     ["map-concept-cyan-full", "a lit concept link pulsing cyan on /capabilities' map", 37, r'^/capabilities @1440 desktop: with "Robotics" selected, a concept link on the system map is painted cyan', None, {"from": "map-concept-cyan"}],
     ["stage-off-by-one", "the stage panel one stage out", 37, r'^/ @1440 desktop: the stage panel opens on "Architect" — it opens on Discover', p_stage_off_by_one, {}],
+    ["pg-packet-gone", "the playground's request crosses no edge (its packet gone)", 37, r'^/ @1440 desktop: following the keyword request \("sushi"\), no packet ran along its path', p_pg_packet_gone, {}],
+    ["light-reduced", "the screens' light under reduced motion", 37, r"^/ @1440 reduced motion: under reduced motion the proof strip still catches the light", p_light_reduced, {}],
+    ["light-dead", "the proof strip's light never shows", 37, r"^/ @1440 desktop: the mouse over the proof strip lit nothing \(data-light true, its glow at opacity 0\)", p_light_dead, {}],
+    ["vt-always", "the page transition on under reduced motion", 37, r'^/ @1440 (?:desktop|reduced motion): the page transition \(@view-transition\) is switched on under "\(no condition\)"', p_vt_always, {}],
     ["stage-twice", "the stage descriptions in the columns and the panel at once", 37, r"^/ @1440 desktop: with the picker live, 6 stage description\(s\) still show in the columns", p_stage_twice, {}],
 ]
 # retired cases: [key, the case, its old check, the reason] — none today; a case

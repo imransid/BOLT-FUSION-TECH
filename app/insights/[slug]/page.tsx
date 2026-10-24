@@ -117,6 +117,10 @@ export default async function InsightPage({ params }: Params) {
       <JsonLd data={graph} />
       <SiteShell ground="graphite" current="/insights">
         <article className="bf-article" aria-labelledby="article-title">
+          {/* reading progress (2026-10-24): CSS driven by the page's scroll, no
+              script; drawn only where the browser supports scroll timelines
+              and motion is allowed (app/site.css) */}
+          <div className="bf-readbar" aria-hidden="true" />
           <PageHead id="article-title" eyebrow="Insight" back={{ href: "/insights", label: "← All insights" }} title={a.title} size="long">
             <p className="bf-lead">{a.dek}</p>
             <p className="bf-pagehead__meta">

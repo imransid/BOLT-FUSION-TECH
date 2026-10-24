@@ -73,7 +73,8 @@ export default function StageRail({ stages }: { stages: readonly Stage[] }) {
           <div className="bf-stagepanel__progress" aria-hidden="true">
             <span className="bf-stagepanel__fill" style={{ transform: `scaleX(${(active + 1) / stages.length})` }} />
           </div>
-          <div className="bf-stagepanel__body">
+          {/* keyed: a new stage enters, a short rise (app/site.css) */}
+          <div key={s.id} className="bf-stagepanel__body">
             <p className="bf-stagepanel__title">{s.title}</p>
             <p className="bf-stagepanel__does">{s.does}</p>
             <div className="bf-stagepanel__gets">
